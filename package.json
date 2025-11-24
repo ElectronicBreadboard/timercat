@@ -1,20 +1,42 @@
 {
-  "name": "isshin",
-  "private": true,
-  "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
-  },
-  "devDependencies": {
-    "prettier": "^3.6.2",
-    "turbo": "^2.6.1",
-    "typescript": "5.9.2"
-  },
-  "packageManager": "pnpm@9.0.0",
-  "engines": {
-    "node": ">=18"
-  }
+	"name": "isshin",
+	"private": true,
+	"description": "",
+	"keywords": [],
+	"homepage": "https://isshin.app/?utm_source=github",
+	"bugs": {
+		"url": "https://github.com/builder-group/isshin/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/builder-group/isshin.git"
+	},
+	"license": "AGPL-3.0-or-later",
+	"author": "@bennobuilder",
+	"scripts": {
+		"build": "turbo run build",
+		"clean": "turbo run clean --force && shx rm -rf .turbo && shx rm -rf .vercel && shx rm -rf node_modules",
+		"format": "prettier --write \"**/*.{ts,tsx,md,json,js,jsx}\"",
+		"install:clean": "pnpm clean && pnpm install && pnpm build",
+		"lint": "turbo run lint",
+		"start:dev": "turbo run start:dev",
+		"test": "turbo run test",
+		"update:latest": "turbo run update:latest --force && pnpm update --latest && pnpm build"
+	},
+	"devDependencies": {
+		"@blgc/config": "^0.0.39",
+		"eslint": "^9.39.1",
+		"prettier": "^3.6.2",
+		"rollup": "^4.53.3",
+		"rollup-presets": "^0.0.25",
+		"shx": "^0.4.0",
+		"turbo": "^2.6.1",
+		"typescript": "5.9.3",
+		"vite": "^7.2.4",
+		"vitest": "^4.0.13"
+	},
+	"packageManager": "pnpm@10.20.0",
+	"engines": {
+		"node": ">=24"
+	}
 }
