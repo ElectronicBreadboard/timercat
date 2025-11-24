@@ -1,7 +1,18 @@
 {
-	"name": "desktop",
-	"version": "0.1.0",
+	"name": "@repo/desktop",
+	"version": "0.0.1",
 	"private": true,
+	"description": "",
+	"keywords": [],
+	"bugs": {
+		"url": "https://github.com/builder-group/isshin/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/builder-group/isshin.git"
+	},
+	"license": "AGPL-3.0-or-later",
+	"author": "@bennobuilder",
 	"type": "module",
 	"scripts": {
 		"build": "tauri build",
@@ -17,17 +28,26 @@
 		"update:latest": "pnpm update --latest"
 	},
 	"dependencies": {
+		"@tanstack/react-router": "^1.139.3",
+		"@tanstack/react-router-devtools": "^1.139.3",
+		"@tanstack/react-start": "^1.139.3",
 		"@tauri-apps/api": "^2",
 		"@tauri-apps/plugin-opener": "^2",
 		"react": "^19.1.0",
-		"react-dom": "^19.1.0"
+		"react-dom": "^19.1.0",
+		"tailwind-merge": "^3.4.0",
+		"zod": "^4.1.13"
 	},
 	"devDependencies": {
+		"@tailwindcss/postcss": "^4.1.17",
 		"@tauri-apps/cli": "^2",
 		"@types/react": "^19.1.8",
 		"@types/react-dom": "^19.1.6",
-		"@vitejs/plugin-react": "^4.6.0",
+		"@vitejs/plugin-react": "^4.7.0",
+		"postcss": "^8.5.6",
+		"tailwindcss": "^4.1.17",
 		"typescript": "~5.8.3",
-		"vite": "^7.0.4"
+		"vite": "^7.0.4",
+		"vite-tsconfig-paths": "^5.1.4"
 	}
 }

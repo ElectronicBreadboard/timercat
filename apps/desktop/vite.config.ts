@@ -1,12 +1,28 @@
-import react from '@vitejs/plugin-react';
+import { tanstackStart } from '@tanstack/react-start/plugin/vite';
+import viteReact from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import tsConfigPaths from 'vite-tsconfig-paths';
 
-// @ts-expect-error process is a nodejs global
-const host = process.env.TAURI_DEV_HOST;
+const host = process.env['TAURI_DEV_HOST'];
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
-	plugins: [react()],
+	plugins: [
+		tsConfigPaths({
+			projects: ['./tsconfig.json']
+		}),
+		tanstackStart({
+			srcDirectory: 'src',
+			spa: {
+				enabled: true,
+				prerender: {
+					enabled: true,
+					outputPath: 'index.html'
+				}
+			}
+		}),
+		viteReact()
+	],
 
 	// Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
 	//
