@@ -1,4 +1,4 @@
-# Why Tauri
+# Why Tauri for Desktop
 
 ## Decision
 

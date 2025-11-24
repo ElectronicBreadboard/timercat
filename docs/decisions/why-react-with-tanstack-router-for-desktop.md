@@ -1,4 +1,4 @@
-# Why React with TanStack Router for Tauri
+# Why React with TanStack Router for Desktop
 
 ## Decision
 

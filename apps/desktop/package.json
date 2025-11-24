@@ -16,6 +16,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "tauri build",
+		"build:prod": "tauri build --config src-tauri/tauri.prod.conf.json",
 		"clean": "shx rm -rf target && shx rm -rf build && shx rm -rf .react-router && shx rm -rf .turbo && shx rm -rf node_modules",
 		"format": "prettier --write \"**/*.{ts,tsx,md,json,js,jsx}\"",
 		"install:clean": "pnpm run clean && pnpm install",
@@ -28,6 +29,7 @@
 		"update:latest": "pnpm update --latest"
 	},
 	"dependencies": {
+		"@base-ui-components/react": "1.0.0-beta.6",
 		"@tanstack/react-router": "^1.139.3",
 		"@tanstack/react-router-devtools": "^1.139.3",
 		"@tanstack/react-start": "^1.139.3",

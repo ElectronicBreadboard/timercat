@@ -1,8 +1,8 @@
 {
 	"$schema": "https://schema.tauri.app/config/2",
-	"productName": "Isshin",
-	"version": "0.0.1",
-	"identifier": "group.builder.isshin",
+	"productName": "Isshin - Development",
+	"identifier": "group.builder.isshin.dev",
+	"mainBinaryName": "Isshin - Development",
 	"build": {
 		"beforeDevCommand": "pnpm ui:start:dev",
 		"devUrl": "http://localhost:1420",
