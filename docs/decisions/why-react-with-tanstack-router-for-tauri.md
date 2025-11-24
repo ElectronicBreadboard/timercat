@@ -1,4 +1,4 @@
-# TanStack Router for Tauri Frontend
+# Why React with TanStack Router for Tauri
 
 ## Decision
 
