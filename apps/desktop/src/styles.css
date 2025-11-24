@@ -2,4 +2,4 @@
 @import '@repo/ui/styles.css';
 
 @source '.';
-@source '../node_modules/@repo/ui/src';
+@source '../node_modules/@repo/ui';
