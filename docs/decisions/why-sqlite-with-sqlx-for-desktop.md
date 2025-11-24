@@ -36,4 +36,3 @@ We use a tiered approach for different types of data:
 
 - **`tauri-plugin-sql`**: Exposes database access to the frontend, which is less secure. Our backend lives in Rust, so keeping database logic there is more appropriate.
 - **PostgreSQL**: Not embeddable - users would need to install and run a separate server, which is impractical for a desktop app. See [discussion](https://github.com/tauri-apps/tauri/discussions/5418).
-

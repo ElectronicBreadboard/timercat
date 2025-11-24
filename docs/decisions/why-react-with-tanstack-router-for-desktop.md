@@ -76,4 +76,3 @@ TanStack Start creates a server bundle even in SPA mode. We need to investigate 
 #### No `React.FC`
 
 Can't use `React.FC` for route components because it would require a `const` declaration, and `const` declarations must be defined above the Route definition (unlike function declarations which are hoisted). This means we use function declarations instead of arrow functions for components.
-

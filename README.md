@@ -36,7 +36,7 @@
 
 **Isshin** (一心: One Mind) — a state of singular focus and wholehearted dedication, where all energy is directed towards one goal, achieving an unparalleled level of concentration.
 
-Isshin is a native macOS utility that connects your daily schedule with your digital environment. You plan your day once, and your computer automatically adjusts itself around that plan. No toggling, no willpower needed—just focus.
+Isshin is a native macOS utility that connects your daily schedule with your digital environment. You plan your day once, and your computer automatically adjusts itself around that plan. No toggling, no willpower needed — just focus.
 
 Isshin uses **Modes** (sets of rules), **Zones** (main blocks of your day), and **Tasks** (within Zones) to automatically enforce the right level of focus for whatever you're working on. When you start a task, the correct rules activate immediately. When you switch tasks, the environment adjusts.
 

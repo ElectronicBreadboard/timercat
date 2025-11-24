@@ -10,7 +10,7 @@ We chose **Tauri** as our desktop application framework.
 
 #### Performance & Energy Efficiency
 
-Our app is a tray application that runs primarily in the background. Tauri uses Rust for backend operations, which compiles to native machine code and is significantly more energy-efficient and performant than Electron's main process, which runs JavaScript (Node.js). While Electron can call native C++ modules, the main process logic itself runs in JavaScript, which has higher overhead for continuous background operations. 
+Our app is a tray application that runs primarily in the background. Tauri uses Rust for backend operations, which compiles to native machine code and is significantly more energy-efficient and performant than Electron's main process, which runs JavaScript (Node.js). While Electron can call native C++ modules, the main process logic itself runs in JavaScript, which has higher overhead for continuous background operations.
 
 #### Cross-Platform
 
@@ -28,4 +28,3 @@ Rust provides access to low-level system APIs when needed, while still maintaini
 
 - **Electron**: Too resource-intensive for a background app. Larger bundle sizes and higher memory/CPU usage would negatively impact performance and battery life.
 - **Native Development**: Would require separate codebases for each platform, which is not feasible for a bootstrapped team.
-
