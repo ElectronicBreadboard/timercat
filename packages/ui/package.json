@@ -21,7 +21,7 @@
 			"require": "./dist/cjs/index.js",
 			"default": "./dist/cjs/index.js"
 		},
-		"./styles.css": "./dist/styles.css",
+		"./theme.css": "./dist/theme.css",
 		"./tailwind.css": "./dist/tailwind.css"
 	},
 	"files": [
@@ -30,7 +30,7 @@
 	],
 	"scripts": {
 		"build": "shx rm -rf dist && rollup -c rollup.config.js && pnpm build:css",
-		"build:css": "npx @tailwindcss/cli -i ./src/styles/root.css -o ./dist/styles.css && npx @tailwindcss/cli -i ./src/styles/tailwind.css -o ./dist/tailwind.css",
+		"build:css": "npx @tailwindcss/cli -i ./src/styles/theme.css -o ./dist/theme.css && npx @tailwindcss/cli -i ./src/styles/tailwind.css -o ./dist/tailwind.css",
 		"build:prod": "export NODE_ENV=production && pnpm build",
 		"clean": "shx rm -rf dist && shx rm -rf .turbo && shx rm -rf node_modules",
 		"install:clean": "pnpm run clean && pnpm install",
@@ -38,7 +38,7 @@
 		"start:dev": "tsc -w && pnpm watch:css",
 		"test": "vitest run",
 		"update:latest": "pnpm update --latest",
-		"watch:css": "npx @tailwindcss/cli -i ./src/styles/root.css -o ./dist/styles.css --watch && npx @tailwindcss/cli -i ./src/styles/tailwind.css -o ./dist/tailwind.css --watch"
+		"watch:css": "npx @tailwindcss/cli -i ./src/styles/theme.css -o ./dist/theme.css --watch && npx @tailwindcss/cli -i ./src/styles/tailwind.css -o ./dist/tailwind.css --watch"
 	},
 	"dependencies": {
 		"@base-ui-components/react": "1.0.0-beta.6",

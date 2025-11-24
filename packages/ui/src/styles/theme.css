@@ -1,0 +1,13 @@
+@theme {
+	/* Shared theme values - available to all apps that import this file */
+	/* Define your design tokens here, e.g.:
+	--color-primary: oklch(0.5 0.2 250);
+	--font-sans: 'Inter', sans-serif;
+	--spacing-custom: 2rem;
+	*/
+}
+
+/* Global styles (non-Tailwind utilities) */
+:root {
+	/* Regular CSS variables */
+}
