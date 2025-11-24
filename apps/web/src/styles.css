@@ -1,1 +1,5 @@
-@import 'tailwindcss';
+@import 'tailwindcss' source(none);
+@import '@repo/ui/styles.css';
+
+@source '.';
+@source '../node_modules/@repo/ui/src';

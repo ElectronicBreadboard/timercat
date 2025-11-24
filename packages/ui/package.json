@@ -1,0 +1,57 @@
+{
+	"name": "@repo/ui",
+	"version": "0.0.1",
+	"private": true,
+	"description": "",
+	"keywords": [],
+	"bugs": {
+		"url": "https://github.com/builder-group/isshin/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/builder-group/isshin.git"
+	},
+	"license": "AGPL-3.0-or-later",
+	"author": "@bennobuilder",
+	"exports": {
+		".": {
+			"source": "./src/index.ts",
+			"types": "./dist/types/index.d.ts",
+			"import": "./dist/esm/index.js",
+			"require": "./dist/cjs/index.js",
+			"default": "./dist/cjs/index.js"
+		},
+		"./styles.css": "./dist/styles.css",
+		"./tailwind.css": "./dist/tailwind.css"
+	},
+	"files": [
+		"dist",
+		"postcss.config.js",
+		"README.md"
+	],
+	"scripts": {
+		"build": "shx rm -rf dist && rollup -c rollup.config.js && pnpm build:css",
+		"build:css": "npx @tailwindcss/cli -i ./src/styles/root.css -o ./dist/styles.css && npx @tailwindcss/cli -i ./src/styles/tailwind.css -o ./dist/tailwind.css",
+		"build:prod": "export NODE_ENV=production && pnpm build",
+		"clean": "shx rm -rf dist && shx rm -rf .turbo && shx rm -rf node_modules",
+		"install:clean": "pnpm run clean && pnpm install",
+		"lint": "eslint . --fix",
+		"start:dev": "tsc -w && pnpm watch:css",
+		"test": "vitest run",
+		"update:latest": "pnpm update --latest",
+		"watch:css": "npx @tailwindcss/cli -i ./src/styles/root.css -o ./dist/styles.css --watch && npx @tailwindcss/cli -i ./src/styles/tailwind.css -o ./dist/tailwind.css --watch"
+	},
+	"dependencies": {
+		"@base-ui-components/react": "1.0.0-beta.6",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"tailwind-merge": "^3.4.0"
+	},
+	"devDependencies": {
+		"@tailwindcss/cli": "^4.1.17",
+		"@types/react": "^19.2.7",
+		"postcss": "^8.5.6",
+		"react": "^19.2.0",
+		"tailwindcss": "^4.1.17"
+	}
+}

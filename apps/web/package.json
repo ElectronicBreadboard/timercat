@@ -26,13 +26,12 @@
 		"update:latest": "pnpm update --latest"
 	},
 	"dependencies": {
-		"@base-ui-components/react": "1.0.0-beta.6",
+		"@repo/ui": "workspace:*",
 		"@tanstack/react-router": "^1.139.3",
 		"@tanstack/react-router-devtools": "^1.139.3",
 		"@tanstack/react-start": "^1.139.3",
 		"react": "^19.2.0",
 		"react-dom": "^19.2.0",
-		"tailwind-merge": "^3.4.0",
 		"zod": "^4.1.13"
 	},
 	"devDependencies": {

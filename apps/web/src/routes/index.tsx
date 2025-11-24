@@ -1,3 +1,4 @@
+import { Button } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/')({
@@ -15,6 +16,7 @@ function Home() {
 	return (
 		<div className="bg-blue-200 p-2">
 			<h3>{message}</h3>
+			<Button />
 		</div>
 	);
 }
