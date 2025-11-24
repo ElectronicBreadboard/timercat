@@ -18,15 +18,11 @@ coverage
 # Turbo
 .turbo
 
-# Vercel
-.vercel
-
 # Build Outputs
-.next/
 out/
 build
 dist
-
+target
 
 # Debug
 npm-debug.log*
@@ -36,3 +32,4 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+*.local
