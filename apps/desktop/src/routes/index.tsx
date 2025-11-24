@@ -1,13 +1,20 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/')({
-	component: Home
+	component: Home,
+	loader: async () => {
+		return {
+			message: 'Hello World'
+		};
+	}
 });
 
 function Home() {
+	const { message } = Route.useLoaderData();
+
 	return (
 		<div className="bg-blue-200 p-2">
-			<h3>Welcome Home!!!</h3>
+			<h3>{message}</h3>
 		</div>
 	);
 }
