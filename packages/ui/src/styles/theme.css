@@ -8,17 +8,20 @@
 	/* https://www.fontshare.com/fonts/erode */
 	--font-serif: 'Erode', serif;
 
-	--color-base-50: oklch(0.974 0.006 84.48);
+	/* Generated via tints.dev (Value: #F3F0E8; Hue: 0; Saturation: -3) */
+	--color-base-50: oklch(0.973 0.003 84.4);
 	--color-base-100: oklch(0.955 0.011 89.66);
-	--color-base-200: oklch(0.861 0.028 90.9);
-	--color-base-300: oklch(0.776 0.026 91.64);
-	--color-base-400: oklch(0.68 0.023 88.74);
-	--color-base-500: oklch(0.594 0.019 88.03);
-	--color-base-600: oklch(0.5 0.016 88.74);
-	--color-base-700: oklch(0.413 0.014 89.82);
-	--color-base-800: oklch(0.317 0.009 88.73);
-	--color-base-900: oklch(0.232 0.008 84.57);
-	--color-base-content: oklch(0.232 0.008 84.57);
+	--color-base-150: oklch(0.908 0.014 88.82);
+	--color-base-200: oklch(0.861 0.017 87.98);
+	--color-base-300: oklch(0.776 0.01 93.54);
+	--color-base-400: oklch(0.68 0.002 67.85);
+	--color-base-500: oklch(0.594 0.001 0);
+	--color-base-600: oklch(0.5 0.001 0);
+	--color-base-700: oklch(0.413 0.001 0);
+	--color-base-800: oklch(0.317 0.001 0);
+	--color-base-900: oklch(0.232 0.001 0);
+	--color-base-content: oklch(0.232 0.001 0);
+
 	--color-primary: oklch(0.2 0.02 45);
 	--color-primary-content: oklch(0.974 0.006 84.48);
 	--color-secondary: oklch(0.55 0.25 250);
@@ -26,11 +29,11 @@
 	--color-accent: oklch(0.7 0.22 35);
 	--color-accent-content: oklch(0.974 0.006 84.48);
 	--color-info: oklch(0.65 0.12 240);
-	--color-info-content: oklch(0.232 0.008 84.57);
+	--color-info-content: oklch(0.232 0.001 0);
 	--color-success: oklch(0.65 0.12 140);
-	--color-success-content: oklch(0.232 0.008 84.57);
+	--color-success-content: oklch(0.232 0.001 0);
 	--color-warning: oklch(0.75 0.12 75);
-	--color-warning-content: oklch(0.232 0.008 84.57);
+	--color-warning-content: oklch(0.232 0.001 0);
 	--color-error: oklch(0.65 0.12 25);
 	--color-error-content: oklch(0.974 0.006 84.48);
 }
