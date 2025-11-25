@@ -1,4 +1,10 @@
-/* 
+/* Design Philosophy
+ * 
+ * Traditional Japanese aesthetic meets modern SaaS
+ * - Mostly square/rectilinear layouts (Japanese interior structure)
+ * - Focus elements (primary buttons, CTAs) are completely round
+ * - Colors: Natural, grounded, non-distracting (warm beige to neutral gray)
+ * 
  * Reference: https://tailwindcss.com/docs/theme#default-theme-variable-reference
  * Based on: https://daisyui.com/theme-generator
  */
