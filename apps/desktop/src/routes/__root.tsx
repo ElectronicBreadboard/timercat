@@ -14,7 +14,27 @@ export const Route = createRootRoute({
 				content: 'width=device-width, initial-scale=1'
 			}
 		],
-		links: [{ rel: 'stylesheet', href: styles }]
+		links: [
+			{ rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+			{
+				rel: 'preconnect',
+				href: 'https://fonts.gstatic.com',
+				crossOrigin: 'anonymous'
+			},
+			{ rel: 'preconnect', href: 'https://api.fontshare.com' },
+			// https://fonts.google.com/specimen/Inter
+			// https://fonts.google.com/specimen/Caveat
+			{
+				rel: 'stylesheet',
+				href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Caveat:wght@400..700&display=swap'
+			},
+			// https://www.fontshare.com/fonts/erode
+			{
+				rel: 'stylesheet',
+				href: 'https://api.fontshare.com/v2/css?f[]=erode@1,2&display=swap'
+			},
+			{ rel: 'stylesheet', href: styles }
+		]
 	}),
 	shellComponent: RootDocument
 });
