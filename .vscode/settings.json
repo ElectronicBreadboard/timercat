@@ -13,14 +13,21 @@
 		"**/dist": true,
 		"**/target": true,
 		"**/.turbo": true,
-		"**/_deprecated": true
+		"**/_deprecated": true,
+		"**/routeTree.gen.ts": true
 	},
 
-	// File associations
+	// File settings
 	"files.associations": {
 		"*.scss": "postcss",
 		"*.ts": "typescript",
 		"*.tsconfig.json": "jsonc" // Allows comments in tsconfig.json
+	},
+	"files.watcherExclude": {
+		"**/routeTree.gen.ts": true
+	},
+	"files.readonlyInclude": {
+		"**/routeTree.gen.ts": true
 	},
 
 	// File nesting in explorer

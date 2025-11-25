@@ -1,4 +1,4 @@
-import { createRootRoute, HeadContent, Link, Scripts } from '@tanstack/react-router';
+import { createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import React from 'react';
 import styles from '../styles.css?url';
@@ -48,26 +48,6 @@ function RootDocument(props: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
-				<div className="flex gap-2 p-2 text-lg">
-					<Link
-						to="/"
-						activeProps={{
-							className: 'font-bold'
-						}}
-						activeOptions={{ exact: true }}
-					>
-						Home
-					</Link>
-					<Link
-						to="/settings"
-						activeProps={{
-							className: 'font-bold'
-						}}
-					>
-						Settings
-					</Link>
-				</div>
-				<hr />
 				{children}
 				<TanStackRouterDevtools position="bottom-right" />
 				<Scripts />
