@@ -11,8 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppSettingsIndexRouteImport } from './routes/_app.settings/index'
+import { Route as AppSettingsRouteRouteImport } from './routes/_app.settings/route'
 import { Route as AppPomodoroIndexRouteImport } from './routes/_app.pomodoro/index'
+import { Route as AppSettingsGeneralIndexRouteImport } from './routes/_app.settings.general/index'
 
 const AppRouteRoute = AppRouteRouteImport.update({
   id: '/_app',
@@ -23,9 +24,9 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
-  id: '/settings/',
-  path: '/settings/',
+const AppSettingsRouteRoute = AppSettingsRouteRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppPomodoroIndexRoute = AppPomodoroIndexRouteImport.update({
@@ -33,30 +34,44 @@ const AppPomodoroIndexRoute = AppPomodoroIndexRouteImport.update({
   path: '/pomodoro/',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppSettingsGeneralIndexRoute = AppSettingsGeneralIndexRouteImport.update({
+  id: '/general/',
+  path: '/general/',
+  getParentRoute: () => AppSettingsRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/settings': typeof AppSettingsRouteRouteWithChildren
   '/pomodoro': typeof AppPomodoroIndexRoute
-  '/settings': typeof AppSettingsIndexRoute
+  '/settings/general': typeof AppSettingsGeneralIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/settings': typeof AppSettingsRouteRouteWithChildren
   '/pomodoro': typeof AppPomodoroIndexRoute
-  '/settings': typeof AppSettingsIndexRoute
+  '/settings/general': typeof AppSettingsGeneralIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteRouteWithChildren
+  '/_app/settings': typeof AppSettingsRouteRouteWithChildren
   '/_app/pomodoro/': typeof AppPomodoroIndexRoute
-  '/_app/settings/': typeof AppSettingsIndexRoute
+  '/_app/settings/general/': typeof AppSettingsGeneralIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/pomodoro' | '/settings'
+  fullPaths: '/' | '/settings' | '/pomodoro' | '/settings/general'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/pomodoro' | '/settings'
-  id: '__root__' | '/' | '/_app' | '/_app/pomodoro/' | '/_app/settings/'
+  to: '/' | '/settings' | '/pomodoro' | '/settings/general'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/_app/settings'
+    | '/_app/pomodoro/'
+    | '/_app/settings/general/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -80,11 +95,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/settings/': {
-      id: '/_app/settings/'
+    '/_app/settings': {
+      id: '/_app/settings'
       path: '/settings'
       fullPath: '/settings'
-      preLoaderRoute: typeof AppSettingsIndexRouteImport
+      preLoaderRoute: typeof AppSettingsRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_app/pomodoro/': {
@@ -94,17 +109,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPomodoroIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_app/settings/general/': {
+      id: '/_app/settings/general/'
+      path: '/general'
+      fullPath: '/settings/general'
+      preLoaderRoute: typeof AppSettingsGeneralIndexRouteImport
+      parentRoute: typeof AppSettingsRouteRoute
+    }
   }
 }
 
+interface AppSettingsRouteRouteChildren {
+  AppSettingsGeneralIndexRoute: typeof AppSettingsGeneralIndexRoute
+}
+
+const AppSettingsRouteRouteChildren: AppSettingsRouteRouteChildren = {
+  AppSettingsGeneralIndexRoute: AppSettingsGeneralIndexRoute,
+}
+
+const AppSettingsRouteRouteWithChildren =
+  AppSettingsRouteRoute._addFileChildren(AppSettingsRouteRouteChildren)
+
 interface AppRouteRouteChildren {
+  AppSettingsRouteRoute: typeof AppSettingsRouteRouteWithChildren
   AppPomodoroIndexRoute: typeof AppPomodoroIndexRoute
-  AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppSettingsRouteRoute: AppSettingsRouteRouteWithChildren,
   AppPomodoroIndexRoute: AppPomodoroIndexRoute,
-  AppSettingsIndexRoute: AppSettingsIndexRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
