@@ -10,7 +10,7 @@ We chose **SQLite** with **SQLx** for persistent data storage in our Tauri deskt
 
 #### Embedded & Zero-Setup
 
-SQLite is embedded, requires no separate server installation, and is fully portable. The database file is stored at `~/Library/Application Support/group.builder.isshin/isshin.db`. This makes it ideal for desktop applications where users shouldn't need to manage database infrastructure.
+SQLite is embedded, requires no separate server installation, and is fully portable. The database file is stored at `~/Library/Application Support/com.buildergroup.isshin/isshin.db`. This makes it ideal for desktop applications where users shouldn't need to manage database infrastructure.
 
 #### Rust-Side Database Logic
 
