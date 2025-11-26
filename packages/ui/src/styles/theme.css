@@ -14,32 +14,34 @@
 	/* https://www.fontshare.com/fonts/erode */
 	--font-serif: 'Erode', serif;
 
-	/* Generated via tints.dev (Value: #F3F0E8; Hue: 0; Saturation: -3) */
-	--color-base-50: oklch(0.973 0.003 84.4);
-	--color-base-100: oklch(0.955 0.011 89.66);
-	--color-base-150: oklch(0.908 0.014 88.82);
-	--color-base-200: oklch(0.861 0.017 87.98);
-	--color-base-300: oklch(0.776 0.01 93.54);
-	--color-base-400: oklch(0.68 0.002 67.85);
-	--color-base-500: oklch(0.594 0.001 0);
-	--color-base-600: oklch(0.5 0.001 0);
-	--color-base-700: oklch(0.413 0.001 0);
-	--color-base-800: oklch(0.317 0.001 0);
-	--color-base-900: oklch(0.232 0.001 0);
-	--color-base-content: oklch(0.232 0.001 0);
+	/* Generated via tints.dev (Value: #F3F0E8; Hue: 0; Saturation: -5) */
+	--color-base-0: oklch(1 0 0); /* Pure White */
+	--color-base-50: oklch(0.98 0.003 85); /* Washi Paper */
+	--color-base-100: oklch(0.95 0.004 85);
+	--color-base-200: oklch(0.9 0.005 85); /* Light Sand */
+	--color-base-300: oklch(0.82 0.006 85);
+	--color-base-400: oklch(0.74 0.007 85); /* Stone */
+	--color-base-500: oklch(0.65 0.008 85);
+	--color-base-600: oklch(0.56 0.009 85); /* Wet Clay */
+	--color-base-700: oklch(0.48 0.01 85);
+	--color-base-800: oklch(0.4 0.011 85); /* Dark Wood */
+	--color-base-900: oklch(0.32 0.012 85);
+	--color-base-950: oklch(0.25 0.01 85); /* Charcoal (Warm) */
+	--color-base-content: oklch(0.25 0.01 85);
+	--color-base-content: oklch(0.26 0.001 35);
 
-	--color-primary: oklch(0.2 0.02 45);
-	--color-primary-content: oklch(0.973 0.003 84.4);
+	--color-primary: oklch(0.26 0.001 35);
+	--color-primary-content: oklch(0.974 0.002 67.9);
 	--color-secondary: oklch(0.55 0.25 250);
-	--color-secondary-content: oklch(0.973 0.003 84.4);
+	--color-secondary-content: oklch(0.974 0.002 67.9);
 	--color-accent: oklch(0.7 0.22 35);
-	--color-accent-content: oklch(0.973 0.003 84.4);
+	--color-accent-content: oklch(0.974 0.002 67.9);
 	--color-info: oklch(0.65 0.12 240);
-	--color-info-content: oklch(0.232 0.001 0);
+	--color-info-content: oklch(0.26 0.001 35);
 	--color-success: oklch(0.65 0.12 140);
-	--color-success-content: oklch(0.232 0.001 0);
+	--color-success-content: oklch(0.26 0.001 35);
 	--color-warning: oklch(0.75 0.12 75);
-	--color-warning-content: oklch(0.232 0.001 0);
+	--color-warning-content: oklch(0.26 0.001 35);
 	--color-error: oklch(0.65 0.12 25);
-	--color-error-content: oklch(0.973 0.003 84.4);
+	--color-error-content: oklch(0.974 0.002 67.9);
 }

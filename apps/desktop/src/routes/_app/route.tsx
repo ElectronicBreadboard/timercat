@@ -9,7 +9,7 @@ function RouteComponent() {
 	return (
 		<div className="flex min-h-screen">
 			{/* App Nav Panel */}
-			<div className="bg-base-150 flex flex-col items-center justify-between">
+			<div className="bg-base-200 flex flex-col items-center justify-between">
 				<div className="flex flex-col items-center p-2">
 					<LogoIcon className="text-base-content h-10 w-10" />
 					<Link to="/pomodoro">P</Link>
