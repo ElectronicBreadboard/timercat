@@ -27,10 +27,10 @@
 		"@blgc/config": "^0.0.39",
 		"eslint": "^9.39.2",
 		"prettier": "^3.7.4",
-		"rollup": "^4.53.5",
+		"rollup": "^4.54.0",
 		"rollup-presets": "^0.0.25",
 		"shx": "^0.4.0",
-		"turbo": "^2.7.0",
+		"turbo": "^2.7.2",
 		"typescript": "5.9.3",
 		"vite": "^7.3.0",
 		"vitest": "^4.0.16"
