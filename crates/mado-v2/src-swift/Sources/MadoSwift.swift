@@ -24,6 +24,8 @@ class WindowMonitor: NSObject {
     private var observers: [AXObserver] = []
     private var currentPID: pid_t = 0
     private var isRunning = false
+    private var notificationObserver: NSObjectProtocol?
+    private var monitorRunLoop: CFRunLoop?
     
     init(callback: @escaping WindowCallback) {
         self.callback = callback
@@ -32,12 +34,12 @@ class WindowMonitor: NSObject {
     func start() {
         guard !isRunning else { return }
         isRunning = true
+        monitorRunLoop = CFRunLoopGetCurrent()
         
         NSLog("[Monitor] 🟢 START")
         
-        // App activation notification - queue: nil means synchronous delivery on posting thread
-        // Since we run on main thread, this works directly
-        NSWorkspace.shared.notificationCenter.addObserver(
+        // App activation notification - store token for proper cleanup
+        notificationObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,
             object: nil,
             queue: nil  // Synchronous on posting thread
@@ -52,7 +54,7 @@ class WindowMonitor: NSObject {
             NSLog("[Monitor] 🎯 App activated: %@ (PID: %d)", app.localizedName ?? "unknown", newPID)
             
             if newPID != self.currentPID {
-                self.observers.removeAll()
+                self.cleanupObservers()
                 self.observeApp(pid: newPID)
             }
         }
@@ -70,10 +72,37 @@ class WindowMonitor: NSObject {
     }
     
     func stop() {
+        guard isRunning else { return }
         isRunning = false
-        NSWorkspace.shared.notificationCenter.removeObserver(self)
+        
+        // Remove notification observer
+        if let observer = notificationObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+            notificationObserver = nil
+        }
+        
+        // Cleanup AX observers
+        cleanupObservers()
+        
+        // Stop the monitor's runloop (not the calling thread's runloop)
+        if let runLoop = monitorRunLoop {
+            CFRunLoopStop(runLoop)
+            monitorRunLoop = nil
+        }
+        
+        NSLog("[Monitor] 🔴 STOPPED")
+    }
+    
+    private func cleanupObservers() {
+        // Remove run loop sources before clearing
+        for observer in observers {
+            CFRunLoopRemoveSource(
+                monitorRunLoop ?? CFRunLoopGetCurrent(),
+                AXObserverGetRunLoopSource(observer),
+                .defaultMode
+            )
+        }
         observers.removeAll()
-        CFRunLoopStop(CFRunLoopGetCurrent())
     }
     
     private func observeApp(pid: pid_t) {
