@@ -1940,6 +1940,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "mado-v2"
+version = "0.0.1"
+dependencies = [
+ "swift-rs",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "markup5ever"
 version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
