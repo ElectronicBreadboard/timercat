@@ -15,17 +15,14 @@ fn main() {
     println!("Switch apps or windows to see changes");
     println!("Press Ctrl+C to stop\n");
 
-    // Start monitor in separate thread
+    // Auto-stop after 60 seconds
     thread::spawn(|| {
-        let monitor = WindowMonitor::new();
-        monitor.run(MyListener).expect("Failed to run monitor");
+        thread::sleep(Duration::from_secs(60));
+        println!("\nStopping after timeout...");
+        WindowMonitor::stop();
     });
 
-    // Run for 30 seconds then stop
-    thread::sleep(Duration::from_secs(30));
-    println!("\nStopping...");
-    WindowMonitor::stop();
-
-    // Give time for cleanup
-    thread::sleep(Duration::from_secs(1));
+    // Run monitor on main thread (required for app activation notifications)
+    let monitor = WindowMonitor::new();
+    monitor.run(MyListener).expect("Failed to run monitor");
 }

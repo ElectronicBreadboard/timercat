@@ -24,6 +24,10 @@ impl WindowMonitor {
 
     /// Start monitoring (blocks until stopped)
     ///
+    /// **Important**: Must be called from the main thread to receive app activation
+    /// notifications. This is because macOS's NSWorkspace posts notifications on
+    /// the main thread's runloop.
+    ///
     /// This spawns observers for window changes and blocks the current thread.
     /// Call `stop()` from another thread to stop monitoring.
     pub fn run<L: WindowListener + 'static>(self, listener: L) -> Result<(), Error> {

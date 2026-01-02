@@ -24,7 +24,6 @@ class WindowMonitor: NSObject {
     private var observers: [AXObserver] = []
     private var currentPID: pid_t = 0
     private var isRunning = false
-    private var pollTimer: Timer?
     
     init(callback: @escaping WindowCallback) {
         self.callback = callback
@@ -34,66 +33,50 @@ class WindowMonitor: NSObject {
         guard !isRunning else { return }
         isRunning = true
         
-        // Observe initial app using CoreGraphics (works from any thread)
-        if let pid = getFrontmostAppPID() {
-            observeApp(pid: pid)
+        NSLog("[Monitor] 🟢 START")
+        
+        // App activation notification - queue: nil means synchronous delivery on posting thread
+        // Since we run on main thread, this works directly
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: nil  // Synchronous on posting thread
+        ) { [weak self] notification in
+            guard let self = self else { return }
+            
+            guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else {
+                return
+            }
+            
+            let newPID = app.processIdentifier
+            NSLog("[Monitor] 🎯 App activated: %@ (PID: %d)", app.localizedName ?? "unknown", newPID)
+            
+            if newPID != self.currentPID {
+                self.observers.removeAll()
+                self.observeApp(pid: newPID)
+            }
+        }
+        NSLog("[Monitor] ✅ Registered app activation observer")
+        
+        // Observe initial app
+        if let frontApp = NSWorkspace.shared.frontmostApplication {
+            NSLog("[Monitor] Initial: %@ (PID: %d)", frontApp.localizedName ?? "unknown", frontApp.processIdentifier)
+            observeApp(pid: frontApp.processIdentifier)
         }
         
-        // Poll for app changes every 0.5 seconds using CoreGraphics
-        // More reliable than NSWorkspace notifications from Rust-spawned threads
-        let timer = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
-            self?.checkForAppSwitch()
-        }
-        pollTimer = timer
-        RunLoop.current.add(timer, forMode: .common)
-        
-        // Run current thread's run loop (blocks)
+        // Run run loop
+        NSLog("[Monitor] Starting RunLoop...")
         RunLoop.current.run()
     }
     
     func stop() {
-        pollTimer?.invalidate()
-        pollTimer = nil
+        isRunning = false
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
         observers.removeAll()
         CFRunLoopStop(CFRunLoopGetCurrent())
     }
     
-    /// Get frontmost app PID using CoreGraphics (filters system UI)
-    private func getFrontmostAppPID() -> pid_t? {
-        let options = CGWindowListOption(arrayLiteral: .optionOnScreenOnly, .excludeDesktopElements)
-        guard let windowList = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] else {
-            return nil
-        }
-        
-        // Find first window from a real user app
-        for window in windowList {
-            guard let ownerPID = window[kCGWindowOwnerPID as String] as? Int32,
-                  let ownerName = window[kCGWindowOwnerName as String] as? String else {
-                continue
-            }
-            
-            // Skip system UI
-            if ["Window Server", "Control Center", "Dock", "SystemUIServer", "Notification Center"].contains(ownerName) {
-                continue
-            }
-            
-            return pid_t(ownerPID)
-        }
-        
-        return nil
-    }
-    
-    private func checkForAppSwitch() {
-        guard let newPID = getFrontmostAppPID() else { return }
-        
-        if newPID != currentPID && currentPID != 0 {
-            observers.removeAll()
-            observeApp(pid: newPID)
-        }
-    }
-    
     private func observeApp(pid: pid_t) {
-        print("[WindowMonitor] 🔧 observeApp(pid: \(pid))")
         currentPID = pid
         
         // Create observer with callback
