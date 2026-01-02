@@ -1,5 +1,5 @@
 [package]
-name = "mado-v2"
+name = "mado-poc"
 version = "0.0.1"
 authors = { workspace = true }
 license = { workspace = true }
@@ -13,5 +13,9 @@ swift-rs = "1.0.5"
 swift-rs = { version = "1.0.5", features = ["build"] }
 
 [[example]]
-name = "minimal"
-path = "examples/minimal.rs"
+name = "poc_cli"
+path = "examples/poc_cli.rs"
+
+[[example]]
+name = "poc_tauri_style"
+path = "examples/poc_tauri_style.rs"

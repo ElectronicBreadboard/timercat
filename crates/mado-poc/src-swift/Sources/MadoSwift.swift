@@ -38,13 +38,16 @@ class WindowMonitor: NSObject {
         
         NSLog("[Monitor] 🟢 START")
         
-        // App activation notification - store token for proper cleanup
+        // App activation notification
+        // IMPORTANT: NSWorkspace posts on main thread, so we use OperationQueue.main
+        // Then schedule the actual work back to our monitor's runloop
         notificationObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,
             object: nil,
-            queue: nil  // Synchronous on posting thread
+            queue: OperationQueue.main  // Receive on main thread
         ) { [weak self] notification in
             guard let self = self else { return }
+            guard let runLoop = self.monitorRunLoop else { return }
             
             guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else {
                 return
@@ -53,10 +56,14 @@ class WindowMonitor: NSObject {
             let newPID = app.processIdentifier
             NSLog("[Monitor] 🎯 App activated: %@ (PID: %d)", app.localizedName ?? "unknown", newPID)
             
-            if newPID != self.currentPID {
-                self.cleanupObservers()
-                self.observeApp(pid: newPID)
+            // Schedule observer setup on our monitor thread's runloop
+            CFRunLoopPerformBlock(runLoop, CFRunLoopMode.defaultMode.rawValue) {
+                if newPID != self.currentPID {
+                    self.cleanupObservers()
+                    self.observeApp(pid: newPID)
+                }
             }
+            CFRunLoopWakeUp(runLoop)
         }
         NSLog("[Monitor] ✅ Registered app activation observer")
         
@@ -113,11 +120,11 @@ class WindowMonitor: NSObject {
         let result = AXObserverCreate(pid, axObserverCallback, &observer)
         
         guard result == .success, let observer = observer else {
-            print("[WindowMonitor] ❌ Failed to create AXObserver: \(result.rawValue)")
+            NSLog("[Monitor] ❌ Failed to create AXObserver: %d", result.rawValue)
             return
         }
         
-        print("[WindowMonitor] ✅ Created AXObserver")
+        NSLog("[Monitor] ✅ Created AXObserver")
         
         let app = AXUIElementCreateApplication(pid)
         let context = Unmanaged.passUnretained(self).toOpaque()
@@ -129,7 +136,7 @@ class WindowMonitor: NSObject {
             kAXFocusedWindowChangedNotification as CFString,
             context
         )
-        print("[WindowMonitor] ✅ Added focus change notification")
+        NSLog("[Monitor] ✅ Added focus change notification")
         
         // Register title observer on the FOCUSED WINDOW (not the app)
         registerTitleObserver(forObserver: observer)
@@ -140,14 +147,14 @@ class WindowMonitor: NSObject {
             AXObserverGetRunLoopSource(observer),
             .defaultMode
         )
-        print("[WindowMonitor] ✅ Added observer to run loop")
+        NSLog("[Monitor] ✅ Added observer to run loop")
         
         observers.append(observer)
         
         // Send initial title
-        print("[WindowMonitor] 📤 Sending initial title...")
+        NSLog("[Monitor] 📤 Sending initial title...")
         sendWindowTitle()
-        print("[WindowMonitor] ✅ observeApp complete")
+        NSLog("[Monitor] ✅ observeApp complete")
     }
     
     fileprivate func registerTitleObserver(forObserver observer: AXObserver) {
@@ -249,4 +256,9 @@ public func madoStartMonitor(callbackPtr: UnsafeRawPointer) {
 public func madoStopMonitor() {
     monitorInstance?.stop()
     monitorInstance = nil
+}
+
+@_cdecl("mado_is_trusted")
+public func madoIsTrusted() -> Bool {
+    return AXIsProcessTrusted()
 }
