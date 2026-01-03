@@ -15,8 +15,8 @@
 	"author": "@bennobuilder",
 	"exports": {
 		".": {
-			"source": "./src/index.ts",
 			"types": "./dist/types/index.d.ts",
+			"source": "./src/index.ts",
 			"import": "./dist/esm/index.js",
 			"require": "./dist/cjs/index.js",
 			"default": "./dist/cjs/index.js"

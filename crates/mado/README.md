@@ -16,7 +16,8 @@
 - **Accessibility permissions** required if `track_window_changes: true` (default)
   - System Settings > Privacy & Security > Accessibility
   - Not required if only tracking app switches (`track_window_changes: false`)
-- **Automation permissions** (optional, for browser URL extraction): System Settings > Privacy & Security > Automation
+- **Automation permissions** (optional, for browser URL extraction)
+  - System Settings > Privacy & Security > Automation
 
 ## 📦 Installation
 
@@ -37,6 +38,12 @@ println!("Current app: {} (PID: {})", app.name, app.pid);
 
 let window = mado::get_active_window()?;
 println!("Window: '{}' in {}", window.title, window.app.name);
+
+// With browser URL extraction (slower, uses AppleScript)
+let window = mado::get_active_window_with_browser()?;
+if let Some(browser) = &window.browser {
+    println!("URL: {:?}", browser.url);
+}
 ```
 
 ### Listen to changes
@@ -77,19 +84,23 @@ impl WindowListener for MyListener {
                 if let Some(url) = &browser.url {
                     println!("URL: {}", url);
                 }
+                if let Some(is_private) = browser.is_private {
+                    println!("Private mode: {}", is_private);
+                }
             }
         }
     }
 }
 
 let config = MonitorConfig {
-    allow_browser: true, // Requires Automation permission on macOS
+    allow_browser: true, // Requires Automation permission
+    track_window_changes: true,
 };
 let monitor = WindowMonitor::with_config(MyListener, config);
 monitor.run()?;
 ```
 
-**Note:** Browser URL extraction requires Automation permission on macOS. If not granted, `window.browser` will be `None`.
+**Note:** Browser URL extraction requires Automation permission on macOS. If not granted, `window.browser` will be `None`. Supported browsers include Chrome, Safari, Brave, Edge, Arc, and Opera. Firefox is not supported (no AppleScript interface).
 
 ### Stop monitoring
 
@@ -135,7 +146,21 @@ Two events handle different scenarios and provide explicit control:
 
 #### macOS
 
-todo
+Uses Swift via [swift-rs](https://github.com/Brendonovich/swift-rs) for native API access. The Swift code handles:
+
+1. **NSWorkspace** - Detects app switches via `didActivateApplicationNotification`
+2. **Accessibility API** - Observes window focus changes (`kAXFocusedWindowChangedNotification`) and title changes (`kAXTitleChangedNotification`)
+3. **CoreGraphics** - Provides stable window IDs and accurate bounds (Accessibility API doesn't expose window IDs reliably)
+4. **AppleScript** - Extracts browser URLs and private mode detection (optional, requires Automation permission)
+
+**Threading Model:**
+
+- Monitor runs in a spawned thread with its own CFRunLoop
+- NSWorkspace notifications arrive on main thread, forwarded to monitor thread via `CFRunLoopPerformBlock`
+- AXObserver callbacks delivered directly to monitor thread's runloop
+
+**Delayed Window Handling:**
+Some apps (especially when launched from Dock) activate before their window appears. We use exponential backoff polling (200ms → 400ms → 800ms → 1.6s capped, max ~5 min) to catch delayed windows.
 
 ## 💡 Resources / References
 

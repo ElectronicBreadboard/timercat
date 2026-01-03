@@ -6,7 +6,7 @@
 //! - The focused window changes within the same app (WindowChanged event)
 //! - The focused window title changes (WindowChanged event)
 
-use mado::{WindowEvent, WindowListener, WindowMonitor};
+use mado::{MonitorConfig, WindowEvent, WindowListener, WindowMonitor};
 
 struct FocusListener;
 
@@ -38,11 +38,12 @@ fn main() -> Result<(), mado::Error> {
         ));
     }
 
-    // Start listening (blocks until stopped)
-    let config = mado::MonitorConfig {
-        allow_browser: true,
-        track_window_changes: true,
-    };
-    let monitor = WindowMonitor::with_config(FocusListener, config);
+    let monitor = WindowMonitor::with_config(
+        FocusListener,
+        MonitorConfig {
+            allow_browser: true,
+            track_window_changes: true,
+        },
+    );
     monitor.run()
 }

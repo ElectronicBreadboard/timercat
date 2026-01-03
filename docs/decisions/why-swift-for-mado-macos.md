@@ -22,11 +22,12 @@ NSWorkspace, Accessibility API, and CoreGraphics are first-class citizens in Swi
 
 #### Simpler Codebase
 
-~400 lines of Swift + Rust vs ~800+ lines of unsafe Rust for the same functionality. The FFI boundary is minimal (2-4 functions), and only that boundary requires `unsafe` code.
+~800 lines of Swift + ~200 lines of Rust FFI vs ~1,150 lines of unsafe Rust for the same functionality. The FFI boundary is minimal (5 functions), and only that boundary requires `unsafe` code in Rust.
 
 ### swift-rs Integration
 
 swift-rs enables:
+
 - **Long-running tasks**: CFRunLoop support with `RunLoop.current.run()`
 - **Callbacks**: C function pointers for event callbacks to Rust
 - **Cross-thread scheduling**: `CFRunLoopPerformBlock` to schedule work from main to monitor thread
@@ -35,10 +36,10 @@ swift-rs enables:
 
 ### Threading Model
 
-The monitor runs in a **spawned thread**, but requires the **main thread to run an event loop** (which Tauri does):
+The monitor runs in a **spawned thread** with its own CFRunLoop:
 
-- NSWorkspace notifications are posted on the main thread
-- We receive them via `OperationQueue.main`, then use `CFRunLoopPerformBlock` to schedule work on the monitor thread
+- NSWorkspace notifications arrive on main thread
+- We receive them via `OperationQueue.main`, then use `CFRunLoopPerformBlock` to forward to monitor thread
 - AXObserver callbacks are delivered directly to the monitor thread's runloop
 
 **Tauri use case**: Perfect fit. Tauri runs a native event loop on main thread, so NSWorkspace notifications work automatically. The monitor runs in a spawned thread, leaving the main thread free.

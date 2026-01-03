@@ -112,6 +112,27 @@ pub fn get_active_window() -> Result<WindowInfo, Error> {
     platform::get_active_window()
 }
 
+/// Get information about the currently active window, including browser info (macOS only)
+///
+/// This is slower than `get_active_window()` because it runs AppleScript to extract
+/// the browser URL and private mode. Only use when you need browser information.
+///
+/// On non-macOS platforms, this is equivalent to `get_active_window()`.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// let window = mado::get_active_window_with_browser()?;
+/// if let Some(browser) = &window.browser {
+///     println!("URL: {:?}", browser.url);
+///     println!("Private: {:?}", browser.is_private);
+/// }
+/// # Ok::<(), mado::Error>(())
+/// ```
+pub fn get_active_window_with_browser() -> Result<WindowInfo, Error> {
+    platform::get_active_window_with_browser()
+}
+
 /// Check if accessibility permissions are granted (macOS only)
 ///
 /// On macOS, accessibility permissions are required for window monitoring.

@@ -82,6 +82,26 @@ pub fn get_active_window() -> Result<WindowInfo, Error> {
     return Err(Error::Platform("Unsupported platform".to_string()));
 }
 
+/// Get information about the currently active window, including browser info (macOS only).
+///
+/// This is slower than `get_active_window()` because it runs AppleScript to extract
+/// the browser URL and private mode. Only use when you need browser information.
+///
+/// On non-macOS platforms, this is equivalent to `get_active_window()`.
+pub fn get_active_window_with_browser() -> Result<WindowInfo, Error> {
+    #[cfg(target_os = "macos")]
+    return macos::get_active_window_with_browser();
+
+    #[cfg(target_os = "linux")]
+    return linux::get_active_window();
+
+    #[cfg(target_os = "windows")]
+    return windows::get_active_window();
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+    return Err(Error::Platform("Unsupported platform".to_string()));
+}
+
 /// Check if accessibility permissions are granted (macOS only).
 ///
 /// On macOS, accessibility permissions are required for window monitoring.
