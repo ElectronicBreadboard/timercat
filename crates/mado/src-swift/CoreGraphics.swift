@@ -34,6 +34,8 @@ func findWindowIdAndBounds(pid: pid_t, title: String?) -> (
     }
 
     // Fallback: first matching window for PID
+    // Note: CoreGraphics returns windows in frontmost-first order (z-order), 
+    // so the first window for a PID is the focused/frontmost window
     for window in windowList {
         guard
             let ownerPID = window["kCGWindowOwnerPID"] as? Int,
