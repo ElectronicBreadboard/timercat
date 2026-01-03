@@ -8,148 +8,155 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import type { createStart } from '@tanstack/react-start';
-import type { getRouter } from './router.tsx';
-import { Route as rootRouteImport } from './routes/__root';
-import { Route as AppPomodoroIndexRouteImport } from './routes/_app.pomodoro/index';
-import { Route as AppSettingsGeneralIndexRouteImport } from './routes/_app.settings.general/index';
-import { Route as AppSettingsRouteRouteImport } from './routes/_app.settings/route';
-import { Route as AppRouteRouteImport } from './routes/_app/route';
-import { Route as IndexRouteImport } from './routes/index';
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppRouteRouteImport } from './routes/_app/route'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppSettingsRouteRouteImport } from './routes/_app.settings/route'
+import { Route as AppPomodoroIndexRouteImport } from './routes/_app.pomodoro/index'
+import { Route as AppSettingsGeneralIndexRouteImport } from './routes/_app.settings.general/index'
 
 const AppRouteRoute = AppRouteRouteImport.update({
-	id: '/_app',
-	getParentRoute: () => rootRouteImport
-} as any);
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
-	id: '/',
-	path: '/',
-	getParentRoute: () => rootRouteImport
-} as any);
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppSettingsRouteRoute = AppSettingsRouteRouteImport.update({
-	id: '/settings',
-	path: '/settings',
-	getParentRoute: () => AppRouteRoute
-} as any);
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppPomodoroIndexRoute = AppPomodoroIndexRouteImport.update({
-	id: '/pomodoro/',
-	path: '/pomodoro/',
-	getParentRoute: () => AppRouteRoute
-} as any);
+  id: '/pomodoro/',
+  path: '/pomodoro/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppSettingsGeneralIndexRoute = AppSettingsGeneralIndexRouteImport.update({
-	id: '/general/',
-	path: '/general/',
-	getParentRoute: () => AppSettingsRouteRoute
-} as any);
+  id: '/general/',
+  path: '/general/',
+  getParentRoute: () => AppSettingsRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
-	'/': typeof IndexRoute;
-	'/settings': typeof AppSettingsRouteRouteWithChildren;
-	'/pomodoro': typeof AppPomodoroIndexRoute;
-	'/settings/general': typeof AppSettingsGeneralIndexRoute;
+  '/': typeof IndexRoute
+  '/settings': typeof AppSettingsRouteRouteWithChildren
+  '/pomodoro': typeof AppPomodoroIndexRoute
+  '/settings/general': typeof AppSettingsGeneralIndexRoute
 }
 export interface FileRoutesByTo {
-	'/': typeof IndexRoute;
-	'/settings': typeof AppSettingsRouteRouteWithChildren;
-	'/pomodoro': typeof AppPomodoroIndexRoute;
-	'/settings/general': typeof AppSettingsGeneralIndexRoute;
+  '/': typeof IndexRoute
+  '/settings': typeof AppSettingsRouteRouteWithChildren
+  '/pomodoro': typeof AppPomodoroIndexRoute
+  '/settings/general': typeof AppSettingsGeneralIndexRoute
 }
 export interface FileRoutesById {
-	'__root__': typeof rootRouteImport;
-	'/': typeof IndexRoute;
-	'/_app': typeof AppRouteRouteWithChildren;
-	'/_app/settings': typeof AppSettingsRouteRouteWithChildren;
-	'/_app/pomodoro/': typeof AppPomodoroIndexRoute;
-	'/_app/settings/general/': typeof AppSettingsGeneralIndexRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/_app': typeof AppRouteRouteWithChildren
+  '/_app/settings': typeof AppSettingsRouteRouteWithChildren
+  '/_app/pomodoro/': typeof AppPomodoroIndexRoute
+  '/_app/settings/general/': typeof AppSettingsGeneralIndexRoute
 }
 export interface FileRouteTypes {
-	fileRoutesByFullPath: FileRoutesByFullPath;
-	fullPaths: '/' | '/settings' | '/pomodoro' | '/settings/general';
-	fileRoutesByTo: FileRoutesByTo;
-	to: '/' | '/settings' | '/pomodoro' | '/settings/general';
-	id: '__root__' | '/' | '/_app' | '/_app/settings' | '/_app/pomodoro/' | '/_app/settings/general/';
-	fileRoutesById: FileRoutesById;
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths: '/' | '/settings' | '/pomodoro' | '/settings/general'
+  fileRoutesByTo: FileRoutesByTo
+  to: '/' | '/settings' | '/pomodoro' | '/settings/general'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/_app/settings'
+    | '/_app/pomodoro/'
+    | '/_app/settings/general/'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-	IndexRoute: typeof IndexRoute;
-	AppRouteRoute: typeof AppRouteRouteWithChildren;
+  IndexRoute: typeof IndexRoute
+  AppRouteRoute: typeof AppRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
-	interface FileRoutesByPath {
-		'/_app': {
-			id: '/_app';
-			path: '';
-			fullPath: '';
-			preLoaderRoute: typeof AppRouteRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/': {
-			id: '/';
-			path: '/';
-			fullPath: '/';
-			preLoaderRoute: typeof IndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/_app/settings': {
-			id: '/_app/settings';
-			path: '/settings';
-			fullPath: '/settings';
-			preLoaderRoute: typeof AppSettingsRouteRouteImport;
-			parentRoute: typeof AppRouteRoute;
-		};
-		'/_app/pomodoro/': {
-			id: '/_app/pomodoro/';
-			path: '/pomodoro';
-			fullPath: '/pomodoro';
-			preLoaderRoute: typeof AppPomodoroIndexRouteImport;
-			parentRoute: typeof AppRouteRoute;
-		};
-		'/_app/settings/general/': {
-			id: '/_app/settings/general/';
-			path: '/general';
-			fullPath: '/settings/general';
-			preLoaderRoute: typeof AppSettingsGeneralIndexRouteImport;
-			parentRoute: typeof AppSettingsRouteRoute;
-		};
-	}
+  interface FileRoutesByPath {
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AppRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/pomodoro/': {
+      id: '/_app/pomodoro/'
+      path: '/pomodoro'
+      fullPath: '/pomodoro'
+      preLoaderRoute: typeof AppPomodoroIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/settings/general/': {
+      id: '/_app/settings/general/'
+      path: '/general'
+      fullPath: '/settings/general'
+      preLoaderRoute: typeof AppSettingsGeneralIndexRouteImport
+      parentRoute: typeof AppSettingsRouteRoute
+    }
+  }
 }
 
 interface AppSettingsRouteRouteChildren {
-	AppSettingsGeneralIndexRoute: typeof AppSettingsGeneralIndexRoute;
+  AppSettingsGeneralIndexRoute: typeof AppSettingsGeneralIndexRoute
 }
 
 const AppSettingsRouteRouteChildren: AppSettingsRouteRouteChildren = {
-	AppSettingsGeneralIndexRoute: AppSettingsGeneralIndexRoute
-};
+  AppSettingsGeneralIndexRoute: AppSettingsGeneralIndexRoute,
+}
 
-const AppSettingsRouteRouteWithChildren = AppSettingsRouteRoute._addFileChildren(
-	AppSettingsRouteRouteChildren
-);
+const AppSettingsRouteRouteWithChildren =
+  AppSettingsRouteRoute._addFileChildren(AppSettingsRouteRouteChildren)
 
 interface AppRouteRouteChildren {
-	AppSettingsRouteRoute: typeof AppSettingsRouteRouteWithChildren;
-	AppPomodoroIndexRoute: typeof AppPomodoroIndexRoute;
+  AppSettingsRouteRoute: typeof AppSettingsRouteRouteWithChildren
+  AppPomodoroIndexRoute: typeof AppPomodoroIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
-	AppSettingsRouteRoute: AppSettingsRouteRouteWithChildren,
-	AppPomodoroIndexRoute: AppPomodoroIndexRoute
-};
+  AppSettingsRouteRoute: AppSettingsRouteRouteWithChildren,
+  AppPomodoroIndexRoute: AppPomodoroIndexRoute,
+}
 
-const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(AppRouteRouteChildren);
+const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
+  AppRouteRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
-	IndexRoute: IndexRoute,
-	AppRouteRoute: AppRouteRouteWithChildren
-};
+  IndexRoute: IndexRoute,
+  AppRouteRoute: AppRouteRouteWithChildren,
+}
 export const routeTree = rootRouteImport
-	._addFileChildren(rootRouteChildren)
-	._addFileTypes<FileRouteTypes>();
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()
 
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
 declare module '@tanstack/react-start' {
-	interface Register {
-		ssr: true;
-		router: Awaited<ReturnType<typeof getRouter>>;
-	}
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
 }

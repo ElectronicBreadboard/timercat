@@ -2,7 +2,7 @@ import ApplicationServices
 import Foundation
 
 /// Find window ID and bounds using CoreGraphics.
-/// Strategy: exact title match first (for multi-window apps), then first window for PID.
+/// Strategy: exact title match first (for multi-window apps), then first window for PID (title matching rarely works as kCGWindowName is typically empty).
 func findWindowIdAndBounds(pid: pid_t, title: String?) -> (
     windowId: UInt32?, bounds: [String: Double]?
 ) {
@@ -18,7 +18,7 @@ func findWindowIdAndBounds(pid: pid_t, title: String?) -> (
 
     let titleToMatch = title ?? ""
 
-    // Try exact title match first (accurate for multi-window apps)
+    // Try title match first (rarely succeeds as kCGWindowName is typically empty)
     if !titleToMatch.isEmpty {
         for window in windowList {
             guard

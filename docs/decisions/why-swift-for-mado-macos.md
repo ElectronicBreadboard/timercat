@@ -18,7 +18,14 @@ The pure Rust implementation required manual memory management for Accessibility
 
 #### Native API Access
 
-NSWorkspace, Accessibility API, and CoreGraphics are first-class citizens in Swift. The pure Rust approach required three different FFI crates (`core-foundation`, `accessibility-sys`, `objc2`) with ~40% of the code in `unsafe` blocks. Swift eliminates this complexity.
+NSWorkspace, Accessibility API, CoreGraphics, and AppleScript are first-class citizens in Swift. The pure Rust approach required three different FFI crates (`core-foundation`, `accessibility-sys`, `objc2`) with ~40% of the code in `unsafe` blocks. Swift eliminates this complexity.
+
+**APIs Used:**
+
+- **NSWorkspace**: Detects app activation events
+- **Accessibility API**: Observes window focus and title changes
+- **CoreGraphics**: Provides stable window IDs and accurate bounds (Accessibility API doesn't expose window IDs reliably)
+- **AppleScript**: Extracts browser URLs and private mode detection (optional, requires Automation permission)
 
 #### Simpler Codebase
 
