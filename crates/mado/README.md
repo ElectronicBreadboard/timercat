@@ -2,7 +2,138 @@
 
 > A simple, clean window monitoring library for Rust
 
+## 🌐 Platform Support
+
+- ✅ **macOS**: Full support
+- 🚧 **Linux**: Planned
+- 🚧 **Windows**: Planned
+
+### Requirements
+
+**macOS:**
+
+- macOS 10.9+
+- **Accessibility permissions** required if `track_window_changes: true` (default)
+  - System Settings > Privacy & Security > Accessibility
+  - Not required if only tracking app switches (`track_window_changes: false`)
+- **Automation permissions** (optional, for browser URL extraction): System Settings > Privacy & Security > Automation
+
+## 📦 Installation
+
+```toml
+[dependencies]
+mado = "0.0.1"
+```
+
 ## 📖 Usage
+
+### Query current state
+
+```rust
+use mado;
+
+let app = mado::get_active_app()?;
+println!("Current app: {} (PID: {})", app.name, app.pid);
+
+let window = mado::get_active_window()?;
+println!("Window: '{}' in {}", window.title, window.app.name);
+```
+
+### Listen to changes
+
+```rust
+use mado::{WindowListener, WindowMonitor, WindowEvent};
+
+struct FocusListener;
+
+impl WindowListener for FocusListener {
+    fn on_focus_change(&self, event: WindowEvent) {
+        match event {
+            WindowEvent::AppActivated { app } => {
+                println!("App activated: {}", app.name);
+            }
+            WindowEvent::WindowChanged { window } => {
+                println!("Window: '{}'", window.title);
+            }
+        }
+    }
+}
+
+let monitor = WindowMonitor::new(FocusListener);
+monitor.run()?;
+```
+
+### Browser URL extraction (macOS only)
+
+```rust
+use mado::{WindowListener, WindowMonitor, MonitorConfig, WindowEvent};
+
+struct MyListener;
+
+impl WindowListener for MyListener {
+    fn on_focus_change(&self, event: WindowEvent) {
+        if let WindowEvent::WindowChanged { window } = event {
+            if let Some(browser) = &window.browser {
+                if let Some(url) = &browser.url {
+                    println!("URL: {}", url);
+                }
+            }
+        }
+    }
+}
+
+let config = MonitorConfig {
+    allow_browser: true, // Requires Automation permission on macOS
+};
+let monitor = WindowMonitor::with_config(MyListener, config);
+monitor.run()?;
+```
+
+**Note:** Browser URL extraction requires Automation permission on macOS. If not granted, `window.browser` will be `None`.
+
+### Stop monitoring
+
+```rust
+use mado::WindowMonitor;
+use std::thread;
+use std::time::Duration;
+
+let monitor = WindowMonitor::new(MyListener);
+
+thread::spawn(move || {
+    thread::sleep(Duration::from_secs(5));
+    WindowMonitor::stop().unwrap();
+});
+
+monitor.run()?;
+```
+
+### Check permissions (macOS)
+
+```rust
+if !mado::is_accessibility_trusted() {
+    eprintln!("Please grant accessibility permissions in System Settings");
+}
+```
+
+## 📐 Architecture
+
+### Why Event-Driven?
+
+Event-driven monitoring minimizes latency and potentially reduces CPU usage and power consumption by avoiding continuous polling.
+
+### Why Two Event Types?
+
+Two events handle different scenarios and provide explicit control:
+
+- **`AppActivated`**: Fires immediately when app is activated (even if no window yet, e.g. tray apps). Provides instant app switch detection.
+- **`WindowChanged`**: Fires when window data is available. Provides complete context (title, bounds, browser info).
+
+**Why not combine into one event?** A single event with `Option<WindowInfo>` would be less explicit and wouldn't distinguish "app changed" vs "window changed". More importantly, it would miss app activations when apps don't have windows (e.g. tray apps, apps activated via Spotlight before opening a window). Consumers might need to know the app was activated even if no window exists yet.
+
+### Platform Implementation
+
+#### macOS
 
 todo
 
