@@ -1,11 +1,10 @@
 import ApplicationServices
 import Foundation
 
-/// Find window ID and bounds using CoreGraphics.
-/// Strategy: exact title match first (for multi-window apps), then first window for PID (title matching rarely works as kCGWindowName is typically empty).
-func findWindowIdAndBounds(pid: pid_t, title: String?) -> (
-    windowId: UInt32?, bounds: [String: Double]?
-) {
+/// Find window ID using CoreGraphics.
+/// Strategy: Match by bounds first (if available), then fall back to z-order (first window).
+/// Note: We can't identify windows by title because CoreGraphics doesn't provide window titles.
+func findWindowId(pid: pid_t, bounds: [String: Double]?) -> UInt32? {
     let option: CGWindowListOption = [
         .optionOnScreenOnly, .excludeDesktopElements,
     ]
@@ -13,28 +12,42 @@ func findWindowIdAndBounds(pid: pid_t, title: String?) -> (
         let windowList = CGWindowListCopyWindowInfo(option, kCGNullWindowID)
             as? [[String: Any]]
     else {
-        return (nil, nil)
+        return nil
     }
 
-    let titleToMatch = title ?? ""
+    // Strategy 1: Match by bounds
+    if let bounds = bounds,
+        let x = bounds["x"],
+        let y = bounds["y"],
+        let width = bounds["width"],
+        let height = bounds["height"]
+    {
+        let tolerance: Double = 2.0  // Allow 2px difference for rounding
 
-    // Try title match first (rarely succeeds as kCGWindowName is typically empty)
-    if !titleToMatch.isEmpty {
         for window in windowList {
             guard
                 let ownerPID = window["kCGWindowOwnerPID"] as? Int,
                 ownerPID == pid,
-                let windowName = window["kCGWindowName"] as? String,
-                windowName == titleToMatch,
-                isValidWindow(window)
+                isValidWindow(window),
+                let boundsDict = window["kCGWindowBounds"] as? [String: Any],
+                let cgX = boundsDict["X"] as? Double,
+                let cgY = boundsDict["Y"] as? Double,
+                let cgWidth = boundsDict["Width"] as? Double,
+                let cgHeight = boundsDict["Height"] as? Double
             else { continue }
 
-            return extractWindowIdAndBounds(window)
+            // Match if bounds are within tolerance
+            if abs(cgX - x) <= tolerance && abs(cgY - y) <= tolerance
+                && abs(cgWidth - width) <= tolerance
+                && abs(cgHeight - height) <= tolerance
+            {
+                return extractWindowId(window)
+            }
         }
     }
 
-    // Fallback: first matching window for PID
-    // Note: CoreGraphics returns windows in frontmost-first order (z-order), 
+    // Strategy 2: Fall back to z-order (first window is focused)
+    // CoreGraphics returns windows in frontmost-first order (z-order),
     // so the first window for a PID is the focused/frontmost window
     for window in windowList {
         guard
@@ -43,10 +56,10 @@ func findWindowIdAndBounds(pid: pid_t, title: String?) -> (
             isValidWindow(window)
         else { continue }
 
-        return extractWindowIdAndBounds(window)
+        return extractWindowId(window)
     }
 
-    return (nil, nil)
+    return nil
 }
 
 /// Check if window is visible and not transparent.
@@ -63,23 +76,10 @@ private func isValidWindow(_ window: [String: Any]) -> Bool {
     return true
 }
 
-/// Extract window ID and bounds from CoreGraphics window dictionary.
-private func extractWindowIdAndBounds(_ window: [String: Any]) -> (
-    windowId: UInt32?, bounds: [String: Double]?
-) {
+/// Extract window ID from CoreGraphics window dictionary.
+private func extractWindowId(_ window: [String: Any]) -> UInt32? {
     guard let windowId = window["kCGWindowNumber"] as? Int else {
-        return (nil, nil)
+        return nil
     }
-
-    var bounds: [String: Double]? = nil
-    if let boundsDict = window["kCGWindowBounds"] as? [String: Any],
-        let x = boundsDict["X"] as? Double,
-        let y = boundsDict["Y"] as? Double,
-        let width = boundsDict["Width"] as? Double,
-        let height = boundsDict["Height"] as? Double
-    {
-        bounds = ["x": x, "y": y, "width": width, "height": height]
-    }
-
-    return (UInt32(windowId), bounds)
+    return UInt32(windowId)
 }

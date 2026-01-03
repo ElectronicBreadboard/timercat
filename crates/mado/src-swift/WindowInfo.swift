@@ -21,7 +21,7 @@ struct WindowInfo {
     }
 
     /// Get window info for a specific PID.
-    /// Uses Accessibility API for title, CoreGraphics for window ID and bounds.
+    /// Uses Accessibility API for title and bounds, CoreGraphics for window ID.
     static func getForPID(_ pid: pid_t, allowBrowser: Bool = false)
         -> WindowInfo
     {
@@ -29,15 +29,8 @@ struct WindowInfo {
         let appInfo = AppInfo.fromPID(pid)
         let bundleId = appInfo.bundleId
 
-        // Get focused window title via Accessibility API
-        var focusedWindow: CFTypeRef?
-        let windowResult = AXUIElementCopyAttributeValue(
-            app,
-            kAXFocusedWindowAttribute as CFString,
-            &focusedWindow
-        )
-
-        guard windowResult == .success, let window = focusedWindow else {
+        // Get focused window via Accessibility API
+        guard let windowElement = getFocusedWindow(from: app) else {
             return WindowInfo(
                 title: nil,
                 windowId: nil,
@@ -47,18 +40,11 @@ struct WindowInfo {
             )
         }
 
-        // AX API guarantees window is AXUIElement when result == .success
-        var titleValue: CFTypeRef?
-        AXUIElementCopyAttributeValue(
-            window as! AXUIElement,
-            kAXTitleAttribute as CFString,
-            &titleValue
-        )
-        let title = titleValue as? String
+        let title = getTitle(from: windowElement)
+        let bounds = getBounds(from: windowElement)
 
-        // CoreGraphics provides stable window IDs and accurate bounds.
-        // Accessibility API doesn't expose window IDs reliably.
-        let (windowId, bounds) = findWindowIdAndBounds(pid: pid, title: title)
+        // CoreGraphics provides stable window IDs (Accessibility API doesn't expose window IDs reliably).
+        let windowId = findWindowId(pid: pid, bounds: bounds)
 
         // Get browser info if enabled and app is a browser
         let browser: BrowserInfo? =
@@ -79,32 +65,17 @@ struct WindowInfo {
 
     /// Get frontmost window info.
     static func getFrontmost(allowBrowser: Bool = false) -> WindowInfo? {
-        let systemWide = AXUIElementCreateSystemWide()
-        var focusedApp: CFTypeRef?
-
-        let result = AXUIElementCopyAttributeValue(
-            systemWide,
-            kAXFocusedApplicationAttribute as CFString,
-            &focusedApp
-        )
-
-        // AX API guarantees focusedApp is AXUIElement when result == .success
-        let pid: pid_t
-        if result == .success, let appElement = focusedApp {
-            var appPid: pid_t = 0
-            let pidResult = AXUIElementGetPid(
-                appElement as! AXUIElement,
-                &appPid
-            )
-            guard pidResult == .success, appPid != 0 else { return nil }
-            pid = appPid
-        } else {
-            guard let app = NSWorkspace.shared.frontmostApplication else {
-                return nil
-            }
-            pid = app.processIdentifier
+        // Try Accessibility API first
+        if let appElement = getFocusedApplication(),
+            let pid = getPID(from: appElement)
+        {
+            return getForPID(pid, allowBrowser: allowBrowser)
         }
 
-        return getForPID(pid, allowBrowser: allowBrowser)
+        // Fallback to NSWorkspace
+        guard let app = NSWorkspace.shared.frontmostApplication else {
+            return nil
+        }
+        return getForPID(app.processIdentifier, allowBrowser: allowBrowser)
     }
 }

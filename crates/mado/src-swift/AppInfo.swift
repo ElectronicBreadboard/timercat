@@ -44,22 +44,11 @@ struct AppInfo {
 
     /// Get frontmost app. Tries Accessibility API first (more reliable), falls back to NSWorkspace.
     static func getFrontmost() -> AppInfo? {
-        let systemWide = AXUIElementCreateSystemWide()
-        var focusedApp: CFTypeRef?
-
-        let result = AXUIElementCopyAttributeValue(
-            systemWide,
-            kAXFocusedApplicationAttribute as CFString,
-            &focusedApp
-        )
-
-        // AX API guarantees focusedApp is AXUIElement when result == .success
-        if result == .success, let appElement = focusedApp {
-            var pid: pid_t = 0
-            let pidResult = AXUIElementGetPid(appElement as! AXUIElement, &pid)
-            if pidResult == .success, pid != 0 {
-                return fromPID(pid)
-            }
+        // Try Accessibility API first
+        if let appElement = getFocusedApplication(),
+            let pid = getPID(from: appElement)
+        {
+            return fromPID(pid)
         }
 
         // Fallback to NSWorkspace

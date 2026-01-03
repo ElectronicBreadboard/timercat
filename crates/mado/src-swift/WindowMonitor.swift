@@ -179,20 +179,12 @@ final class WindowMonitor: NSObject {
     /// Called when focus changes because title observer is window-specific.
     private func registerTitleObserver(observer: AXObserver, pid: pid_t) {
         let app = AXUIElementCreateApplication(pid)
-        var focusedWindow: CFTypeRef?
-
-        let result = AXUIElementCopyAttributeValue(
-            app,
-            kAXFocusedWindowAttribute as CFString,
-            &focusedWindow
-        )
-
-        guard result == .success, let window = focusedWindow else { return }
+        guard let windowElement = getFocusedWindow(from: app) else { return }
 
         let context = Unmanaged.passUnretained(self).toOpaque()
         AXObserverAddNotification(
             observer,
-            window as! AXUIElement,
+            windowElement,
             kAXTitleChangedNotification as CFString,
             context
         )
