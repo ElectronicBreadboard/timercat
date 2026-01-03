@@ -71,7 +71,7 @@ final class WindowMonitor: NSObject {
         guard isRunning else { return }
         isRunning = false
 
-        stopPolling()
+        stopWindowPolling()
         cleanupAccessibilityObservers()
 
         if let observer = notificationObserver {
@@ -122,7 +122,7 @@ final class WindowMonitor: NSObject {
 
         // Cleanup previous app state
         cleanupAccessibilityObservers()
-        stopPolling()
+        stopWindowPolling()
         resetDeduplication()
 
         currentPID = pid
@@ -137,7 +137,7 @@ final class WindowMonitor: NSObject {
             // If no window yet, start polling.
             // Common when app is launched from Dock - app activates but window takes time to appear.
             if !didSend {
-                startPolling()
+                startWindowPolling()
             }
         }
     }
@@ -219,25 +219,31 @@ final class WindowMonitor: NSObject {
 
     /// Called by AX callback on any window change
     fileprivate func handleWindowChange() {
-        stopPolling()
+        stopWindowPolling()
         _ = sendWindowChangedEvent()
     }
 
-    // MARK: - Polling
+    // MARK: - Window Polling
 
     /// Start polling for window with exponential backoff.
     /// Needed because some apps (especially launched from Dock) show their window
     /// seconds after activation. Without polling, we'd miss the WindowChanged event.
-    private func startPolling() {
+    private func startWindowPolling() {
         pollingRetryCount = 0
-        scheduleNextPoll()
+        scheduleNextWindowPoll()
     }
 
-    private func scheduleNextPoll() {
+    private func scheduleNextWindowPoll() {
         guard pollingRetryCount < maxRetries, let runLoop = monitorRunLoop
         else {
-            stopPolling()
+            stopWindowPolling()
             return
+        }
+
+        // Invalidate previous timer if it exists (prevents multiple timers running)
+        if let oldTimer = pollingTimer {
+            CFRunLoopTimerInvalidate(oldTimer)
+            pollingTimer = nil
         }
 
         pollingRetryCount += 1
@@ -262,7 +268,7 @@ final class WindowMonitor: NSObject {
                 guard let info = info else { return }
                 let monitor = Unmanaged<WindowMonitor>.fromOpaque(info)
                     .takeUnretainedValue()
-                monitor.pollCheck()
+                monitor.checkWindowPoll()
             },
             &context
         )
@@ -273,7 +279,7 @@ final class WindowMonitor: NSObject {
         }
     }
 
-    private func pollCheck() {
+    private func checkWindowPoll() {
         let windowInfo = WindowInfo.getForPID(
             currentPID,
             allowBrowser: allowBrowser
@@ -281,15 +287,15 @@ final class WindowMonitor: NSObject {
 
         if windowInfo.windowId != nil {
             // Window appeared, send event and stop polling
-            stopPolling()
+            stopWindowPolling()
             _ = sendWindowChangedEvent()
         } else {
             // Window not ready yet, continue polling
-            scheduleNextPoll()
+            scheduleNextWindowPoll()
         }
     }
 
-    private func stopPolling() {
+    private func stopWindowPolling() {
         if let timer = pollingTimer {
             CFRunLoopTimerInvalidate(timer)
             pollingTimer = nil

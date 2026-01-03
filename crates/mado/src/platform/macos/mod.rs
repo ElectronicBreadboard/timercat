@@ -27,6 +27,13 @@ static GLOBAL_LISTENER: Mutex<Option<Arc<dyn WindowListener>>> = Mutex::new(None
 /// Start monitoring window and application focus changes.
 /// Blocks current thread until `stop()` is called.
 pub fn run(listener: Arc<dyn WindowListener>, config: MonitorConfig) -> Result<(), Error> {
+    // Check permissions if tracking window changes
+    if config.track_window_changes && !is_accessibility_trusted() {
+        return Err(Error::MissingPermission(
+            "Accessibility permissions required for window change tracking".to_string(),
+        ));
+    }
+
     // Atomic check-and-set: only one monitor can run at a time
     if RUNNING
         .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)

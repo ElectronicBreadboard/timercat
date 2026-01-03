@@ -1,8 +1,3 @@
-//! FFI declarations for Swift interop.
-//!
-//! This file defines the interface between Rust and Swift.
-//! Each function here corresponds to a `@_cdecl` function in `FFI.swift`.
-
 use std::ffi::c_void;
 use swift_rs::{swift, SRString};
 
