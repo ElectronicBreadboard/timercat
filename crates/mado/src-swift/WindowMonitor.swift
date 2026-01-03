@@ -272,7 +272,7 @@ final class WindowMonitor: NSObject {
     }
 
     private func checkWindowPoll() {
-        let windowInfo = WindowInfo.getForPID(
+        let windowInfo = WindowInfo.fromPID(
             currentPID,
             allowBrowser: allowBrowser
         )
@@ -298,7 +298,7 @@ final class WindowMonitor: NSObject {
     // MARK: - Events
 
     private func sendAppActivatedEvent(app: NSRunningApplication) {
-        let appInfo = AppInfo.from(app)
+        let appInfo = AppInfo.fromNS(app)
         let eventData: [String: Any] = ["app": appInfo.toDictionary()]
         sendEvent(type: "AppActivated", data: eventData)
     }
@@ -308,7 +308,7 @@ final class WindowMonitor: NSObject {
     private func sendWindowChangedEvent() -> Bool {
         guard currentPID != 0 else { return false }
 
-        let windowInfo = WindowInfo.getForPID(
+        let windowInfo = WindowInfo.fromPID(
             currentPID,
             allowBrowser: allowBrowser
         )

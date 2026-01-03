@@ -19,8 +19,16 @@ struct AppInfo {
         ]
     }
 
+    /// Create from AXUIElement application.
+    static func fromAX(_ appElement: AXUIElement) -> AppInfo? {
+        guard let pid = getPID(from: appElement) else {
+            return nil
+        }
+        return fromPID(pid)
+    }
+
     /// Create from NSRunningApplication.
-    static func from(_ app: NSRunningApplication) -> AppInfo {
+    static func fromNS(_ app: NSRunningApplication) -> AppInfo {
         return AppInfo(
             pid: app.processIdentifier,
             name: app.localizedName,
@@ -31,9 +39,11 @@ struct AppInfo {
 
     /// Create from PID.
     static func fromPID(_ pid: pid_t) -> AppInfo {
+        // Try to get full info from NSRunningApplication
         if let app = NSRunningApplication(processIdentifier: pid) {
-            return from(app)
+            return fromNS(app)
         }
+        // Fallback to minimal info with just PID
         return AppInfo(
             pid: pid,
             name: nil,
@@ -45,16 +55,14 @@ struct AppInfo {
     /// Get frontmost app. Tries Accessibility API first (more reliable), falls back to NSWorkspace.
     static func getFrontmost() -> AppInfo? {
         // Try Accessibility API first
-        if let appElement = getFocusedApplication(),
-            let pid = getPID(from: appElement)
-        {
-            return fromPID(pid)
+        if let appElement = getFocusedApplication() {
+            return fromAX(appElement)
         }
 
         // Fallback to NSWorkspace
         guard let app = NSWorkspace.shared.frontmostApplication else {
             return nil
         }
-        return from(app)
+        return fromNS(app)
     }
 }
