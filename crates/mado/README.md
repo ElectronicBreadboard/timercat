@@ -2,18 +2,10 @@
 
 > A simple, clean window monitoring library for Rust
 
-## Features
-
-- Query current state - Get active app/window information on demand
-- Monitor changes - Listen to app switches and window changes in real-time
-- Tab switch detection - Detects browser tab switches (macOS & Linux)
-- Browser URL extraction - Get current browser tab URL (macOS only, optional)
-- Cross-platform - macOS and Linux support
-
 ## 🌐 Platform Support
 
-- ✅ **macOS**: Full support (NSWorkspace + Accessibility API)
-- ✅ **Linux**: Full support (X11)
+- ✅ **macOS**: Full support
+- 🚧 **Linux**: Planned
 - 🚧 **Windows**: Planned
 
 ### Requirements
@@ -24,18 +16,14 @@
 - **Accessibility permissions** required if `track_window_changes: true` (default)
   - System Settings > Privacy & Security > Accessibility
   - Not required if only tracking app switches (`track_window_changes: false`)
-- **Automation permissions** (optional, for browser URL extraction): System Settings > Privacy & Security > Automation
-
-**Linux:**
-
-- X11 display server
-- X11 development libraries (`libx11-dev` on Debian/Ubuntu, `libX11-devel` on Fedora)
+- **Automation permissions** (optional, for browser URL extraction)
+  - System Settings > Privacy & Security > Automation
 
 ## 📦 Installation
 
 ```toml
 [dependencies]
-mado = "0.1.0"
+mado = "0.0.1"
 ```
 
 ## 📖 Usage
@@ -48,8 +36,17 @@ use mado;
 let app = mado::get_active_app()?;
 println!("Current app: {} (PID: {})", app.name, app.pid);
 
+// Basic window info (fast, default)
 let window = mado::get_active_window()?;
 println!("Window: '{}' in {}", window.title, window.app.name);
+
+// With browser URL extraction (slower, macOS only)
+let window = mado::get_active_window_with_config(mado::QueryConfig {
+    allow_browser: true,
+})?;
+if let Some(browser) = &window.browser {
+    println!("URL: {:?}", browser.url);
+}
 ```
 
 ### Listen to changes
@@ -87,20 +84,26 @@ impl WindowListener for MyListener {
     fn on_focus_change(&self, event: WindowEvent) {
         if let WindowEvent::WindowChanged { window } = event {
             if let Some(browser) = &window.browser {
-                println!("URL: {}", url);
+                if let Some(url) = &browser.url {
+                    println!("URL: {}", url);
+                }
+                if let Some(is_private) = browser.is_private {
+                    println!("Private mode: {}", is_private);
+                }
             }
         }
     }
 }
 
 let config = MonitorConfig {
-    allow_browser: true, // Requires Automation permission on macOS
+    allow_browser: true, // Requires Automation permission
+    track_window_changes: true,
 };
 let monitor = WindowMonitor::with_config(MyListener, config);
 monitor.run()?;
 ```
 
-**Note:** Browser URL extraction requires Automation permission on macOS. If not granted, `window.browser` will be `None`.
+**Note:** Browser URL extraction requires Automation permission on macOS. If not granted, `window.browser` will be `None`. Supported browsers include Chrome, Safari, Brave, Edge, Arc, and Opera. Firefox is not supported (no AppleScript interface).
 
 ### Stop monitoring
 
@@ -131,7 +134,7 @@ if !mado::is_accessibility_trusted() {
 
 ### Why Event-Driven?
 
-Event-driven monitoring provides lower latency, lower CPU usage, and is more battery-friendly. Polling would be inefficient and add latency.
+Event-driven monitoring minimizes latency and potentially reduces CPU usage and power consumption by avoiding continuous polling.
 
 ### Why Two Event Types?
 
@@ -144,44 +147,25 @@ Two events handle different scenarios and provide explicit control:
 
 ### Platform Implementation
 
-#### macOS: Two-Layer Monitoring
+#### macOS
 
-**1. App Switching** (`NSWorkspace`)
+Uses Swift via [swift-rs](https://github.com/Brendonovich/swift-rs) for native API access. The Swift code handles:
 
-- Monitors `NSWorkspaceDidActivateApplicationNotification`
-- Sends `AppActivated` immediately, then `WindowChanged` when window ready
-- Creates Accessibility observer for new app
+1. **NSWorkspace** - Detects app switches via `didActivateApplicationNotification`
+2. **Accessibility API** - Observes window focus changes (`kAXFocusedWindowChangedNotification`) and title changes (`kAXTitleChangedNotification`)
+3. **CoreGraphics** - Provides stable window IDs and accurate bounds (Accessibility API doesn't expose window IDs reliably)
+4. **AppleScript** - Extracts browser URLs and private mode detection (optional, requires Automation permission)
 
-**2. Window Changes** (Accessibility API)
+**Threading Model:**
 
-- Monitors `kAXFocusedWindowChangedNotification` and `kAXTitleChangedNotification`
-- Detects tab switches via title changes
-- Sends `WindowChanged` for all window/title changes
+- Monitor runs in a spawned thread with its own CFRunLoop
+- NSWorkspace notifications arrive on main thread, forwarded to monitor thread via `CFRunLoopPerformBlock`
+- AXObserver callbacks delivered directly to monitor thread's runloop
 
-**Data sources**: NSWorkspace (app metadata), Accessibility API (window title), CoreGraphics (window ID/bounds)
-
-#### Linux: X11 Property Monitoring
-
-**Implementation**: Single event loop monitoring `_NET_ACTIVE_WINDOW` and `_NET_WM_NAME`. Uses `select()` with self-pipe for interruptible waiting.
-
-**Data sources**: X11 properties (title, WM_CLASS, PID), direct window ID
-
-### Why Static `stop()`?
-
-`run()` consumes `self` and blocks, so instance-based `stop()` can't be called. Static `stop()` only stores what's needed (interrupt pipe on Linux, framework singleton on macOS), which is simpler than storing a global `Arc<WindowMonitor>`.
-
-### Event Flow
-
-**macOS App Switch**: NSWorkspace notification → `AppActivated` → Accessibility observer → `WindowChanged`
-
-**macOS Window/Tab Switch**: Accessibility notification → `WindowChanged`
-
-**Linux Focus Change**: X11 PropertyNotify → `WindowChanged`
+**Delayed Window Handling:**
+Some apps (especially when launched from Dock) activate before their window appears. We use exponential backoff polling (200ms → 400ms → 800ms → 1.6s capped, max ~5 min) to catch delayed windows.
 
 ## 💡 Resources / References
 
-- [active-win-pos-rs](https://github.com/dimusic/active-win-pos-rs)
-- [winshift-rs](https://github.com/efJerryYang/winshift-rs)
-- [ferrous-focus](https://github.com/eurora-labs/ferrous-focus)
-- [aw-watcher-window](https://github.com/ActivityWatch/aw-watcher-window)
-- [nsworkspace-rs](https://github.com/mishamyrt/nsworkspace-rs)
+- [swift-rs](https://github.com/Brendonovich/swift-rs)
+- [Creating a standalone Swift package with Xcode](https://developer.apple.com/documentation/xcode/creating-a-standalone-swift-package-with-xcode)

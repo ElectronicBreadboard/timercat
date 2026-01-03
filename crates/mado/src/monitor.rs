@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use crate::config::MonitorConfig;
 use crate::error::Error;
@@ -29,7 +29,7 @@ use crate::listener::WindowListener;
 /// monitor.run()?;
 /// ```
 pub struct WindowMonitor {
-    listener: Arc<RwLock<dyn WindowListener>>,
+    listener: Arc<dyn WindowListener>,
     config: MonitorConfig,
 }
 
@@ -37,7 +37,7 @@ impl WindowMonitor {
     /// Create a new window monitor with default configuration.
     pub fn new<L: WindowListener + 'static>(listener: L) -> Self {
         Self {
-            listener: Arc::new(RwLock::new(listener)),
+            listener: Arc::new(listener),
             config: MonitorConfig::default(),
         }
     }
@@ -45,7 +45,7 @@ impl WindowMonitor {
     /// Create a new window monitor with custom configuration.
     pub fn with_config<L: WindowListener + 'static>(listener: L, config: MonitorConfig) -> Self {
         Self {
-            listener: Arc::new(RwLock::new(listener)),
+            listener: Arc::new(listener),
             config,
         }
     }

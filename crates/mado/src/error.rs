@@ -8,11 +8,8 @@ pub enum Error {
     Platform(String),
 
     /// Required permissions are not granted
-    ///
-    /// On macOS, this indicates missing Accessibility permissions.
-    /// Enable in System Settings > Privacy & Security > Accessibility
-    #[error("Missing permissions. On macOS: Enable in System Settings > Privacy & Security > Accessibility")]
-    MissingPermissions,
+    #[error("Missing permissions: {0}")]
+    MissingPermission(String),
 
     /// Monitor is already running
     #[error("Monitor is already running")]

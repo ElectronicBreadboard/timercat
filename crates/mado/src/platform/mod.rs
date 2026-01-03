@@ -1,35 +1,33 @@
+#[cfg(target_os = "linux")]
+mod linux;
+#[cfg(target_os = "macos")]
+mod macos;
+#[cfg(target_os = "windows")]
+mod windows;
+
 use crate::{
-    config::MonitorConfig,
+    config::{MonitorConfig, QueryConfig},
     error::Error,
     listener::WindowListener,
-    types::{AppInfo, WindowInfo},
+    types::{AppInfo, WindowEvent, WindowInfo},
 };
-use std::sync::{Arc, RwLock};
-
-#[cfg(target_os = "macos")]
-pub mod macos;
-
-#[cfg(target_os = "linux")]
-pub mod linux;
+use std::sync::Arc;
 
 /// Start monitoring window and application focus changes.
 ///
 /// This blocks the current thread until `stop()` is called.
-pub fn run(listener: Arc<RwLock<dyn WindowListener>>, config: MonitorConfig) -> Result<(), Error> {
+pub fn run(listener: Arc<dyn WindowListener>, config: MonitorConfig) -> Result<(), Error> {
     #[cfg(target_os = "macos")]
-    {
-        macos::run(listener, config)
-    }
+    return macos::run(listener, config);
 
     #[cfg(target_os = "linux")]
-    {
-        linux::run(listener, config)
-    }
+    return linux::run(listener, config);
 
-    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
-    {
-        Err(Error::Platform("Platform not yet implemented".to_string()))
-    }
+    #[cfg(target_os = "windows")]
+    return windows::run(listener, config);
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+    return Err(Error::Platform("Unsupported platform".to_string()));
 }
 
 /// Stop the monitor (thread-safe).
@@ -37,19 +35,16 @@ pub fn run(listener: Arc<RwLock<dyn WindowListener>>, config: MonitorConfig) -> 
 /// This can be called from any thread to signal the monitor to stop.
 pub fn stop() -> Result<(), Error> {
     #[cfg(target_os = "macos")]
-    {
-        macos::stop()
-    }
+    return macos::stop();
 
     #[cfg(target_os = "linux")]
-    {
-        linux::stop()
-    }
+    return linux::stop();
 
-    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
-    {
-        Err(Error::Platform("Platform not yet implemented".to_string()))
-    }
+    #[cfg(target_os = "windows")]
+    return windows::stop();
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+    return Err(Error::Platform("Unsupported platform".to_string()));
 }
 
 /// Get information about the currently active application.
@@ -57,40 +52,37 @@ pub fn stop() -> Result<(), Error> {
 /// This is a synchronous query that returns the current state immediately.
 pub fn get_active_app() -> Result<AppInfo, Error> {
     #[cfg(target_os = "macos")]
-    {
-        macos::app_info::get_current_app().ok_or(Error::NoActiveApp)
-    }
+    return macos::get_active_app();
 
     #[cfg(target_os = "linux")]
-    {
-        linux::window_info::get_current_app().ok_or(Error::NoActiveApp)
-    }
+    return linux::get_active_app();
 
-    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
-    {
-        Err(Error::Platform("Platform not yet implemented".to_string()))
-    }
+    #[cfg(target_os = "windows")]
+    return windows::get_active_app();
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+    return Err(Error::Platform("Unsupported platform".to_string()));
 }
 
 /// Get information about the currently active window.
-///
-/// This is a synchronous query that returns the current state immediately.
-/// The returned `WindowInfo` includes both window details and the associated app info.
-pub fn get_active_window() -> Result<WindowInfo, Error> {
+pub fn get_active_window(config: QueryConfig) -> Result<WindowInfo, Error> {
     #[cfg(target_os = "macos")]
-    {
-        macos::window_info::get_current_window().ok_or(Error::NoActiveWindow)
-    }
+    return macos::get_active_window(config);
 
     #[cfg(target_os = "linux")]
     {
-        linux::window_info::get_current_window().ok_or(Error::NoActiveWindow)
+        let _ = config; // Unused on Linux
+        return linux::get_active_window();
     }
 
-    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+    #[cfg(target_os = "windows")]
     {
-        Err(Error::Platform("Platform not yet implemented".to_string()))
+        let _ = config; // Unused on Windows
+        return windows::get_active_window();
     }
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+    return Err(Error::Platform("Unsupported platform".to_string()));
 }
 
 /// Check if accessibility permissions are granted (macOS only).
@@ -98,15 +90,25 @@ pub fn get_active_window() -> Result<WindowInfo, Error> {
 /// On macOS, accessibility permissions are required for window monitoring.
 /// This function returns `true` if permissions are granted.
 ///
-/// On Linux and other platforms, this always returns `true`.
+/// On Linux and Windows, this always returns `true` (no special permissions required).
 pub fn is_accessibility_trusted() -> bool {
     #[cfg(target_os = "macos")]
-    {
-        macos::accessibility::is_trusted()
-    }
+    return macos::is_accessibility_trusted();
 
     #[cfg(not(target_os = "macos"))]
-    {
-        true
+    return true;
+}
+
+/// Call the listener callback with panic safety.
+///
+/// Panics in callbacks are caught and logged, but won't crash the monitor thread.
+/// This ensures the monitor continues running even if a callback panics.
+pub(crate) fn call_listener_safe(listener: &Arc<dyn WindowListener>, event: WindowEvent) {
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        listener.on_focus_change(event);
+    }));
+
+    if let Err(panic) = result {
+        eprintln!("[mado] Callback panicked (monitor continues): {:?}", panic);
     }
 }

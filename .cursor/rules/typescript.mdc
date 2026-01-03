@@ -1,7 +1,7 @@
 ---
 description: TypeScript coding standards and style guidelines
-globs: ["**/*.ts", "**/*.tsx"]
-alwaysApply: true
+globs: ['**/*.ts', '**/*.tsx']
+alwaysApply: false
 ---
 
 # TypeScript Style Guide
@@ -18,6 +18,7 @@ TypeScript coding standards and style guidelines for our codebase. These guideli
 ## File Organization
 
 ### Directory Structure
+
 - Always organize code in a predictable and scalable way
 - Always keep related code close together
 - Always use clear, descriptive directory names
@@ -26,49 +27,53 @@ TypeScript coding standards and style guidelines for our codebase. These guideli
 - Always use plural for collections/lists (e.g. `components/`, `hooks/`, `utils/`)
 
 ✅ Good:
+
 ```typescript
 src/
   auth/              # Singular: domain
     components/      # Plural: collection
     hooks/          # Plural: collection
     lib/            # Singular: category
-  
+
   user/             # Singular: domain
     components/     # Plural: collection
     hooks/         # Plural: collection
     lib/           # Singular: category
-  
+
   lib/             # Singular: core category
   components/      # Plural: shared collection
   hooks/          # Plural: shared collection
 ```
 
 ❌ Bad:
+
 ```typescript
 src/
   auths/           # Wrong: Category should be singular
     component/     # Wrong: Collection should be plural
-  
+
   users/          # Wrong: Category should be singular
     hook/         # Wrong: Collection should be plural
-  
+
   libraries/      # Wrong: Category should be singular
   shared-components/ # Wrong: Use simple plural
 ```
 
 ### Files & Directories
+
 - Always use consistent and predictable naming patterns
 - Always make names descriptive and purpose-indicating
 - Always follow established community conventions
 
 ✅ Good:
+
 ```typescript
 // Directories (kebab-case)
 src/
   auth/
-    components/
-    hooks/
-    lib/
+  components/
+  hooks/
+  lib/
 
 // Regular Files (kebab-case)
 user-service.ts
@@ -89,6 +94,7 @@ CacheManager.ts
 ```
 
 ❌ Bad:
+
 ```typescript
 // Directories (mixed case)
 src/
@@ -105,217 +111,256 @@ Api.Client.ts      # Wrong: PascalCase with dots
 ```
 
 ### Code Identifiers
+
 - Always use clear, descriptive names that indicate purpose
 - Always follow TypeScript community standards
 - Always maintain consistent prefixing for special types
 
 ✅ Good:
+
 ```typescript
 // Variables & Functions (camelCase)
 const currentUser = getCurrentUser();
 const isValidEmail = validateEmail(email);
-const calculateTotalPrice = (items: TOrderItem[]): number => {
-  return items.reduce((sum, item) => sum + item.price, 0);
-};
+function calculateTotalPrice(items: TOrderItem[]): number {
+	return items.reduce((sum, item) => sum + item.price, 0);
+}
 
 // Interfaces & Types (T prefix)
 type TUser = {
-  id: string;
-  email: string;
-  profile: TUserProfile;
+	id: string;
+	email: string;
+	profile: TUserProfile;
 };
 
 type TOrderItem = {
-  id: string;
-  productId: string;
-  quantity: number;
-  price: number;
+	id: string;
+	productId: string;
+	quantity: number;
+	price: number;
 };
 
 // Enums (E prefix)
 enum EOrderStatus {
-  Pending = 'pending',
-  Processing = 'processing',
-  Completed = 'completed',
-  Cancelled = 'cancelled'
+	Pending = 'pending',
+	Processing = 'processing',
+	Completed = 'completed',
+	Cancelled = 'cancelled'
 }
 
 enum EUserRole {
-  Admin = 'admin',
-  Customer = 'customer',
-  Guest = 'guest'
+	Admin = 'admin',
+	Customer = 'customer',
+	Guest = 'guest'
 }
 
 // Schemas (S prefix)
 const SUserProfile = z.object({
-  firstName: z.string().min(2),
-  lastName: z.string().min(2),
-  dateOfBirth: z.iso.datetime().optional(),
-  phoneNumber: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional()
+	firstName: z.string().min(2),
+	lastName: z.string().min(2),
+	dateOfBirth: z.iso.datetime().optional(),
+	phoneNumber: z
+		.string()
+		.regex(/^\+?[1-9]\d{1,14}$/)
+		.optional()
 });
 
 const SOrderCreate = z.object({
-  userId: z.string().uuid(),
-  items: z.array(z.object({
-    productId: z.string().uuid(),
-    quantity: z.number().int().positive()
-  }))
+	userId: z.string().uuid(),
+	items: z.array(
+		z.object({
+			productId: z.string().uuid(),
+			quantity: z.number().int().positive()
+		})
+	)
 });
 ```
 
 ❌ Bad:
+
 ```typescript
 // Variables & Functions (inconsistent)
-const CurrentUser = getCurrentUser();  # Wrong: PascalCase
-const valid_email = validate_email();  # Wrong: snake_case
-const CALCULATE_PRICE = () => {};      # Wrong: UPPER_CASE
+const CurrentUser = getCurrentUser();  // Wrong: PascalCase
+const valid_email = validate_email();  // Wrong: snake_case
+const CALCULATE_PRICE = () => {};      // Wrong: UPPER_CASE
 
 // Types & Interfaces (missing prefix)
-type User = {                         # Wrong: Missing T prefix
-  ID: string;                        # Wrong: UPPER_CASE
-  Email: string;                     # Wrong: PascalCase
+type User = {                         // Wrong: Missing T prefix
+  ID: string;                        // Wrong: UPPER_CASE
+  Email: string;                     // Wrong: PascalCase
 };
 
-interface OrderItem {                 # Wrong: Missing T prefix
-  product_id: string;               # Wrong: snake_case
-  Quantity: number;                 # Wrong: PascalCase
+interface OrderItem {                 // Wrong: Missing T prefix
+  product_id: string;               // Wrong: snake_case
+  Quantity: number;                 // Wrong: PascalCase
 }
 
 // Enums (inconsistent)
-enum OrderStatus {                    # Wrong: Missing E prefix
-  PENDING = 'PENDING',              # Wrong: All caps
-  Processing = 'Processing',        # Wrong: PascalCase value
-  completed = 'completed'           # Wrong: camelCase
+enum OrderStatus {                    // Wrong: Missing E prefix
+  PENDING = 'PENDING',              // Wrong: All caps
+  Processing = 'Processing',        // Wrong: PascalCase value
+  completed = 'completed'           // Wrong: camelCase
 }
 
 // Schemas (inconsistent)
-const userSchema = z.object({         # Wrong: Missing S prefix
-  FirstName: z.string(),            # Wrong: PascalCase
-  last_name: z.string(),            # Wrong: snake_case
-  DOB: z.iso.datetime()                     # Wrong: Abbreviation
+const userSchema = z.object({         // Wrong: Missing S prefix
+  FirstName: z.string(),            // Wrong: PascalCase
+  last_name: z.string(),            // Wrong: snake_case
+  DOB: z.iso.datetime()             // Wrong: Abbreviation
 });
 ```
 
 ## Code Style
 
 ### Type Safety
+
 - Always define explicit types for better maintainability
 - Always use TypeScript's type system to prevent runtime errors
 - Always make code intentions clear through typing
 
 ✅ Good:
+
 ```typescript
 async function getUser(id: string): Promise<TUser> {
-  const user = await db.users.findUnique({ where: { id } });
-  if (user == null) {
-    throw new Error('User not found');
-  }
-  return user;
+	const user = await db.users.findUnique({ where: { id } });
+	if (user == null) {
+		throw new Error('User not found');
+	}
+	return user;
 }
 ```
 
 ❌ Bad:
+
 ```typescript
 async function getUser(id) {
-  const user = await db.users.findUnique({ where: { id } });
-  if (!user) throw new Error('User not found');
-  return user;
+	const user = await db.users.findUnique({ where: { id } });
+	if (!user) throw new Error('User not found');
+	return user;
 }
 ```
 
 ### Null Checks
+
 - Always be explicit about null/undefined checks
 - Always handle edge cases clearly and consistently
 - Always prevent runtime null/undefined errors
 
 ✅ Good:
+
 ```typescript
 if (user == null) {
-  throw new Error('User is required');
+	throw new Error('User is required');
 }
 
 const name = user.name ?? 'Anonymous';
 ```
 
 ❌ Bad:
+
 ```typescript
 if (!user) {
-  throw new Error('User is required');
+	throw new Error('User is required');
 }
 
 const name = user.name || 'Anonymous';
 ```
 
 ### Functions
+
 - Always keep functions focused and single-purpose
 - Always use function declarations for named functions
 - Always use arrow functions only for callbacks and inline functions
 
 ✅ Good:
+
 ```typescript
 function processUser(user: TUser): void {
-  // Implementation
+	// Implementation
 }
 
-users.map(user => user.name);
+users.map((user) => user.name);
 ```
 
 ❌ Bad:
+
 ```typescript
 const processUser = (user: TUser): void => {
-  // Implementation
-}
+	// Implementation
+};
 
-users.map(function(user) { return user.name; });
+users.map(function (user) {
+	return user.name;
+});
 ```
 
 ### Conditionals
+
 - Always keep conditionals simple and flat
-- Always use early returns to reduce nesting
+- Always use early returns for guard clauses (invalid states)
 - Always avoid deeply nested conditions
+- Always prefer single exit point for main flow when possible
 
 ✅ Good:
+
 ```typescript
-// Early return pattern
+// Guard clauses for invalid states
 function processUser(user: TUser): void {
-  if (user == null) {
-    return;
-  }
-  
-  if (!user.isActive) {
-    return;
-  }
-  
-  processActiveUser(user);
+	if (user == null) {
+		return;
+	}
+
+	if (!user.isActive) {
+		return;
+	}
+
+	processActiveUser(user);
+}
+
+// Single exit point for main flow
+async function handleMessage(ctx: TBotContext): Promise<void> {
+	const session = getSession(ctx);
+	if (session == null) {
+		return;
+	}
+
+	await processMessage(ctx);
+	await sendResponse(ctx);
+
+	const finalState = getState(ctx);
+	if (finalState.isComplete) {
+		await handleComplete(ctx);
+	}
 }
 
 // Simple boolean check
 function isValidUser(user: TUser): boolean {
-  return user != null && user.isActive;
+	return user != null && user.isActive;
 }
 ```
 
 ❌ Bad:
+
 ```typescript
 // Deeply nested conditions
 function processUser(user: TUser): void {
-  if (user != null) {
-    if (user.isActive) {
-      if (user.permissions != null) {
-        if (user.permissions.canEdit) {
-          processActiveUser(user);
-        }
-      }
-    }
-  }
+	if (user != null) {
+		if (user.isActive) {
+			if (user.permissions != null) {
+				if (user.permissions.canEdit) {
+					processActiveUser(user);
+				}
+			}
+		}
+	}
 }
 
 // Complex nested ternary
-const userName = user 
-  ? user.profile 
-    ? user.profile.name 
-      ? user.profile.name 
-      : 'No name'
-    : 'No profile'
-  : 'No user';
+const userName = user
+	? user.profile
+		? user.profile.name
+			? user.profile.name
+			: 'No name'
+		: 'No profile'
+	: 'No user';
 ```

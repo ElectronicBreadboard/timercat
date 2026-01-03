@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-/// Information about an application.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AppInfo {
@@ -9,15 +8,12 @@ pub struct AppInfo {
     pub pid: i32,
     /// Application name (localized)
     pub name: Option<String>,
-    /// Bundle identifier (macOS) or application class (Linux)
+    /// Bundle identifier (macOS)
     pub bundle_id: Option<String>,
     /// Path to the executable
     pub process_path: Option<String>,
 }
 
-/// Browser-specific information (macOS only).
-///
-/// Requires Automation permission: System Settings > Privacy & Security > Automation
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct BrowserInfo {
@@ -31,7 +27,6 @@ pub struct BrowserInfo {
     pub is_private: Option<bool>,
 }
 
-/// Information about a window.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct WindowInfo {
@@ -47,7 +42,6 @@ pub struct WindowInfo {
     pub browser: Option<BrowserInfo>,
 }
 
-/// Window bounds (position and size).
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct WindowBounds {
@@ -65,7 +59,8 @@ pub struct WindowBounds {
 ///
 /// Distinguishes between app activation (always fires on app switch) and window changes
 /// (fires when window focus/title changes or when window becomes available).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
 pub enum WindowEvent {
     /// Application was activated/switched to.
     ///
@@ -78,10 +73,7 @@ pub enum WindowEvent {
     /// - App switching where window information isn't immediately available
     ///
     /// A `WindowChanged` event will follow when a window becomes available (if the app has windows).
-    AppActivated {
-        /// Application information
-        app: AppInfo,
-    },
+    AppActivated { app: AppInfo },
     /// Window focus or title changed.
     ///
     /// This event fires when:
@@ -90,10 +82,7 @@ pub enum WindowEvent {
     /// - Complete window information becomes available after app activation
     ///
     /// Note: App switches are always signaled via `AppActivated` events first.
-    WindowChanged {
-        /// Complete window information including app details
-        window: WindowInfo,
-    },
+    WindowChanged { window: WindowInfo },
 }
 
 impl WindowEvent {
@@ -162,7 +151,6 @@ fn fmt_display<T: fmt::Display>(opt: &Option<T>) -> String {
     match opt {
         Some(value) => {
             let s = value.to_string();
-            // Truncate strings to prevent wrapping (respecting UTF-8 character boundaries)
             if s.chars().count() > 70 {
                 let truncated: String = s.chars().take(67).collect();
                 format!("{}...", truncated)

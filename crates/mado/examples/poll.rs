@@ -15,7 +15,9 @@ fn main() -> Result<(), mado::Error> {
     if !mado::is_accessibility_trusted() {
         eprintln!("⚠️  Accessibility permissions required!");
         eprintln!("   Enable in: System Settings > Privacy & Security > Accessibility");
-        return Err(mado::Error::MissingPermissions);
+        return Err(mado::Error::MissingPermission(
+            "Accessibility permissions required".to_string(),
+        ));
     }
 
     loop {
@@ -27,7 +29,9 @@ fn main() -> Result<(), mado::Error> {
             Err(e) => eprintln!("❌ Error getting app: {}", e),
         }
 
-        match mado::get_active_window() {
+        match mado::get_active_window_with_config(mado::QueryConfig {
+            allow_browser: true,
+        }) {
             Ok(window) => {
                 println!("\n🪟 Current Window");
                 print!("{}", window);

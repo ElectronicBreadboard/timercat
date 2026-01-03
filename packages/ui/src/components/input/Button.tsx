@@ -54,7 +54,8 @@ export const ButtonLink: React.FC<TButtonLinkProps> = (props) => {
 };
 
 export interface TButtonLinkProps
-	extends VariantProps<typeof buttonVariants>,
+	extends
+		VariantProps<typeof buttonVariants>,
 		Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'className'> {
 	href: string;
 	className?: string;

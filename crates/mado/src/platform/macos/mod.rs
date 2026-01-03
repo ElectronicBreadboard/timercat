@@ -1,64 +1,136 @@
-pub mod accessibility;
-pub mod app_info;
-mod browser;
-mod window_event_handler;
-pub mod window_info;
-mod workspace;
+mod ffi;
+mod parser;
 
-use crate::{config::MonitorConfig, error::Error, listener::WindowListener};
-use std::sync::{Arc, RwLock};
-use window_event_handler::WindowEventHandler;
-use workspace::WorkspaceMonitor;
+use crate::platform::call_listener_safe;
+use crate::{
+    config::{MonitorConfig, QueryConfig},
+    error::Error,
+    listener::WindowListener,
+    types::{AppInfo, WindowInfo},
+};
+use ffi::*;
+use parser::{parse_app_info, parse_event, parse_window_info};
+use std::ffi::c_void;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
+use swift_rs::SRString;
 
-/// Run the monitor on macOS.
-///
-/// Coordinates window monitoring using:
-/// - NSWorkspace for app switching detection
-/// - Accessibility API for window focus and title changes
-/// - CoreGraphics for stable window IDs
-///
-/// ## Architecture
-///
-/// The monitoring works through a two-layer system:
-/// - **WorkspaceMonitor**: Watches for app switches using NSWorkspace notifications
-/// - **AccessibilityMonitor**: Watches for window changes using Accessibility API
-///
-/// When an app switch occurs, WorkspaceMonitor:
-/// - Notifies the handler of the app change
-/// - Creates a new AccessibilityMonitor for the new app
-/// - Notifies the handler of the initial window state
-///
-/// This blocks the current thread until `stop()` is called.
-///
-/// # Threading
-///
-/// This function must be called from a thread that can safely run AppKit code
-/// (either the main thread or a dedicated AppKit thread). See `WorkspaceMonitor::new()`
-/// for detailed threading requirements.
-///
-/// For non-blocking usage (e.g. in Tauri setup), spawn a thread:
-/// ```rust,no_run
-/// std::thread::spawn(move || {
-///     run(listener, config).expect("Monitor failed");
-/// });
-/// ```
-pub(super) fn run(
-    listener: Arc<RwLock<dyn WindowListener>>,
-    config: MonitorConfig,
-) -> Result<(), Error> {
-    if config.track_window_changes && !accessibility::is_trusted() {
-        return Err(Error::MissingPermissions);
+/// Track if monitor is running (only one monitor can run at a time).
+/// This atomic check is necessary for thread safety - prevents race conditions where
+/// multiple threads try to start a monitor simultaneously. Swift-side checks are defensive
+/// but not sufficient for concurrent access.
+static RUNNING: AtomicBool = AtomicBool::new(false);
+
+/// Global listener storage for C callback access
+static GLOBAL_LISTENER: Mutex<Option<Arc<dyn WindowListener>>> = Mutex::new(None);
+
+/// Start monitoring window and application focus changes.
+/// Blocks current thread until `stop()` is called.
+pub fn run(listener: Arc<dyn WindowListener>, config: MonitorConfig) -> Result<(), Error> {
+    // Check permissions if tracking window changes
+    if config.track_window_changes && !is_accessibility_trusted() {
+        return Err(Error::MissingPermission(
+            "Accessibility permissions required for window change tracking".to_string(),
+        ));
     }
 
-    let event_handler = WindowEventHandler::new(listener, config);
-    let mut monitor = WorkspaceMonitor::new(event_handler)?;
-    monitor.run()?;
+    // Atomic check-and-set: only one monitor can run at a time
+    if RUNNING
+        .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+        .is_err()
+    {
+        return Err(Error::AlreadyRunning);
+    }
+
+    // Store listener for C callback access
+    {
+        let mut guard = GLOBAL_LISTENER.lock().unwrap();
+        *guard = Some(listener.clone());
+    }
+
+    // Start monitoring (blocks until stopped)
+    unsafe {
+        let callback_ptr = window_event_callback as *const c_void;
+        mado_start_monitor(
+            callback_ptr,
+            config.track_window_changes,
+            config.allow_browser,
+        );
+    }
+
+    // Cleanup after stop
+    {
+        let mut guard = GLOBAL_LISTENER.lock().unwrap();
+        *guard = None;
+    }
+
+    RUNNING.store(false, Ordering::SeqCst);
 
     return Ok(());
 }
 
-/// Stop the monitor (thread-safe).
-pub(super) fn stop() -> Result<(), Error> {
-    WorkspaceMonitor::stop();
+/// Stop the monitor (thread-safe, can be called from any thread).
+pub fn stop() -> Result<(), Error> {
+    if !RUNNING.load(Ordering::SeqCst) {
+        return Err(Error::NotRunning);
+    }
+
+    unsafe {
+        mado_stop_monitor();
+    }
+
     return Ok(());
+}
+
+/// Get information about the currently active application.
+pub fn get_active_app() -> Result<AppInfo, Error> {
+    let json = unsafe {
+        match mado_get_active_app() {
+            Some(s) => s.as_str().to_string(),
+            None => return Err(Error::NoActiveApp),
+        }
+    };
+
+    return parse_app_info(&json)
+        .map_err(|e| Error::Platform(format!("Failed to parse app info: {}", e)));
+}
+
+/// Get information about the currently active window.
+pub fn get_active_window(config: QueryConfig) -> Result<WindowInfo, Error> {
+    let json = unsafe {
+        match mado_get_active_window(config.allow_browser) {
+            Some(s) => s.as_str().to_string(),
+            None => return Err(Error::NoActiveWindow),
+        }
+    };
+
+    return parse_window_info(&json)
+        .map_err(|e| Error::Platform(format!("Failed to parse window info: {}", e)));
+}
+
+/// Check if accessibility permissions are granted.
+pub fn is_accessibility_trusted() -> bool {
+    return unsafe { mado_is_trusted() };
+}
+
+/// C callback invoked by Swift when window/app events occur.
+extern "C" fn window_event_callback(event_json_ptr: *const SRString) {
+    if event_json_ptr.is_null() {
+        return;
+    }
+
+    let json = unsafe { (*event_json_ptr).as_str() };
+
+    let event = match parse_event(json) {
+        Ok(event) => event,
+        Err(e) => {
+            eprintln!("[mado] Failed to parse event: {} - {}", e, json);
+            return;
+        }
+    };
+
+    let guard = GLOBAL_LISTENER.lock().unwrap();
+    if let Some(listener) = guard.as_ref() {
+        call_listener_safe(listener, event);
+    }
 }
