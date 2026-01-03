@@ -51,6 +51,7 @@ final class WindowMonitor: NSObject {
 
     // MARK: - Lifecycle
 
+    /// Start monitoring. Blocks forever until stop() is called.
     func start() {
         guard !isRunning else { return }
         isRunning = true
@@ -300,7 +301,7 @@ final class WindowMonitor: NSObject {
 
     private func sendAppActivatedEvent(app: NSRunningApplication) {
         let appInfo = AppInfo.from(app)
-        let eventData: [String: Any] = ["app": appInfo]
+        let eventData: [String: Any] = ["app": appInfo.toDictionary()]
         sendEvent(type: "AppActivated", data: eventData)
     }
 

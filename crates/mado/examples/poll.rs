@@ -29,7 +29,9 @@ fn main() -> Result<(), mado::Error> {
             Err(e) => eprintln!("❌ Error getting app: {}", e),
         }
 
-        match mado::get_active_window_with_browser() {
+        match mado::get_active_window_with_config(mado::QueryConfig {
+            allow_browser: true,
+        }) {
             Ok(window) => {
                 println!("\n🪟 Current Window");
                 print!("{}", window);

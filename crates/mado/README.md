@@ -36,11 +36,14 @@ use mado;
 let app = mado::get_active_app()?;
 println!("Current app: {} (PID: {})", app.name, app.pid);
 
+// Basic window info (fast, default)
 let window = mado::get_active_window()?;
 println!("Window: '{}' in {}", window.title, window.app.name);
 
-// With browser URL extraction (slower, uses AppleScript)
-let window = mado::get_active_window_with_browser()?;
+// With browser URL extraction (slower, macOS only)
+let window = mado::get_active_window_with_config(mado::QueryConfig {
+    allow_browser: true,
+})?;
 if let Some(browser) = &window.browser {
     println!("URL: {:?}", browser.url);
 }

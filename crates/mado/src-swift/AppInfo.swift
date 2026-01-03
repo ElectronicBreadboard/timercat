@@ -3,25 +3,47 @@ import ApplicationServices
 import Foundation
 
 /// Application information from NSRunningApplication.
-enum AppInfo {
-    static func from(_ app: NSRunningApplication) -> [String: Any?] {
+struct AppInfo {
+    let pid: pid_t
+    let name: String?
+    let bundleId: String?
+    let processPath: String?
+
+    /// Convert to dictionary for JSON serialization.
+    func toDictionary() -> [String: Any?] {
         return [
-            "pid": app.processIdentifier,
-            "name": app.localizedName,
-            "bundleId": app.bundleIdentifier,
-            "processPath": app.executableURL?.path,
+            "pid": pid,
+            "name": name,
+            "bundleId": bundleId,
+            "processPath": processPath,
         ]
     }
 
-    static func fromPID(_ pid: pid_t) -> [String: Any?] {
+    /// Create from NSRunningApplication.
+    static func from(_ app: NSRunningApplication) -> AppInfo {
+        return AppInfo(
+            pid: app.processIdentifier,
+            name: app.localizedName,
+            bundleId: app.bundleIdentifier,
+            processPath: app.executableURL?.path
+        )
+    }
+
+    /// Create from PID.
+    static func fromPID(_ pid: pid_t) -> AppInfo {
         if let app = NSRunningApplication(processIdentifier: pid) {
             return from(app)
         }
-        return ["pid": pid, "name": nil, "bundleId": nil, "processPath": nil]
+        return AppInfo(
+            pid: pid,
+            name: nil,
+            bundleId: nil,
+            processPath: nil
+        )
     }
 
     /// Get frontmost app. Tries Accessibility API first (more reliable), falls back to NSWorkspace.
-    static func getFrontmost() -> [String: Any?]? {
+    static func getFrontmost() -> AppInfo? {
         let systemWide = AXUIElementCreateSystemWide()
         var focusedApp: CFTypeRef?
 

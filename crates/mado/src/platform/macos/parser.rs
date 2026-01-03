@@ -2,10 +2,19 @@ use crate::types::{AppInfo, WindowEvent, WindowInfo};
 use serde::de::Error;
 use serde_json::Value;
 
-/// Parse WindowEvent from Swift's JSON format
-///
+/// Parse AppInfo from JSON
+pub fn parse_app_info(json: &str) -> Result<AppInfo, serde_json::Error> {
+    return serde_json::from_str(json);
+}
+
+/// Parse WindowInfo from JSON
+pub fn parse_window_info(json: &str) -> Result<WindowInfo, serde_json::Error> {
+    return serde_json::from_str(json);
+}
+
+/// Parse WindowEvent from Swift's JSON format.
 /// Swift sends: `{ "type": "AppActivated"|"WindowChanged", "data": {...} }`
-pub fn parse_event_from_json(json: &str) -> Result<WindowEvent, serde_json::Error> {
+pub fn parse_event(json: &str) -> Result<WindowEvent, serde_json::Error> {
     let value: Value = serde_json::from_str(json)?;
 
     let event_type = value

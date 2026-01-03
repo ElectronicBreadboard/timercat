@@ -7,16 +7,16 @@ struct WindowInfo {
     let title: String?
     let windowId: UInt32?
     let bounds: [String: Double]?
-    let app: [String: Any?]
-    let browser: [String: Any?]?
+    let app: AppInfo
+    let browser: BrowserInfo?
 
     func toDictionary() -> [String: Any?] {
         return [
             "title": title,
             "windowId": windowId,
             "bounds": bounds,
-            "app": app,
-            "browser": browser,
+            "app": app.toDictionary(),
+            "browser": browser?.toDictionary(),
         ]
     }
 
@@ -27,7 +27,7 @@ struct WindowInfo {
     {
         let app = AXUIElementCreateApplication(pid)
         let appInfo = AppInfo.fromPID(pid)
-        let bundleId = appInfo["bundleId"] as? String
+        let bundleId = appInfo.bundleId
 
         // Get focused window title via Accessibility API
         var focusedWindow: CFTypeRef?
@@ -61,13 +61,12 @@ struct WindowInfo {
         let (windowId, bounds) = findWindowIdAndBounds(pid: pid, title: title)
 
         // Get browser info if enabled and app is a browser
-        var browser: [String: Any?]? = nil
-        if allowBrowser, let bundleId = bundleId {
-            browser = BrowserInfo.extract(
-                bundleId: bundleId,
-                windowTitle: title
-            )
-        }
+        let browser: BrowserInfo? =
+            if allowBrowser, let bundleId = bundleId {
+                BrowserInfo.extract(bundleId: bundleId, windowTitle: title)
+            } else {
+                nil
+            }
 
         return WindowInfo(
             title: title,
@@ -108,86 +107,4 @@ struct WindowInfo {
 
         return getForPID(pid, allowBrowser: allowBrowser)
     }
-}
-
-// MARK: - CoreGraphics Helpers
-
-/// Find window ID and bounds using CoreGraphics.
-/// Strategy: exact title match first (for multi-window apps), then first window for PID.
-private func findWindowIdAndBounds(pid: pid_t, title: String?) -> (
-    windowId: UInt32?, bounds: [String: Double]?
-) {
-    let option: CGWindowListOption = [
-        .optionOnScreenOnly, .excludeDesktopElements,
-    ]
-    guard
-        let windowList = CGWindowListCopyWindowInfo(option, kCGNullWindowID)
-            as? [[String: Any]]
-    else {
-        return (nil, nil)
-    }
-
-    let titleToMatch = title ?? ""
-
-    // Try exact title match first (accurate for multi-window apps)
-    if !titleToMatch.isEmpty {
-        for window in windowList {
-            guard
-                let ownerPID = window["kCGWindowOwnerPID"] as? Int,
-                ownerPID == pid,
-                let windowName = window["kCGWindowName"] as? String,
-                windowName == titleToMatch,
-                isValidWindow(window)
-            else { continue }
-
-            return extractWindowIdAndBounds(window)
-        }
-    }
-
-    // Fallback: first matching window for PID
-    for window in windowList {
-        guard
-            let ownerPID = window["kCGWindowOwnerPID"] as? Int,
-            ownerPID == pid,
-            isValidWindow(window)
-        else { continue }
-
-        return extractWindowIdAndBounds(window)
-    }
-
-    return (nil, nil)
-}
-
-/// Check if window is visible and not transparent
-private func isValidWindow(_ window: [String: Any]) -> Bool {
-    guard let isOnscreen = window["kCGWindowIsOnscreen"] as? Bool, isOnscreen
-    else {
-        return false
-    }
-
-    guard let alpha = window["kCGWindowAlpha"] as? Double, alpha > 0.0 else {
-        return false
-    }
-
-    return true
-}
-
-private func extractWindowIdAndBounds(_ window: [String: Any]) -> (
-    windowId: UInt32?, bounds: [String: Double]?
-) {
-    guard let windowId = window["kCGWindowNumber"] as? Int else {
-        return (nil, nil)
-    }
-
-    var bounds: [String: Double]? = nil
-    if let boundsDict = window["kCGWindowBounds"] as? [String: Any],
-        let x = boundsDict["X"] as? Double,
-        let y = boundsDict["Y"] as? Double,
-        let width = boundsDict["Width"] as? Double,
-        let height = boundsDict["Height"] as? Double
-    {
-        bounds = ["x": x, "y": y, "width": width, "height": height]
-    }
-
-    return (UInt32(windowId), bounds)
 }

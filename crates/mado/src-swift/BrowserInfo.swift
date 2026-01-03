@@ -1,16 +1,22 @@
 import Foundation
 
-/// Extracts browser URL and private mode via AppleScript.
-/// Requires Automation permission: System Settings > Privacy & Security > Automation
-enum BrowserInfo {
+/// Browser information (URL, private mode).
+struct BrowserInfo {
+    let url: String?
+    let isPrivate: Bool?
+
+    /// Convert to dictionary for JSON serialization.
+    func toDictionary() -> [String: Any?] {
+        return ["url": url, "isPrivate": isPrivate]
+    }
+
     private static let browserKeywords = [
         "chrome", "safari", "firefox", "edge", "brave", "opera", "arc",
         "browser",
     ]
 
     /// Extract browser info if the app is a browser. Returns nil if not a browser or extraction fails.
-    static func extract(bundleId: String, windowTitle: String?) -> [String:
-        Any?]?
+    static func extract(bundleId: String, windowTitle: String?) -> BrowserInfo?
     {
         guard isBrowser(bundleId) else { return nil }
 
@@ -23,7 +29,7 @@ enum BrowserInfo {
         // Only return if we got something useful
         guard url != nil || isPrivate != nil else { return nil }
 
-        return ["url": url, "isPrivate": isPrivate]
+        return BrowserInfo(url: url, isPrivate: isPrivate)
     }
 
     private static func isBrowser(_ bundleId: String) -> Bool {

@@ -6,7 +6,7 @@ mod macos;
 mod windows;
 
 use crate::{
-    config::MonitorConfig,
+    config::{MonitorConfig, QueryConfig},
     error::Error,
     listener::WindowListener,
     types::{AppInfo, WindowEvent, WindowInfo},
@@ -65,38 +65,21 @@ pub fn get_active_app() -> Result<AppInfo, Error> {
 }
 
 /// Get information about the currently active window.
-///
-/// This is a synchronous query that returns the current state immediately.
-/// The returned `WindowInfo` includes both window details and the associated app info.
-pub fn get_active_window() -> Result<WindowInfo, Error> {
+pub fn get_active_window(config: QueryConfig) -> Result<WindowInfo, Error> {
     #[cfg(target_os = "macos")]
-    return macos::get_active_window();
+    return macos::get_active_window(config);
 
     #[cfg(target_os = "linux")]
-    return linux::get_active_window();
+    {
+        let _ = config; // Unused on Linux
+        return linux::get_active_window();
+    }
 
     #[cfg(target_os = "windows")]
-    return windows::get_active_window();
-
-    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
-    return Err(Error::Platform("Unsupported platform".to_string()));
-}
-
-/// Get information about the currently active window, including browser info (macOS only).
-///
-/// This is slower than `get_active_window()` because it runs AppleScript to extract
-/// the browser URL and private mode. Only use when you need browser information.
-///
-/// On non-macOS platforms, this is equivalent to `get_active_window()`.
-pub fn get_active_window_with_browser() -> Result<WindowInfo, Error> {
-    #[cfg(target_os = "macos")]
-    return macos::get_active_window_with_browser();
-
-    #[cfg(target_os = "linux")]
-    return linux::get_active_window();
-
-    #[cfg(target_os = "windows")]
-    return windows::get_active_window();
+    {
+        let _ = config; // Unused on Windows
+        return windows::get_active_window();
+    }
 
     #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
     return Err(Error::Platform("Unsupported platform".to_string()));

@@ -3,19 +3,22 @@ mod parser;
 
 use crate::platform::call_listener_safe;
 use crate::{
-    config::MonitorConfig,
+    config::{MonitorConfig, QueryConfig},
     error::Error,
     listener::WindowListener,
     types::{AppInfo, WindowInfo},
 };
 use ffi::*;
-use parser::parse_event_from_json;
+use parser::{parse_app_info, parse_event, parse_window_info};
 use std::ffi::c_void;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use swift_rs::SRString;
 
-/// Track if monitor is running (only one monitor can run at a time)
+/// Track if monitor is running (only one monitor can run at a time).
+/// This atomic check is necessary for thread safety - prevents race conditions where
+/// multiple threads try to start a monitor simultaneously. Swift-side checks are defensive
+/// but not sufficient for concurrent access.
 static RUNNING: AtomicBool = AtomicBool::new(false);
 
 /// Global listener storage for C callback access
@@ -74,46 +77,28 @@ pub fn stop() -> Result<(), Error> {
 
 /// Get information about the currently active application.
 pub fn get_active_app() -> Result<AppInfo, Error> {
-    let json_str = unsafe {
-        let result = mado_get_active_app();
-        if result.is_none() {
-            return Err(Error::NoActiveApp);
+    let json = unsafe {
+        match mado_get_active_app() {
+            Some(s) => s.as_str().to_string(),
+            None => return Err(Error::NoActiveApp),
         }
-        result.unwrap().as_str().to_string()
     };
 
-    let app: AppInfo = serde_json::from_str(&json_str)
-        .map_err(|e| Error::Platform(format!("Failed to parse app info: {}", e)))?;
-
-    return Ok(app);
+    return parse_app_info(&json)
+        .map_err(|e| Error::Platform(format!("Failed to parse app info: {}", e)));
 }
 
 /// Get information about the currently active window.
-pub fn get_active_window() -> Result<WindowInfo, Error> {
-    return get_active_window_internal(false);
-}
-
-/// Get information about the currently active window, including browser info.
-///
-/// This is slower than `get_active_window()` because it runs AppleScript to extract
-/// the browser URL and private mode. Only use when you need browser information.
-pub fn get_active_window_with_browser() -> Result<WindowInfo, Error> {
-    return get_active_window_internal(true);
-}
-
-fn get_active_window_internal(allow_browser: bool) -> Result<WindowInfo, Error> {
-    let json_str = unsafe {
-        let result = mado_get_active_window(allow_browser);
-        if result.is_none() {
-            return Err(Error::NoActiveWindow);
+pub fn get_active_window(config: QueryConfig) -> Result<WindowInfo, Error> {
+    let json = unsafe {
+        match mado_get_active_window(config.allow_browser) {
+            Some(s) => s.as_str().to_string(),
+            None => return Err(Error::NoActiveWindow),
         }
-        result.unwrap().as_str().to_string()
     };
 
-    let window: WindowInfo = serde_json::from_str(&json_str)
-        .map_err(|e| Error::Platform(format!("Failed to parse window info: {}", e)))?;
-
-    return Ok(window);
+    return parse_window_info(&json)
+        .map_err(|e| Error::Platform(format!("Failed to parse window info: {}", e)));
 }
 
 /// Check if accessibility permissions are granted.
@@ -127,12 +112,12 @@ extern "C" fn window_event_callback(event_json_ptr: *const SRString) {
         return;
     }
 
-    let event_json = unsafe { (*event_json_ptr).as_str() };
+    let json = unsafe { (*event_json_ptr).as_str() };
 
-    let event = match parse_event_from_json(event_json) {
+    let event = match parse_event(json) {
         Ok(event) => event,
         Err(e) => {
-            eprintln!("[mado] Failed to parse event JSON: {} - {}", e, event_json);
+            eprintln!("[mado] Failed to parse event: {} - {}", e, json);
             return;
         }
     };

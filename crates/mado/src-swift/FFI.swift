@@ -10,6 +10,9 @@ public func madoStartMonitor(
     trackWindowChanges: Bool,
     allowBrowser: Bool
 ) {
+    // Singleton check: Rust side already prevents concurrent calls, this is defensive
+    guard WindowMonitor.shared == nil else { return }
+
     let callback = unsafeBitCast(callbackPtr, to: WindowEventCallback.self)
     let monitor = WindowMonitor(
         callback: callback,
@@ -38,7 +41,7 @@ public func madoIsTrusted() -> Bool {
 @_cdecl("mado_get_active_app")
 public func madoGetActiveApp() -> SRString? {
     guard let appInfo = AppInfo.getFrontmost() else { return nil }
-    return toJson(appInfo)
+    return toJson(appInfo.toDictionary())
 }
 
 @_cdecl("mado_get_active_window")
