@@ -20,16 +20,6 @@ struct WindowInfo {
         ]
     }
 
-    /// Create from AXUIElement application.
-    static func fromAX(_ appElement: AXUIElement, allowBrowser: Bool = false)
-        -> WindowInfo?
-    {
-        guard let pid = getPID(from: appElement) else {
-            return nil
-        }
-        return fromPID(pid, allowBrowser: allowBrowser)
-    }
-
     /// Create from NSRunningApplication.
     static func fromNS(_ app: NSRunningApplication, allowBrowser: Bool = false)
         -> WindowInfo
@@ -81,12 +71,6 @@ struct WindowInfo {
 
     /// Get frontmost window info.
     static func getFrontmost(allowBrowser: Bool = false) -> WindowInfo? {
-        // Try Accessibility API first
-        if let appElement = getFocusedApplication() {
-            return fromAX(appElement, allowBrowser: allowBrowser)
-        }
-
-        // Fallback to NSWorkspace
         guard let app = NSWorkspace.shared.frontmostApplication else {
             return nil
         }

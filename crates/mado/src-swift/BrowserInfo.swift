@@ -10,9 +10,15 @@ struct BrowserInfo {
         return ["url": url, "isPrivate": isPrivate]
     }
 
-    private static let browserKeywords = [
-        "chrome", "safari", "firefox", "edge", "brave", "opera", "arc",
-        "browser",
+    /// Known browser bundle IDs (exact matches).
+    private static let browserBundleIds: Set<String> = [
+        "com.google.Chrome",
+        "com.brave.Browser",
+        "com.apple.Safari",
+        "org.mozilla.firefox",
+        "com.microsoft.edgemac",
+        "com.operasoftware.Opera",
+        "company.thebrowser.Browser",  // Arc
     ]
 
     /// Extract browser info if the app is a browser. Returns nil if not a browser or extraction fails.
@@ -26,15 +32,15 @@ struct BrowserInfo {
             windowTitle: windowTitle ?? ""
         )
 
-        // Only return if we got something useful
+        // Only return if we got something useful (URL or private mode detection)
         guard url != nil || isPrivate != nil else { return nil }
 
         return BrowserInfo(url: url, isPrivate: isPrivate)
     }
 
+    /// Check if bundle ID belongs to a browser.
     private static func isBrowser(_ bundleId: String) -> Bool {
-        let lower = bundleId.lowercased()
-        return browserKeywords.contains { lower.contains($0) }
+        return browserBundleIds.contains(bundleId)
     }
 
     /// Get current URL from browser via AppleScript.

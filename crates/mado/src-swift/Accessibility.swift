@@ -20,6 +20,8 @@ func getBounds(from windowElement: AXUIElement) -> [String: Double]? {
     var rect = CGRect.zero
 
     // AXFrame is a CGRect (x, y, width, height)
+    // AX API guarantees frame is AXValue when copy succeeds.
+    // Force cast is safe: AXFrame attribute always returns AXValue type.
     guard AXValueGetValue(frame as! AXValue, .cgRect, &rect) else {
         return nil
     }
@@ -53,39 +55,10 @@ func getFocusedWindow(from app: AXUIElement) -> AXUIElement? {
         kAXFocusedWindowAttribute as CFString,
         &focusedWindow
     )
-    // AX API guarantees focusedWindow is AXUIElement when result == .success
+    // AX API guarantees focusedWindow is AXUIElement when result == .success.
+    // Force cast is safe: kAXFocusedWindowAttribute always returns AXUIElement type.
     guard result == .success, let window = focusedWindow else {
         return nil
     }
     return (window as! AXUIElement)
-}
-
-/// Get focused application from system.
-/// Returns nil if no focused application is available.
-func getFocusedApplication() -> AXUIElement? {
-    let systemWide = AXUIElementCreateSystemWide()
-    var focusedApp: CFTypeRef?
-
-    let result = AXUIElementCopyAttributeValue(
-        systemWide,
-        kAXFocusedApplicationAttribute as CFString,
-        &focusedApp
-    )
-
-    // AX API guarantees focusedApp is AXUIElement when result == .success
-    guard result == .success, let appElement = focusedApp else {
-        return nil
-    }
-    return (appElement as! AXUIElement)
-}
-
-/// Get PID from an AXUIElement application.
-/// Returns nil if PID cannot be retrieved.
-func getPID(from appElement: AXUIElement) -> pid_t? {
-    var pid: pid_t = 0
-    let result = AXUIElementGetPid(appElement, &pid)
-    guard result == .success, pid != 0 else {
-        return nil
-    }
-    return pid
 }

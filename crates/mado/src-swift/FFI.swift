@@ -13,6 +13,7 @@ public func madoStartMonitor(
     // Singleton check: Rust side already prevents concurrent calls, this is defensive
     guard WindowMonitor.shared == nil else { return }
 
+    // unsafeBitCast is safe here: Rust guarantees callbackPtr is a valid WindowEventCallback function pointer
     let callback = unsafeBitCast(callbackPtr, to: WindowEventCallback.self)
     let monitor = WindowMonitor(
         callback: callback,
