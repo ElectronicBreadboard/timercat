@@ -33,12 +33,13 @@ mado = "0.0.1"
 ```rust
 use mado;
 
+// Get current app
 let app = mado::get_active_app()?;
-println!("Current app: {} (PID: {})", app.name, app.pid);
+println!("Current app: {}", app);
 
-// Basic window info (fast, default)
+// Get current window (fast, default)
 let window = mado::get_active_window()?;
-println!("Window: '{}' in {}", window.title, window.app.name);
+println!("Window: {}", window);
 
 // With browser URL extraction (slower, macOS only)
 let window = mado::get_active_window_with_config(mado::QueryConfig {
@@ -60,10 +61,10 @@ impl WindowListener for FocusListener {
     fn on_focus_change(&self, event: WindowEvent) {
         match event {
             WindowEvent::AppActivated { app } => {
-                println!("App activated: {}", app.name);
+                println!("App: {}", app);
             }
             WindowEvent::WindowChanged { window } => {
-                println!("Window: '{}'", window.title);
+                println!("Window: {}", window);
             }
         }
     }
@@ -163,7 +164,7 @@ Uses Swift via [swift-rs](https://github.com/Brendonovich/swift-rs) for native A
 - AXObserver callbacks delivered directly to monitor thread's runloop
 
 **Delayed Window Handling:**
-Some apps (especially when launched from Dock) activate before their window appears. We use exponential backoff polling (200ms → 400ms → 800ms → 1.6s capped, max ~5 min) to catch delayed windows.
+Some apps (especially when launched from Dock) activate before their window appears. We use exponential backoff polling (200ms → 400ms → 800ms → 1.6s capped, max ~30s total) to catch delayed windows.
 
 ## 💡 Resources / References
 

@@ -155,7 +155,10 @@ final class WindowMonitor: NSObject {
         var observer: AXObserver?
         guard AXObserverCreate(pid, axCallback, &observer) == .success,
             let observer = observer
-        else { return }
+        else {
+            Log.debug("Failed to create AXObserver for PID \(pid)")
+            return
+        }
 
         let app = AXUIElementCreateApplication(pid)
         let context = Unmanaged.passUnretained(self).toOpaque()
@@ -374,7 +377,10 @@ final class WindowMonitor: NSObject {
 
         guard let jsonData = try? JSONSerialization.data(withJSONObject: event),
             let jsonString = String(data: jsonData, encoding: .utf8)
-        else { return }
+        else {
+            Log.warn("Failed to serialize \(type) event to JSON")
+            return
+        }
 
         let srJson = SRString(jsonString)
         withUnsafePointer(to: srJson) { callback($0) }

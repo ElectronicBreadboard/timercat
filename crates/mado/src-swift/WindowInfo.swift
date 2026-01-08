@@ -10,6 +10,7 @@ struct WindowInfo {
     let app: AppInfo
     let browser: BrowserInfo?
 
+    /// Convert to dictionary for JSON serialization.
     func toDictionary() -> [String: Any?] {
         return [
             "title": title,

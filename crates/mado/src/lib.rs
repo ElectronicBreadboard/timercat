@@ -10,10 +10,10 @@
 //!
 //! ```rust,no_run
 //! let app = mado::get_active_app()?;
-//! println!("Current app: {}", app.name);
+//! println!("Current app: {}", app);
 //!
 //! let window = mado::get_active_window()?;
-//! println!("Window: '{}' in {}", window.title, window.app.name);
+//! println!("Window: {}", window);
 //! # Ok::<(), mado::Error>(())
 //! ```
 //!
@@ -28,10 +28,10 @@
 //!     fn on_focus_change(&self, event: WindowEvent) {
 //!         match event {
 //!             WindowEvent::AppActivated { app } => {
-//!                 println!("App activated: {}", app.name);
+//!                 println!("App: {}", app);
 //!             }
 //!             WindowEvent::WindowChanged { window } => {
-//!                 println!("Window: '{}'", window.title);
+//!                 println!("Window: {}", window);
 //!             }
 //!         }
 //!     }
@@ -39,6 +39,7 @@
 //!
 //! let monitor = WindowMonitor::new(MyListener);
 //! monitor.run()?;
+//! # Ok::<(), mado::Error>(())
 //! ```
 //!
 //! ## Platform Support
@@ -80,7 +81,7 @@ pub use types::{AppInfo, BrowserInfo, WindowBounds, WindowEvent, WindowInfo};
 ///
 /// ```rust,no_run
 /// let app = mado::get_active_app()?;
-/// println!("Current app: {} (PID: {})", app.name, app.pid);
+/// println!("Current app: {}", app);
 /// # Ok::<(), mado::Error>(())
 /// ```
 pub fn get_active_app() -> Result<AppInfo, Error> {
@@ -103,7 +104,7 @@ pub fn get_active_app() -> Result<AppInfo, Error> {
 ///
 /// ```rust,no_run
 /// let window = mado::get_active_window()?;
-/// println!("Window: '{}'", window.title);
+/// println!("Window: {}", window);
 /// # Ok::<(), mado::Error>(())
 /// ```
 pub fn get_active_window() -> Result<WindowInfo, Error> {

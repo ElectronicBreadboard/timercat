@@ -12,21 +12,17 @@ use crate::types::WindowEvent;
 /// Callbacks should be **fast** to avoid blocking the monitor thread. For heavy work
 /// (e.g., database operations, network requests), spawn async tasks:
 ///
-/// ```rust
+/// ```rust,ignore
 /// use mado::{WindowEvent, WindowListener};
-/// use tauri::async_runtime;
 ///
-/// struct MyListener;
+/// struct MyListener {
+///     sender: std::sync::mpsc::Sender<WindowEvent>,
+/// }
 ///
 /// impl WindowListener for MyListener {
 ///     fn on_focus_change(&self, event: WindowEvent) {
-///         // Fast: emit event immediately
-///         emit_event(&event);
-///
-///         // Heavy work: spawn async task
-///         async_runtime::spawn(async move {
-///             save_to_database(&event).await;
-///         });
+///         // Fast: send event to another thread for processing
+///         let _ = self.sender.send(event);
 ///     }
 /// }
 /// ```
@@ -52,10 +48,10 @@ use crate::types::WindowEvent;
 ///     fn on_focus_change(&self, event: WindowEvent) {
 ///         match event {
 ///             WindowEvent::AppActivated { app } => {
-///                 println!("App activated: {}", app.name);
+///                 println!("App: {}", app);
 ///             }
 ///             WindowEvent::WindowChanged { window } => {
-///                 println!("Window changed: {} in {}", window.title, window.app.name);
+///                 println!("Window: {}", window);
 ///             }
 ///         }
 ///     }

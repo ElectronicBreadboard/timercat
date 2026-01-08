@@ -58,7 +58,10 @@ private func toJson(_ dict: [String: Any?]) -> SRString? {
     guard
         let jsonData = try? JSONSerialization.data(withJSONObject: dict),
         let jsonString = String(data: jsonData, encoding: .utf8)
-    else { return nil }
+    else {
+        Log.warn("Failed to serialize query response to JSON")
+        return nil
+    }
 
     return SRString(jsonString)
 }

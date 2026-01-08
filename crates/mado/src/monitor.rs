@@ -16,10 +16,10 @@ use crate::listener::WindowListener;
 ///     fn on_focus_change(&self, event: WindowEvent) {
 ///         match event {
 ///             WindowEvent::AppActivated { app } => {
-///                 println!("App activated: {}", app.name);
+///                 println!("App: {}", app);
 ///             }
 ///             WindowEvent::WindowChanged { window } => {
-///                 println!("Window: {} in app: {}", window.title, window.app.name);
+///                 println!("Window: {}", window);
 ///             }
 ///         }
 ///     }
@@ -27,6 +27,7 @@ use crate::listener::WindowListener;
 ///
 /// let monitor = WindowMonitor::new(MyListener);
 /// monitor.run()?;
+/// # Ok::<(), mado::Error>(())
 /// ```
 pub struct WindowMonitor {
     listener: Arc<dyn WindowListener>,

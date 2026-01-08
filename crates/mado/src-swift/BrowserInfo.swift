@@ -119,25 +119,27 @@ struct BrowserInfo {
         return nil
     }
 
-    private static func runAppleScript(_ script: String) -> String? {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        process.arguments = ["-e", script]
+    private static func runAppleScript(_ source: String, timeout: Double = 2.0)
+        -> String?
+    {
+        let semaphore = DispatchSemaphore(value: 0)
+        nonisolated(unsafe) var scriptResult: String?
 
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = FileHandle.nullDevice
+        DispatchQueue.global(qos: .utility).async {
+            guard let script = NSAppleScript(source: source) else {
+                semaphore.signal()
+                return
+            }
+            var error: NSDictionary?
+            let result = script.executeAndReturnError(&error)
+            scriptResult = result.stringValue
+            semaphore.signal()
+        }
 
-        do {
-            try process.run()
-            process.waitUntilExit()
-
-            guard process.terminationStatus == 0 else { return nil }
-
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            return String(data: data, encoding: .utf8)
-        } catch {
+        if semaphore.wait(timeout: .now() + timeout) == .timedOut {
             return nil
         }
+
+        return scriptResult
     }
 }

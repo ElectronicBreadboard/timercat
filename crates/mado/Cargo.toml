@@ -14,5 +14,5 @@ specta = { version = "2.0.0-rc.21", features = ["derive"] }
 [target.'cfg(target_os = "macos")'.dependencies]
 swift-rs = "1.0.5"
 
-[build-dependencies]
+[target.'cfg(target_os = "macos")'.build-dependencies]
 swift-rs = { version = "1.0.5", features = ["build"] }

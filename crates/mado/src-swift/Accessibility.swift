@@ -1,28 +1,24 @@
 import ApplicationServices
 import Foundation
 
-/// Extract bounds (position and size) from an AXUIElement window.
-/// Returns nil if bounds cannot be retrieved.
+/// Extract window bounds (position and size) from an accessibility element.
 func getBounds(from windowElement: AXUIElement) -> [String: Double]? {
-    var frameValue: CFTypeRef?
-
+    var frameRef: CFTypeRef?
     guard
         AXUIElementCopyAttributeValue(
             windowElement,
             "AXFrame" as CFString,
-            &frameValue
+            &frameRef
         ) == .success,
-        let frame = frameValue
+        let frameRef
     else {
         return nil
     }
 
     var rect = CGRect.zero
-
-    // AXFrame is a CGRect (x, y, width, height)
-    // AX API guarantees frame is AXValue when copy succeeds.
-    // Force cast is safe: AXFrame attribute always returns AXValue type.
-    guard AXValueGetValue(frame as! AXValue, .cgRect, &rect) else {
+    // Note: Force cast is safe because the Accessibility API guarantees
+    // AXFrame always returns an AXValue containing a CGRect.
+    guard AXValueGetValue(frameRef as! AXValue, .cgRect, &rect) else {
         return nil
     }
 
@@ -34,31 +30,31 @@ func getBounds(from windowElement: AXUIElement) -> [String: Double]? {
     ]
 }
 
-/// Extract title from an AXUIElement window.
-/// Returns nil if title cannot be retrieved.
+/// Extract title from an accessibility window element.
 func getTitle(from windowElement: AXUIElement) -> String? {
-    var titleValue: CFTypeRef?
+    var titleRef: CFTypeRef?
     AXUIElementCopyAttributeValue(
         windowElement,
         kAXTitleAttribute as CFString,
-        &titleValue
+        &titleRef
     )
-    return titleValue as? String
+    return titleRef as? String
 }
 
-/// Get focused window from an application.
-/// Returns nil if no focused window is available.
+/// Get the focused window from an application's accessibility element.
 func getFocusedWindow(from app: AXUIElement) -> AXUIElement? {
-    var focusedWindow: CFTypeRef?
-    let result = AXUIElementCopyAttributeValue(
-        app,
-        kAXFocusedWindowAttribute as CFString,
-        &focusedWindow
-    )
-    // AX API guarantees focusedWindow is AXUIElement when result == .success.
-    // Force cast is safe: kAXFocusedWindowAttribute always returns AXUIElement type.
-    guard result == .success, let window = focusedWindow else {
+    var windowRef: CFTypeRef?
+    guard
+        AXUIElementCopyAttributeValue(
+            app,
+            kAXFocusedWindowAttribute as CFString,
+            &windowRef
+        ) == .success,
+        let windowRef
+    else {
         return nil
     }
-    return (window as! AXUIElement)
+    // Note: Force cast is safe because the Accessibility API guarantees
+    // AXFocusedWindow always returns an AXUIElement.
+    return (windowRef as! AXUIElement)
 }
