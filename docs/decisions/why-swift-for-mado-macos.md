@@ -6,32 +6,39 @@ We chose **Swift via swift-rs** for the macOS window monitoring implementation i
 
 ## Rationale
 
-### Why Swift
+### Why Swift over Pure Rust
 
-#### Event-Driven Architecture (Call Once, Receive Callbacks)
+#### Event-Driven Architecture
 
-macOS monitoring works best as callback-based: Rust calls into Swift once to start monitoring, Swift sets up all native observers (NSWorkspace, AXObserver), runs the CFRunLoop, and calls back to Rust on each event. This is cleaner than trying to orchestrate native APIs from Rust repeatedly.
+macOS monitoring works best as callback-based: Rust calls into Swift once to start monitoring, Swift sets up all native observers (NSWorkspace, AXObserver), runs the CFRunLoop, and calls back to Rust on each event. This is cleaner than orchestrating native APIs from Rust repeatedly.
 
-#### Memory Safety
+#### Memory Safety via ARC
 
-The pure Rust implementation required manual memory management for Accessibility API callbacks using `Box::into_raw()`, leading to potential memory leaks and complexity. Swift's ARC automatically manages memory for observers and callbacks, eliminating these issues entirely.
+The pure Rust implementation required manual memory management for Accessibility API callbacks using `Box::into_raw()`, leading to potential memory leaks and complexity. Swift's ARC automatically manages memory for observers and callbacks, eliminating these issues.
 
 #### Native API Access
 
-NSWorkspace, Accessibility API, CoreGraphics, and AppleScript are first-class citizens in Swift. The pure Rust approach required three different FFI crates (`core-foundation`, `accessibility-sys`, `objc2`) with ~40% of the code in `unsafe` blocks. Swift eliminates this complexity.
+NSWorkspace, Accessibility API, CoreGraphics, and AppleScript are first-class citizens in Swift. The pure Rust approach required three different FFI crates (`core-foundation`, `accessibility-sys`, `objc2`) with ~40% of the code in `unsafe` blocks.
 
 **APIs Used:**
 
-- **NSWorkspace**: Detects app activation events
-- **Accessibility API**: Observes window focus and title changes
-- **CoreGraphics**: Provides stable window IDs and accurate bounds (Accessibility API doesn't expose window IDs reliably)
-- **AppleScript**: Extracts browser URLs and private mode detection (optional, requires Automation permission)
+| API               | Purpose                                 |
+| ----------------- | --------------------------------------- |
+| NSWorkspace       | App activation events                   |
+| Accessibility API | Window focus and title changes          |
+| CoreGraphics      | Stable window IDs and bounds            |
+| AppleScript       | Browser URLs and private mode detection |
 
-#### Simpler Codebase
+#### Code Reduction
 
-~800 lines of Swift + ~200 lines of Rust FFI vs ~1,150 lines of unsafe Rust for the same functionality. The FFI boundary is minimal (5 functions), and only that boundary requires `unsafe` code in Rust.
+| Approach         | Lines of Code          | Unsafe Code  |
+| ---------------- | ---------------------- | ------------ |
+| Swift + Rust FFI | ~800 Swift + ~200 Rust | ~5 functions |
+| Pure Rust        | ~1,150 lines           | ~40% unsafe  |
 
-### swift-rs Integration
+The FFI boundary is minimal (5 functions), and only that boundary requires `unsafe` code in Rust.
+
+### Why swift-rs
 
 swift-rs enables:
 
@@ -53,8 +60,19 @@ The monitor runs in a **spawned thread** with its own CFRunLoop:
 
 ## Trade-offs
 
-- **Build Complexity**: Requires Swift toolchain, but this is standard on macOS.
-- **Two Languages**: Context switching adds cognitive overhead, but the FFI boundary is clean and minimal. The complexity reduction in the Swift layer more than compensates.
+### Build Complexity
+
+Requires Swift toolchain, but this is standard on macOS development machines.
+
+### Two Languages
+
+Context switching between Rust and Swift adds cognitive overhead. We mitigate this by:
+
+- Keeping the FFI boundary clean and minimal (5 functions)
+- Swift handles all macOS-specific logic
+- Rust handles cross-platform abstractions and the public API
+
+The complexity reduction in the Swift layer more than compensates.
 
 ## Alternatives Considered
 

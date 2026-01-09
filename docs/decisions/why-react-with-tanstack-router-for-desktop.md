@@ -59,15 +59,24 @@ TanStack Router's approach is more discoverable - everything about a route is vi
 
 Built-in dev tools (`TanStackRouterDevtools`) provide excellent debugging capabilities during development.
 
-#### Migration Path
+### Why TanStack Router over TanStack Start
 
-We decided to try TanStack Router for this project. Since the mental model with loaders and components is quite similar to React Router, migration would be straightforward if we're not happy with TanStack Router.
+| Aspect            | TanStack Router      | TanStack Start                                      |
+| ----------------- | -------------------- | --------------------------------------------------- |
+| **Use case**      | Pure SPA             | Full-stack (SSR/SSG)                                |
+| **Plugin**        | `TanStackRouterVite` | `tanstackStart`                                     |
+| **Output**        | `dist/`              | `dist/client/` + `dist/server/`                     |
+| **Server bundle** | None                 | Generated (unused in Tauri)                         |
+| **Root route**    | Simple `Outlet`      | Requires `shellComponent`, `HeadContent`, `Scripts` |
 
-### Things We Don't Like
+TanStack Start is designed for web apps that need SSR. Its SPA mode still generates server artifacts that Tauri never uses. TanStack Router is purpose-built for SPAs -> simpler setup, smaller output, no SSR concepts leaking through.
 
-#### Server Bundle
+## Alternatives Considered
 
-TanStack Start creates a server bundle even in SPA mode. We need to investigate how to exclude this for pure SPA deployments. See [RFC #3394](https://github.com/TanStack/router/discussions/3394) for ongoing SPA mode enhancements.
+- **React Router**: Less type-safe, route configuration is scattered across separate exports rather than co-located.
+- **TanStack Start**: Overkill for desktop apps. Generates unused server bundles and introduces SSR concepts that don't apply to Tauri.
+
+## Things We Don't Like
 
 #### Error Handling
 

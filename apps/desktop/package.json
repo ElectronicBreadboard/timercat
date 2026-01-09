@@ -30,11 +30,11 @@
 	},
 	"dependencies": {
 		"@repo/ui": "workspace:*",
-		"@tanstack/react-router": "^1.144.0",
-		"@tanstack/react-router-devtools": "^1.144.0",
-		"@tanstack/react-start": "^1.145.3",
+		"@tanstack/react-router": "^1.146.2",
+		"@tanstack/react-router-devtools": "^1.146.2",
+		"@tanstack/react-start": "^1.146.3",
 		"@tauri-apps/api": "^2.9.1",
-		"@tauri-apps/plugin-opener": "^2.5.2",
+		"@tauri-apps/plugin-opener": "^2.5.3",
 		"react": "^19.2.3",
 		"react-dom": "^19.2.3",
 		"zod": "^4.3.5"

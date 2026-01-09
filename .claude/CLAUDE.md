@@ -21,17 +21,20 @@ Language-specific rules are in `.claude/rules/` (auto-loaded).
 Tauri desktop app for activity tracking.
 
 **Tech Stack:**
+
 - Rust + Swift (backend, `crates/`)
 - TypeScript + React (frontend, `apps/`)
 - SQLite (database)
 
 **Key Commands:**
+
 - `pnpm start:dev` - Start development
 - `pnpm build` - Build all
 - `pnpm test` - Run all tests
 - `cargo test -p mado` - Test mado crate
 
 **Important Directories:**
+
 - `crates/mado/` - Window monitoring library (Swift + Rust FFI)
 - `apps/desktop/` - Tauri desktop app
 - `apps/web/` - Web app

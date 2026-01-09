@@ -24,6 +24,30 @@ We're most familiar with React, and Tauri allows us to use our existing React sk
 
 Rust provides access to low-level system APIs when needed, while still maintaining a simple React frontend. This gives us the flexibility to optimize critical paths without sacrificing developer experience.
 
+## Trade-offs
+
+### WebView Fragmentation
+
+Tauri uses the OS's native webview (WebView2 on Windows, WebKit on macOS, WebKitGTK on Linux). This means:
+
+- **Different rendering engines**: Features and bugs can vary across platforms
+- **Linux variability**: WebKitGTK versions differ by distro (Ubuntu 22.04+ required for Tauri 2.x)
+- **Known quirks**: localStorage sync issues on Linux, z-order differences between Windows/macOS
+
+We accept this tradeoff because:
+
+1. Our UI is simple enough that cross-browser issues are minimal
+2. The performance and bundle size benefits outweigh the testing overhead
+3. Most of our users are on macOS (primary target)
+
+### Rust Learning Curve
+
+Teams unfamiliar with Rust face a steeper learning curve. We mitigate this by:
+
+- Keeping Rust code focused on backend/system operations
+- Using Swift for macOS-specific native code (simpler than fighting Rust FFI)
+- Frontend remains pure React/TypeScript
+
 ## Alternatives Considered
 
 - **Electron**: Too resource-intensive for a background app. Larger bundle sizes and higher memory/CPU usage would negatively impact performance and battery life.
