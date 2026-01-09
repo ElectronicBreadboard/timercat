@@ -6,6 +6,7 @@
 		"source.fixAll.eslint": "explicit"
 	},
 	"editor.wordWrap": "on",
+	"editor.minimap.sectionHeaderDetectionRegExp": "MARK:",
 
 	// Search settings
 	"search.exclude": {

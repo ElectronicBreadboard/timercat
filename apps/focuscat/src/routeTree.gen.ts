@@ -9,68 +9,68 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as WindowMainIndexRouteImport } from './routes/window.main/index'
+import { Route as WindowCatIndexRouteImport } from './routes/window.cat/index'
 
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
+const WindowMainIndexRoute = WindowMainIndexRouteImport.update({
+  id: '/window/main/',
+  path: '/window/main/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const WindowCatIndexRoute = WindowCatIndexRouteImport.update({
+  id: '/window/cat/',
+  path: '/window/cat/',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/window/cat': typeof WindowCatIndexRoute
+  '/window/main': typeof WindowMainIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/window/cat': typeof WindowCatIndexRoute
+  '/window/main': typeof WindowMainIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/window/cat/': typeof WindowCatIndexRoute
+  '/window/main/': typeof WindowMainIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about'
+  fullPaths: '/window/cat' | '/window/main'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about'
-  id: '__root__' | '/' | '/about'
+  to: '/window/cat' | '/window/main'
+  id: '__root__' | '/window/cat/' | '/window/main/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
+  WindowCatIndexRoute: typeof WindowCatIndexRoute
+  WindowMainIndexRoute: typeof WindowMainIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/window/main/': {
+      id: '/window/main/'
+      path: '/window/main'
+      fullPath: '/window/main'
+      preLoaderRoute: typeof WindowMainIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/window/cat/': {
+      id: '/window/cat/'
+      path: '/window/cat'
+      fullPath: '/window/cat'
+      preLoaderRoute: typeof WindowCatIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
+  WindowCatIndexRoute: WindowCatIndexRoute,
+  WindowMainIndexRoute: WindowMainIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

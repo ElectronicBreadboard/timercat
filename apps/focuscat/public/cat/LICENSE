@@ -1,0 +1,35 @@
+Copyright (c) 2025 @bennobuilder
+
+1. Scope of Licensing  
+   All content in this directory is proprietary and is governed solely by
+   the terms of this license. This includes, without limitation, all
+   files, code, documentation, images, assets, and data contained here.
+
+   Content that includes an explicit license header is governed by that
+   specific header, which overrides this directory-level license.
+
+2. Precedence of Licenses  
+   When multiple license sources could apply, the most specific license
+   takes precedence. The license in this directory therefore overrides
+   any license in parent directories, including the repository’s main
+   open-source license.
+
+3. Permitted Use  
+   You are granted permission to use the contents of this directory only
+   for the purpose of running, building, or contributing to this
+   repository.
+
+4. Prohibited Use  
+   Any other use—including but not limited to copying, modifying,
+   redistributing, publishing, embedding in other projects, training
+   models, or creating derivative works—is prohibited without explicit
+   written permission from the copyright holder.
+
+5. Third-Party Components  
+   Any third-party components included in this directory remain under
+   their original licenses as provided by their respective owners.
+
+6. Relationship to Default License  
+   Content in this directory is explicitly not covered by the repository’s
+   default license (AGPLv3) or any other license in parent directories.
+   The default license applies only where no more specific license exists.

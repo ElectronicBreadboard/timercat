@@ -29,12 +29,17 @@
 		"update:latest": "pnpm update --latest"
 	},
 	"dependencies": {
+		"@base-ui/react": "^1.0.0",
 		"@tanstack/react-router": "^1.146.2",
 		"@tanstack/react-router-devtools": "^1.146.2",
 		"@tauri-apps/api": "^2.9.1",
 		"@tauri-apps/plugin-opener": "^2.5.3",
+		"clsx": "^2.1.1",
+		"lucide-react": "^0.562.0",
 		"react": "^19.2.3",
-		"react-dom": "^19.2.3"
+		"react-dom": "^19.2.3",
+		"tailwind-merge": "^3.4.0",
+		"tuple-result": "^0.0.10"
 	},
 	"devDependencies": {
 		"@blgc/config": "^0.0.39",

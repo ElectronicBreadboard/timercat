@@ -1,0 +1,34 @@
+use crate::{
+    environment::states::settings::AppSettingsState,
+    features::settings::{
+        persistence,
+        types::{AppSettings, AppSettingsChangedEvent},
+    },
+};
+use tauri::{AppHandle, State};
+use tauri_specta::Event;
+
+#[tauri::command]
+#[specta::specta]
+pub fn get_settings(state: State<'_, AppSettingsState>) -> AppSettings {
+    return state.lock().unwrap().clone();
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn set_settings(
+    app: AppHandle,
+    state: State<'_, AppSettingsState>,
+    settings: AppSettings,
+) -> Result<(), String> {
+    // Update in-memory state
+    *state.lock().unwrap() = settings.clone();
+
+    // Persist to disk
+    persistence::save_settings(&app, &settings)?;
+
+    // Emit event to notify frontend
+    let _ = AppSettingsChangedEvent(settings).emit(&app);
+
+    return Ok(());
+}
