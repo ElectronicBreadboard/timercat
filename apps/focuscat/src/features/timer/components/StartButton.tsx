@@ -1,11 +1,11 @@
 import React from 'react';
+import { specta } from '@/environment';
 import { cn } from '@/lib';
-import type { TTimerStatus } from '../types';
 
 export const StartButton: React.FC<TStartButtonProps> = (props) => {
 	const { status, onStart, onPause, onResume, className } = props;
 
-	const { label, onClick } = React.useMemo(() => {
+	const { label, onClick } = React.useMemo((): { label: string; onClick: () => void } => {
 		switch (status) {
 			case 'idle':
 				return { label: 'START SESSION', onClick: onStart };
@@ -31,7 +31,7 @@ export const StartButton: React.FC<TStartButtonProps> = (props) => {
 };
 
 interface TStartButtonProps {
-	status: TTimerStatus;
+	status: specta.TimerStatus;
 	onStart: () => void;
 	onPause: () => void;
 	onResume: () => void;

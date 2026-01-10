@@ -5,7 +5,7 @@ import React from 'react';
 import { ExpandIcon, GripIcon } from '@/components';
 import { specta } from '@/environment';
 import { Cat } from '@/features/cat';
-import { useAppSettings } from '@/hooks';
+import { useAppSettings, useTimerState } from '@/hooks';
 import { cn } from '@/lib';
 
 export const Route = createFileRoute('/window/cat/')({
@@ -13,28 +13,21 @@ export const Route = createFileRoute('/window/cat/')({
 });
 
 function RouteComponent() {
-	const [tapCount, setTapCount] = React.useState(0);
+	const timerState = useTimerState();
 	const [settings] = useAppSettings();
 
 	// MARK: - Actions
-
-	const handleCatTap = React.useCallback(() => {
-		setTapCount((prev) => prev + 1);
-	}, []);
 
 	const handleExpand = React.useCallback(async () => {
 		await specta.commands.showMainWindow();
 		await specta.commands.hideCatWindow();
 	}, []);
 
-	// MARK: - Render
+	// MARK: - UI
 
 	return (
 		<div className={cn('flex flex-col items-center', settings.debug && 'border border-red-500')}>
-			<Cat
-				className={cn('z-10', settings.debug && 'border border-green-500')}
-				onTap={handleCatTap}
-			/>
+			<Cat className={cn('z-10', settings.debug && 'border border-green-500')} />
 
 			<div
 				className={cn(
@@ -54,9 +47,14 @@ function RouteComponent() {
 					<GripIcon size={14} className="text-gray-500" />
 				</div>
 
-				{/* Counter */}
-				<span className="min-w-[32px] px-2 text-center font-mono text-sm text-white select-none">
-					{tapCount}
+				{/* Timer Display */}
+				<span
+					className={cn(
+						'min-w-[48px] px-2 text-center font-mono text-sm select-none',
+						timerState?.status === 'running' ? 'text-white' : 'text-gray-400'
+					)}
+				>
+					{formatTime(timerState?.remainingSeconds ?? 0)}
 				</span>
 
 				{/* Expand Button */}
@@ -69,4 +67,10 @@ function RouteComponent() {
 			</div>
 		</div>
 	);
+}
+
+function formatTime(seconds: number): string {
+	const mins = Math.floor(seconds / 60);
+	const secs = seconds % 60;
+	return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }

@@ -1,8 +1,8 @@
 import { Menu } from '@base-ui/react/menu';
 import { ChevronDownIcon } from 'lucide-react';
 import React from 'react';
+import { specta } from '@/environment';
 import { cn } from '@/lib';
-import type { TFocusCategory } from '../types';
 
 export const FocusSelector: React.FC<TFocusSelectorProps> = (props) => {
 	const { categories, selected, onSelect, disabled = false, className } = props;
@@ -45,9 +45,9 @@ export const FocusSelector: React.FC<TFocusSelectorProps> = (props) => {
 };
 
 interface TFocusSelectorProps {
-	categories: TFocusCategory[];
-	selected: TFocusCategory | null;
-	onSelect: (category: TFocusCategory | null) => void;
+	categories: specta.FocusCategory[];
+	selected: specta.FocusCategory | null;
+	onSelect: (category: specta.FocusCategory | null) => void;
 	disabled?: boolean;
 	className?: string;
 }

@@ -1,9 +1,6 @@
-use crate::{
-    environment::states::settings::AppSettingsState,
-    features::settings::{
-        persistence,
-        types::{AppSettings, AppSettingsChangedEvent},
-    },
+use super::{
+    persistence,
+    types::{AppSettings, AppSettingsChangedEvent, AppSettingsState},
 };
 use tauri::{AppHandle, State};
 use tauri_specta::Event;

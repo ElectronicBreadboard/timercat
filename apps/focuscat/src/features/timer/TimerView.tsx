@@ -29,8 +29,13 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	const lastWholeMinute = React.useRef<number | null>(null);
 	const lastTapTime = React.useRef<number>(0);
 
-	const isRunning = state.status !== 'idle';
-	const displaySeconds = previewMinutes != null ? previewMinutes * 60 : state.remainingSeconds;
+	const isRunning = React.useMemo(() => {
+		return state != null && state.status !== 'idle';
+	}, [state]);
+
+	const displaySeconds = React.useMemo(() => {
+		return previewMinutes != null ? previewMinutes * 60 : (state?.remainingSeconds ?? 0);
+	}, [previewMinutes, state?.remainingSeconds]);
 
 	// MARK: - Actions
 
@@ -67,6 +72,14 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	}, []);
 
 	// MARK: - UI
+
+	if (state == null || settings == null) {
+		return (
+			<div className={cn('flex items-center justify-center', className)}>
+				<p className="text-gray-400">Loading...</p>
+			</div>
+		);
+	}
 
 	return (
 		<div className={cn('relative flex flex-col items-center justify-between py-8', className)}>

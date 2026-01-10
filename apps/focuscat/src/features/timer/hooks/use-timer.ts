@@ -1,125 +1,94 @@
 import React from 'react';
+import { specta } from '@/environment';
+import { useTimerState } from '@/hooks';
+import { toTuple } from '@/lib';
 import { timerConfig } from '../timer.config';
-import type { TFocusCategory, TTimerPhase, TTimerSettings, TTimerState } from '../types';
 
 export function useTimer(): TUseTimerReturn {
-	const [settings] = React.useState<TTimerSettings>(timerConfig.settings);
-	const [categories] = React.useState<TFocusCategory[]>(timerConfig.categories);
-	const [state, setState] = React.useState<TTimerState>(() => getInitialState(settings));
+	const state = useTimerState();
+	const [settings, setSettings] = React.useState<specta.TimerSettings | null>(null);
+	const [categories] = React.useState<specta.FocusCategory[]>(timerConfig.categories);
 	const [startTime, setStartTime] = React.useState<Date | null>(null);
 
-	const intervalRef = React.useRef<number | null>(null);
-
 	const endTime = React.useMemo(() => {
-		if (startTime == null || state.status !== 'running') return null;
+		if (startTime == null || state == null || state.status !== 'running') {
+			return null;
+		}
 		return new Date(startTime.getTime() + state.remainingSeconds * 1000);
-	}, [startTime, state.remainingSeconds, state.status]);
+	}, [startTime, state]);
 
 	// MARK: - Actions
 
-	const transitionToNextPhase = React.useCallback(() => {
-		setState((prev) => {
-			const isWorkPhase = prev.phase === 'work';
-			const newSessionsCompleted = isWorkPhase
-				? prev.sessionsCompleted + 1
-				: prev.sessionsCompleted;
-
-			let nextPhase: TTimerPhase;
-			if (isWorkPhase) {
-				nextPhase =
-					newSessionsCompleted % settings.sessionsBeforeLongBreak === 0
-						? 'longBreak'
-						: 'shortBreak';
-			} else {
-				nextPhase = 'work';
-			}
-
-			const nextDuration = getDurationForPhase(nextPhase, settings);
-
-			return {
-				...prev,
-				status: 'idle',
-				phase: nextPhase,
-				totalSeconds: nextDuration,
-				remainingSeconds: nextDuration,
-				sessionsCompleted: newSessionsCompleted
-			};
-		});
-		setStartTime(null);
-	}, [settings]);
-
-	const tick = React.useCallback(() => {
-		setState((prev) => {
-			if (prev.remainingSeconds <= 1) {
-				if (intervalRef.current != null) {
-					clearInterval(intervalRef.current);
-					intervalRef.current = null;
-				}
-				setTimeout(() => transitionToNextPhase(), 0);
-				return { ...prev, remainingSeconds: 0, status: 'idle' };
-			}
-			return { ...prev, remainingSeconds: prev.remainingSeconds - 1 };
-		});
-	}, [transitionToNextPhase]);
-
-	const start = React.useCallback(() => {
-		if (state.status !== 'idle') return;
-		setStartTime(new Date());
-		setState((prev) => ({ ...prev, status: 'running' }));
-		intervalRef.current = window.setInterval(tick, 1000);
-	}, [state.status, tick]);
-
-	const pause = React.useCallback(() => {
-		if (state.status !== 'running') return;
-		if (intervalRef.current != null) {
-			clearInterval(intervalRef.current);
-			intervalRef.current = null;
+	const start = React.useCallback(async () => {
+		const [isOk, , error] = toTuple(await specta.commands.startTimer());
+		if (isOk) {
+			setStartTime(new Date());
+		} else {
+			console.error('Failed to start timer:', error);
 		}
-		setState((prev) => ({ ...prev, status: 'paused' }));
-	}, [state.status]);
-
-	const resume = React.useCallback(() => {
-		if (state.status !== 'paused') return;
-		setStartTime(new Date());
-		setState((prev) => ({ ...prev, status: 'running' }));
-		intervalRef.current = window.setInterval(tick, 1000);
-	}, [state.status, tick]);
-
-	const reset = React.useCallback(() => {
-		if (intervalRef.current != null) {
-			clearInterval(intervalRef.current);
-			intervalRef.current = null;
-		}
-		setState((prev) => ({ ...prev, status: 'idle', remainingSeconds: prev.totalSeconds }));
-		setStartTime(null);
 	}, []);
 
-	const skip = React.useCallback(() => {
-		if (intervalRef.current != null) {
-			clearInterval(intervalRef.current);
-			intervalRef.current = null;
+	const pause = React.useCallback(async () => {
+		const [isOk, , error] = toTuple(await specta.commands.pauseTimer());
+		if (!isOk) {
+			console.error('Failed to pause timer:', error);
 		}
-		transitionToNextPhase();
-	}, [transitionToNextPhase]);
+	}, []);
 
-	const setDurationMinutes = React.useCallback(
-		(minutes: number) => {
-			if (state.status !== 'idle') return;
-			const seconds = minutes * 60;
-			setState((prev) => ({ ...prev, totalSeconds: seconds, remainingSeconds: seconds }));
-		},
-		[state.status]
-	);
+	const resume = React.useCallback(async () => {
+		const [isOk, , error] = toTuple(await specta.commands.resumeTimer());
+		if (isOk) {
+			setStartTime(new Date());
+		} else {
+			console.error('Failed to resume timer:', error);
+		}
+	}, []);
 
-	const setCategory = React.useCallback((category: TFocusCategory | null) => {
-		setState((prev) => ({ ...prev, category }));
+	const reset = React.useCallback(async () => {
+		const [isOk, , error] = toTuple(await specta.commands.resetTimer());
+		if (isOk) {
+			setStartTime(null);
+		} else {
+			console.error('Failed to reset timer:', error);
+		}
+	}, []);
+
+	const skip = React.useCallback(async () => {
+		const [isOk, , error] = toTuple(await specta.commands.skipTimer());
+		if (isOk) {
+			setStartTime(null);
+		} else {
+			console.error('Failed to skip timer:', error);
+		}
+	}, []);
+
+	const setDurationMinutes = React.useCallback(async (minutes: number) => {
+		const [isOk, , error] = toTuple(await specta.commands.setTimerDuration(minutes));
+		if (!isOk) {
+			console.error('Failed to set timer duration:', error);
+		}
+	}, []);
+
+	const setCategory = React.useCallback(async (category: specta.FocusCategory | null) => {
+		const [isOk, , error] = toTuple(await specta.commands.setTimerCategory(category));
+		if (!isOk) {
+			console.error('Failed to set timer category:', error);
+		}
 	}, []);
 
 	// MARK: - Effects
 
 	React.useEffect(() => {
+		specta.commands.getTimerSettings().then(setSettings);
+	}, []);
+
+	React.useEffect(() => {
+		const unsub = specta.events.timerCompleteEvent.listen(() => {
+			setStartTime(null);
+		});
+
 		return () => {
-			if (intervalRef.current != null) clearInterval(intervalRef.current);
+			unsub.then((u) => u());
 		};
 	}, []);
 
@@ -139,32 +108,10 @@ export function useTimer(): TUseTimerReturn {
 	};
 }
 
-function getInitialState(settings: TTimerSettings): TTimerState {
-	return {
-		status: 'idle',
-		phase: 'work',
-		totalSeconds: settings.workDuration,
-		remainingSeconds: settings.workDuration,
-		category: timerConfig.categories[0] ?? null,
-		sessionsCompleted: 0
-	};
-}
-
-function getDurationForPhase(phase: TTimerPhase, settings: TTimerSettings): number {
-	switch (phase) {
-		case 'work':
-			return settings.workDuration;
-		case 'shortBreak':
-			return settings.shortBreakDuration;
-		case 'longBreak':
-			return settings.longBreakDuration;
-	}
-}
-
 interface TUseTimerReturn {
-	state: TTimerState;
-	settings: TTimerSettings;
-	categories: TFocusCategory[];
+	state: specta.Timer | null;
+	settings: specta.TimerSettings | null;
+	categories: specta.FocusCategory[];
 	startTime: Date | null;
 	endTime: Date | null;
 	start: () => void;
@@ -173,5 +120,5 @@ interface TUseTimerReturn {
 	reset: () => void;
 	skip: () => void;
 	setDurationMinutes: (minutes: number) => void;
-	setCategory: (category: TFocusCategory | null) => void;
+	setCategory: (category: specta.FocusCategory | null) => void;
 }

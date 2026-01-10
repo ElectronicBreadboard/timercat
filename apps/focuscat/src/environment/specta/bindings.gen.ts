@@ -50,6 +50,68 @@ async setSettings(settings: AppSettings) : Promise<Result<null, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async getTimer() : Promise<Timer> {
+    return await TAURI_INVOKE("get_timer");
+},
+async getTimerSettings() : Promise<TimerSettings> {
+    return await TAURI_INVOKE("get_timer_settings");
+},
+async startTimer() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("start_timer") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async pauseTimer() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("pause_timer") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async resumeTimer() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("resume_timer") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async resetTimer() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("reset_timer") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async skipTimer() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("skip_timer") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setTimerDuration(minutes: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_timer_duration", { minutes }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setTimerCategory(category: FocusCategory | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_timer_category", { category }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -57,9 +119,13 @@ async setSettings(settings: AppSettings) : Promise<Result<null, string>> {
 
 
 export const events = __makeEvents__<{
-appSettingsChangedEvent: AppSettingsChangedEvent
+appSettingsChangedEvent: AppSettingsChangedEvent,
+timerCompleteEvent: TimerCompleteEvent,
+timerTickEvent: TimerTickEvent
 }>({
-appSettingsChangedEvent: "app-settings-changed-event"
+appSettingsChangedEvent: "app-settings-changed-event",
+timerCompleteEvent: "timer-complete-event",
+timerTickEvent: "timer-tick-event"
 })
 
 /** user-defined constants **/
@@ -68,14 +134,21 @@ appSettingsChangedEvent: "app-settings-changed-event"
 
 /** user-defined types **/
 
-/**
- * Global application settings.
- */
 export type AppSettings = { debug: boolean }
-/**
- * Event emitted when app settings change.
- */
 export type AppSettingsChangedEvent = AppSettings
+export type FocusCategory = { id: string; name: string; color: string }
+export type Timer = { status: TimerStatus; phase: TimerPhase; totalSeconds: number; remainingSeconds: number; category: FocusCategory | null; sessionsCompleted: number }
+/**
+ * Event emitted when timer phase completes.
+ */
+export type TimerCompleteEvent = TimerPhase
+export type TimerPhase = "work" | "shortBreak" | "longBreak"
+export type TimerSettings = { workDuration: number; shortBreakDuration: number; longBreakDuration: number; sessionsBeforeLongBreak: number }
+export type TimerStatus = "idle" | "running" | "paused"
+/**
+ * Event emitted every second while timer is running.
+ */
+export type TimerTickEvent = Timer
 
 /** tauri-specta globals **/
 

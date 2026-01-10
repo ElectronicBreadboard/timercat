@@ -2,9 +2,21 @@ mod commands;
 pub mod tray;
 pub mod window;
 
-use crate::{
-    environment::states::settings::AppSettingsState,
-    features::settings::{self, types::AppSettingsChangedEvent},
+use std::sync::Mutex;
+
+use crate::features::{
+    settings::{
+        self,
+        types::{AppSettingsChangedEvent, AppSettingsState},
+    },
+    timer::{
+        self,
+        runner::TimerRunner,
+        types::{
+            Timer, TimerCompleteEvent, TimerSettings, TimerSettingsState, TimerState,
+            TimerTickEvent,
+        },
+    },
 };
 use specta_typescript::Typescript;
 use tauri::Manager;
@@ -22,8 +34,22 @@ pub fn run() {
             // Settings commands
             settings::commands::get_settings,
             settings::commands::set_settings,
+            // Timer commands
+            timer::commands::get_timer,
+            timer::commands::get_timer_settings,
+            timer::commands::start_timer,
+            timer::commands::pause_timer,
+            timer::commands::resume_timer,
+            timer::commands::reset_timer,
+            timer::commands::skip_timer,
+            timer::commands::set_timer_duration,
+            timer::commands::set_timer_category,
         ])
-        .events(collect_events![AppSettingsChangedEvent]);
+        .events(collect_events![
+            AppSettingsChangedEvent,
+            TimerTickEvent,
+            TimerCompleteEvent
+        ]);
 
     #[cfg(debug_assertions)]
     builder
@@ -45,6 +71,9 @@ pub fn run() {
 
             // Manage state
             app.manage(AppSettingsState::new(app_settings));
+            app.manage(TimerState::new(Timer::default()));
+            app.manage(TimerSettingsState::new(TimerSettings::default()));
+            app.manage(Mutex::new(None::<TimerRunner>));
 
             // Setup tray icon (macOS only)
             #[cfg(target_os = "macos")]
