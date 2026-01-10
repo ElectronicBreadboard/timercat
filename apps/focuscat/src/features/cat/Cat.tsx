@@ -3,7 +3,7 @@ import { cn } from '@/lib';
 import { catConfig } from './cat.config';
 import { TCatFace, TCatFur, TCatHand, TCatHat } from './types';
 
-export const Cat: React.FC<TCatProps> = (props) => {
+export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
 	const { fur = 'white', face = 'cute', hat, size = 150, className, onTap } = props;
 	const [leftHand, setLeftHand] = React.useState<TCatHand>('down');
 	const [rightHand, setRightHand] = React.useState<TCatHand>('down');
@@ -29,7 +29,7 @@ export const Cat: React.FC<TCatProps> = (props) => {
 
 	// MARK: - Actions
 
-	const handleTap = React.useCallback(() => {
+	const tap = React.useCallback(() => {
 		if (lastHand === 'right') {
 			setLeftHand('up');
 			setTimeout(() => setLeftHand('down'), 100);
@@ -39,10 +39,18 @@ export const Cat: React.FC<TCatProps> = (props) => {
 			setTimeout(() => setRightHand('down'), 100);
 			setLastHand('right');
 		}
-		onTap?.();
-	}, [lastHand, onTap]);
+	}, [lastHand]);
 
-	// MARK: - Render
+	const handleTap = React.useCallback(() => {
+		tap();
+		onTap?.();
+	}, [tap, onTap]);
+
+	// MARK: - Effects
+
+	React.useImperativeHandle(ref, () => ({ tap }), [tap]);
+
+	// MARK: - UI
 
 	return (
 		<div
@@ -71,7 +79,7 @@ export const Cat: React.FC<TCatProps> = (props) => {
 			</div>
 		</div>
 	);
-};
+});
 
 interface TCatProps {
 	fur?: TCatFur;
@@ -80,4 +88,8 @@ interface TCatProps {
 	size?: number;
 	className?: string;
 	onTap?: () => void;
+}
+
+export interface TCatRef {
+	tap: () => void;
 }

@@ -2,5 +2,8 @@
 export {
 	Maximize2 as ExpandIcon,
 	GripVertical as GripIcon,
-	Minimize2 as MinimizeIcon
+	LayoutGrid as LayoutIcon,
+	Minimize2 as MinimizeIcon,
+	Pin as PinIcon,
+	PinOff as PinOffIcon
 } from 'lucide-react'; // https://lucide.dev/icons/

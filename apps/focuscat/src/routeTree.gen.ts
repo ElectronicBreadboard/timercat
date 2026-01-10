@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WindowMainIndexRouteImport } from './routes/window.main/index'
 import { Route as WindowCatIndexRouteImport } from './routes/window.cat/index'
+import { Route as WindowMainSettingsIndexRouteImport } from './routes/window.main.settings/index'
 
 const WindowMainIndexRoute = WindowMainIndexRouteImport.update({
   id: '/window/main/',
@@ -22,31 +23,40 @@ const WindowCatIndexRoute = WindowCatIndexRouteImport.update({
   path: '/window/cat/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WindowMainSettingsIndexRoute = WindowMainSettingsIndexRouteImport.update({
+  id: '/window/main/settings/',
+  path: '/window/main/settings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/window/cat': typeof WindowCatIndexRoute
   '/window/main': typeof WindowMainIndexRoute
+  '/window/main/settings': typeof WindowMainSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/window/cat': typeof WindowCatIndexRoute
   '/window/main': typeof WindowMainIndexRoute
+  '/window/main/settings': typeof WindowMainSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/window/cat/': typeof WindowCatIndexRoute
   '/window/main/': typeof WindowMainIndexRoute
+  '/window/main/settings/': typeof WindowMainSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/window/cat' | '/window/main'
+  fullPaths: '/window/cat' | '/window/main' | '/window/main/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/window/cat' | '/window/main'
-  id: '__root__' | '/window/cat/' | '/window/main/'
+  to: '/window/cat' | '/window/main' | '/window/main/settings'
+  id: '__root__' | '/window/cat/' | '/window/main/' | '/window/main/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   WindowCatIndexRoute: typeof WindowCatIndexRoute
   WindowMainIndexRoute: typeof WindowMainIndexRoute
+  WindowMainSettingsIndexRoute: typeof WindowMainSettingsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WindowCatIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/window/main/settings/': {
+      id: '/window/main/settings/'
+      path: '/window/main/settings'
+      fullPath: '/window/main/settings'
+      preLoaderRoute: typeof WindowMainSettingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   WindowCatIndexRoute: WindowCatIndexRoute,
   WindowMainIndexRoute: WindowMainIndexRoute,
+  WindowMainSettingsIndexRoute: WindowMainSettingsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

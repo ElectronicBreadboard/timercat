@@ -364,3 +364,26 @@ const userName = user
 		: 'No profile'
 	: 'No user';
 ```
+
+## Barrel Exports
+
+- Always use `export * from` in index files
+- Always keep barrel files simple and flat
+
+✅ Good:
+
+```typescript
+// index.ts
+export * from './Button';
+export * from './Input';
+export * from './Modal';
+```
+
+❌ Bad:
+
+```typescript
+// index.ts
+export { Button } from './Button';
+export { Input } from './Input';
+export { Modal } from './Modal';
+```
