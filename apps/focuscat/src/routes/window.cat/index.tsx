@@ -4,8 +4,8 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import React from 'react';
 import { ExpandIcon, GripIcon } from '@/components';
 import { specta } from '@/environment';
-import { Cat } from '@/features/cat';
-import { useAppSettings, useTimerState } from '@/hooks';
+import { Cat, type TCatRef } from '@/features/cat';
+import { useAppSettings, useInputTap, useTimerState } from '@/hooks';
 import { cn } from '@/lib';
 
 export const Route = createFileRoute('/window/cat/')({
@@ -15,6 +15,10 @@ export const Route = createFileRoute('/window/cat/')({
 function RouteComponent() {
 	const timerState = useTimerState();
 	const [settings] = useAppSettings();
+	const catRef = React.useRef<TCatRef>(null);
+
+	// Tap cat on global input events
+	useInputTap(catRef);
 
 	// MARK: - Actions
 
@@ -27,7 +31,7 @@ function RouteComponent() {
 
 	return (
 		<div className={cn('flex flex-col items-center', settings.debug && 'border border-red-500')}>
-			<Cat className={cn('z-10', settings.debug && 'border border-green-500')} />
+			<Cat ref={catRef} className={cn('z-10', settings.debug && 'border border-green-500')} />
 
 			<div
 				className={cn(

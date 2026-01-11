@@ -5,6 +5,7 @@ pub mod window;
 use std::sync::Mutex;
 
 use crate::features::{
+    input::{runner::InputRunner, types::InputDetectedEvent},
     settings::{
         self,
         types::{AppSettingsChangedEvent, AppSettingsState},
@@ -47,6 +48,7 @@ pub fn run() {
         ])
         .events(collect_events![
             AppSettingsChangedEvent,
+            InputDetectedEvent,
             TimerTickEvent,
             TimerCompleteEvent
         ]);
@@ -74,6 +76,9 @@ pub fn run() {
             app.manage(TimerState::new(Timer::default()));
             app.manage(TimerSettingsState::new(TimerSettings::default()));
             app.manage(Mutex::new(None::<TimerRunner>));
+
+            // Start input monitoring
+            InputRunner::start(app.handle().clone());
 
             // Setup tray icon (macOS only)
             #[cfg(target_os = "macos")]

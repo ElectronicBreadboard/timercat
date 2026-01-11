@@ -120,10 +120,12 @@ async setTimerCategory(category: FocusCategory | null) : Promise<Result<null, st
 
 export const events = __makeEvents__<{
 appSettingsChangedEvent: AppSettingsChangedEvent,
+inputDetectedEvent: InputDetectedEvent,
 timerCompleteEvent: TimerCompleteEvent,
 timerTickEvent: TimerTickEvent
 }>({
 appSettingsChangedEvent: "app-settings-changed-event",
+inputDetectedEvent: "input-detected-event",
 timerCompleteEvent: "timer-complete-event",
 timerTickEvent: "timer-tick-event"
 })
@@ -137,6 +139,14 @@ timerTickEvent: "timer-tick-event"
 export type AppSettings = { debug: boolean }
 export type AppSettingsChangedEvent = AppSettings
 export type FocusCategory = { id: string; name: string; color: string }
+/**
+ * Event emitted when user input is detected (throttled).
+ */
+export type InputDetectedEvent = InputType
+/**
+ * Type of input event detected.
+ */
+export type InputType = "keyboard" | "mouse"
 export type Timer = { status: TimerStatus; phase: TimerPhase; totalSeconds: number; remainingSeconds: number; category: FocusCategory | null; sessionsCompleted: number }
 /**
  * Event emitted when timer phase completes.
