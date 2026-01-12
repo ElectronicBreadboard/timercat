@@ -21,8 +21,7 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 		reset,
 		skip,
 		setDurationMinutes,
-		setCategory,
-		setTargetSessions
+		setCategory
 	} = useTimer();
 
 	const [previewMinutes, setPreviewMinutes] = React.useState<number | null>(null);
@@ -37,26 +36,24 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	// Use preview value during drag, otherwise use state
 	const remainingSeconds = previewMinutes != null ? previewMinutes * 60 : (state?.remainingSeconds ?? 0);
 
-	// Target sessions for the wheel display
-	// Shows remaining sessions counting down as sessions complete
-	const displaySessions = React.useMemo(() => {
+	// Session progress: work phase = 0→0.5, break phase = 0.5→1.0
+	const sessionProgress = React.useMemo(() => {
 		if (state == null || state.status === 'idle') {
-			return settings.sessionsBeforeLongBreak;
+			return 0;
 		}
 
-		// Remaining sessions = target minus already completed
-		const remaining = state.targetSessions - state.sessionsCompleted;
+		const total = state.totalSeconds;
+		const remaining = state.remainingSeconds;
+		const elapsed = total - remaining;
+		const progress = total > 0 ? elapsed / total : 0;
 
-		// During breaks, show remaining without progress
-		if (state.phase !== 'work' || state.baseWorkSeconds === 0) {
-			return remaining;
+		if (state.phase === 'work') {
+			// Work: 0 → 0.5
+			return state.sessionsCompleted + progress * 0.5;
 		}
-
-		// During work, subtract fractional progress through current session
-		const elapsed = state.baseWorkSeconds - remainingSeconds;
-		const progress = Math.max(0, Math.min(elapsed / state.baseWorkSeconds, 1));
-		return remaining - progress;
-	}, [state, settings.sessionsBeforeLongBreak, remainingSeconds]);
+		// Break: 0.5 → 1.0
+		return state.sessionsCompleted + 0.5 + progress * 0.5;
+	}, [state]);
 
 	// MARK: - Actions
 
@@ -169,15 +166,11 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 					{/* Divider */}
 					<div className="h-16 w-px bg-gray-200" />
 
-					{/* Session wheel */}
+					{/* Session counter */}
 					<WheelContainer direction="vertical" className="mr-2">
 						<SessionWheel
-							value={displaySessions}
-							onChange={(value) => setTargetSessions(Math.round(value))}
-							onDragStart={handleDragStart}
-							targetSessions={state.targetSessions}
+							value={sessionProgress}
 							sessionsBeforeLongBreak={settings.sessionsBeforeLongBreak}
-							smooth={isActive}
 						/>
 					</WheelContainer>
 				</div>

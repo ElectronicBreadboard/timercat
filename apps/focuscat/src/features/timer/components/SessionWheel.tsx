@@ -1,99 +1,31 @@
-import {
-	animate,
-	motion,
-	useDragControls,
-	useMotionValue,
-	useMotionValueEvent
-} from 'motion/react';
+import { motion, useMotionValue } from 'motion/react';
 import React from 'react';
 import { cn } from '@/lib';
 
+/**
+ * Passive display showing sessions completed with break indicators.
+ * Counts up (0, 1, 2, 3...) - not interactive.
+ */
 export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
-	const {
-		value,
-		onChange,
-		onPreview,
-		onDragStart,
-		min = 0,
-		max = 16,
-		itemHeight = 28,
-		targetSessions,
-		sessionsBeforeLongBreak = 4,
-		smooth = false,
-		className
-	} = props;
+	const { value, sessionsBeforeLongBreak = 4, itemHeight = 28, className } = props;
 
 	const y = useMotionValue(0);
-	const dragControls = useDragControls();
-	const isDragging = React.useRef(false);
-	const isAnimatingFromDrag = React.useRef(false);
-	const lastPreviewValue = React.useRef<number>(value);
 
-	const itemCount = max - min + 1;
-	const minY = -(itemCount - 1) * itemHeight;
-	const maxY = 0;
-
+	// Show numbers 0 to some reasonable max (value + buffer for scrolling visual)
+	const maxDisplay = Math.max(value + 5, 10);
 	const items = React.useMemo(() => {
 		const result: number[] = [];
-		for (let v = max; v >= min; v--) {
+		for (let v = maxDisplay; v >= 0; v--) {
 			result.push(v);
 		}
 		return result;
-	}, [min, max]);
+	}, [maxDisplay]);
 
-	// MARK: - Actions
-
-	const handleDragEnd = React.useCallback(() => {
-		isDragging.current = false;
-		if (onChange == null) return;
-
-		const finalValue = lastPreviewValue.current;
-		const targetIndex = max - finalValue;
-		const targetY = -targetIndex * itemHeight;
-
-		isAnimatingFromDrag.current = true;
-		animate(y, targetY, { type: 'spring', stiffness: 400, damping: 30 }).then(() => {
-			isAnimatingFromDrag.current = false;
-		});
-		onChange(finalValue);
-	}, [onChange, y, max, itemHeight]);
-
-	const handlePointerDown = React.useCallback(
-		(e: React.PointerEvent) => {
-			e.preventDefault();
-			isDragging.current = true;
-			onDragStart?.();
-			dragControls.start(e);
-		},
-		[dragControls, onDragStart]
-	);
-
-	// MARK: - Effects
-
-	useMotionValueEvent(y, 'change', (latestY) => {
-		if (!isDragging.current) return;
-		const clampedY = Math.max(minY, Math.min(maxY, latestY));
-		const index = Math.round(-clampedY / itemHeight);
-		const previewValue = max - index;
-		lastPreviewValue.current = previewValue;
-		onPreview?.(previewValue);
-	});
-
+	// Update position smoothly (value is fractional: 0, 0.1, 0.2, ..., 0.5, 0.6, ..., 1.0, ...)
 	React.useEffect(() => {
-		// Skip if we're already animating from drag end
-		if (isAnimatingFromDrag.current) return;
-
-		const index = max - value;
-		const targetY = -index * itemHeight;
-
-		if (smooth) {
-			y.set(targetY);
-		} else {
-			animate(y, targetY, { type: 'spring', stiffness: 300, damping: 30 });
-		}
-	}, [value, max, y, itemHeight, smooth]);
-
-	// MARK: - UI
+		const targetY = -(maxDisplay - value) * itemHeight;
+		y.set(targetY);
+	}, [value, maxDisplay, y, itemHeight]);
 
 	return (
 		<div className={cn('relative h-20 w-10 select-none overflow-hidden', className)}>
@@ -101,41 +33,17 @@ export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
 			<motion.div
 				className="pointer-events-none absolute inset-x-0 flex flex-col items-center"
 				style={{ y, top: '50%', marginTop: -itemHeight / 2 }}
-				drag="y"
-				dragControls={dragControls}
-				dragListener={false}
-				dragConstraints={{ top: minY, bottom: maxY }}
-				dragElastic={0.1}
-				dragTransition={{
-					power: 0.5,
-					timeConstant: 120,
-					modifyTarget: (target) => Math.round(target / itemHeight) * itemHeight
-				}}
-				onDragEnd={handleDragEnd}
 			>
-				{items.map((itemValue, index) => {
-					// Long break after every sessionsBeforeLongBreak completed sessions
-					const completedAtPosition = targetSessions != null ? targetSessions - itemValue : 0;
-					const isLongBreak =
-						completedAtPosition > 0 && completedAtPosition % sessionsBeforeLongBreak === 0;
-
-					return (
-						<SessionItem
-							key={itemValue}
-							value={itemValue}
-							height={itemHeight}
-							isLongBreak={isLongBreak}
-							showBreak={index > 0}
-						/>
-					);
-				})}
+				{items.map((itemValue, index) => (
+					<SessionItem
+						key={itemValue}
+						value={itemValue}
+						height={itemHeight}
+						isLongBreak={itemValue > 0 && itemValue % sessionsBeforeLongBreak === 0}
+						showBreak={index > 0}
+					/>
+				))}
 			</motion.div>
-
-			{/* Drag overlay */}
-			<div
-				className="absolute inset-0 z-20 cursor-grab active:cursor-grabbing"
-				onPointerDown={handlePointerDown}
-			/>
 		</div>
 	);
 };
@@ -163,19 +71,11 @@ const SessionItem: React.FC<TSessionItemProps> = (props) => {
 };
 
 interface TSessionWheelProps {
+	/** Sessions completed (counts up: 0, 1, 2, 3...) */
 	value: number;
-	onChange?: (value: number) => void;
-	onPreview?: (value: number) => void;
-	/** Called when user starts dragging */
-	onDragStart?: () => void;
-	min?: number;
-	max?: number;
-	itemHeight?: number;
-	/** Current target sessions (for break indicator calculation) */
-	targetSessions?: number;
-	/** Sessions before long break (for break indicators) */
+	/** Long break every N sessions (default: 4) */
 	sessionsBeforeLongBreak?: number;
-	smooth?: boolean;
+	itemHeight?: number;
 	className?: string;
 }
 
