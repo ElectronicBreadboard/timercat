@@ -14,7 +14,7 @@ export const Route = createFileRoute('/window/cat/')({
 
 function RouteComponent() {
 	const timerState = useTimerState();
-	const [settings] = useAppSettings();
+	const { settings } = useAppSettings();
 	const catRef = React.useRef<TCatRef>(null);
 
 	// Tap cat on global input events

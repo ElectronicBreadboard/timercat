@@ -6,8 +6,8 @@ import { timerConfig } from '../timer.config';
 
 export function useTimer(): TUseTimerReturn {
 	const state = useTimerState();
-	const [settings] = useAppSettings();
-	const [categories] = React.useState<specta.FocusCategory[]>(timerConfig.categories);
+	const { settings } = useAppSettings();
+	const categories = timerConfig.categories;
 	const [startTime, setStartTime] = React.useState<Date | null>(null);
 
 	const endTime = React.useMemo(() => {

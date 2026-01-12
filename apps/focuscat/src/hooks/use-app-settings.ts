@@ -1,7 +1,7 @@
 import React from 'react';
 import { specta } from '@/environment';
 
-export function useAppSettings() {
+export function useAppSettings(): TUseAppSettingsReturn {
 	const [settings, setSettings] = React.useState<specta.AppSettings>({
 		debug: false,
 		workDurationMinutes: 25,
@@ -24,5 +24,16 @@ export function useAppSettings() {
 		return () => unlisten?.();
 	}, []);
 
-	return [settings, setSettings] as const;
+	const updateSettings = React.useCallback(async (updates: Partial<specta.AppSettings>) => {
+		const updated = { ...settings, ...updates };
+		setSettings(updated);
+		await specta.commands.setSettings(updated);
+	}, [settings]);
+
+	return { settings, updateSettings };
+}
+
+interface TUseAppSettingsReturn {
+	settings: specta.AppSettings;
+	updateSettings: (updates: Partial<specta.AppSettings>) => Promise<void>;
 }

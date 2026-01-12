@@ -12,7 +12,7 @@ export const Route = createFileRoute('/window/main/settings/')({
 
 function RouteComponent() {
 	const navigate = useNavigate();
-	const [settings, setSettings] = useAppSettings();
+	const { settings, updateSettings } = useAppSettings();
 	const timerState = useTimerState();
 	const { cycleSpeed } = useTimer();
 
@@ -23,21 +23,17 @@ function RouteComponent() {
 	}, [navigate]);
 
 	const handleDebugToggle = React.useCallback(
-		async (checked: boolean) => {
-			const updated = { ...settings, debug: checked };
-			setSettings(updated);
-			await specta.commands.setSettings(updated);
+		(checked: boolean) => {
+			updateSettings({ debug: checked });
 		},
-		[settings, setSettings]
+		[updateSettings]
 	);
 
 	const handleSettingChange = React.useCallback(
-		async (key: keyof specta.AppSettings, value: number) => {
-			const updated = { ...settings, [key]: value };
-			setSettings(updated);
-			await specta.commands.setSettings(updated);
+		(key: keyof specta.AppSettings, value: number) => {
+			updateSettings({ [key]: value });
 		},
-		[settings, setSettings]
+		[updateSettings]
 	);
 
 	// MARK: - UI
