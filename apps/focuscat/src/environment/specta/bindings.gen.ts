@@ -117,14 +117,6 @@ async cycleTimerSpeed() : Promise<Result<null, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
-},
-async setTargetSessions(sessions: number) : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("set_target_sessions", { sessions }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
 }
 }
 
@@ -178,15 +170,27 @@ export type InputDetectedEvent = InputType
 export type InputType = "keyboard" | "mouse"
 export type Timer = { status: TimerStatus; phase: TimerPhase; totalSeconds: number; remainingSeconds: number; 
 /**
- * Counts up after session completes (for overtime tracking)
+ * Counts up after timer hits zero
  */
-overtimeSeconds: number; category: FocusCategory | null; sessionsCompleted: number; targetSessions: number; 
+overtimeSeconds: number; category: FocusCategory | null; sessionsCompleted: number; 
 /**
- * Base work duration from settings (for progress calculation)
+ * Base work duration from settings
  */
 baseWorkSeconds: number; 
 /**
- * Debug only: speed multiplier (1x, 2x, 4x, etc.)
+ * Work done before current segment (for multi-extension tracking)
+ */
+accumulatedWorkSeconds: number; 
+/**
+ * Time added via wheel extensions this session
+ */
+totalExtendedSeconds: number; 
+/**
+ * Stats from last work session (shown during breaks)
+ */
+lastWorkSession: WorkSessionStats | null; 
+/**
+ * Debug: speed multiplier
  */
 speed: number }
 /**
@@ -199,6 +203,26 @@ export type TimerStatus = "idle" | "running" | "paused"
  * Event emitted every second while timer is running.
  */
 export type TimerTickEvent = Timer
+/**
+ * Stats from the last completed work session (shown during breaks).
+ */
+export type WorkSessionStats = { 
+/**
+ * Original work duration from settings
+ */
+baseSeconds: number; 
+/**
+ * Time added via wheel adjustment
+ */
+extendedSeconds: number; 
+/**
+ * Time spent after timer hit zero (unplanned)
+ */
+overtimeSeconds: number; 
+/**
+ * Total time completed (base + extended + overtime)
+ */
+completedSeconds: number }
 
 /** tauri-specta globals **/
 

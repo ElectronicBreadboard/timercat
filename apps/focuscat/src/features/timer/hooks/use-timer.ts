@@ -76,13 +76,6 @@ export function useTimer(): TUseTimerReturn {
 		}
 	}, []);
 
-	const setTargetSessions = React.useCallback(async (sessions: number) => {
-		const [isOk, , error] = toTuple(await specta.commands.setTargetSessions(sessions));
-		if (!isOk) {
-			console.error('Failed to set target sessions:', error);
-		}
-	}, []);
-
 	const cycleSpeed = React.useCallback(async () => {
 		const [isOk, , error] = toTuple(await specta.commands.cycleTimerSpeed());
 		if (!isOk) {
@@ -115,7 +108,6 @@ export function useTimer(): TUseTimerReturn {
 		skip,
 		setDurationMinutes,
 		setCategory,
-		setTargetSessions,
 		cycleSpeed
 	};
 }
@@ -133,6 +125,5 @@ interface TUseTimerReturn {
 	skip: () => void;
 	setDurationMinutes: (minutes: number) => void;
 	setCategory: (category: specta.FocusCategory | null) => void;
-	setTargetSessions: (sessions: number) => void;
 	cycleSpeed: () => void;
 }

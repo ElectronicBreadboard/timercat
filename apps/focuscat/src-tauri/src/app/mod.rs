@@ -42,7 +42,6 @@ pub fn run() {
             timer::commands::set_timer_duration,
             timer::commands::set_timer_category,
             timer::commands::cycle_timer_speed,
-            timer::commands::set_target_sessions,
         ])
         .events(collect_events![
             AppSettingsChangedEvent,

@@ -7,6 +7,7 @@ use crate::features::settings::types::AppSettingsState;
 use super::runner::TimerRunner;
 use super::types::{
     FocusCategory, Timer, TimerConfig, TimerPhase, TimerState, TimerStatus, TimerTickEvent,
+    WorkSessionStats,
 };
 
 #[tauri::command]
@@ -117,8 +118,9 @@ pub fn reset_timer(
     timer.remaining_seconds = config.work_duration;
     timer.overtime_seconds = 0;
     timer.sessions_completed = 0;
-    timer.target_sessions = config.sessions_before_long_break;
     timer.base_work_seconds = config.work_duration;
+    timer.accumulated_work_seconds = 0;
+    timer.total_extended_seconds = 0;
 
     // Emit tick with reset state
     let _ = TimerTickEvent(timer.clone()).emit(&app);
@@ -146,9 +148,24 @@ pub fn skip_timer(
 
     let is_work_phase = timer.phase == TimerPhase::Work;
 
-    // Increment sessions if skipping work phase
+    // Capture work session stats before transitioning to break
     if is_work_phase {
+        let current_work = timer.total_seconds - timer.remaining_seconds + timer.overtime_seconds;
+        let completed = timer.accumulated_work_seconds + current_work;
+        let planned = timer.base_work_seconds + timer.total_extended_seconds;
+        let overtime = completed.saturating_sub(planned);
+
+        timer.last_work_session = Some(WorkSessionStats {
+            base_seconds: timer.base_work_seconds,
+            extended_seconds: timer.total_extended_seconds,
+            overtime_seconds: overtime,
+            completed_seconds: completed,
+        });
         timer.sessions_completed += 1;
+
+        // Reset accumulators for next work session
+        timer.accumulated_work_seconds = 0;
+        timer.total_extended_seconds = 0;
     }
 
     // Determine next phase
@@ -180,19 +197,12 @@ pub fn skip_timer(
     // Emit tick with new state
     let _ = TimerTickEvent(timer.clone()).emit(&app);
 
-    // Manage runner based on new status
+    // Always restart runner for clean state
     let mut runner_guard = runner.lock().unwrap();
-    if timer.status == TimerStatus::Running {
-        // Start runner for auto-started break
-        if runner_guard.is_none() {
-            *runner_guard = Some(TimerRunner::start(app));
-        }
-    } else {
-        // Stop runner for idle state
-        if let Some(r) = runner_guard.take() {
-            r.stop();
-        }
+    if let Some(r) = runner_guard.take() {
+        r.stop();
     }
+    *runner_guard = Some(TimerRunner::start(app));
 
     return Ok(());
 }
@@ -208,6 +218,13 @@ pub fn set_timer_duration(
     let mut timer = state.lock().unwrap();
     let settings = app_settings.lock().unwrap();
     let seconds = minutes * 60;
+
+    // If extending mid-session, capture work done before this segment
+    if timer.status != TimerStatus::Idle {
+        let current_work = timer.total_seconds - timer.remaining_seconds + timer.overtime_seconds;
+        timer.accumulated_work_seconds += current_work;
+        timer.total_extended_seconds += seconds;
+    }
 
     // Set both total and remaining to selected value
     timer.total_seconds = seconds;
@@ -260,22 +277,3 @@ pub fn cycle_timer_speed(app: AppHandle, state: State<'_, TimerState>) -> Result
     return Ok(());
 }
 
-#[tauri::command]
-#[specta::specta]
-pub fn set_target_sessions(
-    app: AppHandle,
-    state: State<'_, TimerState>,
-    sessions: u32,
-) -> Result<(), String> {
-    if sessions < 1 || sessions > 16 {
-        return Err("Target sessions must be between 1 and 16".to_string());
-    }
-
-    let mut timer = state.lock().unwrap();
-    timer.target_sessions = sessions;
-
-    // Emit tick with new target
-    let _ = TimerTickEvent(timer.clone()).emit(&app);
-
-    return Ok(());
-}

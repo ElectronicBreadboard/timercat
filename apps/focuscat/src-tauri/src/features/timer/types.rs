@@ -27,6 +27,20 @@ pub struct FocusCategory {
     pub color: String,
 }
 
+/// Stats from the last completed work session (shown during breaks).
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkSessionStats {
+    /// Original work duration from settings
+    pub base_seconds: u32,
+    /// Time added via wheel adjustment
+    pub extended_seconds: u32,
+    /// Time spent after timer hit zero (unplanned)
+    pub overtime_seconds: u32,
+    /// Total time completed (base + extended + overtime)
+    pub completed_seconds: u32,
+}
+
 /// Runtime timer settings (in seconds). Derived from AppSettings.
 #[derive(Debug, Clone)]
 pub struct TimerConfig {
@@ -60,14 +74,19 @@ pub struct Timer {
     pub phase: TimerPhase,
     pub total_seconds: u32,
     pub remaining_seconds: u32,
-    /// Counts up after session completes (for overtime tracking)
+    /// Counts up after timer hits zero
     pub overtime_seconds: u32,
     pub category: Option<FocusCategory>,
     pub sessions_completed: u32,
-    pub target_sessions: u32,
-    /// Base work duration from settings (for progress calculation)
+    /// Base work duration from settings
     pub base_work_seconds: u32,
-    /// Debug only: speed multiplier (1x, 2x, 4x, etc.)
+    /// Work done before current segment (for multi-extension tracking)
+    pub accumulated_work_seconds: u32,
+    /// Time added via wheel extensions this session
+    pub total_extended_seconds: u32,
+    /// Stats from last work session (shown during breaks)
+    pub last_work_session: Option<WorkSessionStats>,
+    /// Debug: speed multiplier
     pub speed: u32,
 }
 
@@ -82,8 +101,10 @@ impl Default for Timer {
             overtime_seconds: 0,
             category: None,
             sessions_completed: 0,
-            target_sessions: 4,
             base_work_seconds: config.work_duration,
+            accumulated_work_seconds: 0,
+            total_extended_seconds: 0,
+            last_work_session: None,
             speed: 1,
         };
     }
@@ -99,8 +120,10 @@ impl Timer {
             overtime_seconds: 0,
             category: None,
             sessions_completed: 0,
-            target_sessions: config.sessions_before_long_break,
             base_work_seconds: config.work_duration,
+            accumulated_work_seconds: 0,
+            total_extended_seconds: 0,
+            last_work_session: None,
             speed: 1,
         };
     }

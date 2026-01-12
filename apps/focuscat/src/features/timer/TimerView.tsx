@@ -28,10 +28,12 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	const catRef = React.useRef<TCatRef>(null);
 	const lastWholeMinute = React.useRef<number | null>(null);
 	const lastTapTime = React.useRef<number>(0);
+	const wasRunningBeforeDrag = React.useRef(false);
 
 	const isRunning = state != null && state.status === 'running';
 	const isActive = state != null && state.status !== 'idle';
 	const isOvertime = state != null && state.remainingSeconds === 0 && state.overtimeSeconds > 0;
+	const isBreak = state != null && state.phase !== 'work';
 
 	// Use preview value during drag, otherwise use state
 	const remainingSeconds = previewMinutes != null ? previewMinutes * 60 : (state?.remainingSeconds ?? 0);
@@ -80,12 +82,19 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 			setPreviewMinutes(null);
 			lastWholeMinute.current = null;
 			setDurationMinutes(minutes);
+
+			// Auto-resume if was running before drag
+			if (wasRunningBeforeDrag.current) {
+				resume();
+				wasRunningBeforeDrag.current = false;
+			}
 		},
-		[setDurationMinutes]
+		[setDurationMinutes, resume]
 	);
 
 	const handleDragStart = React.useCallback(() => {
 		// Pause timer when user starts adjusting wheels
+		wasRunningBeforeDrag.current = isRunning;
 		if (isRunning) {
 			pause();
 		}
@@ -183,11 +192,8 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 							<p className="font-mono text-3xl font-light tracking-wider text-gray-900">
 								{formatTime(state.totalSeconds + state.overtimeSeconds)}
 							</p>
-							{/* Overtime + category */}
-							<p className="text-sm text-gray-400">
-								+{formatTime(state.overtimeSeconds)} overtime
-								{state.category != null && ` · ${state.category.name}`}
-							</p>
+							{/* Overtime */}
+							<p className="text-sm text-gray-400">+{formatTime(state.overtimeSeconds)} overtime</p>
 						</>
 					) : (
 						<>
@@ -203,6 +209,25 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 								)}
 							</p>
 						</>
+					)}
+
+					{/* Last session stats (subtle, during breaks) */}
+					{isBreak && state.lastWorkSession != null && (
+						<div className="mt-2 text-center text-xs text-gray-300">
+							<p>{formatTime(state.lastWorkSession.completedSeconds)} last session</p>
+							{/* Debug: show breakdown */}
+							{settings.debug &&
+								(state.lastWorkSession.extendedSeconds > 0 ||
+									state.lastWorkSession.overtimeSeconds > 0) && (
+									<p>
+										({formatTime(state.lastWorkSession.baseSeconds)} base
+										{state.lastWorkSession.extendedSeconds > 0 &&
+											` + ${formatTime(state.lastWorkSession.extendedSeconds)} ext`}
+										{state.lastWorkSession.overtimeSeconds > 0 &&
+											` + ${formatTime(state.lastWorkSession.overtimeSeconds)} ot`})
+									</p>
+								)}
+						</div>
 					)}
 				</div>
 			</div>
