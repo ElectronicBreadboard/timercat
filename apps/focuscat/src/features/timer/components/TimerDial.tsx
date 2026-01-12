@@ -2,29 +2,23 @@ import React from 'react';
 import { NumberWheel } from '@/components';
 
 export const TimerDial: React.FC<TTimerDialProps> = (props) => {
-	const {
-		remainingSeconds,
-		onChangeMinutes,
-		onPreviewMinutes,
-		disabled = false,
-		className
-	} = props;
+	const { remainingSeconds, onChangeMinutes, onPreviewMinutes, onDragStart, smooth = false, className } = props;
 
 	// Fractional for smooth countdown animation, ceiling for selection snapping
 	const minutes = React.useMemo(() => {
-		return disabled ? remainingSeconds / 60 : Math.ceil(remainingSeconds / 60);
-	}, [remainingSeconds, disabled]);
+		return smooth ? remainingSeconds / 60 : Math.ceil(remainingSeconds / 60);
+	}, [remainingSeconds, smooth]);
 
 	return (
 		<NumberWheel
 			value={minutes}
 			onChange={onChangeMinutes}
 			onPreview={onPreviewMinutes}
+			onDragStart={onDragStart}
 			min={1}
 			max={60}
 			labelInterval={5}
-			disabled={disabled}
-			smooth={disabled}
+			smooth={smooth}
 			className={className}
 		/>
 	);
@@ -34,6 +28,7 @@ interface TTimerDialProps {
 	remainingSeconds: number;
 	onChangeMinutes?: (minutes: number) => void;
 	onPreviewMinutes?: (minutes: number) => void;
-	disabled?: boolean;
+	onDragStart?: () => void;
+	smooth?: boolean;
 	className?: string;
 }

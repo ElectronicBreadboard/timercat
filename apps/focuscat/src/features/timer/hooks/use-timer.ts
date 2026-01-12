@@ -1,12 +1,12 @@
 import React from 'react';
 import { specta } from '@/environment';
-import { useTimerState } from '@/hooks';
+import { useAppSettings, useTimerState } from '@/hooks';
 import { toTuple } from '@/lib';
 import { timerConfig } from '../timer.config';
 
 export function useTimer(): TUseTimerReturn {
 	const state = useTimerState();
-	const [settings, setSettings] = React.useState<specta.TimerSettings | null>(null);
+	const [settings] = useAppSettings();
 	const [categories] = React.useState<specta.FocusCategory[]>(timerConfig.categories);
 	const [startTime, setStartTime] = React.useState<Date | null>(null);
 
@@ -76,11 +76,21 @@ export function useTimer(): TUseTimerReturn {
 		}
 	}, []);
 
-	// MARK: - Effects
-
-	React.useEffect(() => {
-		specta.commands.getTimerSettings().then(setSettings);
+	const setTargetSessions = React.useCallback(async (sessions: number) => {
+		const [isOk, , error] = toTuple(await specta.commands.setTargetSessions(sessions));
+		if (!isOk) {
+			console.error('Failed to set target sessions:', error);
+		}
 	}, []);
+
+	const cycleSpeed = React.useCallback(async () => {
+		const [isOk, , error] = toTuple(await specta.commands.cycleTimerSpeed());
+		if (!isOk) {
+			console.error('Failed to cycle timer speed:', error);
+		}
+	}, []);
+
+	// MARK: - Effects
 
 	React.useEffect(() => {
 		const unsub = specta.events.timerCompleteEvent.listen(() => {
@@ -104,13 +114,15 @@ export function useTimer(): TUseTimerReturn {
 		reset,
 		skip,
 		setDurationMinutes,
-		setCategory
+		setCategory,
+		setTargetSessions,
+		cycleSpeed
 	};
 }
 
 interface TUseTimerReturn {
 	state: specta.Timer | null;
-	settings: specta.TimerSettings | null;
+	settings: specta.AppSettings;
 	categories: specta.FocusCategory[];
 	startTime: Date | null;
 	endTime: Date | null;
@@ -121,4 +133,6 @@ interface TUseTimerReturn {
 	skip: () => void;
 	setDurationMinutes: (minutes: number) => void;
 	setCategory: (category: specta.FocusCategory | null) => void;
+	setTargetSessions: (sessions: number) => void;
+	cycleSpeed: () => void;
 }

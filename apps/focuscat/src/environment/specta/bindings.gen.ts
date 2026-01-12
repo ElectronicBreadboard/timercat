@@ -54,9 +54,6 @@ async setSettings(settings: AppSettings) : Promise<Result<null, string>> {
 async getTimer() : Promise<Timer> {
     return await TAURI_INVOKE("get_timer");
 },
-async getTimerSettings() : Promise<TimerSettings> {
-    return await TAURI_INVOKE("get_timer_settings");
-},
 async startTimer() : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("start_timer") };
@@ -112,6 +109,22 @@ async setTimerCategory(category: FocusCategory | null) : Promise<Result<null, st
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async cycleTimerSpeed() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("cycle_timer_speed") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setTargetSessions(sessions: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_target_sessions", { sessions }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -136,7 +149,23 @@ timerTickEvent: "timer-tick-event"
 
 /** user-defined types **/
 
-export type AppSettings = { debug: boolean }
+export type AppSettings = { debug: boolean; 
+/**
+ * Work duration in minutes
+ */
+workDurationMinutes: number; 
+/**
+ * Short break duration in minutes
+ */
+shortBreakMinutes: number; 
+/**
+ * Long break duration in minutes
+ */
+longBreakMinutes: number; 
+/**
+ * Number of work sessions before a long break
+ */
+sessionsBeforeLongBreak: number }
 export type AppSettingsChangedEvent = AppSettings
 export type FocusCategory = { id: string; name: string; color: string }
 /**
@@ -147,13 +176,24 @@ export type InputDetectedEvent = InputType
  * Type of input event detected.
  */
 export type InputType = "keyboard" | "mouse"
-export type Timer = { status: TimerStatus; phase: TimerPhase; totalSeconds: number; remainingSeconds: number; category: FocusCategory | null; sessionsCompleted: number }
+export type Timer = { status: TimerStatus; phase: TimerPhase; totalSeconds: number; remainingSeconds: number; 
+/**
+ * Counts up after session completes (for overtime tracking)
+ */
+overtimeSeconds: number; category: FocusCategory | null; sessionsCompleted: number; targetSessions: number; 
+/**
+ * Base work duration from settings (for progress calculation)
+ */
+baseWorkSeconds: number; 
+/**
+ * Debug only: speed multiplier (1x, 2x, 4x, etc.)
+ */
+speed: number }
 /**
  * Event emitted when timer phase completes.
  */
 export type TimerCompleteEvent = TimerPhase
 export type TimerPhase = "work" | "shortBreak" | "longBreak"
-export type TimerSettings = { workDuration: number; shortBreakDuration: number; longBreakDuration: number; sessionsBeforeLongBreak: number }
 export type TimerStatus = "idle" | "running" | "paused"
 /**
  * Event emitted every second while timer is running.

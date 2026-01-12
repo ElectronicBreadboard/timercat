@@ -13,6 +13,7 @@ export const NumberWheel: React.FC<TNumberWheelProps> = (props) => {
 		value,
 		onChange,
 		onPreview,
+		onDragStart,
 		min = 1,
 		max = 60,
 		step = 1,
@@ -58,11 +59,13 @@ export const NumberWheel: React.FC<TNumberWheelProps> = (props) => {
 	const handlePointerDown = React.useCallback(
 		(e: React.PointerEvent) => {
 			if (!disabled) {
+				e.preventDefault();
 				isDragging.current = true;
+				onDragStart?.();
 				dragControls.start(e);
 			}
 		},
-		[disabled, dragControls]
+		[disabled, dragControls, onDragStart]
 	);
 
 	// MARK: - Effects
@@ -170,6 +173,8 @@ interface TNumberWheelProps {
 	onChange?: (value: number) => void;
 	/** Called during drag with preview value */
 	onPreview?: (value: number) => void;
+	/** Called when user starts dragging */
+	onDragStart?: () => void;
 	min?: number;
 	max?: number;
 	step?: number;

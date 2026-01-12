@@ -5,10 +5,7 @@ use std::time::Duration;
 use tauri::{AppHandle, Manager};
 use tauri_specta::Event;
 
-use super::types::{
-    Timer, TimerCompleteEvent, TimerPhase, TimerSettings, TimerSettingsState, TimerState,
-    TimerStatus, TimerTickEvent,
-};
+use super::types::{TimerCompleteEvent, TimerState, TimerStatus, TimerTickEvent};
 
 /// Handle to control the timer runner thread.
 pub struct TimerRunner {
@@ -36,85 +33,61 @@ impl TimerRunner {
 
 fn run_timer_loop(app: AppHandle, stop_flag: Arc<AtomicBool>) {
     loop {
-        // Check stop flag
         if stop_flag.load(Ordering::SeqCst) {
             break;
         }
 
-        // Sleep for 1 second
-        thread::sleep(Duration::from_secs(1));
+        // Get sleep duration based on speed (faster tick = faster countdown)
+        let sleep_duration = {
+            let state_handle = match app.try_state::<TimerState>() {
+                Some(s) => s,
+                None => {
+                    thread::sleep(Duration::from_millis(100));
+                    continue;
+                }
+            };
+            let timer = state_handle.lock().unwrap();
 
-        // Check stop flag again after sleep
+            if timer.status != TimerStatus::Running {
+                drop(timer);
+                thread::sleep(Duration::from_millis(100));
+                continue;
+            }
+
+            Duration::from_millis(1000 / timer.speed.max(1) as u64)
+        };
+
+        thread::sleep(sleep_duration);
+
         if stop_flag.load(Ordering::SeqCst) {
             break;
         }
 
-        // Get state and settings
+        // Get state for tick
         let state_handle = match app.try_state::<TimerState>() {
             Some(s) => s,
             None => continue,
         };
-        let settings_handle = match app.try_state::<TimerSettingsState>() {
-            Some(s) => s,
-            None => continue,
-        };
 
-        // Lock and process
         let mut timer = state_handle.lock().unwrap();
-        let settings = settings_handle.lock().unwrap();
 
-        // Only tick if running
         if timer.status != TimerStatus::Running {
             continue;
         }
 
-        // Decrement remaining seconds
+        // Count down or count overtime
         if timer.remaining_seconds > 0 {
             timer.remaining_seconds -= 1;
-        }
 
-        // Emit tick event
-        let _ = TimerTickEvent(timer.clone()).emit(&app);
-
-        // Check if phase completed
-        if timer.remaining_seconds == 0 {
-            let completed_phase = timer.phase;
-
-            // Transition to next phase
-            transition_to_next_phase(&mut timer, &settings);
-
-            // Emit completion event
-            let _ = TimerCompleteEvent(completed_phase).emit(&app);
-
-            // Emit tick with new state
-            let _ = TimerTickEvent(timer.clone()).emit(&app);
-        }
-    }
-}
-
-fn transition_to_next_phase(timer: &mut Timer, settings: &TimerSettings) {
-    let is_work_phase = timer.phase == TimerPhase::Work;
-
-    // Increment sessions if work phase completed
-    if is_work_phase {
-        timer.sessions_completed += 1;
-    }
-
-    // Determine next phase
-    let next_phase = if is_work_phase {
-        if timer.sessions_completed % settings.sessions_before_long_break == 0 {
-            TimerPhase::LongBreak
+            // Emit complete event when hitting zero
+            if timer.remaining_seconds == 0 {
+                let _ = TimerCompleteEvent(timer.phase).emit(&app);
+            }
         } else {
-            TimerPhase::ShortBreak
+            // Count overtime after completion
+            timer.overtime_seconds += 1;
         }
-    } else {
-        TimerPhase::Work
-    };
 
-    // Update state
-    let next_duration = Timer::get_duration_for_phase(next_phase, settings);
-    timer.status = TimerStatus::Idle;
-    timer.phase = next_phase;
-    timer.total_seconds = next_duration;
-    timer.remaining_seconds = next_duration;
+        let _ = TimerTickEvent(timer.clone()).emit(&app);
+    }
 }

@@ -13,10 +13,7 @@ use crate::features::{
     timer::{
         self,
         runner::TimerRunner,
-        types::{
-            Timer, TimerCompleteEvent, TimerSettings, TimerSettingsState, TimerState,
-            TimerTickEvent,
-        },
+        types::{Timer, TimerCompleteEvent, TimerConfig, TimerState, TimerTickEvent},
     },
 };
 use specta_typescript::Typescript;
@@ -37,7 +34,6 @@ pub fn run() {
             settings::commands::set_settings,
             // Timer commands
             timer::commands::get_timer,
-            timer::commands::get_timer_settings,
             timer::commands::start_timer,
             timer::commands::pause_timer,
             timer::commands::resume_timer,
@@ -45,6 +41,8 @@ pub fn run() {
             timer::commands::skip_timer,
             timer::commands::set_timer_duration,
             timer::commands::set_timer_category,
+            timer::commands::cycle_timer_speed,
+            timer::commands::set_target_sessions,
         ])
         .events(collect_events![
             AppSettingsChangedEvent,
@@ -71,10 +69,13 @@ pub fn run() {
             // Load settings from disk
             let app_settings = settings::persistence::load_settings(app);
 
+            // Initialize timer with settings
+            let timer_config = TimerConfig::from(&app_settings);
+            let timer = Timer::new(&timer_config);
+
             // Manage state
             app.manage(AppSettingsState::new(app_settings));
-            app.manage(TimerState::new(Timer::default()));
-            app.manage(TimerSettingsState::new(TimerSettings::default()));
+            app.manage(TimerState::new(timer));
             app.manage(Mutex::new(None::<TimerRunner>));
 
             // Start input monitoring

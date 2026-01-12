@@ -1,4 +1,4 @@
 export * from './FocusSelector';
-export * from './SessionDots';
+export * from './SessionWheel';
 export * from './StartButton';
 export * from './TimerDial';
