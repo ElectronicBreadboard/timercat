@@ -160,24 +160,33 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 
 				{/* Time display */}
 				<div className="flex flex-col items-center gap-1">
-					<p className={cn(
-						'font-mono text-3xl font-light tracking-wider',
-						isOvertime ? 'text-orange-500' : 'text-gray-900'
-					)}>
-						{isOvertime ? `+${formatTime(state.overtimeSeconds)}` : formatTime(remainingSeconds)}
-					</p>
-					<p className="text-sm text-gray-400">
-						{isOvertime ? (
-							'Session complete!'
-						) : (
-							<>
+					{isOvertime ? (
+						<>
+							{/* Total time worked */}
+							<p className="font-mono text-3xl font-light tracking-wider text-gray-900">
+								{formatTime(state.totalSeconds + state.overtimeSeconds)}
+							</p>
+							{/* Overtime + category */}
+							<p className="text-sm text-gray-400">
+								+{formatTime(state.overtimeSeconds)} overtime
+								{state.category != null && ` · ${state.category.name}`}
+							</p>
+						</>
+					) : (
+						<>
+							{/* Remaining time */}
+							<p className="font-mono text-3xl font-light tracking-wider text-gray-900">
+								{formatTime(remainingSeconds)}
+							</p>
+							{/* Time range */}
+							<p className="text-sm text-gray-400">
 								{formatTimeOfDay(isRunning && startTime != null ? startTime : new Date())} →{' '}
 								{formatTimeOfDay(
 									isRunning && endTime != null ? endTime : new Date(Date.now() + remainingSeconds * 1000)
 								)}
-							</>
-						)}
-					</p>
+							</p>
+						</>
+					)}
 				</div>
 			</div>
 
