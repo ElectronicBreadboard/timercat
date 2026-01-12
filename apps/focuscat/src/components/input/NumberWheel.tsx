@@ -14,7 +14,7 @@ export const NumberWheel: React.FC<TNumberWheelProps> = (props) => {
 		onChange,
 		onPreview,
 		onDragStart,
-		min = 1,
+		min = 0,
 		max = 60,
 		step = 1,
 		labelInterval = 5,
@@ -27,6 +27,7 @@ export const NumberWheel: React.FC<TNumberWheelProps> = (props) => {
 	const x = useMotionValue(0);
 	const dragControls = useDragControls();
 	const isDragging = React.useRef(false);
+	const isAnimatingFromDrag = React.useRef(false);
 	const lastPreviewValue = React.useRef<number>(value);
 
 	const itemCount = Math.floor((max - min) / step) + 1;
@@ -52,7 +53,10 @@ export const NumberWheel: React.FC<TNumberWheelProps> = (props) => {
 		const targetIndex = (finalValue - min) / step;
 		const targetX = -targetIndex * itemWidth;
 
-		animate(x, targetX, { type: 'spring', stiffness: 400, damping: 30 });
+		isAnimatingFromDrag.current = true;
+		animate(x, targetX, { type: 'spring', stiffness: 400, damping: 30 }).then(() => {
+			isAnimatingFromDrag.current = false;
+		});
 		onChange(finalValue);
 	}, [disabled, onChange, x, min, step, itemWidth]);
 
@@ -80,6 +84,9 @@ export const NumberWheel: React.FC<TNumberWheelProps> = (props) => {
 	});
 
 	React.useEffect(() => {
+		// Skip if we're already animating from drag end
+		if (isAnimatingFromDrag.current) return;
+
 		const index = (value - min) / step;
 		const targetX = -index * itemWidth;
 
@@ -95,58 +102,38 @@ export const NumberWheel: React.FC<TNumberWheelProps> = (props) => {
 	// MARK: - UI
 
 	return (
-		<div className={cn('relative w-full select-none', className)}>
-			{/* Top border line */}
-			<div className="absolute inset-x-0 top-0 h-px bg-gray-200" />
+		<div className={cn('relative h-20 w-full select-none overflow-hidden', className)}>
+			{/* Tick strip */}
+			<motion.div
+				className="pointer-events-none absolute inset-y-0 flex items-end pb-3"
+				style={{ x, left: '50%', marginLeft: -itemWidth / 2 }}
+				drag="x"
+				dragControls={dragControls}
+				dragListener={false}
+				dragConstraints={{ left: minX, right: maxX }}
+				dragElastic={0.1}
+				dragTransition={{
+					power: 0.5,
+					timeConstant: 120,
+					modifyTarget: (target) => Math.round(target / itemWidth) * itemWidth
+				}}
+				onDragEnd={handleDragEnd}
+			>
+				{items.map((itemValue) => (
+					<TickMark
+						key={itemValue}
+						value={itemValue}
+						width={itemWidth}
+						showLabel={itemValue % labelInterval === 0}
+					/>
+				))}
+			</motion.div>
 
-			{/* Dial body */}
-			<div className="relative h-20 w-full overflow-hidden">
-				{/* Tick strip */}
-				<motion.div
-					className="pointer-events-none absolute inset-y-0 flex items-end pb-3"
-					style={{ x, left: '50%', marginLeft: -itemWidth / 2 }}
-					drag="x"
-					dragControls={dragControls}
-					dragListener={false}
-					dragConstraints={{ left: minX, right: maxX }}
-					dragElastic={0.1}
-					dragTransition={{
-						power: 0.5,
-						timeConstant: 120,
-						modifyTarget: (target) => Math.round(target / itemWidth) * itemWidth
-					}}
-					onDragEnd={handleDragEnd}
-				>
-					{items.map((itemValue) => (
-						<TickMark
-							key={itemValue}
-							value={itemValue}
-							width={itemWidth}
-							showLabel={itemValue % labelInterval === 0}
-						/>
-					))}
-				</motion.div>
-
-				{/* Edge fades */}
-				<div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-linear-to-r from-white to-transparent" />
-				<div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-linear-to-l from-white to-transparent" />
-
-				{/* Drag overlay */}
-				<div
-					className={cn('absolute inset-0 z-20', !disabled && 'cursor-grab active:cursor-grabbing')}
-					onPointerDown={handlePointerDown}
-				/>
-			</div>
-
-			{/* Bottom border line */}
-			<div className="absolute inset-x-0 bottom-0 h-px bg-gray-200" />
-
-			{/* Center arrow indicator */}
-			<div className="pointer-events-none absolute inset-x-0 top-px z-30 flex justify-center">
-				<svg width="12" height="8" viewBox="0 0 12 8" fill="currentColor" className="text-gray-200">
-					<path d="M6 8 L12 0 L0 0 Z" />
-				</svg>
-			</div>
+			{/* Drag overlay */}
+			<div
+				className={cn('absolute inset-0 z-20', !disabled && 'cursor-grab active:cursor-grabbing')}
+				onPointerDown={handlePointerDown}
+			/>
 		</div>
 	);
 };

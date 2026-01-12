@@ -15,7 +15,7 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 			onChange={onChangeMinutes}
 			onPreview={onPreviewMinutes}
 			onDragStart={onDragStart}
-			min={1}
+			min={0}
 			max={60}
 			labelInterval={5}
 			smooth={smooth}

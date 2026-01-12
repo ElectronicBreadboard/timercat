@@ -1,10 +1,9 @@
-import { SkipForwardIcon, XIcon } from 'lucide-react';
 import React from 'react';
-import { MinimizeIcon } from '@/components';
+import { MinimizeIcon, WheelContainer } from '@/components';
 import { specta } from '@/environment';
 import { Cat, TCatRef } from '@/features/cat';
-import { cn } from '@/lib';
-import { FocusSelector, SessionWheel, StartButton, TimerDial } from './components';
+import { cn, formatTime, formatTimeOfDay } from '@/lib';
+import { FocusSelector, SessionWheel, TimerActions, TimerDial } from './components';
 import { useTimer } from './hooks';
 
 export const TimerView: React.FC<TTimerViewProps> = (props) => {
@@ -39,30 +38,24 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	const remainingSeconds = previewMinutes != null ? previewMinutes * 60 : (state?.remainingSeconds ?? 0);
 
 	// Target sessions for the wheel display
-	// - When idle: use base settings
-	// - When active: use in-session target with fractional progress during work phase
+	// Shows remaining sessions counting down as sessions complete
 	const displaySessions = React.useMemo(() => {
-		if (state == null) {
+		if (state == null || state.status === 'idle') {
 			return settings.sessionsBeforeLongBreak;
 		}
 
-		// When idle, use base settings (so changing settings updates the wheel)
-		if (state.status === 'idle') {
-			return settings.sessionsBeforeLongBreak;
-		}
+		// Remaining sessions = target minus already completed
+		const remaining = state.targetSessions - state.sessionsCompleted;
 
-		// When active (running or paused), use in-session target
-		const target = state.targetSessions;
-
-		// Show fractional progress during work phase (both running and paused)
+		// During breaks, show remaining without progress
 		if (state.phase !== 'work' || state.baseWorkSeconds === 0) {
-			return target;
+			return remaining;
 		}
 
-		// Progress through current session based on base work duration
+		// During work, subtract fractional progress through current session
 		const elapsed = state.baseWorkSeconds - remainingSeconds;
 		const progress = Math.max(0, Math.min(elapsed / state.baseWorkSeconds, 1));
-		return target - progress;
+		return remaining - progress;
 	}, [state, settings.sessionsBeforeLongBreak, remainingSeconds]);
 
 	// MARK: - Actions
@@ -106,6 +99,23 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 		await specta.commands.hideMainWindow();
 	}, []);
 
+	// MARK: - Effects
+
+	// Tap cat on each second tick while timer is running
+	const lastSecond = React.useRef<number | null>(null);
+	React.useEffect(() => {
+		if (!isRunning || state == null) {
+			lastSecond.current = null;
+			return;
+		}
+
+		const currentSecond = state.remainingSeconds;
+		if (lastSecond.current != null && lastSecond.current !== currentSecond) {
+			catRef.current?.tap();
+		}
+		lastSecond.current = currentSecond;
+	}, [isRunning, state?.remainingSeconds]);
+
 	// MARK: - UI
 
 	if (state == null) {
@@ -137,25 +147,39 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 
 			{/* Center: Timer dial with cat + time display */}
 			<div className="flex w-full flex-col items-center gap-4">
-				{/* Session wheel + Timer dial */}
+				{/* Timer dial + Session wheel */}
 				<div className="relative flex w-full items-center">
-					<Cat ref={catRef} size={150} className="absolute right-4 bottom-full z-10" />
-					<SessionWheel
-						value={displaySessions}
-						onChange={(value) => setTargetSessions(Math.round(value))}
-						onDragStart={handleDragStart}
-						targetSessions={state.targetSessions}
-						sessionsBeforeLongBreak={settings.sessionsBeforeLongBreak}
-						smooth={isActive}
-					/>
-					<TimerDial
-						remainingSeconds={state.remainingSeconds}
-						onChangeMinutes={handleChangeMinutes}
-						onPreviewMinutes={handlePreviewMinutes}
-						onDragStart={handleDragStart}
-						smooth={isActive}
-						className="flex-1"
-					/>
+					<Cat ref={catRef} size={150} className="absolute right-12 bottom-full z-30" />
+
+					{/* Border lines - full width */}
+					<div className="absolute inset-x-0 top-0 z-20 h-px bg-gray-200" />
+					<div className="absolute inset-x-0 bottom-0 z-20 h-px bg-gray-200" />
+
+					{/* Timer dial */}
+					<WheelContainer direction="horizontal" className="ml-2 flex-1">
+						<TimerDial
+							remainingSeconds={state.remainingSeconds}
+							onChangeMinutes={handleChangeMinutes}
+							onPreviewMinutes={handlePreviewMinutes}
+							onDragStart={handleDragStart}
+							smooth={isActive}
+						/>
+					</WheelContainer>
+
+					{/* Divider */}
+					<div className="h-16 w-px bg-gray-200" />
+
+					{/* Session wheel */}
+					<WheelContainer direction="vertical" className="mr-2">
+						<SessionWheel
+							value={displaySessions}
+							onChange={(value) => setTargetSessions(Math.round(value))}
+							onDragStart={handleDragStart}
+							targetSessions={state.targetSessions}
+							sessionsBeforeLongBreak={settings.sessionsBeforeLongBreak}
+							smooth={isActive}
+						/>
+					</WheelContainer>
 				</div>
 
 				{/* Time display */}
@@ -191,46 +215,18 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 			</div>
 
 			{/* Bottom: Action buttons */}
-			<div className="relative flex items-center justify-center">
-				{/* Reset button (left of main button) */}
-				{state.status === 'paused' && (
-					<button
-						type="button"
-						onClick={reset}
-						className="absolute right-full mr-3 flex size-11 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200"
-					>
-						<XIcon size={18} />
-					</button>
-				)}
-
-				<StartButton status={state.status} onStart={start} onPause={pause} onResume={resume} />
-
-				{/* Skip button (right of main button) */}
-				{isActive && (
-					<button
-						type="button"
-						onClick={skip}
-						className="absolute left-full ml-3 flex size-11 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200"
-					>
-						<SkipForwardIcon size={18} />
-					</button>
-				)}
-			</div>
+			<TimerActions
+				status={state.status}
+				phase={state.phase}
+				onStart={start}
+				onSkip={skip}
+				onPause={pause}
+				onResume={resume}
+				onCancel={reset}
+			/>
 		</div>
 	);
 };
-
-// MARK: - Helpers
-
-function formatTime(seconds: number): string {
-	const mins = Math.floor(seconds / 60);
-	const secs = seconds % 60;
-	return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
-
-function formatTimeOfDay(date: Date): string {
-	return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-}
 
 // MARK: - Types
 

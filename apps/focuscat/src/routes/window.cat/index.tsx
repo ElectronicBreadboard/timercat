@@ -6,7 +6,7 @@ import { ExpandIcon, GripIcon } from '@/components';
 import { specta } from '@/environment';
 import { Cat, type TCatRef } from '@/features/cat';
 import { useAppSettings, useInputTap, useTimerState } from '@/hooks';
-import { cn } from '@/lib';
+import { cn, formatTime } from '@/lib';
 
 export const Route = createFileRoute('/window/cat/')({
 	component: RouteComponent
@@ -71,10 +71,4 @@ function RouteComponent() {
 			</div>
 		</div>
 	);
-}
-
-function formatTime(seconds: number): string {
-	const mins = Math.floor(seconds / 60);
-	const secs = seconds % 60;
-	return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }

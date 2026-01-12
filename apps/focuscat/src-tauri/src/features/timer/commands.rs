@@ -174,12 +174,8 @@ pub fn skip_timer(
         timer.base_work_seconds = config.work_duration;
     }
 
-    // Auto-start breaks, but require manual start for work
-    timer.status = if is_work_phase {
-        TimerStatus::Running
-    } else {
-        TimerStatus::Idle
-    };
+    // Auto-start next phase
+    timer.status = TimerStatus::Running;
 
     // Emit tick with new state
     let _ = TimerTickEvent(timer.clone()).emit(&app);
