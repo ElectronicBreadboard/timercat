@@ -11,8 +11,9 @@ export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
 
 	const y = useMotionValue(0);
 
-	// Show numbers 0 to some reasonable max (value + buffer for scrolling visual)
-	const maxDisplay = Math.max(value + 5, 10);
+	// Show numbers 0 to max (ceil ensures integers, +5 buffer for scrolling visual)
+	const maxDisplay = React.useMemo(() => Math.max(Math.ceil(value) + 5, 10), [value]);
+
 	const items = React.useMemo(() => {
 		const result: number[] = [];
 		for (let v = maxDisplay; v >= 0; v--) {
@@ -21,14 +22,18 @@ export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
 		return result;
 	}, [maxDisplay]);
 
-	// Update position smoothly (value is fractional: 0, 0.1, 0.2, ..., 0.5, 0.6, ..., 1.0, ...)
+	// MARK: - Effects
+
+	// Update position when value changes (fractional: 0, 0.5, 1.0, 1.5, ...)
 	React.useEffect(() => {
 		const targetY = -(maxDisplay - value) * itemHeight;
 		y.set(targetY);
 	}, [value, maxDisplay, y, itemHeight]);
 
+	// MARK: - UI
+
 	return (
-		<div className={cn('relative h-20 w-10 select-none overflow-hidden', className)}>
+		<div className={cn('relative h-20 w-10 overflow-hidden select-none', className)}>
 			{/* Number strip */}
 			<motion.div
 				className="pointer-events-none absolute inset-x-0 flex flex-col items-center"

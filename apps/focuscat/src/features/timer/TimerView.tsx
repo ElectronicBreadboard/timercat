@@ -36,7 +36,8 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	const isBreak = state != null && state.phase !== 'work';
 
 	// Use preview value during drag, otherwise use state
-	const remainingSeconds = previewMinutes != null ? previewMinutes * 60 : (state?.remainingSeconds ?? 0);
+	const remainingSeconds =
+		previewMinutes != null ? previewMinutes * 60 : (state?.remainingSeconds ?? 0);
 
 	// Session progress: work phase = 0→0.5, break phase = 0.5→1.0
 	const sessionProgress = React.useMemo(() => {
@@ -185,7 +186,7 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 				</div>
 
 				{/* Time display */}
-				<div className="flex flex-col items-center gap-1">
+				<div className="flex min-h-24 flex-col items-center gap-1">
 					{isOvertime ? (
 						<>
 							{/* Total time worked */}
@@ -205,7 +206,9 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 							<p className="text-sm text-gray-400">
 								{formatTimeOfDay(isRunning && startTime != null ? startTime : new Date())} →{' '}
 								{formatTimeOfDay(
-									isRunning && endTime != null ? endTime : new Date(Date.now() + remainingSeconds * 1000)
+									isRunning && endTime != null
+										? endTime
+										: new Date(Date.now() + remainingSeconds * 1000)
 								)}
 							</p>
 						</>
@@ -224,7 +227,8 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 										{state.lastWorkSession.extendedSeconds > 0 &&
 											` + ${formatTime(state.lastWorkSession.extendedSeconds)} ext`}
 										{state.lastWorkSession.overtimeSeconds > 0 &&
-											` + ${formatTime(state.lastWorkSession.overtimeSeconds)} ot`})
+											` + ${formatTime(state.lastWorkSession.overtimeSeconds)} ot`}
+										)
 									</p>
 								)}
 						</div>

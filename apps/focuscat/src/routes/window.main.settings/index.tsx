@@ -56,7 +56,7 @@ function RouteComponent() {
 			<div className="flex-1 space-y-4 overflow-y-auto p-4">
 				{/* Timer Settings Section */}
 				<div className="space-y-3">
-					<h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500">Timer</h2>
+					<h2 className="text-xs font-semibold tracking-wider text-gray-500 uppercase">Timer</h2>
 
 					{/* Work Duration */}
 					<NumberInput
@@ -101,7 +101,9 @@ function RouteComponent() {
 
 				{/* Developer Section */}
 				<div className="space-y-3">
-					<h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500">Developer</h2>
+					<h2 className="text-xs font-semibold tracking-wider text-gray-500 uppercase">
+						Developer
+					</h2>
 
 					{/* Debug Toggle */}
 					<label className="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 p-4">

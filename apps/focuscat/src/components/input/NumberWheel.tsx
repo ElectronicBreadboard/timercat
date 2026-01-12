@@ -102,7 +102,7 @@ export const NumberWheel: React.FC<TNumberWheelProps> = (props) => {
 	// MARK: - UI
 
 	return (
-		<div className={cn('relative h-20 w-full select-none overflow-hidden', className)}>
+		<div className={cn('relative h-20 w-full overflow-hidden select-none', className)}>
 			{/* Tick strip */}
 			<motion.div
 				className="pointer-events-none absolute inset-y-0 flex items-end pb-3"

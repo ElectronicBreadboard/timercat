@@ -8,14 +8,12 @@ import { cn } from '@/lib';
 export const WheelContainer: React.FC<TWheelContainerProps> = (props) => {
 	const { direction = 'horizontal', className, children } = props;
 
-	const isHorizontal = direction === 'horizontal';
-
 	return (
 		<div className={cn('relative', className)}>
 			{children}
 
 			{/* Edge fades */}
-			{isHorizontal ? (
+			{direction === 'horizontal' ? (
 				<>
 					<div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-linear-to-r from-white to-transparent" />
 					<div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-linear-to-l from-white to-transparent" />
@@ -28,15 +26,27 @@ export const WheelContainer: React.FC<TWheelContainerProps> = (props) => {
 			)}
 
 			{/* Center indicator */}
-			{isHorizontal ? (
+			{direction === 'horizontal' ? (
 				<div className="pointer-events-none absolute inset-x-0 top-px z-30 flex justify-center">
-					<svg width="12" height="8" viewBox="0 0 12 8" fill="currentColor" className="text-gray-300">
+					<svg
+						width="12"
+						height="8"
+						viewBox="0 0 12 8"
+						fill="currentColor"
+						className="text-gray-300"
+					>
 						<path d="M6 8 L12 0 L0 0 Z" />
 					</svg>
 				</div>
 			) : (
 				<div className="pointer-events-none absolute inset-y-0 left-0 z-30 flex items-center">
-					<svg width="6" height="10" viewBox="0 0 6 10" fill="currentColor" className="text-gray-300">
+					<svg
+						width="6"
+						height="10"
+						viewBox="0 0 6 10"
+						fill="currentColor"
+						className="text-gray-300"
+					>
 						<path d="M6 5 L0 0 L0 10 Z" />
 					</svg>
 				</div>
