@@ -2,22 +2,17 @@ mod commands;
 pub mod tray;
 pub mod window;
 
-use std::sync::Mutex;
-
+use crate::environment::db;
 use crate::features::{
-    input::{runner::InputRunner, types::InputDetectedEvent},
-    settings::{
-        self,
-        types::{AppSettingsChangedEvent, AppSettingsState},
-    },
+    input::{self, types::InputDetectedEvent},
+    session_tag,
+    settings::{self, types::AppSettingsChangedEvent},
     timer::{
         self,
-        runner::TimerRunner,
-        types::{Timer, TimerCompleteEvent, TimerConfig, TimerState, TimerTickEvent},
+        types::{TimerCompleteEvent, TimerTickEvent},
     },
 };
 use specta_typescript::Typescript;
-use tauri::Manager;
 use tauri_specta::{collect_commands, collect_events, Builder};
 
 pub fn run() {
@@ -32,6 +27,8 @@ pub fn run() {
             // Settings commands
             settings::commands::get_settings,
             settings::commands::set_settings,
+            settings::commands::get_data_directory_path,
+            settings::commands::open_data_directory,
             // Timer commands
             timer::commands::get_timer,
             timer::commands::start_timer,
@@ -40,8 +37,16 @@ pub fn run() {
             timer::commands::reset_timer,
             timer::commands::skip_timer,
             timer::commands::set_timer_duration,
-            timer::commands::set_timer_category,
+            timer::commands::set_timer_tags,
             timer::commands::cycle_timer_speed,
+            // Session tag commands
+            session_tag::commands::get_session_tags,
+            session_tag::commands::get_session_tag_with_rules,
+            session_tag::commands::create_session_tag,
+            session_tag::commands::update_session_tag,
+            session_tag::commands::delete_session_tag,
+            session_tag::commands::add_session_tag_rule,
+            session_tag::commands::delete_session_tag_rule,
         ])
         .events(collect_events![
             AppSettingsChangedEvent,
@@ -65,30 +70,13 @@ pub fn run() {
             // https://docs.rs/tauri-specta/2.0.0-rc.21/tauri_specta/index.html
             builder.mount_events(app);
 
-            // Load settings from disk
-            let app_settings = settings::persistence::load_settings(app);
-
-            // Initialize timer with settings
-            let timer_config = TimerConfig::from(&app_settings);
-            let timer = Timer::new(&timer_config);
-
-            // Manage state
-            app.manage(AppSettingsState::new(app_settings));
-            app.manage(TimerState::new(timer));
-            app.manage(Mutex::new(None::<TimerRunner>));
-
-            // Start input monitoring
-            InputRunner::start(app.handle().clone());
-
-            // Setup tray icon (macOS only)
+            // Setup modules
+            db::setup(app);
+            settings::setup(app);
+            timer::setup(app);
+            input::setup(app);
             #[cfg(target_os = "macos")]
-            {
-                use crate::app::tray::{Tray, TrayState};
-
-                app.set_activation_policy(tauri::ActivationPolicy::Accessory);
-                let tray_icon = Tray::setup(app.handle()).ok();
-                app.manage(TrayState::new(tray_icon));
-            }
+            tray::setup(app);
 
             // Show main window on startup
             let _ = window::ShowWindow::Main.show(app.handle());

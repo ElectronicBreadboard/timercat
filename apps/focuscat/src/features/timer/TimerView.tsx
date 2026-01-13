@@ -3,7 +3,7 @@ import { MinimizeIcon, WheelContainer } from '@/components';
 import { specta } from '@/environment';
 import { Cat, TCatRef } from '@/features/cat';
 import { cn, formatTime, formatTimeOfDay } from '@/lib';
-import { FocusSelector, SessionWheel, TimerActions, TimerDial } from './components';
+import { SessionWheel, TimerActions, TimerDial } from './components';
 import { useTimer } from './hooks';
 
 export const TimerView: React.FC<TTimerViewProps> = (props) => {
@@ -12,7 +12,6 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	const {
 		state,
 		settings,
-		categories,
 		startTime,
 		endTime,
 		start,
@@ -20,8 +19,7 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 		resume,
 		reset,
 		skip,
-		setDurationMinutes,
-		setCategory
+		setDurationMinutes
 	} = useTimer();
 
 	const [previewMinutes, setPreviewMinutes] = React.useState<number | null>(null);
@@ -144,13 +142,8 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 				<MinimizeIcon size={18} />
 			</button>
 
-			{/* Top: Focus selector */}
-			<FocusSelector
-				categories={categories}
-				selected={state.category}
-				onSelect={setCategory}
-				disabled={isRunning}
-			/>
+			{/* TODO: Add tag selector here */}
+			<div />
 
 			{/* Center: Timer dial with cat + time display */}
 			<div className="flex w-full flex-col items-center gap-4">

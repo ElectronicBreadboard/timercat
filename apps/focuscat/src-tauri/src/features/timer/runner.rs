@@ -1,3 +1,4 @@
+use super::types::{TimerCompleteEvent, TimerState, TimerStatus, TimerTickEvent};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
@@ -5,10 +6,8 @@ use std::time::Duration;
 use tauri::{AppHandle, Manager};
 use tauri_specta::Event;
 
-use super::types::{TimerCompleteEvent, TimerState, TimerStatus, TimerTickEvent};
-
 #[cfg(target_os = "macos")]
-use crate::app::tray::set_tray_timer;
+use crate::app::tray::TrayState;
 
 /// Handle to control the timer runner thread.
 pub struct TimerRunner {
@@ -95,6 +94,6 @@ fn run_timer_loop(app: AppHandle, stop_flag: Arc<AtomicBool>) {
 
         // Update tray with remaining time
         #[cfg(target_os = "macos")]
-        set_tray_timer(&app, Some(timer.remaining_seconds));
+        TrayState::set_timer(&app, Some(timer.remaining_seconds));
     }
 }

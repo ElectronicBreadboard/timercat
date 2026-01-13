@@ -2,12 +2,10 @@ import React from 'react';
 import { specta } from '@/environment';
 import { useAppSettings, useTimerState } from '@/hooks';
 import { toTuple } from '@/lib';
-import { timerConfig } from '../timer.config';
 
 export function useTimer(): TUseTimerReturn {
 	const state = useTimerState();
 	const { settings } = useAppSettings();
-	const categories = timerConfig.categories;
 	const [startTime, setStartTime] = React.useState<Date | null>(null);
 
 	const endTime = React.useMemo(() => {
@@ -69,13 +67,6 @@ export function useTimer(): TUseTimerReturn {
 		}
 	}, []);
 
-	const setCategory = React.useCallback(async (category: specta.FocusCategory | null) => {
-		const [isOk, , error] = toTuple(await specta.commands.setTimerCategory(category));
-		if (!isOk) {
-			console.error('Failed to set timer category:', error);
-		}
-	}, []);
-
 	const cycleSpeed = React.useCallback(async () => {
 		const [isOk, , error] = toTuple(await specta.commands.cycleTimerSpeed());
 		if (!isOk) {
@@ -98,7 +89,6 @@ export function useTimer(): TUseTimerReturn {
 	return {
 		state,
 		settings,
-		categories,
 		startTime,
 		endTime,
 		start,
@@ -107,7 +97,6 @@ export function useTimer(): TUseTimerReturn {
 		reset,
 		skip,
 		setDurationMinutes,
-		setCategory,
 		cycleSpeed
 	};
 }
@@ -115,7 +104,6 @@ export function useTimer(): TUseTimerReturn {
 interface TUseTimerReturn {
 	state: specta.Timer | null;
 	settings: specta.AppSettings;
-	categories: specta.FocusCategory[];
 	startTime: Date | null;
 	endTime: Date | null;
 	start: () => void;
@@ -124,6 +112,5 @@ interface TUseTimerReturn {
 	reset: () => void;
 	skip: () => void;
 	setDurationMinutes: (minutes: number) => void;
-	setCategory: (category: specta.FocusCategory | null) => void;
 	cycleSpeed: () => void;
 }

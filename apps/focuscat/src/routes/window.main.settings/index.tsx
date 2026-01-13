@@ -1,6 +1,6 @@
 import { Switch } from '@base-ui/react/switch';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ArrowLeftIcon } from 'lucide-react';
+import { ArrowLeftIcon, FolderOpenIcon } from 'lucide-react';
 import React from 'react';
 import { specta } from '@/environment';
 import { useTimer } from '@/features/timer';
@@ -132,6 +132,21 @@ function RouteComponent() {
 								<p className="text-xs text-gray-500">Speed up timer for testing</p>
 							</div>
 							<span className="font-mono text-sm text-gray-600">{timerState.speed}x</span>
+						</button>
+					)}
+
+					{/* Open Data Directory (Debug only) */}
+					{settings.debug && (
+						<button
+							type="button"
+							onClick={() => specta.commands.openDataDirectory()}
+							className="flex w-full items-center justify-between rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
+						>
+							<div>
+								<span className="text-sm font-medium text-gray-900">Data Directory</span>
+								<p className="text-xs text-gray-500">Open app data folder in Finder</p>
+							</div>
+							<FolderOpenIcon size={18} className="text-gray-400" />
 						</button>
 					)}
 				</div>

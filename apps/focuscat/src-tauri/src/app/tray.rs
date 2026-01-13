@@ -1,36 +1,58 @@
-use std::io::Cursor;
-use std::sync::Mutex;
-
 use crate::{app::window::ShowWindow, environment::configs::app::AppConfig};
+use std::io::Cursor;
+use std::ops::Deref;
+use std::sync::Mutex;
 use tauri::{
     menu::{Menu, MenuBuilder, MenuItem},
     tray::{TrayIcon, TrayIconBuilder},
-    AppHandle, Manager,
+    App, AppHandle, Manager,
 };
 
-// MARK: - Tray State
+// MARK: - Setup
 
-pub type TrayState = Mutex<Option<TrayIcon<tauri::Wry>>>;
+pub fn setup(app: &mut App) {
+    app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+    app.manage(TrayState::init(app));
+}
 
-/// Update tray title (shown next to icon on macOS).
-fn set_tray_title(app: &AppHandle, title: Option<&str>) {
-    if let Some(state) = app.try_state::<TrayState>() {
-        if let Some(tray) = state.lock().unwrap().as_ref() {
-            let _ = tray.set_title(title);
+// MARK: - State
+
+pub struct TrayState(Mutex<Option<TrayIcon<tauri::Wry>>>);
+
+impl TrayState {
+    pub fn init(app: &App) -> Self {
+        let tray_icon = Tray::setup(app.handle()).ok();
+        return Self(Mutex::new(tray_icon));
+    }
+
+    /// Update tray with timer display. Pass None to clear.
+    pub fn set_timer(app: &AppHandle, seconds: Option<u32>) {
+        match seconds {
+            Some(s) => {
+                let mins = s / 60;
+                let secs = s % 60;
+                let title = format!(" · {mins:2}:{secs:02}");
+                Self::set_title(app, Some(&title));
+            }
+            None => Self::set_title(app, None),
+        }
+    }
+
+    /// Update tray title (shown next to icon on macOS).
+    fn set_title(app: &AppHandle, title: Option<&str>) {
+        if let Some(state) = app.try_state::<TrayState>() {
+            if let Some(tray) = state.lock().unwrap().as_ref() {
+                let _ = tray.set_title(title);
+            }
         }
     }
 }
 
-/// Update tray with timer display. Pass None to clear.
-pub fn set_tray_timer(app: &AppHandle, seconds: Option<u32>) {
-    match seconds {
-        Some(s) => {
-            let mins = s / 60;
-            let secs = s % 60;
-            let title = format!(" · {mins:2}:{secs:02}");
-            set_tray_title(app, Some(&title));
-        }
-        None => set_tray_title(app, None),
+impl Deref for TrayState {
+    type Target = Mutex<Option<TrayIcon<tauri::Wry>>>;
+
+    fn deref(&self) -> &Self::Target {
+        return &self.0;
     }
 }
 

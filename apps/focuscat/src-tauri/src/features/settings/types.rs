@@ -1,5 +1,8 @@
+use super::persistence::load_settings;
 use serde::{Deserialize, Serialize};
+use std::ops::Deref;
 use std::sync::Mutex;
+use tauri::App;
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
@@ -29,7 +32,22 @@ impl Default for AppSettings {
 
 // MARK: - State
 
-pub type AppSettingsState = Mutex<AppSettings>;
+pub struct AppSettingsState(Mutex<AppSettings>);
+
+impl AppSettingsState {
+    pub fn init(app: &App) -> Self {
+        let settings = load_settings(app);
+        return Self(Mutex::new(settings));
+    }
+}
+
+impl Deref for AppSettingsState {
+    type Target = Mutex<AppSettings>;
+
+    fn deref(&self) -> &Self::Target {
+        return &self.0;
+    }
+}
 
 // MARK: - Events
 

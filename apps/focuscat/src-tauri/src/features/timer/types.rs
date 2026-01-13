@@ -1,7 +1,8 @@
+use crate::features::settings::types::{AppSettings, AppSettingsState};
 use serde::{Deserialize, Serialize};
+use std::ops::Deref;
 use std::sync::Mutex;
-
-use crate::features::settings::types::AppSettings;
+use tauri::{App, Manager};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
@@ -17,14 +18,6 @@ pub enum TimerPhase {
     Work,
     ShortBreak,
     LongBreak,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
-#[serde(rename_all = "camelCase")]
-pub struct FocusCategory {
-    pub id: String,
-    pub name: String,
-    pub color: String,
 }
 
 /// Stats from the last completed work session (shown during breaks).
@@ -76,7 +69,8 @@ pub struct Timer {
     pub remaining_seconds: u32,
     /// Counts up after timer hits zero
     pub overtime_seconds: u32,
-    pub category: Option<FocusCategory>,
+    /// Session tag IDs applied to current session
+    pub session_tag_ids: Vec<i32>,
     pub sessions_completed: u32,
     /// Base work duration from settings
     pub base_work_seconds: u32,
@@ -88,6 +82,11 @@ pub struct Timer {
     pub last_work_session: Option<WorkSessionStats>,
     /// Debug: speed multiplier
     pub speed: u32,
+    /// Timestamp when current phase started (Unix epoch seconds).
+    /// Internal field for DB persistence - not exposed to frontend.
+    #[serde(skip)]
+    #[specta(skip)]
+    pub phase_started_at: Option<i64>,
 }
 
 impl Default for Timer {
@@ -99,13 +98,14 @@ impl Default for Timer {
             total_seconds: config.work_duration,
             remaining_seconds: config.work_duration,
             overtime_seconds: 0,
-            category: None,
+            session_tag_ids: Vec::new(),
             sessions_completed: 0,
             base_work_seconds: config.work_duration,
             accumulated_work_seconds: 0,
             total_extended_seconds: 0,
             last_work_session: None,
             speed: 1,
+            phase_started_at: None,
         };
     }
 }
@@ -118,13 +118,14 @@ impl Timer {
             total_seconds: config.work_duration,
             remaining_seconds: config.work_duration,
             overtime_seconds: 0,
-            category: None,
+            session_tag_ids: Vec::new(),
             sessions_completed: 0,
             base_work_seconds: config.work_duration,
             accumulated_work_seconds: 0,
             total_extended_seconds: 0,
             last_work_session: None,
             speed: 1,
+            phase_started_at: None,
         };
     }
 
@@ -139,7 +140,26 @@ impl Timer {
 
 // MARK: - State
 
-pub type TimerState = Mutex<Timer>;
+pub struct TimerState(Mutex<Timer>);
+
+impl TimerState {
+    /// Initialize timer state from managed AppSettingsState.
+    /// Requires AppSettingsState to be managed first.
+    pub fn init(app: &App) -> Self {
+        let settings_state = app.state::<AppSettingsState>();
+        let settings = settings_state.lock().unwrap();
+        let config = TimerConfig::from(&*settings);
+        return Self(Mutex::new(Timer::new(&config)));
+    }
+}
+
+impl Deref for TimerState {
+    type Target = Mutex<Timer>;
+
+    fn deref(&self) -> &Self::Target {
+        return &self.0;
+    }
+}
 
 // MARK: - Events
 

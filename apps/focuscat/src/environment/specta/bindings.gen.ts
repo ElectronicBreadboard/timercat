@@ -51,6 +51,17 @@ async setSettings(settings: AppSettings) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async getDataDirectoryPath() : Promise<string> {
+    return await TAURI_INVOKE("get_data_directory_path");
+},
+async openDataDirectory() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_data_directory") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async getTimer() : Promise<Timer> {
     return await TAURI_INVOKE("get_timer");
 },
@@ -102,9 +113,9 @@ async setTimerDuration(minutes: number) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async setTimerCategory(category: FocusCategory | null) : Promise<Result<null, string>> {
+async setTimerTags(sessionTagIds: number[]) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("set_timer_category", { category }) };
+    return { status: "ok", data: await TAURI_INVOKE("set_timer_tags", { sessionTagIds }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -113,6 +124,62 @@ async setTimerCategory(category: FocusCategory | null) : Promise<Result<null, st
 async cycleTimerSpeed() : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("cycle_timer_speed") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getSessionTags() : Promise<Result<SessionTag[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_session_tags") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getSessionTagWithRules(id: number) : Promise<Result<SessionTagWithRules | null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_session_tag_with_rules", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async createSessionTag(name: string, color: string) : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("create_session_tag", { name, color }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async updateSessionTag(id: number, name: string, color: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_session_tag", { id, name, color }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async deleteSessionTag(id: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_session_tag", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async addSessionTagRule(sessionTagId: number, appBundleId: string, appName: string | null) : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("add_session_tag_rule", { sessionTagId, appBundleId, appName }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async deleteSessionTagRule(ruleId: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_session_tag_rule", { ruleId }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -159,7 +226,6 @@ longBreakMinutes: number;
  */
 sessionsBeforeLongBreak: number }
 export type AppSettingsChangedEvent = AppSettings
-export type FocusCategory = { id: string; name: string; color: string }
 /**
  * Event emitted when user input is detected (throttled).
  */
@@ -168,11 +234,18 @@ export type InputDetectedEvent = InputType
  * Type of input event detected.
  */
 export type InputType = "keyboard" | "mouse"
+export type SessionTag = { id: number; name: string; color: string }
+export type SessionTagRule = { id: number; sessionTagId: number; appBundleId: string; appName: string | null }
+export type SessionTagWithRules = { id: number; name: string; color: string; rules: SessionTagRule[] }
 export type Timer = { status: TimerStatus; phase: TimerPhase; totalSeconds: number; remainingSeconds: number; 
 /**
  * Counts up after timer hits zero
  */
-overtimeSeconds: number; category: FocusCategory | null; sessionsCompleted: number; 
+overtimeSeconds: number; 
+/**
+ * Session tag IDs applied to current session
+ */
+sessionTagIds: number[]; sessionsCompleted: number; 
 /**
  * Base work duration from settings
  */
