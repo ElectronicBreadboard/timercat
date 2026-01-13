@@ -1,9 +1,8 @@
-use std::{fs, path::PathBuf};
 use crate::{
-    environment::configs::settings::SettingsConfig,
+    common::path::get_app_data_dir, environment::configs::settings::SettingsConfig,
     features::settings::types::AppSettings,
-    shared::path::get_app_data_dir,
 };
+use std::{fs, path::PathBuf};
 use tauri::{Manager, Runtime};
 
 fn get_settings_path<R: Runtime, M: Manager<R>>(app: &M) -> PathBuf {
