@@ -10,6 +10,9 @@ use super::types::{
     WorkSessionStats,
 };
 
+#[cfg(target_os = "macos")]
+use crate::app::tray::set_tray_timer;
+
 #[tauri::command]
 #[specta::specta]
 pub fn get_timer(state: State<'_, TimerState>) -> Timer {
@@ -33,6 +36,10 @@ pub fn start_timer(
 
     // Emit initial tick
     let _ = TimerTickEvent(timer.clone()).emit(&app);
+
+    // Update tray with initial time
+    #[cfg(target_os = "macos")]
+    set_tray_timer(&app, Some(timer.remaining_seconds));
 
     // Start runner
     let mut runner_guard = runner.lock().unwrap();
@@ -125,6 +132,10 @@ pub fn reset_timer(
     // Emit tick with reset state
     let _ = TimerTickEvent(timer.clone()).emit(&app);
 
+    // Clear tray title
+    #[cfg(target_os = "macos")]
+    set_tray_timer(&app, None);
+
     // Stop runner
     let mut runner_guard = runner.lock().unwrap();
     if let Some(r) = runner_guard.take() {
@@ -197,6 +208,10 @@ pub fn skip_timer(
     // Emit tick with new state
     let _ = TimerTickEvent(timer.clone()).emit(&app);
 
+    // Update tray with new time
+    #[cfg(target_os = "macos")]
+    set_tray_timer(&app, Some(timer.remaining_seconds));
+
     // Always restart runner for clean state
     let mut runner_guard = runner.lock().unwrap();
     if let Some(r) = runner_guard.take() {
@@ -236,6 +251,12 @@ pub fn set_timer_duration(
 
     // Emit tick with new duration
     let _ = TimerTickEvent(timer.clone()).emit(&app);
+
+    // Update tray if timer is active
+    #[cfg(target_os = "macos")]
+    if timer.status != TimerStatus::Idle {
+        set_tray_timer(&app, Some(timer.remaining_seconds));
+    }
 
     return Ok(());
 }

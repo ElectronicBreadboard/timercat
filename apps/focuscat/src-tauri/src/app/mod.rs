@@ -83,10 +83,11 @@ pub fn run() {
             // Setup tray icon (macOS only)
             #[cfg(target_os = "macos")]
             {
-                use crate::app::tray::Tray;
+                use crate::app::tray::{Tray, TrayState};
 
                 app.set_activation_policy(tauri::ActivationPolicy::Accessory);
-                let _ = Tray::setup(app.handle());
+                let tray_icon = Tray::setup(app.handle()).ok();
+                app.manage(TrayState::new(tray_icon));
             }
 
             // Show main window on startup

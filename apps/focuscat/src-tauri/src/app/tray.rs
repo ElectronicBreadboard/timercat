@@ -1,10 +1,38 @@
 use std::io::Cursor;
+use std::sync::Mutex;
+
 use crate::{app::window::ShowWindow, environment::configs::app::AppConfig};
 use tauri::{
     menu::{Menu, MenuBuilder, MenuItem},
     tray::{TrayIcon, TrayIconBuilder},
-    AppHandle,
+    AppHandle, Manager,
 };
+
+// MARK: - Tray State
+
+pub type TrayState = Mutex<Option<TrayIcon<tauri::Wry>>>;
+
+/// Update tray title (shown next to icon on macOS).
+fn set_tray_title(app: &AppHandle, title: Option<&str>) {
+    if let Some(state) = app.try_state::<TrayState>() {
+        if let Some(tray) = state.lock().unwrap().as_ref() {
+            let _ = tray.set_title(title);
+        }
+    }
+}
+
+/// Update tray with timer display. Pass None to clear.
+pub fn set_tray_timer(app: &AppHandle, seconds: Option<u32>) {
+    match seconds {
+        Some(s) => {
+            let mins = s / 60;
+            let secs = s % 60;
+            let title = format!(" · {mins:2}:{secs:02}");
+            set_tray_title(app, Some(&title));
+        }
+        None => set_tray_title(app, None),
+    }
+}
 
 // MARK: - Tray Item
 

@@ -7,6 +7,9 @@ use tauri_specta::Event;
 
 use super::types::{TimerCompleteEvent, TimerState, TimerStatus, TimerTickEvent};
 
+#[cfg(target_os = "macos")]
+use crate::app::tray::set_tray_timer;
+
 /// Handle to control the timer runner thread.
 pub struct TimerRunner {
     stop_flag: Arc<AtomicBool>,
@@ -89,5 +92,9 @@ fn run_timer_loop(app: AppHandle, stop_flag: Arc<AtomicBool>) {
         }
 
         let _ = TimerTickEvent(timer.clone()).emit(&app);
+
+        // Update tray with remaining time
+        #[cfg(target_os = "macos")]
+        set_tray_timer(&app, Some(timer.remaining_seconds));
     }
 }
