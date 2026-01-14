@@ -13,6 +13,10 @@ use tauri_specta::Event;
 #[cfg(target_os = "macos")]
 use crate::app::tray::TrayState;
 
+// NOTE: Timer commands are async to avoid blocking the main thread.
+// The runner updates the tray (which dispatches to main thread on macOS) while holding
+// the timer lock. Sync commands would block the main thread waiting for that lock → deadlock.
+
 #[tauri::command]
 #[specta::specta]
 pub fn get_timer(state: State<'_, TimerState>) -> Timer {
@@ -21,7 +25,7 @@ pub fn get_timer(state: State<'_, TimerState>) -> Timer {
 
 #[tauri::command]
 #[specta::specta]
-pub fn start_timer(
+pub async fn start_timer(
     app: AppHandle,
     state: State<'_, TimerState>,
     runner: State<'_, Mutex<Option<TimerRunner>>>,
@@ -38,7 +42,7 @@ pub fn start_timer(
     // Emit initial tick
     let _ = TimerTickEvent(timer.clone()).emit(&app);
 
-    // Update tray with initial time
+    // Update tray
     #[cfg(target_os = "macos")]
     TrayState::set_timer(&app, Some(timer.remaining_seconds));
 
@@ -54,7 +58,7 @@ pub fn start_timer(
 
 #[tauri::command]
 #[specta::specta]
-pub fn pause_timer(
+pub async fn pause_timer(
     app: AppHandle,
     state: State<'_, TimerState>,
     runner: State<'_, Mutex<Option<TimerRunner>>>,
@@ -81,7 +85,7 @@ pub fn pause_timer(
 
 #[tauri::command]
 #[specta::specta]
-pub fn resume_timer(
+pub async fn resume_timer(
     app: AppHandle,
     state: State<'_, TimerState>,
     runner: State<'_, Mutex<Option<TimerRunner>>>,
@@ -109,7 +113,7 @@ pub fn resume_timer(
 
 #[tauri::command]
 #[specta::specta]
-pub fn reset_timer(
+pub async fn reset_timer(
     app: AppHandle,
     state: State<'_, TimerState>,
     app_settings: State<'_, AppSettingsState>,
@@ -134,7 +138,7 @@ pub fn reset_timer(
     // Emit tick with reset state
     let _ = TimerTickEvent(timer.clone()).emit(&app);
 
-    // Clear tray title
+    // Clear tray
     #[cfg(target_os = "macos")]
     TrayState::set_timer(&app, None);
 
