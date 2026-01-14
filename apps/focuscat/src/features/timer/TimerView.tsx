@@ -52,8 +52,8 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 			// Work: 0 → 0.5
 			return state.sessionsCompleted + progress * 0.5;
 		}
-		// Break: 0.5 → 1.0
-		return state.sessionsCompleted + 0.5 + progress * 0.5;
+		// Break: 0.5 → 1.0 (sessionsCompleted already incremented when entering break)
+		return state.sessionsCompleted - 0.5 + progress * 0.5;
 	}, [state]);
 
 	// MARK: - Actions
