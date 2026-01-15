@@ -18,7 +18,7 @@ pub async fn get_window_activities(
         &GetWindowActivitiesInput {
             started_after: params.started_after as i64,
             started_before: params.started_before as i64,
-            limit: params.limit,
+            limit: params.limit.map(|l| l as i64),
         },
     )
     .await
@@ -55,5 +55,5 @@ pub struct WindowActivityDto {
 pub struct GetWindowActivitiesParams {
     pub started_after: f64,
     pub started_before: f64,
-    pub limit: Option<i64>,
+    pub limit: Option<i32>,
 }

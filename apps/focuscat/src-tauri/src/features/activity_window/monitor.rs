@@ -60,28 +60,28 @@ impl WindowListener for WindowMonitorHandler {
                     let mut active_app_guard = active_app.lock().await;
                     let now = Utc::now().timestamp();
 
-                    // Save previous app session if app changed
-                    if let Some(prev_session) = active_app_guard.take() {
-                        if prev_session.bundle_id != app_info.bundle_id {
+                    // Save previous active app if app changed
+                    if let Some(prev) = active_app_guard.take() {
+                        if prev.bundle_id != app_info.bundle_id {
                             if let Some(state) = app.try_state::<DatabaseState>() {
                                 let _ = AppActivityRepository::insert(
                                     &state.pool,
                                     &InsertAppActivityInput {
-                                        app_id: prev_session.app_id,
-                                        started_at: prev_session.started_at,
+                                        app_id: prev.app_id,
+                                        started_at: prev.started_at,
                                         ended_at: now,
                                     },
                                 )
                                 .await;
                             }
                         } else {
-                            // Same app reactivated, restore session
-                            *active_app_guard = Some(prev_session);
+                            // Same app reactivated, restore
+                            *active_app_guard = Some(prev);
                             return;
                         }
                     }
 
-                    // Upsert new app info and start new app session
+                    // Upsert new app and start tracking
                     if let Some(state) = app.try_state::<DatabaseState>() {
                         if let Ok(app_id) = AppRepository::upsert(
                             &state.pool,
@@ -118,33 +118,33 @@ impl WindowListener for WindowMonitorHandler {
                     let mut active_window_guard = active_window.lock().await;
                     let now = Utc::now().timestamp();
 
-                    // Save previous window session if window changed
-                    if let Some(prev_session) = active_window_guard.take() {
-                        if prev_session.bundle_id != window_info.app.bundle_id
-                            || prev_session.window_title != window_info.title
+                    // Save previous active window if window changed
+                    if let Some(prev) = active_window_guard.take() {
+                        if prev.bundle_id != window_info.app.bundle_id
+                            || prev.window_title != window_info.title
                         {
                             if let Some(state) = app.try_state::<DatabaseState>() {
                                 let _ = WindowActivityRepository::insert(
                                     &state.pool,
                                     &InsertWindowActivityInput {
-                                        app_id: prev_session.app_id,
-                                        window_title: prev_session.window_title,
-                                        window_id: prev_session.window_id,
-                                        window_x: prev_session.window_x,
-                                        window_y: prev_session.window_y,
-                                        window_width: prev_session.window_width,
-                                        window_height: prev_session.window_height,
-                                        browser_url: prev_session.browser_url,
-                                        browser_is_private: prev_session.browser_is_private,
-                                        started_at: prev_session.started_at,
+                                        app_id: prev.app_id,
+                                        window_title: prev.window_title,
+                                        window_id: prev.window_id,
+                                        window_x: prev.window_x,
+                                        window_y: prev.window_y,
+                                        window_width: prev.window_width,
+                                        window_height: prev.window_height,
+                                        browser_url: prev.browser_url,
+                                        browser_is_private: prev.browser_is_private,
+                                        started_at: prev.started_at,
                                         ended_at: now,
                                     },
                                 )
                                 .await;
                             }
                         } else {
-                            // Same window, restore session
-                            *active_window_guard = Some(prev_session);
+                            // Same window, restore
+                            *active_window_guard = Some(prev);
                             return;
                         }
                     }
@@ -163,7 +163,7 @@ impl WindowListener for WindowMonitorHandler {
                         .map(|b| (Some(b.x), Some(b.y), Some(b.width), Some(b.height)))
                         .unwrap_or((None, None, None, None));
 
-                    // Upsert new app info and start new window session
+                    // Upsert new app and start tracking window
                     if let Some(state) = app.try_state::<DatabaseState>() {
                         if let Ok(app_id) = AppRepository::upsert(
                             &state.pool,
