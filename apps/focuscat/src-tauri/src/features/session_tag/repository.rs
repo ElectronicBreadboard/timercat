@@ -1,8 +1,7 @@
-use super::types::{
-    InsertSessionTagInput, InsertSessionTagRuleInput, SessionTag, SessionTagRule,
-    SessionTagWithRules,
-};
+use super::types::{SessionTag, SessionTagRule, SessionTagWithRules};
 use sqlx::{Row, SqlitePool};
+
+// MARK: - Session Tag Repository
 
 pub struct SessionTagRepository;
 
@@ -177,4 +176,15 @@ impl SessionTagRepository {
 
         return Ok(());
     }
+}
+
+pub struct InsertSessionTagInput {
+    pub name: String,
+    pub color: String,
+}
+
+pub struct InsertSessionTagRuleInput {
+    pub session_tag_id: i32,
+    pub app_bundle_id: String,
+    pub app_name: Option<String>,
 }

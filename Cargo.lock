@@ -1053,6 +1053,7 @@ name = "focuscat"
 version = "0.0.1"
 dependencies = [
  "chrono",
+ "mado",
  "png 0.18.0",
  "rdev",
  "serde",
@@ -1064,6 +1065,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-opener",
  "tauri-specta",
+ "tokio",
 ]
 
 [[package]]

@@ -3,7 +3,7 @@ use super::types::{
     Timer, TimerConfig, TimerPhase, TimerState, TimerStatus, TimerTickEvent, WorkSessionStats,
 };
 use crate::environment::db::DatabaseState;
-use crate::features::session::{repository::SessionRepository, types::InsertSessionInput};
+use crate::features::session::repository::{InsertSessionInput, SessionRepository};
 use crate::features::settings::types::AppSettingsState;
 use chrono::Utc;
 use std::sync::Mutex;

@@ -48,3 +48,51 @@ INSERT INTO session_tags (name, color) VALUES
     ('Focus', '#6366f1'),
     ('No Social', '#ef4444'),
     ('No Entertainment', '#f59e0b');
+
+-- App: deduplicated app info, shared across activity types
+CREATE TABLE app (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bundle_id TEXT UNIQUE,
+    name TEXT,
+    process_path TEXT,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+);
+
+CREATE INDEX idx_app_bundle_id ON app(bundle_id);
+
+-- Activity App: tracks app-level focus sessions
+CREATE TABLE activity_app (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    app_id INTEGER NOT NULL REFERENCES app(id) ON DELETE CASCADE,
+    started_at INTEGER NOT NULL,
+    ended_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+);
+
+CREATE INDEX idx_activity_app_app_id ON activity_app(app_id);
+CREATE INDEX idx_activity_app_started_at ON activity_app(started_at);
+
+-- Activity Window: tracks window-level focus sessions
+CREATE TABLE activity_window (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    app_id INTEGER NOT NULL REFERENCES app(id) ON DELETE CASCADE,
+    -- Window fields
+    window_title TEXT,
+    window_id INTEGER,
+    window_x REAL,
+    window_y REAL,
+    window_width REAL,
+    window_height REAL,
+    -- Browser fields (NULL for non-browsers)
+    browser_url TEXT,
+    browser_is_private INTEGER,
+    -- Timestamps
+    started_at INTEGER NOT NULL,
+    ended_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+);
+
+CREATE INDEX idx_activity_window_app_id ON activity_window(app_id);
+CREATE INDEX idx_activity_window_started_at ON activity_window(started_at);
+CREATE INDEX idx_activity_window_browser_url ON activity_window(browser_url)
+    WHERE browser_url IS NOT NULL;

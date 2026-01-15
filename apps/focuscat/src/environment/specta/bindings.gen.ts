@@ -184,6 +184,17 @@ async deleteSessionTagRule(ruleId: number) : Promise<Result<null, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * Get recent window activities (for debugging/display).
+ */
+async getWindowActivities() : Promise<Result<WindowActivityDto[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_window_activities") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -276,6 +287,10 @@ export type TimerStatus = "idle" | "running" | "paused"
  * Event emitted every second while timer is running.
  */
 export type TimerTickEvent = Timer
+/**
+ * Window activity for frontend consumption.
+ */
+export type WindowActivityDto = { appBundleId: string | null; appName: string | null; windowTitle: string | null; browserUrl: string | null; startedAt: number; endedAt: number }
 /**
  * Stats from the last completed work session (shown during breaks).
  */

@@ -121,6 +121,34 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 		lastSecond.current = currentSecond;
 	}, [isRunning, state?.remainingSeconds]);
 
+	// Log window activities when entering break phase (for testing)
+	const prevIsBreak = React.useRef(isBreak);
+	const workStartTime = React.useRef<number | null>(null);
+	React.useEffect(() => {
+		if (!isBreak && state?.phase === 'work' && state?.status === 'running') {
+			// Track when work started
+			if (workStartTime.current == null) {
+				workStartTime.current = Math.floor(Date.now() / 1000);
+			}
+		}
+		if (isBreak && !prevIsBreak.current && workStartTime.current != null) {
+			// Just entered break phase - query activities from work session
+			const startedAfter = workStartTime.current;
+			const startedBefore = Math.floor(Date.now() / 1000);
+			specta.commands
+				.getWindowActivities({ startedAfter, startedBefore, limit: 100 })
+				.then((result) => {
+					if (result.status === 'ok') {
+						console.log('[WindowActivities] Activities during work session:', result.data);
+					} else {
+						console.error('[WindowActivities] Error:', result.error);
+					}
+				});
+			workStartTime.current = null;
+		}
+		prevIsBreak.current = isBreak;
+	}, [isBreak, state?.phase, state?.status]);
+
 	// MARK: - UI
 
 	if (state == null) {

@@ -4,6 +4,7 @@ pub mod window;
 
 use crate::environment::db;
 use crate::features::{
+    activity_window,
     input::{self, types::InputDetectedEvent},
     session_tag,
     settings::{self, types::AppSettingsChangedEvent},
@@ -47,6 +48,8 @@ pub fn run() {
             session_tag::commands::delete_session_tag,
             session_tag::commands::add_session_tag_rule,
             session_tag::commands::delete_session_tag_rule,
+            // Activity window commands
+            activity_window::commands::get_window_activities,
         ])
         .events(collect_events![
             AppSettingsChangedEvent,
@@ -75,6 +78,7 @@ pub fn run() {
             settings::setup(app);
             timer::setup(app);
             input::setup(app);
+            activity_window::setup(app);
             #[cfg(target_os = "macos")]
             tray::setup(app);
 

@@ -1,7 +1,5 @@
-use super::{
-    repository::SessionTagRepository,
-    types::{InsertSessionTagInput, InsertSessionTagRuleInput, SessionTag, SessionTagWithRules},
-};
+use super::repository::{InsertSessionTagInput, InsertSessionTagRuleInput, SessionTagRepository};
+use super::types::{SessionTag, SessionTagWithRules};
 use crate::environment::db::DatabaseState;
 use tauri::State;
 
