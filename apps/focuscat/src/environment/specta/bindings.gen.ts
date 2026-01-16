@@ -195,6 +195,18 @@ async getWindowActivities(params: GetWindowActivitiesParams) : Promise<Result<Wi
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * Check if accessibility permission is granted.
+ */
+async isAccessibilityGranted() : Promise<boolean> {
+    return await TAURI_INVOKE("is_accessibility_granted");
+},
+/**
+ * Open System Settings to Accessibility pane.
+ */
+async openAccessibilitySettings() : Promise<void> {
+    await TAURI_INVOKE("open_accessibility_settings");
 }
 }
 

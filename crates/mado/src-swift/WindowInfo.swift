@@ -56,7 +56,11 @@ struct WindowInfo {
         // Get browser info if enabled and app is a browser
         let browser: BrowserInfo? =
             if allowBrowser, let bundleId = bundleId {
-                BrowserInfo.extract(bundleId: bundleId, windowTitle: title)
+                BrowserInfo.extract(
+                    bundleId: bundleId,
+                    windowElement: windowElement,
+                    windowTitle: title
+                )
             } else {
                 nil
             }

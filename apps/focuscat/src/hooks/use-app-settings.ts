@@ -24,11 +24,14 @@ export function useAppSettings(): TUseAppSettingsReturn {
 		return () => unlisten?.();
 	}, []);
 
-	const updateSettings = React.useCallback(async (updates: Partial<specta.AppSettings>) => {
-		const updated = { ...settings, ...updates };
-		setSettings(updated);
-		await specta.commands.setSettings(updated);
-	}, [settings]);
+	const updateSettings = React.useCallback(
+		async (updates: Partial<specta.AppSettings>) => {
+			const updated = { ...settings, ...updates };
+			setSettings(updated);
+			await specta.commands.setSettings(updated);
+		},
+		[settings]
+	);
 
 	return { settings, updateSettings };
 }

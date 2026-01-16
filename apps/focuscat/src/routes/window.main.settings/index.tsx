@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ArrowLeftIcon, FolderOpenIcon } from 'lucide-react';
 import React from 'react';
 import { specta } from '@/environment';
+import { PermissionStatusView } from '@/features/permission';
 import { useTimer } from '@/features/timer';
 import { useAppSettings, useTimerState } from '@/hooks';
 
@@ -97,6 +98,16 @@ function RouteComponent() {
 						max={10}
 						onChange={(v) => handleSettingChange('sessionsBeforeLongBreak', v)}
 					/>
+				</div>
+
+				{/* Permissions Section */}
+				<div className="space-y-3">
+					<h2 className="text-xs font-semibold tracking-wider text-gray-500 uppercase">
+						Permissions
+					</h2>
+					<div className="rounded-lg border border-gray-200 p-4">
+						<PermissionStatusView />
+					</div>
 				</div>
 
 				{/* Developer Section */}

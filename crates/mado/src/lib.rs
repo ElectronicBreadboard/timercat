@@ -52,7 +52,6 @@
 //!
 //! **macOS:**
 //! - Accessibility permissions required if `track_window_changes: true` (default)
-//! - Automation permissions (optional, for browser URL extraction)
 
 pub mod config;
 pub mod error;
