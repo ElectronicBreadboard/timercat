@@ -50,9 +50,9 @@ pub fn stop() -> Result<(), Error> {
 /// Get information about the currently active application.
 ///
 /// This is a synchronous query that returns the current state immediately.
-pub fn get_active_app() -> Result<AppInfo, Error> {
+pub fn get_active_app(config: QueryConfig) -> Result<AppInfo, Error> {
     #[cfg(target_os = "macos")]
-    return macos::get_active_app();
+    return macos::get_active_app(config);
 
     #[cfg(target_os = "linux")]
     return linux::get_active_app();

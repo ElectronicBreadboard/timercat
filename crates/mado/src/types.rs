@@ -12,6 +12,8 @@ pub struct AppInfo {
     pub bundle_id: Option<String>,
     /// Path to the executable
     pub process_path: Option<String>,
+    /// App icon as base64 PNG data URL (only populated if `include_icon` is enabled)
+    pub icon: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
@@ -102,6 +104,9 @@ impl fmt::Display for AppInfo {
         writeln!(f, "      PID:        {}", self.pid)?;
         writeln!(f, "      Bundle ID:  {}", fmt_display(&self.bundle_id))?;
         writeln!(f, "      Path:       {}", fmt_display(&self.process_path))?;
+        if self.icon.is_some() {
+            writeln!(f, "      Icon:       (base64 PNG, {} bytes)", self.icon.as_ref().unwrap().len())?;
+        }
         Ok(())
     }
 }

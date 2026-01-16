@@ -84,7 +84,32 @@ pub use types::{AppInfo, BrowserInfo, WindowBounds, WindowEvent, WindowInfo};
 /// # Ok::<(), mado::Error>(())
 /// ```
 pub fn get_active_app() -> Result<AppInfo, Error> {
-    platform::get_active_app()
+    platform::get_active_app(QueryConfig::default())
+}
+
+/// Get information about the currently active application with custom configuration.
+///
+/// # Arguments
+///
+/// * `config` - Configuration for the query (e.g. icon extraction)
+///
+/// # Example
+///
+/// ```rust,no_run
+/// use mado::QueryConfig;
+///
+/// let config = QueryConfig {
+///     include_icon: true,
+///     ..Default::default()
+/// };
+/// let app = mado::get_active_app_with_config(config)?;
+/// if let Some(icon) = &app.icon {
+///     println!("Icon data URL: {} bytes", icon.len());
+/// }
+/// # Ok::<(), mado::Error>(())
+/// ```
+pub fn get_active_app_with_config(config: QueryConfig) -> Result<AppInfo, Error> {
+    platform::get_active_app(config)
 }
 
 /// Get information about the currently active window.
@@ -128,13 +153,17 @@ pub fn get_active_window() -> Result<WindowInfo, Error> {
 /// ```rust,no_run
 /// use mado::QueryConfig;
 ///
-/// // With browser URL extraction (slower, macOS only)
+/// // With browser URL extraction and app icon (slower, macOS only)
 /// let config = QueryConfig {
 ///     allow_browser: true,
+///     include_icon: true,
 /// };
 /// let window = mado::get_active_window_with_config(config)?;
 /// if let Some(browser) = &window.browser {
 ///     println!("URL: {:?}", browser.url);
+/// }
+/// if let Some(icon) = &window.app.icon {
+///     println!("Icon: {} bytes", icon.len());
 /// }
 /// # Ok::<(), mado::Error>(())
 /// ```

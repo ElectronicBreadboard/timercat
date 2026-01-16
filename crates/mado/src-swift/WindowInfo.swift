@@ -22,18 +22,26 @@ struct WindowInfo {
     }
 
     /// Create from NSRunningApplication.
-    static func fromNS(_ app: NSRunningApplication, allowBrowser: Bool = false)
-        -> WindowInfo
-    {
-        return fromPID(app.processIdentifier, allowBrowser: allowBrowser)
+    static func fromNS(
+        _ app: NSRunningApplication,
+        allowBrowser: Bool = false,
+        includeIcon: Bool = false
+    ) -> WindowInfo {
+        return fromPID(
+            app.processIdentifier,
+            allowBrowser: allowBrowser,
+            includeIcon: includeIcon
+        )
     }
 
     /// Create from PID.
-    static func fromPID(_ pid: pid_t, allowBrowser: Bool = false)
-        -> WindowInfo
-    {
+    static func fromPID(
+        _ pid: pid_t,
+        allowBrowser: Bool = false,
+        includeIcon: Bool = false
+    ) -> WindowInfo {
         let appElement = AXUIElementCreateApplication(pid)
-        let appInfo = AppInfo.fromPID(pid)
+        let appInfo = AppInfo.fromPID(pid, includeIcon: includeIcon)
         let bundleId = appInfo.bundleId
 
         // Get focused window via Accessibility API
@@ -75,10 +83,13 @@ struct WindowInfo {
     }
 
     /// Get frontmost window info.
-    static func getFrontmost(allowBrowser: Bool = false) -> WindowInfo? {
+    static func getFrontmost(
+        allowBrowser: Bool = false,
+        includeIcon: Bool = false
+    ) -> WindowInfo? {
         guard let app = NSWorkspace.shared.frontmostApplication else {
             return nil
         }
-        return fromNS(app, allowBrowser: allowBrowser)
+        return fromNS(app, allowBrowser: allowBrowser, includeIcon: includeIcon)
     }
 }

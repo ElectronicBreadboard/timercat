@@ -65,6 +65,7 @@ fn main() -> Result<(), mado::Error> {
             MonitorConfig {
                 allow_browser: true,
                 track_window_changes: true,
+                include_icon: true,
             },
         );
 
