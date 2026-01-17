@@ -28,11 +28,17 @@ export function useSettingsCx(): TSettingsCx {
 // MARK: - Factory
 
 const defaultSettings: specta.AppSettings = {
-	debug: false,
-	workDurationMinutes: 25,
-	shortBreakMinutes: 5,
-	longBreakMinutes: 15,
-	sessionsBeforeLongBreak: 4
+	debug: {
+		enabled: false,
+		cat: false,
+		timerSpeed: 1
+	},
+	timer: {
+		workDurationMinutes: 25,
+		shortBreakMinutes: 5,
+		longBreakMinutes: 15,
+		sessionsBeforeLongBreak: 4
+	}
 };
 
 function createSettingsCx(): TSettingsCx {

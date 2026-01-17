@@ -1,9 +1,30 @@
+import { cva, type VariantProps } from 'class-variance-authority';
 import React from 'react';
 import { ChevronRightIcon } from '@/components';
 import { cn } from '@/lib';
 
+const settingItemVariants = cva('flex w-full items-center justify-between px-4 py-3 text-left', {
+	variants: {
+		variant: {
+			static: '',
+			button: [
+				'transition-colors duration-100 hover:bg-gray-100',
+				'outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset'
+			],
+			link: [
+				'transition-colors duration-100 hover:bg-gray-100',
+				'outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset'
+			]
+		}
+	},
+	defaultVariants: {
+		variant: 'static'
+	}
+});
+
 export const SettingItem: React.FC<TSettingItemProps> = (props) => {
-	const { label, description, onClick, children, className } = props;
+	const { label, description, variant = 'static', onClick, children, className } = props;
+	const isInteractive = variant === 'button' || variant === 'link';
 
 	const content = (
 		<>
@@ -13,34 +34,27 @@ export const SettingItem: React.FC<TSettingItemProps> = (props) => {
 			</div>
 			<div className="flex shrink-0 items-center gap-2">
 				{children}
-				{onClick != null && <ChevronRightIcon className="size-4 text-gray-400" />}
+				{variant === 'link' && <ChevronRightIcon className="size-4 text-gray-400" />}
 			</div>
 		</>
 	);
 
-	if (onClick != null) {
+	if (isInteractive) {
 		return (
 			<button
 				type="button"
 				onClick={onClick}
-				className={cn(
-					'flex w-full items-center justify-between px-4 py-3 text-left',
-					'transition-colors duration-100 hover:bg-gray-100',
-					'outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset',
-					className
-				)}
+				className={cn(settingItemVariants({ variant }), className)}
 			>
 				{content}
 			</button>
 		);
 	}
 
-	return (
-		<div className={cn('flex items-center justify-between px-4 py-3', className)}>{content}</div>
-	);
+	return <div className={cn(settingItemVariants({ variant }), className)}>{content}</div>;
 };
 
-export interface TSettingItemProps {
+export interface TSettingItemProps extends VariantProps<typeof settingItemVariants> {
 	label: string;
 	description?: string;
 	onClick?: () => void;

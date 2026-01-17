@@ -1,23 +1,23 @@
-use crate::environment::configs::{app::AppConfig, window::WindowConfig};
-use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri::{
+    AppHandle, CloseRequestApi, Manager, PhysicalPosition, WebviewUrl, WebviewWindow,
+    WebviewWindowBuilder,
+};
 
 #[cfg(target_os = "macos")]
 use tauri::TitleBarStyle;
 
-// MARK: - Window Identifier
+// MARK: - Window
 
-/// Window identifier for getting existing windows.
+/// All window types in the app.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum WindowId {
-    /// Main app window (timer, etc.)
+pub enum Window {
     Main,
-    /// Floating cat widget overlay
     Cat,
-    /// Settings window
     Settings,
 }
 
-impl WindowId {
+impl Window {
+    /// Unique window label for Tauri.
     pub fn label(&self) -> &'static str {
         return match self {
             Self::Main => "main",
@@ -26,60 +26,84 @@ impl WindowId {
         };
     }
 
+    /// Window title.
+    pub fn title(&self) -> &'static str {
+        return match self {
+            Self::Main => "Focuscat",
+            Self::Cat => "Focuscat",
+            Self::Settings => "Focuscat Settings",
+        };
+    }
+
+    /// Route path for the window.
+    pub fn path(&self) -> &'static str {
+        return match self {
+            Self::Main => "/window/main",
+            Self::Cat => "/window/cat",
+            Self::Settings => "/window/settings",
+        };
+    }
+
+    /// Window size (width, height).
+    pub fn size(&self) -> (f64, f64) {
+        return match self {
+            Self::Main => (300.0, 500.0),
+            Self::Cat => (180.0, 220.0),
+            Self::Settings => (600.0, 450.0),
+        };
+    }
+
+    /// Minimum window size, if any.
+    pub fn min_size(&self) -> Option<(f64, f64)> {
+        return match self {
+            Self::Main => None,
+            Self::Cat => None,
+            Self::Settings => Some((500.0, 400.0)),
+        };
+    }
+
+    /// Get existing window if it exists.
     pub fn get(&self, app: &AppHandle) -> Option<WebviewWindow> {
         return app.get_webview_window(self.label());
     }
-}
 
-// MARK: - Show Window
-
-/// Window creation request with configuration.
-#[derive(Debug, Clone, Copy)]
-pub enum ShowWindow {
-    Main,
-    Cat,
-    Settings,
-}
-
-impl ShowWindow {
-    pub fn id(&self) -> WindowId {
-        return match self {
-            Self::Main => WindowId::Main,
-            Self::Cat => WindowId::Cat,
-            Self::Settings => WindowId::Settings,
-        };
-    }
-
+    /// Show window (reuse existing or create new).
     pub fn show(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
-        let id = self.id();
-
         // Reuse existing window if available
-        if let Some(existing) = id.get(app) {
-            existing.show()?;
-            existing.set_focus()?;
-            return Ok(existing);
+        if let Some(window) = self.get(app) {
+            window.show()?;
+            window.set_focus()?;
+            return Ok(window);
         }
 
-        // Create new window based on type
-        let window = match self {
-            Self::Main => self.build_main_window(app)?,
-            Self::Cat => self.build_cat_window(app)?,
-            Self::Settings => self.build_settings_window(app)?,
-        };
-
+        // Create new window
+        let window = self.build(app)?;
         window.show()?;
         window.set_focus()?;
         return Ok(window);
     }
 
-    // MARK: - Build Windows
+    /// Hide window if it exists.
+    pub fn hide(&self, app: &AppHandle) -> tauri::Result<()> {
+        if let Some(window) = self.get(app) {
+            window.hide()?;
+        }
+        return Ok(());
+    }
 
-    fn build_main_window(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
-        let (width, height) = WindowConfig::main_size();
+    // MARK: - Build
 
-        let builder = self
-            .base_builder(app, "/window/main")
-            .inner_size(width, height)
+    fn build(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
+        return match self {
+            Self::Main => self.build_main(app),
+            Self::Cat => self.build_cat(app),
+            Self::Settings => self.build_settings(app),
+        };
+    }
+
+    fn build_main(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
+        let mut builder = self
+            .base_builder(app)
             .resizable(true)
             .maximizable(false)
             .minimizable(true)
@@ -87,23 +111,24 @@ impl ShowWindow {
             .always_on_top(false);
 
         #[cfg(target_os = "macos")]
-        let builder = builder
-            .decorations(true)
-            .title_bar_style(TitleBarStyle::Overlay)
-            .hidden_title(true);
+        {
+            builder = builder
+                .decorations(true)
+                .title_bar_style(TitleBarStyle::Overlay)
+                .hidden_title(true);
+        }
 
         #[cfg(not(target_os = "macos"))]
-        let builder = builder.decorations(false);
+        {
+            builder = builder.decorations(false);
+        }
 
         return builder.build();
     }
 
-    fn build_cat_window(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
-        let (width, height) = WindowConfig::cat_size();
-
+    fn build_cat(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
         return self
-            .base_builder(app, "/window/cat")
-            .inner_size(width, height)
+            .base_builder(app)
             .resizable(false)
             .maximizable(false)
             .minimizable(false)
@@ -115,29 +140,36 @@ impl ShowWindow {
             .build();
     }
 
-    fn build_settings_window(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
-        let (width, height) = WindowConfig::settings_size();
-        let (min_width, min_height) = WindowConfig::settings_min_size();
+    fn build_settings(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
+        let (width, height) = self.size();
 
-        let builder = self
-            .base_builder(app, "/window/settings")
-            .inner_size(width, height)
-            .min_inner_size(min_width, min_height)
+        let mut builder = self
+            .base_builder(app)
             .resizable(true)
             .maximizable(false)
             .minimizable(true)
             .transparent(false)
-            .always_on_top(false)
-            .center();
+            .always_on_top(false);
+
+        // Center over main window if available, otherwise center on screen
+        if let Some(pos) = Self::position_centered_over(app, Self::Main, width, height) {
+            builder = builder.position(pos.x as f64, pos.y as f64);
+        } else {
+            builder = builder.center();
+        }
 
         #[cfg(target_os = "macos")]
-        let builder = builder
-            .decorations(true)
-            .title_bar_style(TitleBarStyle::Overlay)
-            .hidden_title(true);
+        {
+            builder = builder
+                .decorations(true)
+                .title_bar_style(TitleBarStyle::Overlay)
+                .hidden_title(true);
+        }
 
         #[cfg(not(target_os = "macos"))]
-        let builder = builder.decorations(false);
+        {
+            builder = builder.decorations(false);
+        }
 
         return builder.build();
     }
@@ -145,12 +177,58 @@ impl ShowWindow {
     fn base_builder<'a>(
         &self,
         app: &'a AppHandle,
-        path: &str,
     ) -> WebviewWindowBuilder<'a, tauri::Wry, AppHandle> {
-        let id = self.id();
+        let (width, height) = self.size();
 
-        return WebviewWindowBuilder::new(app, id.label(), WebviewUrl::App(path.into()))
-            .title(AppConfig::app_title())
-            .visible(false);
+        let mut builder =
+            WebviewWindowBuilder::new(app, self.label(), WebviewUrl::App(self.path().into()))
+                .title(self.title())
+                .visible(false)
+                .inner_size(width, height);
+
+        if let Some((min_w, min_h)) = self.min_size() {
+            builder = builder.min_inner_size(min_w, min_h);
+        }
+
+        return builder;
+    }
+
+    // MARK: - Events
+
+    /// Handle window close request.
+    pub fn handle_close(label: &str, window: &tauri::Window, api: &CloseRequestApi) {
+        // Main window hides instead of closing (can reopen from tray).
+        // Settings window hides and shows main window.
+        match label {
+            "main" => {
+                api.prevent_close();
+                let _ = window.hide();
+            }
+            "settings" => {
+                api.prevent_close();
+                let _ = window.hide();
+                let _ = Window::Main.show(window.app_handle());
+            }
+            _ => {}
+        }
+    }
+
+    // MARK: - Helpers
+
+    /// Calculate position to center a window over another window.
+    fn position_centered_over(
+        app: &AppHandle,
+        target: Window,
+        width: f64,
+        height: f64,
+    ) -> Option<PhysicalPosition<i32>> {
+        let target_window = target.get(app)?;
+        let target_pos = target_window.outer_position().ok()?;
+        let target_size = target_window.outer_size().ok()?;
+
+        let x = target_pos.x + (target_size.width as i32 - width as i32) / 2;
+        let y = target_pos.y + (target_size.height as i32 - height as i32) / 2;
+
+        return Some(PhysicalPosition::new(x, y));
     }
 }

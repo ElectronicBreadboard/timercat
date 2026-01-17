@@ -17,12 +17,12 @@ function RouteComponent() {
 
 	// MARK: - Actions
 
-	const handleSettingChange = React.useCallback(
-		(key: keyof specta.AppSettings, value: number) => {
-			settingsCx.update({ [key]: value });
+	const updateTimer = React.useCallback(
+		(updates: Partial<specta.TimerSettings>) => {
+			settingsCx.update({ timer: { ...settings.timer, ...updates } });
 		},
-		[settingsCx]
-	)
+		[settingsCx, settings.timer]
+	);
 
 	// MARK: - UI
 
@@ -33,43 +33,44 @@ function RouteComponent() {
 			<SettingGroup title="Timer">
 				<SettingItem label="Work Duration" description="Minutes per work session">
 					<NumberStepper
-						value={settings.workDurationMinutes}
+						value={settings.timer.workDurationMinutes}
 						min={5}
 						max={120}
 						step={5}
-						onChange={(v) => handleSettingChange('workDurationMinutes', v)}
+						onChange={(v) => updateTimer({ workDurationMinutes: v })}
 					/>
 				</SettingItem>
 				<SettingItem label="Short Break" description="Minutes for short breaks">
 					<NumberStepper
-						value={settings.shortBreakMinutes}
+						value={settings.timer.shortBreakMinutes}
 						min={5}
 						max={60}
 						step={5}
-						onChange={(v) => handleSettingChange('shortBreakMinutes', v)}
+						onChange={(v) => updateTimer({ shortBreakMinutes: v })}
 					/>
 				</SettingItem>
 				<SettingItem label="Long Break" description="Minutes for long breaks">
 					<NumberStepper
-						value={settings.longBreakMinutes}
+						value={settings.timer.longBreakMinutes}
 						min={5}
 						max={60}
 						step={5}
-						onChange={(v) => handleSettingChange('longBreakMinutes', v)}
+						onChange={(v) => updateTimer({ longBreakMinutes: v })}
 					/>
 				</SettingItem>
 				<SettingItem label="Sessions Before Long Break" description="Work sessions before a long break">
 					<NumberStepper
-						value={settings.sessionsBeforeLongBreak}
+						value={settings.timer.sessionsBeforeLongBreak}
 						min={1}
 						max={10}
-						onChange={(v) => handleSettingChange('sessionsBeforeLongBreak', v)}
+						onChange={(v) => updateTimer({ sessionsBeforeLongBreak: v })}
 					/>
 				</SettingItem>
 			</SettingGroup>
 
 			<SettingGroup title="Permissions">
 				<SettingItem
+					variant="link"
 					label="Accessibility"
 					description="Required for activity tracking"
 					onClick={accessibility.openSettings}

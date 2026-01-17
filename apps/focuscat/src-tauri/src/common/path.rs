@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use crate::environment::configs::app::AppConfig;
+use std::path::PathBuf;
 use tauri::{Manager, Runtime};
 
 /// Get the app data directory, creating it if it doesn't exist.

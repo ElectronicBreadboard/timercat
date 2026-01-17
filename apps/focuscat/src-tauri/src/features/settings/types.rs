@@ -6,8 +6,25 @@ use tauri::App;
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
-pub struct AppSettings {
-    pub debug: bool,
+pub struct DebugSettings {
+    pub enabled: bool,
+    pub cat: bool,
+    pub timer_speed: u32,
+}
+
+impl Default for DebugSettings {
+    fn default() -> Self {
+        return Self {
+            enabled: false,
+            cat: false,
+            timer_speed: 1,
+        };
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct TimerSettings {
     /// Work duration in minutes
     pub work_duration_minutes: u32,
     /// Short break duration in minutes
@@ -18,14 +35,29 @@ pub struct AppSettings {
     pub sessions_before_long_break: u32,
 }
 
-impl Default for AppSettings {
+impl Default for TimerSettings {
     fn default() -> Self {
         return Self {
-            debug: false,
             work_duration_minutes: 25,
             short_break_minutes: 5,
             long_break_minutes: 15,
             sessions_before_long_break: 4,
+        };
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AppSettings {
+    pub debug: DebugSettings,
+    pub timer: TimerSettings,
+}
+
+impl Default for AppSettings {
+    fn default() -> Self {
+        return Self {
+            debug: DebugSettings::default(),
+            timer: TimerSettings::default(),
         };
     }
 }

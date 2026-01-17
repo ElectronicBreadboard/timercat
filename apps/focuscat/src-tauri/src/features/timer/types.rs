@@ -41,15 +41,17 @@ pub struct TimerConfig {
     pub short_break_duration: u32,
     pub long_break_duration: u32,
     pub sessions_before_long_break: u32,
+    pub speed: u32,
 }
 
 impl From<&AppSettings> for TimerConfig {
     fn from(settings: &AppSettings) -> Self {
         return Self {
-            work_duration: settings.work_duration_minutes * 60,
-            short_break_duration: settings.short_break_minutes * 60,
-            long_break_duration: settings.long_break_minutes * 60,
-            sessions_before_long_break: settings.sessions_before_long_break,
+            work_duration: settings.timer.work_duration_minutes * 60,
+            short_break_duration: settings.timer.short_break_minutes * 60,
+            long_break_duration: settings.timer.long_break_minutes * 60,
+            sessions_before_long_break: settings.timer.sessions_before_long_break,
+            speed: settings.debug.timer_speed,
         };
     }
 }
@@ -82,8 +84,7 @@ pub struct Timer {
     pub last_work_session: Option<WorkSessionStats>,
     /// Debug: speed multiplier
     pub speed: u32,
-    /// Timestamp when current phase started (Unix epoch seconds).
-    /// Internal field for DB persistence - not exposed to frontend.
+    /// Timestamp when current phase started (Unix epoch seconds)
     #[serde(skip)]
     #[specta(skip)]
     pub phase_started_at: Option<i64>,
@@ -104,7 +105,7 @@ impl Default for Timer {
             accumulated_work_seconds: 0,
             total_extended_seconds: 0,
             last_work_session: None,
-            speed: 1,
+            speed: config.speed,
             phase_started_at: None,
         };
     }
@@ -124,7 +125,7 @@ impl Timer {
             accumulated_work_seconds: 0,
             total_extended_seconds: 0,
             last_work_session: None,
-            speed: 1,
+            speed: config.speed,
             phase_started_at: None,
         };
     }

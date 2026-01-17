@@ -33,13 +33,13 @@ function RouteComponent() {
 	// MARK: - UI
 
 	return (
-		<div className={cn('flex flex-col items-center', settings.debug && 'border border-red-500')}>
-			<Cat ref={catRef} className={cn('z-10', settings.debug && 'border border-green-500')} />
+		<div className={cn('flex flex-col items-center', settings.debug.cat && 'border border-red-500')}>
+			<Cat ref={catRef} className={cn('z-10', settings.debug.cat && 'border border-green-500')} />
 
 			<div
 				className={cn(
 					'flex items-center rounded-lg bg-gray-800/90 shadow-lg',
-					settings.debug && 'border border-blue-500'
+					settings.debug.cat && 'border border-blue-500'
 				)}
 			>
 				{/* Drag Handle */}

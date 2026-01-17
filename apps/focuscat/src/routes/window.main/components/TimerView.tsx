@@ -116,7 +116,7 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 			<TimerDial
 				value={displayMinutes}
 				sessionProgress={sessionProgress}
-				sessionsBeforeLongBreak={settings.sessionsBeforeLongBreak}
+				sessionsBeforeLongBreak={settings.timer.sessionsBeforeLongBreak}
 				smooth={isActive && !isDragging}
 				onDragStart={handleDragStart}
 				onDragMove={handleDragMove}
@@ -129,7 +129,7 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 				isRunning={isRunning ?? false}
 				startTime={startTime}
 				endTime={timerCx.getEndTime()}
-				debug={settings.debug}
+				debug={settings.debug.enabled}
 				className="mt-4"
 			/>
 

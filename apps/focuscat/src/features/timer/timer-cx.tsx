@@ -111,13 +111,6 @@ function createTimerCx(): TTimerCx {
 			if (!ok) {
 				console.error('Failed to set timer duration:', err);
 			}
-		},
-
-		async cycleSpeed() {
-			const [ok, , err] = toTuple(await specta.commands.cycleTimerSpeed());
-			if (!ok) {
-				console.error('Failed to cycle timer speed:', err);
-			}
 		}
 	};
 }
@@ -139,5 +132,4 @@ export interface TTimerCx {
 	reset: () => Promise<void>;
 	skip: () => Promise<void>;
 	setDurationMinutes: (minutes: number) => Promise<void>;
-	cycleSpeed: () => Promise<void>;
 }

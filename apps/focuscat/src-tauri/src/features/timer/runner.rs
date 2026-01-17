@@ -41,14 +41,14 @@ fn run_timer_loop(app: AppHandle, stop_flag: Arc<AtomicBool>) {
 
         // Get sleep duration based on speed (faster tick = faster countdown)
         let sleep_duration = {
-            let state_handle = match app.try_state::<TimerState>() {
+            let timer_state = match app.try_state::<TimerState>() {
                 Some(s) => s,
                 None => {
                     thread::sleep(Duration::from_millis(100));
                     continue;
                 }
             };
-            let timer = state_handle.lock().unwrap();
+            let timer = timer_state.lock().unwrap();
 
             if timer.status != TimerStatus::Running {
                 drop(timer);

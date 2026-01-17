@@ -1,4 +1,4 @@
-use crate::{app::window::ShowWindow, environment::configs::app::AppConfig};
+use crate::{app::window::Window, environment::configs::app::AppConfig};
 use std::io::Cursor;
 use std::ops::Deref;
 use std::sync::Mutex;
@@ -86,7 +86,7 @@ impl TrayItem {
     pub fn handle(&self, app: &AppHandle) {
         return match self {
             TrayItem::ShowApp => {
-                let _ = ShowWindow::Main.show(app);
+                let _ = Window::Main.show(app);
             }
             TrayItem::Quit => app.exit(0),
         };
@@ -126,7 +126,7 @@ impl Tray {
                     button: tauri::tray::MouseButton::Left,
                     ..
                 } => {
-                    let _ = ShowWindow::Main.show(tray.app_handle());
+                    let _ = Window::Main.show(tray.app_handle());
                 }
                 _ => {}
             })

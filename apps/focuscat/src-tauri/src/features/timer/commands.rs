@@ -307,7 +307,7 @@ pub fn set_timer_duration(
     timer.overtime_seconds = 0;
 
     // Store base work duration for progress calculation
-    timer.base_work_seconds = settings.work_duration_minutes * 60;
+    timer.base_work_seconds = settings.timer.work_duration_minutes * 60;
 
     // Emit tick with new duration
     let _ = TimerTickEvent(timer.clone()).emit(&app);
@@ -332,27 +332,6 @@ pub fn set_timer_tags(
     timer.session_tag_ids = session_tag_ids;
 
     // Emit tick with new tags
-    let _ = TimerTickEvent(timer.clone()).emit(&app);
-
-    return Ok(());
-}
-
-#[tauri::command]
-#[specta::specta]
-pub fn cycle_timer_speed(app: AppHandle, state: State<'_, TimerState>) -> Result<(), String> {
-    let mut timer = state.lock().unwrap();
-
-    timer.speed = match timer.speed {
-        1 => 2,
-        2 => 4,
-        4 => 8,
-        8 => 16,
-        16 => 32,
-        32 => 64,
-        64 => 128,
-        _ => 1,
-    };
-
     let _ = TimerTickEvent(timer.clone()).emit(&app);
 
     return Ok(());
