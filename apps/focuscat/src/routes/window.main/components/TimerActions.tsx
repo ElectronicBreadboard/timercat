@@ -1,5 +1,5 @@
-import { Briefcase, Coffee, Pause, Play, X } from 'lucide-react';
 import React from 'react';
+import { BriefcaseIcon, CoffeeIcon, PauseIcon, PlayIcon, XIcon } from '@/components';
 import { specta } from '@/environment';
 import { cn } from '@/lib';
 
@@ -15,42 +15,39 @@ export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 			case 'paused':
 				switch (phase) {
 					case 'work':
-						return { label: <Coffee size={20} />, onClick: onSkip };
+						return { label: <CoffeeIcon size={20} />, onClick: onSkip };
 					case 'shortBreak':
 					case 'longBreak':
-						return { label: <Briefcase size={20} />, onClick: onSkip };
+						return { label: <BriefcaseIcon size={20} />, onClick: onSkip };
 				}
 		}
 	}, [status, phase, onStart, onSkip]);
 
-	// Secondary button: pause/play toggle
-	const secondary = React.useMemo((): { icon: React.ReactNode; onClick: () => void } | null => {
+	// Toggle button: pause/play
+	const toggle = React.useMemo((): { icon: React.ReactNode; onClick: () => void } | null => {
 		switch (status) {
 			case 'idle':
 				return null;
 			case 'running':
-				return { icon: <Pause size={18} />, onClick: onPause };
+				return { icon: <PauseIcon size={18} />, onClick: onPause };
 			case 'paused':
-				return { icon: <Play size={18} />, onClick: onResume };
+				return { icon: <PlayIcon size={18} />, onClick: onResume };
 		}
 	}, [status, onPause, onResume]);
 
-	const isIdle = status === 'idle';
-	const isPaused = status === 'paused';
-
 	return (
 		<div className={cn('relative flex items-center justify-center', className)}>
-			{/* Cancel button (left side, shown when paused) */}
-			{!isIdle && (
+			{/* Cancel button */}
+			{status !== 'idle' && (
 				<button
 					type="button"
 					onClick={onCancel}
 					className={cn(
-						'absolute right-full mr-3 flex size-11 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200',
-						!isPaused && 'pointer-events-none opacity-0'
+						'absolute right-full mr-3 flex size-11 items-center justify-center rounded-full bg-neutral-100 text-neutral-500 transition-colors hover:bg-neutral-200',
+						status !== 'paused' && 'pointer-events-none opacity-0'
 					)}
 				>
-					<X size={18} />
+					<XIcon size={18} />
 				</button>
 			)}
 
@@ -63,14 +60,14 @@ export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 				{primary.label}
 			</button>
 
-			{/* Secondary button (right side, pause/play) */}
-			{secondary != null && (
+			{/* Toggle button */}
+			{toggle != null && (
 				<button
 					type="button"
-					onClick={secondary.onClick}
-					className="absolute left-full ml-3 flex size-11 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200"
+					onClick={toggle.onClick}
+					className="absolute left-full ml-3 flex size-11 items-center justify-center rounded-full bg-neutral-100 text-neutral-500 transition-colors hover:bg-neutral-200"
 				>
-					{secondary.icon}
+					{toggle.icon}
 				</button>
 			)}
 		</div>

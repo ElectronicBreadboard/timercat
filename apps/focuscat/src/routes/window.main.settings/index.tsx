@@ -1,11 +1,12 @@
 import { Switch } from '@base-ui/react/switch';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ArrowLeftIcon, FolderOpenIcon } from 'lucide-react';
+import { useFeatureState } from 'feature-react/state';
 import React from 'react';
+import { ArrowLeftIcon, FolderOpenIcon } from '@/components';
 import { specta } from '@/environment';
 import { PermissionStatusView } from '@/features/permission';
-import { useTimer } from '@/features/timer';
-import { useAppSettings, useTimerState } from '@/hooks';
+import { useSettingsCx } from '@/features/settings';
+import { useTimerCx } from '@/features/timer';
 
 export const Route = createFileRoute('/window/main/settings/')({
 	component: RouteComponent
@@ -13,9 +14,10 @@ export const Route = createFileRoute('/window/main/settings/')({
 
 function RouteComponent() {
 	const navigate = useNavigate();
-	const { settings, updateSettings } = useAppSettings();
-	const timerState = useTimerState();
-	const { cycleSpeed } = useTimer();
+	const settingsCx = useSettingsCx();
+	const settings = useFeatureState(settingsCx.$appSettings);
+	const timerCx = useTimerCx();
+	const timer = useFeatureState(timerCx.$timer);
 
 	// MARK: - Actions
 
@@ -25,16 +27,16 @@ function RouteComponent() {
 
 	const handleDebugToggle = React.useCallback(
 		(checked: boolean) => {
-			updateSettings({ debug: checked });
+			settingsCx.update({ debug: checked });
 		},
-		[updateSettings]
+		[settingsCx]
 	);
 
 	const handleSettingChange = React.useCallback(
 		(key: keyof specta.AppSettings, value: number) => {
-			updateSettings({ [key]: value });
+			settingsCx.update({ [key]: value });
 		},
-		[updateSettings]
+		[settingsCx]
 	);
 
 	// MARK: - UI
@@ -132,17 +134,17 @@ function RouteComponent() {
 					</label>
 
 					{/* Timer Speed (Debug only) */}
-					{settings.debug && timerState != null && (
+					{settings.debug && timer != null && (
 						<button
 							type="button"
-							onClick={cycleSpeed}
+							onClick={timerCx.cycleSpeed}
 							className="flex w-full items-center justify-between rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
 						>
 							<div>
 								<span className="text-sm font-medium text-gray-900">Timer Speed</span>
 								<p className="text-xs text-gray-500">Speed up timer for testing</p>
 							</div>
-							<span className="font-mono text-sm text-gray-600">{timerState.speed}x</span>
+							<span className="font-mono text-sm text-gray-600">{timer.speed}x</span>
 						</button>
 					)}
 

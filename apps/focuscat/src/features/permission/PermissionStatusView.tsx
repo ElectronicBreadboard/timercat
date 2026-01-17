@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertIcon, CheckIcon, ChevronRightIcon, HelpIcon } from '@/components/display/icons';
+import { AlertIcon, CheckIcon, ChevronRightIcon, HelpIcon } from '@/components';
 import { specta } from '@/environment';
 import { cn } from '@/lib';
 
@@ -26,34 +26,47 @@ export const PermissionStatusView: React.FC<TPermissionStatusViewProps> = (props
 			type="button"
 			onClick={() => specta.commands.openAccessibilitySettings()}
 			className={cn(
-				'flex items-center gap-2 rounded-lg bg-gray-50 p-2 text-left transition-colors hover:bg-gray-100',
+				'flex items-center gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-gray-100',
 				className
 			)}
 		>
-			<StatusIcon status={granted} />
-			<div className="flex-1">
-				<p className="text-xs font-medium text-gray-600">Accessibility</p>
-				<p className="text-xs text-gray-400">Required for window tracking</p>
-			</div>
+			<StatusIndicator status={granted} />
 			<ChevronRightIcon className="size-4 text-gray-400" />
 		</button>
 	);
 };
 
-// MARK: - Components
-
-const StatusIcon: React.FC<{ status: boolean | null }> = ({ status }) => {
-	if (status === true) {
-		return <CheckIcon className="size-5 text-green-500" />;
-	}
-	if (status === false) {
-		return <AlertIcon className="size-5 text-yellow-500" />;
-	}
-	return <HelpIcon className="size-5 text-gray-400" />;
-};
-
-// MARK: - Types
-
 interface TPermissionStatusViewProps {
 	className?: string;
+}
+
+const StatusIndicator: React.FC<TStatusIndicatorProps> = (props) => {
+	const { status } = props;
+
+	if (status === true) {
+		return (
+			<span className="flex items-center gap-1.5 text-xs font-medium text-green-600">
+				<CheckIcon className="size-4" />
+				Granted
+			</span>
+		);
+	}
+	if (status === false) {
+		return (
+			<span className="flex items-center gap-1.5 text-xs font-medium text-amber-600">
+				<AlertIcon className="size-4" />
+				Required
+			</span>
+		);
+	}
+	return (
+		<span className="flex items-center gap-1.5 text-xs font-medium text-gray-400">
+			<HelpIcon className="size-4" />
+			Checking
+		</span>
+	);
+};
+
+interface TStatusIndicatorProps {
+	status: boolean | null;
 }

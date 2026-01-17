@@ -1,11 +1,13 @@
 import { Button } from '@base-ui/react/button';
 import { createFileRoute } from '@tanstack/react-router';
+import { useFeatureState } from 'feature-react/state';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import React from 'react';
 import { ExpandIcon, GripIcon } from '@/components';
 import { specta } from '@/environment';
 import { Cat, type TCatRef } from '@/features/cat';
-import { useAppSettings, useInputTap, useTimerState } from '@/hooks';
+import { useSettingsCx } from '@/features/settings';
+import { useInputTap, useTimerState } from '@/hooks';
 import { cn, formatTime } from '@/lib';
 
 export const Route = createFileRoute('/window/cat/')({
@@ -14,7 +16,8 @@ export const Route = createFileRoute('/window/cat/')({
 
 function RouteComponent() {
 	const timerState = useTimerState();
-	const { settings } = useAppSettings();
+	const settingsCx = useSettingsCx();
+	const settings = useFeatureState(settingsCx.$appSettings);
 	const catRef = React.useRef<TCatRef>(null);
 
 	// Tap cat on global input events

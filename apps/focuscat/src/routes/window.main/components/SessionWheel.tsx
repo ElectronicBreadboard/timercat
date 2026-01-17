@@ -2,18 +2,11 @@ import { motion, useMotionValue } from 'motion/react';
 import React from 'react';
 import { cn } from '@/lib';
 
-/**
- * Passive display showing sessions completed with break indicators.
- * Counts up (0, 1, 2, 3...) - not interactive.
- */
 export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
 	const { value, sessionsBeforeLongBreak = 4, itemHeight = 28, className } = props;
 
 	const y = useMotionValue(0);
-
-	// Show numbers 0 to max (ceil ensures integers, +5 buffer for scrolling visual)
 	const maxDisplay = React.useMemo(() => Math.max(Math.ceil(value) + 5, 10), [value]);
-
 	const items = React.useMemo(() => {
 		const result: number[] = [];
 		for (let v = maxDisplay; v >= 0; v--) {
@@ -24,7 +17,6 @@ export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
 
 	// MARK: - Effects
 
-	// Update position when value changes (fractional: 0, 0.5, 1.0, 1.5, ...)
 	React.useEffect(() => {
 		const targetY = -(maxDisplay - value) * itemHeight;
 		y.set(targetY);
@@ -34,10 +26,9 @@ export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
 
 	return (
 		<div className={cn('relative h-20 w-10 overflow-hidden select-none', className)}>
-			{/* Number strip */}
 			<motion.div
-				className="pointer-events-none absolute inset-x-0 flex flex-col items-center"
-				style={{ y, top: '50%', marginTop: -itemHeight / 2 }}
+				className="pointer-events-none absolute inset-x-0 top-1/2 flex flex-col items-center"
+				style={{ y, marginTop: -itemHeight / 2 }}
 			>
 				{items.map((itemValue, index) => (
 					<SessionItem
@@ -53,36 +44,32 @@ export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
 	);
 };
 
-// MARK: - SessionItem
+interface TSessionWheelProps {
+	value: number;
+	sessionsBeforeLongBreak?: number;
+	itemHeight?: number;
+	className?: string;
+}
 
 const SessionItem: React.FC<TSessionItemProps> = (props) => {
 	const { value, height, isLongBreak, showBreak } = props;
 
 	return (
 		<div className="flex shrink-0 flex-col items-center" style={{ height }}>
-			{/* Break indicator (above number) */}
 			{showBreak && (
 				<div
-					className={cn('mb-0.5 rounded-full bg-gray-300', isLongBreak ? 'h-1 w-3' : 'h-0.5 w-1.5')}
+					className={cn(
+						'mb-0.5 rounded-full bg-neutral-300',
+						isLongBreak ? 'h-1 w-3' : 'h-0.5 w-1.5'
+					)}
 				/>
 			)}
-
-			{/* Number */}
-			<span className="flex flex-1 items-center justify-center font-mono text-sm font-medium text-gray-900 tabular-nums">
+			<span className="flex flex-1 items-center justify-center font-mono text-sm font-medium text-neutral-900 tabular-nums">
 				{value}
 			</span>
 		</div>
 	);
 };
-
-interface TSessionWheelProps {
-	/** Sessions completed (counts up: 0, 1, 2, 3...) */
-	value: number;
-	/** Long break every N sessions (default: 4) */
-	sessionsBeforeLongBreak?: number;
-	itemHeight?: number;
-	className?: string;
-}
 
 interface TSessionItemProps {
 	value: number;

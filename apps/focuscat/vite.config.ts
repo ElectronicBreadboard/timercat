@@ -16,6 +16,7 @@ export default defineConfig({
 			routesDirectory: './src/routes',
 			generatedRouteTree: './src/routeTree.gen.ts',
 			routeFileIgnorePrefix: '-',
+			routeFileIgnorePattern: '.*(components|hooks|lib).*',
 			quoteStyle: 'single'
 		}),
 		react(),

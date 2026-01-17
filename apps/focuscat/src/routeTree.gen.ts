@@ -9,29 +9,43 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WindowMainRouteRouteImport } from './routes/window.main/route'
+import { Route as WindowCatRouteRouteImport } from './routes/window.cat/route'
 import { Route as WindowMainIndexRouteImport } from './routes/window.main/index'
 import { Route as WindowCatIndexRouteImport } from './routes/window.cat/index'
 import { Route as WindowMainSettingsIndexRouteImport } from './routes/window.main.settings/index'
 
-const WindowMainIndexRoute = WindowMainIndexRouteImport.update({
-  id: '/window/main/',
-  path: '/window/main/',
+const WindowMainRouteRoute = WindowMainRouteRouteImport.update({
+  id: '/window/main',
+  path: '/window/main',
   getParentRoute: () => rootRouteImport,
+} as any)
+const WindowCatRouteRoute = WindowCatRouteRouteImport.update({
+  id: '/window/cat',
+  path: '/window/cat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WindowMainIndexRoute = WindowMainIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WindowMainRouteRoute,
 } as any)
 const WindowCatIndexRoute = WindowCatIndexRouteImport.update({
-  id: '/window/cat/',
-  path: '/window/cat/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => WindowCatRouteRoute,
 } as any)
 const WindowMainSettingsIndexRoute = WindowMainSettingsIndexRouteImport.update({
-  id: '/window/main/settings/',
-  path: '/window/main/settings/',
-  getParentRoute: () => rootRouteImport,
+  id: '/settings/',
+  path: '/settings/',
+  getParentRoute: () => WindowMainRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/window/cat': typeof WindowCatIndexRoute
-  '/window/main': typeof WindowMainIndexRoute
+  '/window/cat': typeof WindowCatRouteRouteWithChildren
+  '/window/main': typeof WindowMainRouteRouteWithChildren
+  '/window/cat/': typeof WindowCatIndexRoute
+  '/window/main/': typeof WindowMainIndexRoute
   '/window/main/settings': typeof WindowMainSettingsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -41,54 +55,105 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/window/cat': typeof WindowCatRouteRouteWithChildren
+  '/window/main': typeof WindowMainRouteRouteWithChildren
   '/window/cat/': typeof WindowCatIndexRoute
   '/window/main/': typeof WindowMainIndexRoute
   '/window/main/settings/': typeof WindowMainSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/window/cat' | '/window/main' | '/window/main/settings'
+  fullPaths:
+    | '/window/cat'
+    | '/window/main'
+    | '/window/cat/'
+    | '/window/main/'
+    | '/window/main/settings'
   fileRoutesByTo: FileRoutesByTo
   to: '/window/cat' | '/window/main' | '/window/main/settings'
-  id: '__root__' | '/window/cat/' | '/window/main/' | '/window/main/settings/'
+  id:
+    | '__root__'
+    | '/window/cat'
+    | '/window/main'
+    | '/window/cat/'
+    | '/window/main/'
+    | '/window/main/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  WindowCatIndexRoute: typeof WindowCatIndexRoute
-  WindowMainIndexRoute: typeof WindowMainIndexRoute
-  WindowMainSettingsIndexRoute: typeof WindowMainSettingsIndexRoute
+  WindowCatRouteRoute: typeof WindowCatRouteRouteWithChildren
+  WindowMainRouteRoute: typeof WindowMainRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/window/main/': {
-      id: '/window/main/'
+    '/window/main': {
+      id: '/window/main'
       path: '/window/main'
       fullPath: '/window/main'
-      preLoaderRoute: typeof WindowMainIndexRouteImport
+      preLoaderRoute: typeof WindowMainRouteRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/window/cat': {
+      id: '/window/cat'
+      path: '/window/cat'
+      fullPath: '/window/cat'
+      preLoaderRoute: typeof WindowCatRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/window/main/': {
+      id: '/window/main/'
+      path: '/'
+      fullPath: '/window/main/'
+      preLoaderRoute: typeof WindowMainIndexRouteImport
+      parentRoute: typeof WindowMainRouteRoute
     }
     '/window/cat/': {
       id: '/window/cat/'
-      path: '/window/cat'
-      fullPath: '/window/cat'
+      path: '/'
+      fullPath: '/window/cat/'
       preLoaderRoute: typeof WindowCatIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof WindowCatRouteRoute
     }
     '/window/main/settings/': {
       id: '/window/main/settings/'
-      path: '/window/main/settings'
+      path: '/settings'
       fullPath: '/window/main/settings'
       preLoaderRoute: typeof WindowMainSettingsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof WindowMainRouteRoute
     }
   }
 }
 
-const rootRouteChildren: RootRouteChildren = {
+interface WindowCatRouteRouteChildren {
+  WindowCatIndexRoute: typeof WindowCatIndexRoute
+}
+
+const WindowCatRouteRouteChildren: WindowCatRouteRouteChildren = {
   WindowCatIndexRoute: WindowCatIndexRoute,
+}
+
+const WindowCatRouteRouteWithChildren = WindowCatRouteRoute._addFileChildren(
+  WindowCatRouteRouteChildren,
+)
+
+interface WindowMainRouteRouteChildren {
+  WindowMainIndexRoute: typeof WindowMainIndexRoute
+  WindowMainSettingsIndexRoute: typeof WindowMainSettingsIndexRoute
+}
+
+const WindowMainRouteRouteChildren: WindowMainRouteRouteChildren = {
   WindowMainIndexRoute: WindowMainIndexRoute,
   WindowMainSettingsIndexRoute: WindowMainSettingsIndexRoute,
+}
+
+const WindowMainRouteRouteWithChildren = WindowMainRouteRoute._addFileChildren(
+  WindowMainRouteRouteChildren,
+)
+
+const rootRouteChildren: RootRouteChildren = {
+  WindowCatRouteRoute: WindowCatRouteRouteWithChildren,
+  WindowMainRouteRoute: WindowMainRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

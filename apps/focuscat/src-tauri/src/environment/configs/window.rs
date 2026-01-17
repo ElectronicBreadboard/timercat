@@ -3,7 +3,7 @@ pub struct WindowConfig;
 impl WindowConfig {
     /// Main window size (width, height).
     pub fn main_size() -> (f64, f64) {
-        return (360.0, 540.0);
+        return (300.0, 600.0);
     }
 
     /// Cat widget window size (width, height).
