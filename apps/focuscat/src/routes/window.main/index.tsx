@@ -1,9 +1,8 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import React from 'react';
-import { MinimizeIcon, SettingsIcon } from '@/components';
 import { specta } from '@/environment';
-import { Cat, TCatRef } from '@/features/cat';
-import { TimerView, TodayCard } from './components';
+import { Cat, catConfig, TCatRef } from '@/features/cat';
+import { Navbar, TimerView, TodayCard } from './components';
 
 export const Route = createFileRoute('/window/main/')({
 	component: RouteComponent
@@ -12,6 +11,14 @@ export const Route = createFileRoute('/window/main/')({
 function RouteComponent() {
 	const navigate = useNavigate();
 	const catRef = React.useRef<TCatRef>(null);
+
+	// Top section (Today + Cat): width is half of 300px window, height lets cat overflow into timer wheel
+	const topSection = React.useMemo(() => {
+		const width = 150;
+		const scaledBodyOffset = catConfig.baseBodyBottomOffset * (width / catConfig.baseSize);
+		const height = Math.round(width - scaledBodyOffset);
+		return { width, height };
+	}, []);
 
 	// MARK: - Actions
 
@@ -31,37 +38,21 @@ function RouteComponent() {
 	// MARK: - UI
 
 	return (
-		<div className="relative h-screen w-[300px] bg-white">
-			{/* Header buttons */}
-			<div className="absolute top-2 right-2 z-50 flex items-center gap-1">
-				<button
-					type="button"
-					onClick={handleMinimize}
-					className="flex size-6 items-center justify-center rounded-full text-neutral-300 transition-colors hover:bg-neutral-100 hover:text-neutral-500"
-				>
-					<MinimizeIcon size={14} />
-				</button>
-				<button
-					type="button"
-					onClick={handleSettings}
-					className="flex size-6 items-center justify-center rounded-full text-neutral-300 transition-colors hover:bg-neutral-100 hover:text-neutral-500"
-				>
-					<SettingsIcon size={14} />
-				</button>
-			</div>
+		<div className="flex h-screen w-[300px] flex-col bg-white">
+			<Navbar onMinimize={handleMinimize} onSettings={handleSettings} />
 
-			{/* Today */}
-			<div className="absolute top-0 left-0 z-10 h-[150px] w-[150px] border-r border-neutral-200">
-				<TodayCard className="size-full" />
-			</div>
-
-			{/* Cat */}
-			<div className="absolute top-0 right-0 z-40 h-[150px] w-[150px] overflow-visible">
-				<Cat ref={catRef} size={150} className="absolute right-2 bottom-0" />
+			{/* Top section: Today + Cat */}
+			<div className="flex shrink-0" style={{ height: topSection.height }}>
+				<div className="w-1/2 border-r border-neutral-200">
+					<TodayCard className="size-full" />
+				</div>
+				<div className="relative z-30 w-1/2 overflow-visible">
+					<Cat ref={catRef} size={topSection.width} className="absolute right-0 bottom-0" />
+				</div>
 			</div>
 
 			{/* Timer */}
-			<TimerView onTick={handleTick} className="absolute inset-x-0 top-[150px] bottom-0" />
+			<TimerView onTick={handleTick} className="flex-1" />
 		</div>
 	);
 }

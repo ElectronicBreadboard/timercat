@@ -71,6 +71,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_os::init())
         .invoke_handler(builder.invoke_handler())
         .setup(move |app| {
             // https://docs.rs/tauri-specta/2.0.0-rc.21/tauri_specta/index.html

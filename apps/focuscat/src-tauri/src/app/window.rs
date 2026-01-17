@@ -1,6 +1,9 @@
 use crate::environment::configs::{app::AppConfig, window::WindowConfig};
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
+#[cfg(target_os = "macos")]
+use tauri::TitleBarStyle;
+
 // MARK: - Window Identifier
 
 /// Window identifier for getting existing windows.
@@ -68,16 +71,25 @@ impl ShowWindow {
     fn build_main_window(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
         let (width, height) = WindowConfig::main_size();
 
-        return self
+        let builder = self
             .base_builder(app, "/window/main")
             .inner_size(width, height)
             .resizable(true)
             .maximizable(false)
             .minimizable(true)
-            .decorations(true)
             .transparent(false)
-            .always_on_top(false)
-            .build();
+            .always_on_top(false);
+
+        #[cfg(target_os = "macos")]
+        let builder = builder
+            .decorations(true)
+            .title_bar_style(TitleBarStyle::Overlay)
+            .hidden_title(true);
+
+        #[cfg(not(target_os = "macos"))]
+        let builder = builder.decorations(false);
+
+        return builder.build();
     }
 
     fn build_cat_window(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {

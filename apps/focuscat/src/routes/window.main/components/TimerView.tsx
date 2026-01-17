@@ -8,7 +8,7 @@ import { TimerActions } from './TimerActions';
 import { TimerDial } from './TimerDial';
 
 export const TimerView: React.FC<TTimerViewProps> = (props) => {
-	const { onTick, className } = props;
+	const { onTick, className, style } = props;
 	const timerCx = useTimerCx();
 	const timer = useFeatureState(timerCx.$timer);
 	const startTime = useFeatureState(timerCx.$startTime);
@@ -106,14 +106,14 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 
 	if (timer == null) {
 		return (
-			<div className={cn('flex items-center justify-center', className)}>
+			<div className={cn('flex items-center justify-center', className)} style={style}>
 				<p className="text-neutral-400">Loading...</p>
 			</div>
 		);
 	}
 
 	return (
-		<div className={cn('flex flex-col items-center pb-4', className)}>
+		<div className={cn('flex flex-col items-center pb-4', className)} style={style}>
 			<TimerDial
 				value={displayMinutes}
 				sessionProgress={sessionProgress}
@@ -152,4 +152,5 @@ interface TTimerViewProps {
 	/** Fires every second when running, every minute boundary when dragging */
 	onTick?: (isDragging: boolean) => void;
 	className?: string;
+	style?: React.CSSProperties;
 }
