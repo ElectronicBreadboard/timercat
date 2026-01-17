@@ -5,7 +5,7 @@ use super::repository::{
 use super::types::{ActiveApp, ActiveWindow};
 use crate::environment::db::DatabaseState;
 use chrono::Utc;
-use mado::{WindowEvent, WindowListener, WindowMonitor};
+use mado::{MonitorConfig, WindowEvent, WindowListener, WindowMonitor};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager};
 use tokio::sync::Mutex as TokioMutex;
@@ -14,7 +14,14 @@ use tokio::sync::Mutex as TokioMutex;
 
 pub fn start_monitoring(app: AppHandle) {
     let handler = WindowMonitorHandler::new(app.clone());
-    let monitor = WindowMonitor::new(handler);
+    let monitor = WindowMonitor::with_config(
+        handler,
+        MonitorConfig {
+            allow_browser: true,
+            track_window_changes: true,
+            include_icon: true,
+        },
+    );
 
     std::thread::spawn(move || {
         println!("[Window Monitor] Started");
@@ -48,8 +55,7 @@ impl WindowListener for WindowMonitorHandler {
         match event {
             WindowEvent::AppActivated { app: app_info } => {
                 let app = self.app.clone();
-                let active_app: Arc<TokioMutex<Option<ActiveApp>>> =
-                    Arc::clone(&self.active_app);
+                let active_app: Arc<TokioMutex<Option<ActiveApp>>> = Arc::clone(&self.active_app);
 
                 #[cfg(debug_assertions)]
                 {
@@ -89,6 +95,7 @@ impl WindowListener for WindowMonitorHandler {
                                 bundle_id: app_info.bundle_id.clone(),
                                 name: app_info.name,
                                 process_path: app_info.process_path,
+                                icon: app_info.icon,
                             },
                         )
                         .await
@@ -171,6 +178,7 @@ impl WindowListener for WindowMonitorHandler {
                                 bundle_id: window_info.app.bundle_id.clone(),
                                 name: window_info.app.name,
                                 process_path: window_info.app.process_path,
+                                icon: window_info.app.icon,
                             },
                         )
                         .await

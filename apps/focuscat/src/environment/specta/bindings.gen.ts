@@ -300,7 +300,7 @@ export type TimerStatus = "idle" | "running" | "paused"
  * Event emitted every second while timer is running.
  */
 export type TimerTickEvent = Timer
-export type WindowActivityDto = { appBundleId: string | null; appName: string | null; windowTitle: string | null; browserUrl: string | null; startedAt: number; endedAt: number }
+export type WindowActivityDto = { appBundleId: string | null; appName: string | null; appIcon: string | null; windowTitle: string | null; browserUrl: string | null; startedAt: number; endedAt: number }
 /**
  * Stats from the last completed work session (shown during breaks).
  */

@@ -55,6 +55,7 @@ CREATE TABLE app (
     bundle_id TEXT UNIQUE,
     name TEXT,
     process_path TEXT,
+    icon TEXT,  -- base64 PNG data URL
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
 );
 

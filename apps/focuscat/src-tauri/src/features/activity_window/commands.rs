@@ -29,6 +29,7 @@ pub async fn get_window_activities(
         .map(|row| WindowActivityDto {
             app_bundle_id: row.app_bundle_id,
             app_name: row.app_name,
+            app_icon: row.app_icon,
             window_title: row.window_title,
             browser_url: row.browser_url,
             started_at: row.started_at as f64,
@@ -44,6 +45,7 @@ pub async fn get_window_activities(
 pub struct WindowActivityDto {
     pub app_bundle_id: Option<String>,
     pub app_name: Option<String>,
+    pub app_icon: Option<String>,
     pub window_title: Option<String>,
     pub browser_url: Option<String>,
     pub started_at: f64,
