@@ -43,9 +43,11 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 		const phaseProgress = totalSeconds > 0 ? (totalSeconds - remainingSeconds) / totalSeconds : 0;
 
 		// Work fills first half (0→0.5), break fills second half (0.5→1.0)
+		// Note: Backend increments sessionsCompleted when work ends, but visually
+		// we want the counter to increment when break ends, so we subtract 0.5 during break
 		return phase === 'work'
 			? sessionsCompleted + phaseProgress * 0.5
-			: sessionsCompleted + 0.5 + phaseProgress * 0.5;
+			: sessionsCompleted - 0.5 + phaseProgress * 0.5;
 	}, [timer]);
 
 	// MARK: - Actions

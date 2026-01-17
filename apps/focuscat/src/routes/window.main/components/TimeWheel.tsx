@@ -102,11 +102,16 @@ export const TimeWheel: React.FC<TTimeWheelProps> = (props) => {
 	// MARK: - UI
 
 	return (
-		<div className={cn('relative h-20 w-full overflow-hidden select-none', className)}>
-			{/* Tick strip */}
+		<div
+			className={cn(
+				'relative h-20 w-full cursor-grab overflow-hidden select-none active:cursor-grabbing',
+				className
+			)}
+			onPointerDown={handlePointerDown}
+		>
 			<motion.div
-				className="pointer-events-none absolute inset-y-0 flex items-end pb-3"
-				style={{ x, left: '50%', marginLeft: -itemWidth / 2 }}
+				className="pointer-events-none absolute inset-y-0 left-1/2 flex items-end pb-3"
+				style={{ x, marginLeft: -itemWidth / 2 }}
 				drag="x"
 				dragControls={dragControls}
 				dragListener={false}
@@ -128,12 +133,6 @@ export const TimeWheel: React.FC<TTimeWheelProps> = (props) => {
 					/>
 				))}
 			</motion.div>
-
-			{/* Drag overlay */}
-			<div
-				className="absolute inset-0 z-20 cursor-grab active:cursor-grabbing"
-				onPointerDown={handlePointerDown}
-			/>
 		</div>
 	);
 };
