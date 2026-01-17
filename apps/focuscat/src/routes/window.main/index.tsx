@@ -10,6 +10,7 @@ export const Route = createFileRoute('/window/main/')({
 
 function RouteComponent() {
 	const catRef = React.useRef<TCatRef>(null);
+	const lastTapTime = React.useRef(0);
 
 	// Top section (Today + Cat): width is half of 300px window, height lets cat overflow into timer wheel
 	const topSection = React.useMemo(() => {
@@ -31,7 +32,11 @@ function RouteComponent() {
 	}, []);
 
 	const handleTick = React.useCallback(() => {
-		catRef.current?.tap();
+		const now = Date.now();
+		if (now - lastTapTime.current >= catConfig.tapThrottleMs) {
+			lastTapTime.current = now;
+			catRef.current?.tap();
+		}
 	}, []);
 
 	// MARK: - UI

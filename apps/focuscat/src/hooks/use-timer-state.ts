@@ -10,7 +10,7 @@ export function useTimerState() {
 		(async () => {
 			const timerState = await specta.commands.getTimer();
 			setState(timerState);
-			unlisten = await specta.events.timerTickEvent.listen((event) => setState(event.payload));
+			unlisten = await specta.events.timerUpdatedEvent.listen((event) => setState(event.payload));
 		})();
 
 		return () => unlisten?.();

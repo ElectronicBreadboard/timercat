@@ -225,12 +225,12 @@ export const events = __makeEvents__<{
 appSettingsChangedEvent: AppSettingsChangedEvent,
 inputDetectedEvent: InputDetectedEvent,
 timerCompleteEvent: TimerCompleteEvent,
-timerTickEvent: TimerTickEvent
+timerUpdatedEvent: TimerUpdatedEvent
 }>({
 appSettingsChangedEvent: "app-settings-changed-event",
 inputDetectedEvent: "input-detected-event",
 timerCompleteEvent: "timer-complete-event",
-timerTickEvent: "timer-tick-event"
+timerUpdatedEvent: "timer-updated-event"
 })
 
 /** user-defined constants **/
@@ -307,9 +307,9 @@ longBreakMinutes: number;
 sessionsBeforeLongBreak: number }
 export type TimerStatus = "idle" | "running" | "paused"
 /**
- * Event emitted every second while timer is running.
+ * Event emitted when timer state changes.
  */
-export type TimerTickEvent = Timer
+export type TimerUpdatedEvent = Timer
 export type WindowActivityDto = { appBundleId: string | null; appName: string | null; appIcon: string | null; windowTitle: string | null; browserUrl: string | null; startedAt: number; endedAt: number }
 /**
  * Stats from the last completed work session (shown during breaks).

@@ -3,7 +3,7 @@ use super::{
     types::{AppSettings, AppSettingsChangedEvent, AppSettingsState},
 };
 use crate::common::path::get_app_data_dir;
-use crate::features::timer::types::{TimerConfig, TimerState, TimerStatus, TimerTickEvent};
+use crate::features::timer::types::{TimerConfig, TimerState, TimerStatus, TimerUpdatedEvent};
 use std::process::Command;
 use tauri::{AppHandle, Manager, State};
 use tauri_specta::Event;
@@ -36,7 +36,7 @@ pub fn set_settings(
             timer.remaining_seconds = config.work_duration;
             timer.base_work_seconds = config.work_duration;
             timer.speed = config.speed;
-            let _ = TimerTickEvent(timer.clone()).emit(&app);
+            let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
         }
     }
 

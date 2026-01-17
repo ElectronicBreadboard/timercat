@@ -164,10 +164,10 @@ impl Deref for TimerState {
 
 // MARK: - Events
 
-/// Event emitted every second while timer is running.
+/// Event emitted when timer state changes.
 #[derive(Debug, Clone, Serialize, specta::Type, tauri_specta::Event)]
 #[serde(rename_all = "camelCase")]
-pub struct TimerTickEvent(pub Timer);
+pub struct TimerUpdatedEvent(pub Timer);
 
 /// Event emitted when timer phase completes.
 #[derive(Debug, Clone, Serialize, specta::Type, tauri_specta::Event)]

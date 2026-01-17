@@ -10,7 +10,7 @@ use crate::features::{
     settings::{self, types::AppSettingsChangedEvent},
     timer::{
         self,
-        types::{TimerCompleteEvent, TimerTickEvent},
+        types::{TimerCompleteEvent, TimerUpdatedEvent},
     },
 };
 use specta_typescript::Typescript;
@@ -58,7 +58,7 @@ pub fn run() {
         .events(collect_events![
             AppSettingsChangedEvent,
             InputDetectedEvent,
-            TimerTickEvent,
+            TimerUpdatedEvent,
             TimerCompleteEvent
         ]);
 

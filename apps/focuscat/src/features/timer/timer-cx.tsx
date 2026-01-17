@@ -32,7 +32,7 @@ function createTimerCx(): TTimerCx {
 	const $timer = createState<specta.Timer | null>(null);
 	const $startTime = createState<Date | null>(null);
 
-	let unlistenTick: (() => void) | undefined;
+	let unlistenUpdate: (() => void) | undefined;
 	let unlistenComplete: (() => void) | undefined;
 
 	return {
@@ -50,7 +50,7 @@ function createTimerCx(): TTimerCx {
 		async mount() {
 			$timer.set(await specta.commands.getTimer());
 
-			unlistenTick = await specta.events.timerTickEvent.listen((event) => {
+			unlistenUpdate = await specta.events.timerUpdatedEvent.listen((event) => {
 				$timer.set(event.payload);
 			});
 			unlistenComplete = await specta.events.timerCompleteEvent.listen(() => {
@@ -59,7 +59,7 @@ function createTimerCx(): TTimerCx {
 		},
 
 		unmount() {
-			unlistenTick?.();
+			unlistenUpdate?.();
 			unlistenComplete?.();
 		},
 

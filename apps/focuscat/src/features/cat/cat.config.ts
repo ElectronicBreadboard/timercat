@@ -5,6 +5,8 @@ export const catConfig = {
 	baseSize: 248,
 	// Base bottom offset of the body from the bottom of the image (in pixels at base size)
 	baseBodyBottomOffset: 83,
+	// Minimum time between taps (prevents rapid tapping e.g. when dragging timer wheel)
+	tapThrottleMs: 200,
 	parts: {
 		fur: {
 			available: ['white'] as const,

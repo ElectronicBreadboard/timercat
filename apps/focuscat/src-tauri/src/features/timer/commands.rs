@@ -1,6 +1,6 @@
 use super::runner::TimerRunner;
 use super::types::{
-    Timer, TimerConfig, TimerPhase, TimerState, TimerStatus, TimerTickEvent, WorkSessionStats,
+    Timer, TimerConfig, TimerPhase, TimerState, TimerStatus, TimerUpdatedEvent, WorkSessionStats,
 };
 use crate::environment::db::DatabaseState;
 use crate::features::session::repository::{InsertSessionInput, SessionRepository};
@@ -40,7 +40,7 @@ pub async fn start_timer(
     timer.phase_started_at = Some(Utc::now().timestamp());
 
     // Emit initial tick
-    let _ = TimerTickEvent(timer.clone()).emit(&app);
+    let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
 
     // Update tray
     #[cfg(target_os = "macos")]
@@ -72,7 +72,7 @@ pub async fn pause_timer(
     timer.status = TimerStatus::Paused;
 
     // Emit tick with paused state
-    let _ = TimerTickEvent(timer.clone()).emit(&app);
+    let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
 
     // Stop runner
     let mut runner_guard = runner.lock().unwrap();
@@ -99,7 +99,7 @@ pub async fn resume_timer(
     timer.status = TimerStatus::Running;
 
     // Emit tick with running state
-    let _ = TimerTickEvent(timer.clone()).emit(&app);
+    let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
 
     // Start runner
     let mut runner_guard = runner.lock().unwrap();
@@ -136,7 +136,7 @@ pub async fn reset_timer(
     timer.phase_started_at = None;
 
     // Emit tick with reset state
-    let _ = TimerTickEvent(timer.clone()).emit(&app);
+    let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
 
     // Clear tray
     #[cfg(target_os = "macos")]
@@ -256,7 +256,7 @@ pub async fn skip_timer(
         timer.status = TimerStatus::Running;
 
         // Emit tick with new state
-        let _ = TimerTickEvent(timer.clone()).emit(&app);
+        let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
 
         // Update tray with new time
         #[cfg(target_os = "macos")]
@@ -310,7 +310,7 @@ pub fn set_timer_duration(
     timer.base_work_seconds = settings.timer.work_duration_minutes * 60;
 
     // Emit tick with new duration
-    let _ = TimerTickEvent(timer.clone()).emit(&app);
+    let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
 
     // Update tray if timer is active
     #[cfg(target_os = "macos")]
@@ -332,7 +332,7 @@ pub fn set_timer_tags(
     timer.session_tag_ids = session_tag_ids;
 
     // Emit tick with new tags
-    let _ = TimerTickEvent(timer.clone()).emit(&app);
+    let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
 
     return Ok(());
 }

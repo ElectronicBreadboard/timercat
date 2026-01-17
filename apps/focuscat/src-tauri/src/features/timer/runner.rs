@@ -1,4 +1,4 @@
-use super::types::{TimerCompleteEvent, TimerState, TimerStatus, TimerTickEvent};
+use super::types::{TimerCompleteEvent, TimerState, TimerStatus, TimerUpdatedEvent};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
@@ -90,7 +90,7 @@ fn run_timer_loop(app: AppHandle, stop_flag: Arc<AtomicBool>) {
             timer.overtime_seconds += 1;
         }
 
-        let _ = TimerTickEvent(timer.clone()).emit(&app);
+        let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
 
         // Update tray with remaining time
         #[cfg(target_os = "macos")]
