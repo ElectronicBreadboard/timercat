@@ -80,6 +80,7 @@ export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
 		</div>
 	);
 });
+Cat.displayName = 'Cat';
 
 interface TCatProps {
 	fur?: TCatFur;

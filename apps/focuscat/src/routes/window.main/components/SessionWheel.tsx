@@ -3,10 +3,13 @@ import React from 'react';
 import { cn } from '@/lib';
 
 export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
-	const { value, sessionsBeforeLongBreak = 4, itemHeight = 28, className } = props;
+	const { value, lookahead = 5, minVisible = 10, sessionsBeforeLongBreak = 4, itemHeight = 28, className } = props;
 
 	const y = useMotionValue(0);
-	const maxDisplay = React.useMemo(() => Math.max(Math.ceil(value) + 5, 10), [value]);
+	const maxDisplay = React.useMemo(
+		() => Math.max(Math.ceil(value) + lookahead, minVisible),
+		[value, lookahead, minVisible]
+	);
 	const items = React.useMemo(() => {
 		const result: number[] = [];
 		for (let v = maxDisplay; v >= 0; v--) {
@@ -46,6 +49,8 @@ export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
 
 interface TSessionWheelProps {
 	value: number;
+	lookahead?: number;
+	minVisible?: number;
 	sessionsBeforeLongBreak?: number;
 	itemHeight?: number;
 	className?: string;

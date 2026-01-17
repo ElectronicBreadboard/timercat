@@ -18,6 +18,15 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 		[state]
 	);
 
+	// Time range: show actual times when running, estimated otherwise
+	const { displayStartTime, displayEndTime } = React.useMemo(() => {
+		const now = new Date();
+		const start = isRunning && startTime != null ? startTime : now;
+		const end =
+			isRunning && endTime != null ? endTime : new Date(now.getTime() + remainingSeconds * 1000);
+		return { displayStartTime: start, displayEndTime: end };
+	}, [isRunning, startTime, endTime, remainingSeconds]);
+
 	return (
 		<div className={cn('flex min-h-24 flex-col items-center gap-1', className)}>
 			{isOvertime ? (
@@ -37,12 +46,7 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 					</p>
 					{/* Time range */}
 					<p className="text-sm text-neutral-400">
-						{formatTimeOfDay(isRunning && startTime != null ? startTime : new Date())} →{' '}
-						{formatTimeOfDay(
-							isRunning && endTime != null
-								? endTime
-								: new Date(Date.now() + remainingSeconds * 1000)
-						)}
+						{formatTimeOfDay(displayStartTime)} → {formatTimeOfDay(displayEndTime)}
 					</p>
 				</>
 			)}

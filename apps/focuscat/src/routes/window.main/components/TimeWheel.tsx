@@ -92,10 +92,8 @@ export const TimeWheel: React.FC<TTimeWheelProps> = (props) => {
 		const targetX = -(value - min) * itemWidth;
 
 		if (smooth) {
-			// Smooth animation for timer countdown
 			animationRef.current = animate(x, targetX, { type: 'spring', stiffness: 500, damping: 50 });
 		} else {
-			// Snap animation for manual selection
 			const snappedX = -Math.round(value - min) * itemWidth;
 			animationRef.current = animate(x, snappedX, { type: 'spring', stiffness: 300, damping: 30 });
 		}

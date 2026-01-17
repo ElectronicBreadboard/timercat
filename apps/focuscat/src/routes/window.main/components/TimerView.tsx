@@ -22,33 +22,30 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	const isActive = timer != null && timer.status !== 'idle';
 	const lastTickValue = React.useRef<number | null>(null);
 
-	// Fractional minutes when active (smooth animation), whole when idle (snap to minutes)
-	const displayMinutes = React.useMemo(() => {
+	// Display values: fractional when active (smooth animation), whole when idle (snap to minutes)
+	const { displayMinutes, displaySeconds } = React.useMemo(() => {
 		if (dragMinutes != null) {
-			return dragMinutes;
+			return { displayMinutes: dragMinutes, displaySeconds: dragMinutes * 60 };
 		}
 		if (timer == null) {
-			return 0;
+			return { displayMinutes: 0, displaySeconds: 0 };
 		}
-		return isActive ? timer.remainingSeconds / 60 : Math.ceil(timer.remainingSeconds / 60);
+		const minutes = isActive ? timer.remainingSeconds / 60 : Math.ceil(timer.remainingSeconds / 60);
+		return { displayMinutes: minutes, displaySeconds: timer.remainingSeconds };
 	}, [dragMinutes, timer, isActive]);
 
-	const displaySeconds = React.useMemo(
-		() => (dragMinutes != null ? dragMinutes * 60 : (timer?.remainingSeconds ?? 0)),
-		[dragMinutes, timer]
-	);
-
-	// Work phase: 0→0.5, break phase: 0.5→1.0 per session
+	// Session progress: each session spans 0→1, split into work (0→0.5) and break (0.5→1.0)
 	const sessionProgress = React.useMemo(() => {
 		if (timer == null || timer.status === 'idle') {
 			return 0;
 		}
 		const { totalSeconds, remainingSeconds, sessionsCompleted, phase } = timer;
-		const progress = totalSeconds > 0 ? (totalSeconds - remainingSeconds) / totalSeconds : 0;
+		const phaseProgress = totalSeconds > 0 ? (totalSeconds - remainingSeconds) / totalSeconds : 0;
 
+		// Work fills first half (0→0.5), break fills second half (0.5→1.0)
 		return phase === 'work'
-			? sessionsCompleted + progress * 0.5
-			: sessionsCompleted - 0.5 + progress * 0.5;
+			? sessionsCompleted + phaseProgress * 0.5
+			: sessionsCompleted + 0.5 + phaseProgress * 0.5;
 	}, [timer]);
 
 	// MARK: - Actions
