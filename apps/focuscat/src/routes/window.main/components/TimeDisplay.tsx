@@ -28,7 +28,7 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 	}, [isRunning, startTime, endTime, remainingSeconds]);
 
 	return (
-		<div className={cn('flex min-h-24 flex-col items-center gap-1', className)}>
+		<div className={cn('flex flex-col items-center gap-1', className)}>
 			{isOvertime ? (
 				<>
 					{/* Total time worked */}

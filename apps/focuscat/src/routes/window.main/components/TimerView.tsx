@@ -1,5 +1,6 @@
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
+import { Badge } from '@/components';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
 import { cn } from '@/lib';
@@ -132,6 +133,12 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 				debug={settings.debug.enabled}
 				className="mt-4"
 			/>
+
+			{settings.debug.enabled && timer.speed > 1 && (
+				<Badge variant="warning" className="mt-1 font-mono">
+					{timer.speed}x
+				</Badge>
+			)}
 
 			<TimerActions
 				status={timer.status}

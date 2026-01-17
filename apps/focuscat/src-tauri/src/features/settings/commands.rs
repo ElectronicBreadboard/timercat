@@ -3,8 +3,9 @@ use super::{
     types::{AppSettings, AppSettingsChangedEvent, AppSettingsState},
 };
 use crate::common::path::get_app_data_dir;
+use crate::features::timer::types::{TimerConfig, TimerState, TimerStatus, TimerTickEvent};
 use std::process::Command;
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Manager, State};
 use tauri_specta::Event;
 
 #[tauri::command]
@@ -25,6 +26,19 @@ pub fn set_settings(
 
     // Persist to disk
     persistence::save_settings(&app, &settings)?;
+
+    // Sync idle timer with new settings
+    if let Some(timer_state) = app.try_state::<TimerState>() {
+        let mut timer = timer_state.lock().unwrap();
+        if timer.status == TimerStatus::Idle {
+            let config = TimerConfig::from(&settings);
+            timer.total_seconds = config.work_duration;
+            timer.remaining_seconds = config.work_duration;
+            timer.base_work_seconds = config.work_duration;
+            timer.speed = config.speed;
+            let _ = TimerTickEvent(timer.clone()).emit(&app);
+        }
+    }
 
     // Emit event to notify frontend
     let _ = AppSettingsChangedEvent(settings).emit(&app);
