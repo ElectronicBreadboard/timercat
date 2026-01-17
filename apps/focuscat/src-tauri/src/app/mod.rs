@@ -14,6 +14,7 @@ use crate::features::{
     },
 };
 use specta_typescript::Typescript;
+use tauri::Manager;
 use tauri_specta::{collect_commands, collect_events, Builder};
 
 pub fn run() {
@@ -22,8 +23,10 @@ pub fn run() {
             // Window commands
             commands::show_main_window,
             commands::show_cat_window,
+            commands::show_settings_window,
             commands::hide_main_window,
             commands::hide_cat_window,
+            commands::hide_settings_window,
             commands::quit_app,
             // Settings commands
             settings::commands::get_settings,
@@ -92,12 +95,17 @@ pub fn run() {
             return Ok(());
         })
         .on_window_event(|window, event| {
-            // Hide main window on close instead of quitting (can reopen from tray)
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 let label = window.label();
                 if label == "main" {
+                    // Hide main window on close instead of quitting (can reopen from tray)
                     api.prevent_close();
                     let _ = window.hide();
+                } else if label == "settings" {
+                    // When settings closes, hide it and show main window
+                    api.prevent_close();
+                    let _ = window.hide();
+                    let _ = window::ShowWindow::Main.show(window.app_handle());
                 }
             }
         })

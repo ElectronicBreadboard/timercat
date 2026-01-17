@@ -1,1 +1,2 @@
-export * from './PermissionStatusView';
+export * from './PermissionBadge';
+export * from './useAccessibilityPermission';

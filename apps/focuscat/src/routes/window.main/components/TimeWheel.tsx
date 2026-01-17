@@ -156,9 +156,9 @@ const TickMark: React.FC<TTickMarkProps> = (props) => {
 	return (
 		<div className="flex shrink-0 flex-col items-center justify-end" style={{ width }}>
 			{showLabel && (
-				<span className="mb-1 text-sm font-medium text-neutral-900 tabular-nums">{value}</span>
+				<span className="mb-1 text-sm font-medium text-gray-900 tabular-nums">{value}</span>
 			)}
-			<div className={cn('bg-neutral-300', showLabel ? 'h-4 w-[2px]' : 'h-2 w-px')} />
+			<div className={cn('bg-gray-300', showLabel ? 'h-4 w-[2px]' : 'h-2 w-px')} />
 		</div>
 	);
 };

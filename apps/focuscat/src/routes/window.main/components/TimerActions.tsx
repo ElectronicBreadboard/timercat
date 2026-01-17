@@ -1,5 +1,5 @@
 import React from 'react';
-import { BriefcaseIcon, CoffeeIcon, PauseIcon, PlayIcon, XIcon } from '@/components';
+import { BriefcaseIcon, Button, CoffeeIcon, IconButton, PauseIcon, PlayIcon, XIcon } from '@/components';
 import { specta } from '@/environment';
 import { cn } from '@/lib';
 
@@ -39,36 +39,36 @@ export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 		<div className={cn('relative flex items-center justify-center', className)}>
 			{/* Cancel button */}
 			{status !== 'idle' && (
-				<button
-					type="button"
+				<IconButton
+					variant="default"
 					onClick={onCancel}
 					className={cn(
-						'absolute right-full mr-3 flex size-11 items-center justify-center rounded-full bg-neutral-100 text-neutral-500 transition-colors hover:bg-neutral-200',
+						'absolute right-full mr-3 size-11 rounded-full',
 						status !== 'paused' && 'pointer-events-none opacity-0'
 					)}
 				>
 					<XIcon size={18} />
-				</button>
+				</IconButton>
 			)}
 
 			{/* Primary button */}
-			<button
-				type="button"
+			<Button
+				variant="primary"
 				onClick={primary.onClick}
-				className="flex h-12 items-center justify-center rounded-full bg-blue-500 px-8 text-sm font-semibold text-white transition-colors hover:bg-blue-600"
+				className="h-12 rounded-full px-8 text-sm font-semibold"
 			>
 				{primary.label}
-			</button>
+			</Button>
 
 			{/* Toggle button */}
 			{toggle != null && (
-				<button
-					type="button"
+				<IconButton
+					variant="default"
 					onClick={toggle.onClick}
-					className="absolute left-full ml-3 flex size-11 items-center justify-center rounded-full bg-neutral-100 text-neutral-500 transition-colors hover:bg-neutral-200"
+					className="absolute left-full ml-3 size-11 rounded-full"
 				>
 					{toggle.icon}
-				</button>
+				</IconButton>
 			)}
 		</div>
 	);

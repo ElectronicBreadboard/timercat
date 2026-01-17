@@ -9,10 +9,12 @@ use tauri::TitleBarStyle;
 /// Window identifier for getting existing windows.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WindowId {
-    /// Main app window (settings, timer, etc.)
+    /// Main app window (timer, etc.)
     Main,
     /// Floating cat widget overlay
     Cat,
+    /// Settings window
+    Settings,
 }
 
 impl WindowId {
@@ -20,6 +22,7 @@ impl WindowId {
         return match self {
             Self::Main => "main",
             Self::Cat => "cat",
+            Self::Settings => "settings",
         };
     }
 
@@ -35,6 +38,7 @@ impl WindowId {
 pub enum ShowWindow {
     Main,
     Cat,
+    Settings,
 }
 
 impl ShowWindow {
@@ -42,6 +46,7 @@ impl ShowWindow {
         return match self {
             Self::Main => WindowId::Main,
             Self::Cat => WindowId::Cat,
+            Self::Settings => WindowId::Settings,
         };
     }
 
@@ -59,6 +64,7 @@ impl ShowWindow {
         let window = match self {
             Self::Main => self.build_main_window(app)?,
             Self::Cat => self.build_cat_window(app)?,
+            Self::Settings => self.build_settings_window(app)?,
         };
 
         window.show()?;
@@ -107,6 +113,33 @@ impl ShowWindow {
             .shadow(false)
             .skip_taskbar(true)
             .build();
+    }
+
+    fn build_settings_window(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
+        let (width, height) = WindowConfig::settings_size();
+        let (min_width, min_height) = WindowConfig::settings_min_size();
+
+        let builder = self
+            .base_builder(app, "/window/settings")
+            .inner_size(width, height)
+            .min_inner_size(min_width, min_height)
+            .resizable(true)
+            .maximizable(false)
+            .minimizable(true)
+            .transparent(false)
+            .always_on_top(false)
+            .center();
+
+        #[cfg(target_os = "macos")]
+        let builder = builder
+            .decorations(true)
+            .title_bar_style(TitleBarStyle::Overlay)
+            .hidden_title(true);
+
+        #[cfg(not(target_os = "macos"))]
+        let builder = builder.decorations(false);
+
+        return builder.build();
     }
 
     fn base_builder<'a>(

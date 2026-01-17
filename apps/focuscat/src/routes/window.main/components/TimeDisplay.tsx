@@ -32,20 +32,20 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 			{isOvertime ? (
 				<>
 					{/* Total time worked */}
-					<p className="font-mono text-3xl font-light tracking-wider text-neutral-900">
+					<p className="font-mono text-3xl font-light tracking-wider text-gray-900">
 						{formatTime(state.totalSeconds + state.overtimeSeconds)}
 					</p>
 					{/* Overtime */}
-					<p className="text-sm text-neutral-400">+{formatTime(state.overtimeSeconds)} overtime</p>
+					<p className="text-sm text-gray-400">+{formatTime(state.overtimeSeconds)} overtime</p>
 				</>
 			) : (
 				<>
 					{/* Remaining time */}
-					<p className="font-mono text-3xl font-light tracking-wider text-neutral-900">
+					<p className="font-mono text-3xl font-light tracking-wider text-gray-900">
 						{formatTime(remainingSeconds)}
 					</p>
 					{/* Time range */}
-					<p className="text-sm text-neutral-400">
+					<p className="text-sm text-gray-400">
 						{formatTimeOfDay(displayStartTime)} → {formatTimeOfDay(displayEndTime)}
 					</p>
 				</>
@@ -53,7 +53,7 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 
 			{/* Last session stats (subtle, during breaks) */}
 			{state.phase !== 'work' && state.lastWorkSession != null && (
-				<div className="mt-2 text-center text-xs text-neutral-300">
+				<div className="mt-2 text-center text-xs text-gray-300">
 					<p>{formatTime(state.lastWorkSession.completedSeconds)} last session</p>
 					{/* Debug: show breakdown */}
 					{debug &&

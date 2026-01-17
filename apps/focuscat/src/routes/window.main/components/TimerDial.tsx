@@ -16,8 +16,8 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 	return (
 		<div className="relative flex w-full items-center">
 			{/* Border lines */}
-			<div className="absolute inset-x-0 top-0 z-20 h-px bg-neutral-200" />
-			<div className="absolute inset-x-0 bottom-0 z-20 h-px bg-neutral-200" />
+			<div className="absolute inset-x-0 top-0 z-20 h-px bg-gray-200" />
+			<div className="absolute inset-x-0 bottom-0 z-20 h-px bg-gray-200" />
 
 			{/* Time wheel */}
 			<div className="relative ml-2 flex-1">
@@ -40,7 +40,7 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 						height="8"
 						viewBox="0 0 12 8"
 						fill="currentColor"
-						className="text-neutral-300"
+						className="text-gray-300"
 					>
 						<path d="M6 8 L12 0 L0 0 Z" />
 					</svg>
@@ -48,7 +48,7 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 			</div>
 
 			{/* Divider */}
-			<div className="h-16 w-px bg-neutral-200" />
+			<div className="h-16 w-px bg-gray-200" />
 
 			{/* Session wheel */}
 			<div className="relative mr-2">
@@ -65,7 +65,7 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 						height="10"
 						viewBox="0 0 6 10"
 						fill="currentColor"
-						className="text-neutral-300"
+						className="text-gray-300"
 					>
 						<path d="M6 5 L0 0 L0 10 Z" />
 					</svg>

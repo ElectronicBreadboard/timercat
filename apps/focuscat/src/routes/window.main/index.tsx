@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import React from 'react';
 import { specta } from '@/environment';
 import { Cat, catConfig, TCatRef } from '@/features/cat';
@@ -9,7 +9,6 @@ export const Route = createFileRoute('/window/main/')({
 });
 
 function RouteComponent() {
-	const navigate = useNavigate();
 	const catRef = React.useRef<TCatRef>(null);
 
 	// Top section (Today + Cat): width is half of 300px window, height lets cat overflow into timer wheel
@@ -27,9 +26,9 @@ function RouteComponent() {
 		await specta.commands.hideMainWindow();
 	}, []);
 
-	const handleSettings = React.useCallback(() => {
-		navigate({ to: '/window/main/settings' });
-	}, [navigate]);
+	const handleSettings = React.useCallback(async () => {
+		await specta.commands.showSettingsWindow();
+	}, []);
 
 	const handleTick = React.useCallback(() => {
 		catRef.current?.tap();
@@ -43,7 +42,7 @@ function RouteComponent() {
 
 			{/* Top section: Today + Cat */}
 			<div className="flex shrink-0" style={{ height: topSection.height }}>
-				<div className="w-1/2 border-r border-neutral-200">
+				<div className="w-1/2 border-r border-gray-200">
 					<TodayCard className="size-full" />
 				</div>
 				<div className="relative z-30 w-1/2 overflow-visible">
