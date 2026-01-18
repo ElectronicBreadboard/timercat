@@ -48,9 +48,25 @@ impl Default for TimerSettings {
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
+pub struct FocusGoalSettings {
+    /// Daily focus goal in minutes (default: 120 = 2h)
+    pub daily_goal_minutes: u32,
+}
+
+impl Default for FocusGoalSettings {
+    fn default() -> Self {
+        return Self {
+            daily_goal_minutes: 120,
+        };
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
 pub struct AppSettings {
     pub debug: DebugSettings,
     pub timer: TimerSettings,
+    pub focus_goal: FocusGoalSettings,
 }
 
 impl Default for AppSettings {
@@ -58,6 +74,7 @@ impl Default for AppSettings {
         return Self {
             debug: DebugSettings::default(),
             timer: TimerSettings::default(),
+            focus_goal: FocusGoalSettings::default(),
         };
     }
 }

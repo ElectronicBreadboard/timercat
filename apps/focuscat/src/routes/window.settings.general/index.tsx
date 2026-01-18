@@ -24,6 +24,13 @@ function RouteComponent() {
 		[settingsCx, settings.timer]
 	);
 
+	const updateFocusGoal = React.useCallback(
+		(updates: Partial<specta.FocusGoalSettings>) => {
+			settingsCx.update({ focusGoal: { ...settings.focusGoal, ...updates } });
+		},
+		[settingsCx, settings.focusGoal]
+	);
+
 	// MARK: - UI
 
 	return (
@@ -64,6 +71,19 @@ function RouteComponent() {
 						min={1}
 						max={10}
 						onChange={(v) => updateTimer({ sessionsBeforeLongBreak: v })}
+					/>
+				</SettingItem>
+			</SettingGroup>
+
+			<SettingGroup title="Focus Goal">
+				<SettingItem label="Daily Goal" description="Target focus hours per day">
+					<NumberStepper
+						value={settings.focusGoal.dailyGoalMinutes / 60}
+						min={0.5}
+						max={12}
+						step={0.5}
+						formatValue={(v) => `${v}h`}
+						onChange={(v) => updateFocusGoal({ dailyGoalMinutes: v * 60 })}
 					/>
 				</SettingItem>
 			</SettingGroup>

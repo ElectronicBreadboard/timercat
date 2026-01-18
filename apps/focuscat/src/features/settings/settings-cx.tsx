@@ -38,6 +38,9 @@ const defaultSettings: specta.AppSettings = {
 		shortBreakMinutes: 5,
 		longBreakMinutes: 15,
 		sessionsBeforeLongBreak: 4
+	},
+	focusGoal: {
+		dailyGoalMinutes: 120
 	}
 };
 

@@ -23,7 +23,7 @@ function RouteComponent() {
 	);
 
 	const cycleTimerSpeed = React.useCallback(() => {
-		const speeds = [1, 2, 5, 10, 60];
+		const speeds = [1, 2, 5, 10, 60, 120];
 		const currentIndex = speeds.indexOf(settings.debug.timerSpeed);
 		const nextIndex = (currentIndex + 1) % speeds.length;
 		updateDebug({ timerSpeed: speeds[nextIndex] });

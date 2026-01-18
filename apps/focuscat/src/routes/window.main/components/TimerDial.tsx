@@ -1,4 +1,5 @@
 import React from 'react';
+import { TriangleDownIcon, TriangleRightIcon } from '@/components';
 import { SessionWheel } from './SessionWheel';
 import { TimeWheel } from './TimeWheel';
 
@@ -35,15 +36,12 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 
 				{/* Center indicator */}
 				<div className="pointer-events-none absolute inset-x-0 top-px z-30 flex justify-center">
-					<svg
-						width="12"
-						height="8"
-						viewBox="0 0 12 8"
-						fill="currentColor"
+					<TriangleDownIcon
+						width={12}
+						height={8}
+						preserveAspectRatio="none"
 						className="text-gray-300"
-					>
-						<path d="M6 8 L12 0 L0 0 Z" />
-					</svg>
+					/>
 				</div>
 			</div>
 
@@ -60,15 +58,12 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 
 				{/* Center indicator */}
 				<div className="pointer-events-none absolute inset-y-0 left-0 z-30 flex items-center">
-					<svg
-						width="6"
-						height="10"
-						viewBox="0 0 6 10"
-						fill="currentColor"
+					<TriangleRightIcon
+						width={6}
+						height={10}
+						preserveAspectRatio="none"
 						className="text-gray-300"
-					>
-						<path d="M6 5 L0 0 L0 10 Z" />
-					</svg>
+					/>
 				</div>
 			</div>
 		</div>

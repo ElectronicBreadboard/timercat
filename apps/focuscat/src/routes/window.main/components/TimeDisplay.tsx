@@ -50,26 +50,6 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 					</p>
 				</>
 			)}
-
-			{/* Last session stats (subtle, during breaks) */}
-			{state.phase !== 'work' && state.lastWorkSession != null && (
-				<div className="mt-2 text-center text-xs text-gray-300">
-					<p>{formatTime(state.lastWorkSession.completedSeconds)} last session</p>
-					{/* Debug: show breakdown */}
-					{debug &&
-						(state.lastWorkSession.extendedSeconds > 0 ||
-							state.lastWorkSession.overtimeSeconds > 0) && (
-							<p>
-								({formatTime(state.lastWorkSession.baseSeconds)} base
-								{state.lastWorkSession.extendedSeconds > 0 &&
-									` + ${formatTime(state.lastWorkSession.extendedSeconds)} ext`}
-								{state.lastWorkSession.overtimeSeconds > 0 &&
-									` + ${formatTime(state.lastWorkSession.overtimeSeconds)} ot`}
-								)
-							</p>
-						)}
-				</div>
-			)}
 		</div>
 	);
 };

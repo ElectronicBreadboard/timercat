@@ -3,7 +3,16 @@ import { MinusIcon, PlusIcon } from '@/components/display';
 import { cn } from '@/lib';
 
 export const NumberStepper: React.FC<TNumberStepperProps> = (props) => {
-	const { value, onChange, min = 0, max = 100, step = 1, disabled = false, className } = props;
+	const {
+		value,
+		onChange,
+		min = 0,
+		max = 100,
+		step = 1,
+		disabled = false,
+		formatValue,
+		className
+	} = props;
 
 	const handleDecrement = React.useCallback(() => {
 		if (value > min) {
@@ -36,8 +45,8 @@ export const NumberStepper: React.FC<TNumberStepperProps> = (props) => {
 			>
 				<MinusIcon size={14} />
 			</button>
-			<span className="w-8 text-center font-mono text-sm tabular-nums text-gray-900">
-				{value}
+			<span className="min-w-8 text-center font-mono text-sm tabular-nums text-gray-900">
+				{formatValue != null ? formatValue(value) : value}
 			</span>
 			<button
 				type="button"
@@ -58,5 +67,6 @@ export interface TNumberStepperProps {
 	max?: number;
 	step?: number;
 	disabled?: boolean;
+	formatValue?: (value: number) => string;
 	className?: string;
 }

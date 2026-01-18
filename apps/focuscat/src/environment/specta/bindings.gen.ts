@@ -204,6 +204,14 @@ async getWindowActivities(params: GetWindowActivitiesParams) : Promise<Result<Wi
     else return { status: "error", error: e  as any };
 }
 },
+async getTodayFocusSeconds() : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_today_focus_seconds") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 /**
  * Check if accessibility permission is granted.
  */
@@ -239,9 +247,14 @@ timerUpdatedEvent: "timer-updated-event"
 
 /** user-defined types **/
 
-export type AppSettings = { debug: DebugSettings; timer: TimerSettings }
+export type AppSettings = { debug: DebugSettings; timer: TimerSettings; focusGoal: FocusGoalSettings }
 export type AppSettingsChangedEvent = AppSettings
 export type DebugSettings = { enabled: boolean; cat: boolean; timerSpeed: number }
+export type FocusGoalSettings = { 
+/**
+ * Daily focus goal in minutes (default: 120 = 2h)
+ */
+dailyGoalMinutes: number }
 export type GetWindowActivitiesParams = { startedAfter: number; startedBefore: number; limit: number | null }
 /**
  * Event emitted when user input is detected (throttled).

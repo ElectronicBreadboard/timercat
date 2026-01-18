@@ -1,4 +1,5 @@
 use crate::features::timer::types::TimerPhase;
+use chrono::{Local, TimeZone};
 use sqlx::{Row, SqlitePool};
 
 pub struct SessionRepository;
@@ -63,6 +64,30 @@ impl SessionRepository {
         }
 
         return Ok(());
+    }
+
+    /// Get total focus seconds for today (midnight-to-now).
+    /// Includes base, extended, and overtime seconds from work sessions only.
+    pub async fn get_today_focus_seconds(pool: &SqlitePool) -> Result<u32, sqlx::Error> {
+        // Get today's midnight in local time as Unix timestamp
+        let today = Local::now().date_naive();
+        let midnight = Local
+            .from_local_datetime(&today.and_hms_opt(0, 0, 0).unwrap())
+            .unwrap();
+        let today_start = midnight.timestamp();
+
+        let result: Option<i64> = sqlx::query_scalar(
+            r#"
+            SELECT COALESCE(SUM(base_seconds + extended_seconds + overtime_seconds), 0)
+            FROM sessions
+            WHERE phase = 'work' AND started_at >= ?
+            "#,
+        )
+        .bind(today_start)
+        .fetch_one(pool)
+        .await?;
+
+        return Ok(result.unwrap_or(0) as u32);
     }
 }
 
