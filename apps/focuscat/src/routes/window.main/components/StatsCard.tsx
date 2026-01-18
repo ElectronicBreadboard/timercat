@@ -73,18 +73,18 @@ export const StatsCard: React.FC<TStatsCardProps> = (props) => {
 				<p className="text-base-400 text-[10px] font-medium tracking-wider uppercase">
 					{labels[currentView] ?? currentView}
 				</p>
-				<div className="flex items-center gap-1">
+				<div className="-mr-2 flex items-center">
 					<button
 						type="button"
 						onClick={handlePrev}
-						className="text-base-300 hover:text-base-500 transition-colors"
+						className="text-base-300 hover:text-base-500 py-1 pr-0.5 pl-2 transition-colors"
 					>
 						<TriangleLeftIcon width={6} height={8} preserveAspectRatio="none" />
 					</button>
 					<button
 						type="button"
 						onClick={handleNext}
-						className="text-base-300 hover:text-base-500 transition-colors"
+						className="text-base-300 hover:text-base-500 py-1 pr-2 pl-0.5 transition-colors"
 					>
 						<TriangleRightIcon width={6} height={8} preserveAspectRatio="none" />
 					</button>
