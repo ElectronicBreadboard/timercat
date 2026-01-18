@@ -4,6 +4,7 @@ use super::repository::{
 };
 use super::types::{ActiveApp, ActiveWindow};
 use crate::environment::db::DatabaseState;
+use crate::features::settings::types::AppSettingsState;
 use chrono::Utc;
 use mado::{MonitorConfig, WindowEvent, WindowListener, WindowMonitor};
 use std::sync::Arc;
@@ -48,12 +49,43 @@ impl WindowMonitorHandler {
             active_window: Arc::new(TokioMutex::new(None)),
         };
     }
+
+    fn is_tracking_enabled(&self) -> bool {
+        self.app
+            .try_state::<AppSettingsState>()
+            .map(|state| state.lock().unwrap().activity.enabled)
+            .unwrap_or(false)
+    }
+
+    fn is_window_tracking_enabled(&self) -> bool {
+        self.app
+            .try_state::<AppSettingsState>()
+            .map(|state| {
+                let settings = state.lock().unwrap();
+                settings.activity.enabled && settings.activity.track_windows
+            })
+            .unwrap_or(false)
+    }
+
+    fn is_browser_tracking_enabled(&self) -> bool {
+        self.app
+            .try_state::<AppSettingsState>()
+            .map(|state| {
+                let settings = state.lock().unwrap();
+                settings.activity.enabled && settings.activity.track_browser
+            })
+            .unwrap_or(false)
+    }
 }
 
 impl WindowListener for WindowMonitorHandler {
     fn on_focus_change(&self, event: WindowEvent) {
         match event {
             WindowEvent::AppActivated { app: app_info } => {
+                if !self.is_tracking_enabled() {
+                    return;
+                }
+
                 let app = self.app.clone();
                 let active_app: Arc<TokioMutex<Option<ActiveApp>>> = Arc::clone(&self.active_app);
 
@@ -112,9 +144,14 @@ impl WindowListener for WindowMonitorHandler {
             WindowEvent::WindowChanged {
                 window: window_info,
             } => {
+                if !self.is_window_tracking_enabled() {
+                    return;
+                }
+
                 let app = self.app.clone();
                 let active_window: Arc<TokioMutex<Option<ActiveWindow>>> =
                     Arc::clone(&self.active_window);
+                let track_browser_urls = self.is_browser_tracking_enabled();
 
                 #[cfg(debug_assertions)]
                 {
@@ -156,12 +193,16 @@ impl WindowListener for WindowMonitorHandler {
                         }
                     }
 
-                    // Extract browser info
-                    let (browser_url, browser_is_private) = window_info
-                        .browser
-                        .as_ref()
-                        .map(|b| (b.url.clone(), b.is_private))
-                        .unwrap_or((None, None));
+                    // Extract browser info (only if tracking is enabled)
+                    let (browser_url, browser_is_private) = if track_browser_urls {
+                        window_info
+                            .browser
+                            .as_ref()
+                            .map(|b| (b.url.clone(), b.is_private))
+                            .unwrap_or((None, None))
+                    } else {
+                        (None, None)
+                    };
 
                     // Extract bounds
                     let (window_x, window_y, window_width, window_height) = window_info

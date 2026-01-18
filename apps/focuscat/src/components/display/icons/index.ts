@@ -6,7 +6,9 @@ export * from './TriangleUpIcon';
 
 // Third Party Icons
 export {
+	Activity as ActivityIcon,
 	AlertTriangle as AlertIcon,
+	AppWindow as AppWindowIcon,
 	ArrowLeft as ArrowLeftIcon,
 	Briefcase as BriefcaseIcon,
 	CheckCircle2 as CheckIcon,
@@ -28,6 +30,7 @@ export {
 	Settings as SettingsIcon,
 	SkipForward as SkipIcon,
 	Sun as SunIcon,
+	Target as TargetIcon,
 	Timer as TimerIcon,
 	X as XIcon
 } from 'lucide-react';

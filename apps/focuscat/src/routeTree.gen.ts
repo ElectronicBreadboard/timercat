@@ -15,8 +15,11 @@ import { Route as WindowCatRouteRouteImport } from './routes/window.cat/route'
 import { Route as WindowSettingsIndexRouteImport } from './routes/window.settings/index'
 import { Route as WindowMainIndexRouteImport } from './routes/window.main/index'
 import { Route as WindowCatIndexRouteImport } from './routes/window.cat/index'
-import { Route as WindowSettingsGeneralIndexRouteImport } from './routes/window.settings.general/index'
+import { Route as WindowSettingsTimerIndexRouteImport } from './routes/window.settings.timer/index'
+import { Route as WindowSettingsGoalsIndexRouteImport } from './routes/window.settings.goals/index'
 import { Route as WindowSettingsDeveloperIndexRouteImport } from './routes/window.settings.developer/index'
+import { Route as WindowSettingsAppIndexRouteImport } from './routes/window.settings.app/index'
+import { Route as WindowSettingsActivityIndexRouteImport } from './routes/window.settings.activity/index'
 
 const WindowSettingsRouteRoute = WindowSettingsRouteRouteImport.update({
   id: '/window/settings',
@@ -48,16 +51,33 @@ const WindowCatIndexRoute = WindowCatIndexRouteImport.update({
   path: '/',
   getParentRoute: () => WindowCatRouteRoute,
 } as any)
-const WindowSettingsGeneralIndexRoute =
-  WindowSettingsGeneralIndexRouteImport.update({
-    id: '/general/',
-    path: '/general/',
+const WindowSettingsTimerIndexRoute =
+  WindowSettingsTimerIndexRouteImport.update({
+    id: '/timer/',
+    path: '/timer/',
+    getParentRoute: () => WindowSettingsRouteRoute,
+  } as any)
+const WindowSettingsGoalsIndexRoute =
+  WindowSettingsGoalsIndexRouteImport.update({
+    id: '/goals/',
+    path: '/goals/',
     getParentRoute: () => WindowSettingsRouteRoute,
   } as any)
 const WindowSettingsDeveloperIndexRoute =
   WindowSettingsDeveloperIndexRouteImport.update({
     id: '/developer/',
     path: '/developer/',
+    getParentRoute: () => WindowSettingsRouteRoute,
+  } as any)
+const WindowSettingsAppIndexRoute = WindowSettingsAppIndexRouteImport.update({
+  id: '/app/',
+  path: '/app/',
+  getParentRoute: () => WindowSettingsRouteRoute,
+} as any)
+const WindowSettingsActivityIndexRoute =
+  WindowSettingsActivityIndexRouteImport.update({
+    id: '/activity/',
+    path: '/activity/',
     getParentRoute: () => WindowSettingsRouteRoute,
   } as any)
 
@@ -68,15 +88,21 @@ export interface FileRoutesByFullPath {
   '/window/cat/': typeof WindowCatIndexRoute
   '/window/main/': typeof WindowMainIndexRoute
   '/window/settings/': typeof WindowSettingsIndexRoute
+  '/window/settings/activity': typeof WindowSettingsActivityIndexRoute
+  '/window/settings/app': typeof WindowSettingsAppIndexRoute
   '/window/settings/developer': typeof WindowSettingsDeveloperIndexRoute
-  '/window/settings/general': typeof WindowSettingsGeneralIndexRoute
+  '/window/settings/goals': typeof WindowSettingsGoalsIndexRoute
+  '/window/settings/timer': typeof WindowSettingsTimerIndexRoute
 }
 export interface FileRoutesByTo {
   '/window/cat': typeof WindowCatIndexRoute
   '/window/main': typeof WindowMainIndexRoute
   '/window/settings': typeof WindowSettingsIndexRoute
+  '/window/settings/activity': typeof WindowSettingsActivityIndexRoute
+  '/window/settings/app': typeof WindowSettingsAppIndexRoute
   '/window/settings/developer': typeof WindowSettingsDeveloperIndexRoute
-  '/window/settings/general': typeof WindowSettingsGeneralIndexRoute
+  '/window/settings/goals': typeof WindowSettingsGoalsIndexRoute
+  '/window/settings/timer': typeof WindowSettingsTimerIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,8 +112,11 @@ export interface FileRoutesById {
   '/window/cat/': typeof WindowCatIndexRoute
   '/window/main/': typeof WindowMainIndexRoute
   '/window/settings/': typeof WindowSettingsIndexRoute
+  '/window/settings/activity/': typeof WindowSettingsActivityIndexRoute
+  '/window/settings/app/': typeof WindowSettingsAppIndexRoute
   '/window/settings/developer/': typeof WindowSettingsDeveloperIndexRoute
-  '/window/settings/general/': typeof WindowSettingsGeneralIndexRoute
+  '/window/settings/goals/': typeof WindowSettingsGoalsIndexRoute
+  '/window/settings/timer/': typeof WindowSettingsTimerIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -98,15 +127,21 @@ export interface FileRouteTypes {
     | '/window/cat/'
     | '/window/main/'
     | '/window/settings/'
+    | '/window/settings/activity'
+    | '/window/settings/app'
     | '/window/settings/developer'
-    | '/window/settings/general'
+    | '/window/settings/goals'
+    | '/window/settings/timer'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/window/cat'
     | '/window/main'
     | '/window/settings'
+    | '/window/settings/activity'
+    | '/window/settings/app'
     | '/window/settings/developer'
-    | '/window/settings/general'
+    | '/window/settings/goals'
+    | '/window/settings/timer'
   id:
     | '__root__'
     | '/window/cat'
@@ -115,8 +150,11 @@ export interface FileRouteTypes {
     | '/window/cat/'
     | '/window/main/'
     | '/window/settings/'
+    | '/window/settings/activity/'
+    | '/window/settings/app/'
     | '/window/settings/developer/'
-    | '/window/settings/general/'
+    | '/window/settings/goals/'
+    | '/window/settings/timer/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -169,11 +207,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WindowCatIndexRouteImport
       parentRoute: typeof WindowCatRouteRoute
     }
-    '/window/settings/general/': {
-      id: '/window/settings/general/'
-      path: '/general'
-      fullPath: '/window/settings/general'
-      preLoaderRoute: typeof WindowSettingsGeneralIndexRouteImport
+    '/window/settings/timer/': {
+      id: '/window/settings/timer/'
+      path: '/timer'
+      fullPath: '/window/settings/timer'
+      preLoaderRoute: typeof WindowSettingsTimerIndexRouteImport
+      parentRoute: typeof WindowSettingsRouteRoute
+    }
+    '/window/settings/goals/': {
+      id: '/window/settings/goals/'
+      path: '/goals'
+      fullPath: '/window/settings/goals'
+      preLoaderRoute: typeof WindowSettingsGoalsIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
     '/window/settings/developer/': {
@@ -181,6 +226,20 @@ declare module '@tanstack/react-router' {
       path: '/developer'
       fullPath: '/window/settings/developer'
       preLoaderRoute: typeof WindowSettingsDeveloperIndexRouteImport
+      parentRoute: typeof WindowSettingsRouteRoute
+    }
+    '/window/settings/app/': {
+      id: '/window/settings/app/'
+      path: '/app'
+      fullPath: '/window/settings/app'
+      preLoaderRoute: typeof WindowSettingsAppIndexRouteImport
+      parentRoute: typeof WindowSettingsRouteRoute
+    }
+    '/window/settings/activity/': {
+      id: '/window/settings/activity/'
+      path: '/activity'
+      fullPath: '/window/settings/activity'
+      preLoaderRoute: typeof WindowSettingsActivityIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
   }
@@ -212,14 +271,20 @@ const WindowMainRouteRouteWithChildren = WindowMainRouteRoute._addFileChildren(
 
 interface WindowSettingsRouteRouteChildren {
   WindowSettingsIndexRoute: typeof WindowSettingsIndexRoute
+  WindowSettingsActivityIndexRoute: typeof WindowSettingsActivityIndexRoute
+  WindowSettingsAppIndexRoute: typeof WindowSettingsAppIndexRoute
   WindowSettingsDeveloperIndexRoute: typeof WindowSettingsDeveloperIndexRoute
-  WindowSettingsGeneralIndexRoute: typeof WindowSettingsGeneralIndexRoute
+  WindowSettingsGoalsIndexRoute: typeof WindowSettingsGoalsIndexRoute
+  WindowSettingsTimerIndexRoute: typeof WindowSettingsTimerIndexRoute
 }
 
 const WindowSettingsRouteRouteChildren: WindowSettingsRouteRouteChildren = {
   WindowSettingsIndexRoute: WindowSettingsIndexRoute,
+  WindowSettingsActivityIndexRoute: WindowSettingsActivityIndexRoute,
+  WindowSettingsAppIndexRoute: WindowSettingsAppIndexRoute,
   WindowSettingsDeveloperIndexRoute: WindowSettingsDeveloperIndexRoute,
-  WindowSettingsGeneralIndexRoute: WindowSettingsGeneralIndexRoute,
+  WindowSettingsGoalsIndexRoute: WindowSettingsGoalsIndexRoute,
+  WindowSettingsTimerIndexRoute: WindowSettingsTimerIndexRoute,
 }
 
 const WindowSettingsRouteRouteWithChildren =

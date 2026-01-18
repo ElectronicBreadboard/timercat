@@ -247,7 +247,20 @@ timerUpdatedEvent: "timer-updated-event"
 
 /** user-defined types **/
 
-export type AppSettings = { appearance: AppearanceSettings; debug: DebugSettings; timer: TimerSettings; focusGoal: FocusGoalSettings }
+export type ActivitySettings = { 
+/**
+ * Whether activity tracking is enabled
+ */
+enabled: boolean; 
+/**
+ * Whether to track window changes (not just app switches)
+ */
+trackWindows: boolean; 
+/**
+ * Whether to track browser URLs
+ */
+trackBrowser: boolean }
+export type AppSettings = { appearance: AppearanceSettings; debug: DebugSettings; timer: TimerSettings; focusGoal: FocusGoalSettings; activity: ActivitySettings }
 export type AppSettingsChangedEvent = AppSettings
 export type AppearanceSettings = { theme: Theme }
 export type DebugSettings = { enabled: boolean; cat: boolean; timerSpeed: number }

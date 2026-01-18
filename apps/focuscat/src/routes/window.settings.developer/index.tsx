@@ -35,41 +35,30 @@ function RouteComponent() {
 		<div className="space-y-6">
 			<h1 className="text-base-900 text-xl font-semibold">Developer</h1>
 
-			<SettingGroup title="Debug">
-				<SettingItem label="Debug Mode" description="Show debug tools and information">
+			<SettingGroup title="Debug Tools">
+				<SettingItem
+					variant="button"
+					label="Timer Speed"
+					description="Speed up timer for testing"
+					onClick={cycleTimerSpeed}
+				>
+					<span className="text-base-500 font-mono text-sm">{settings.debug.timerSpeed}x</span>
+				</SettingItem>
+				<SettingItem label="Cat Borders" description="Show cat widget debug borders">
 					<Switch
-						checked={settings.debug.enabled}
-						onCheckedChange={(checked) => updateDebug({ enabled: checked })}
+						checked={settings.debug.cat}
+						onCheckedChange={(checked) => updateDebug({ cat: checked })}
 					/>
 				</SettingItem>
+				<SettingItem
+					variant="link"
+					label="Data Directory"
+					description="Open app data folder in Finder"
+					onClick={() => specta.commands.openDataDirectory()}
+				>
+					<FolderOpenIcon size={16} className="text-base-400" />
+				</SettingItem>
 			</SettingGroup>
-
-			{settings.debug.enabled && (
-				<SettingGroup title="Debug Tools">
-					<SettingItem
-						variant="button"
-						label="Timer Speed"
-						description="Speed up timer for testing"
-						onClick={cycleTimerSpeed}
-					>
-						<span className="text-base-500 font-mono text-sm">{settings.debug.timerSpeed}x</span>
-					</SettingItem>
-					<SettingItem label="Cat Borders" description="Show cat widget debug borders">
-						<Switch
-							checked={settings.debug.cat}
-							onCheckedChange={(checked) => updateDebug({ cat: checked })}
-						/>
-					</SettingItem>
-					<SettingItem
-						variant="link"
-						label="Data Directory"
-						description="Open app data folder in Finder"
-						onClick={() => specta.commands.openDataDirectory()}
-					>
-						<FolderOpenIcon size={16} className="text-base-400" />
-					</SettingItem>
-				</SettingGroup>
-			)}
 		</div>
 	);
 }

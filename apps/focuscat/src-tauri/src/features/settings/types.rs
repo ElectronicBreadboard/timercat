@@ -78,11 +78,33 @@ impl Default for FocusGoalSettings {
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
+pub struct ActivitySettings {
+    /// Whether activity tracking is enabled
+    pub enabled: bool,
+    /// Whether to track window changes (not just app switches)
+    pub track_windows: bool,
+    /// Whether to track browser URLs
+    pub track_browser: bool,
+}
+
+impl Default for ActivitySettings {
+    fn default() -> Self {
+        return Self {
+            enabled: true,
+            track_windows: true,
+            track_browser: false,
+        };
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
 pub struct AppSettings {
     pub appearance: AppearanceSettings,
     pub debug: DebugSettings,
     pub timer: TimerSettings,
     pub focus_goal: FocusGoalSettings,
+    pub activity: ActivitySettings,
 }
 
 impl Default for AppSettings {
@@ -92,6 +114,7 @@ impl Default for AppSettings {
             debug: DebugSettings::default(),
             timer: TimerSettings::default(),
             focus_goal: FocusGoalSettings::default(),
+            activity: ActivitySettings::default(),
         };
     }
 }
