@@ -1,11 +1,12 @@
 Review my staged and unstaged changes before committing:
 
 1. Run `git diff` and `git diff --staged` to see all changes
-2. For each changed file:
+2. Read the relevant rules from `.claude/rules/` (e.g., `react.md` for .tsx files, `typescript.md` for .ts files, `rust.md` for .rs files)
+3. For each changed file:
    - Summarize what changed
    - Check for potential issues (bugs, security, performance)
-   - Verify it follows our style guides
-3. Give me a brief summary:
+   - Verify it follows the rules in `.claude/rules/`
+4. Give me a brief summary:
    - What's good
    - Any concerns or suggestions
    - Ready to commit? (yes/no with reason)

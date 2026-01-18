@@ -1,5 +1,13 @@
 import React from 'react';
-import { BriefcaseIcon, Button, CoffeeIcon, IconButton, PauseIcon, PlayIcon, XIcon } from '@/components';
+import {
+	BriefcaseIcon,
+	Button,
+	CoffeeIcon,
+	IconButton,
+	PauseIcon,
+	PlayIcon,
+	XIcon
+} from '@/components';
 import { specta } from '@/environment';
 import { cn } from '@/lib';
 

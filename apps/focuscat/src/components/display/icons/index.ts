@@ -26,6 +26,7 @@ export {
 	Play as PlayIcon,
 	Plus as PlusIcon,
 	Settings as SettingsIcon,
+	SkipForward as SkipIcon,
 	Sun as SunIcon,
 	Timer as TimerIcon,
 	X as XIcon

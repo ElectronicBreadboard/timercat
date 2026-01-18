@@ -5,8 +5,8 @@ import { TCatFace, TCatFur, TCatHand, TCatHat } from './types';
 
 export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
 	const { fur = 'white', face = 'cute', hat, size = 150, className, onTap } = props;
-	const [leftHand, setLeftHand] = React.useState<TCatHand>('down');
-	const [rightHand, setRightHand] = React.useState<TCatHand>('down');
+	const [leftHand, setLeftHand] = React.useState<TCatHand>('up');
+	const [rightHand, setRightHand] = React.useState<TCatHand>('up');
 	const [lastHand, setLastHand] = React.useState<'left' | 'right'>('right');
 
 	const { basePath, leftHandPath, rightHandPath, facePath, hatPath } = React.useMemo(() => {
@@ -31,12 +31,12 @@ export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
 
 	const tap = React.useCallback(() => {
 		if (lastHand === 'right') {
-			setLeftHand('up');
-			setTimeout(() => setLeftHand('down'), 100);
+			setLeftHand('down');
+			setTimeout(() => setLeftHand('up'), 100);
 			setLastHand('left');
 		} else {
-			setRightHand('up');
-			setTimeout(() => setRightHand('down'), 100);
+			setRightHand('down');
+			setTimeout(() => setRightHand('up'), 100);
 			setLastHand('right');
 		}
 	}, [lastHand]);
@@ -71,11 +71,38 @@ export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
 					transform: `translateY(${bottomOffset}px)`
 				}}
 			>
-				<img src={basePath} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none" />
-				<img src={leftHandPath} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none" />
-				<img src={facePath} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none" />
-				{hatPath != null && <img src={hatPath} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none" />}
-				<img src={rightHandPath} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none" />
+				<img
+					src={basePath}
+					alt=""
+					draggable={false}
+					className="absolute inset-0 h-full w-full select-none"
+				/>
+				<img
+					src={leftHandPath}
+					alt=""
+					draggable={false}
+					className="absolute inset-0 h-full w-full select-none"
+				/>
+				<img
+					src={facePath}
+					alt=""
+					draggable={false}
+					className="absolute inset-0 h-full w-full select-none"
+				/>
+				{hatPath != null && (
+					<img
+						src={hatPath}
+						alt=""
+						draggable={false}
+						className="absolute inset-0 h-full w-full select-none"
+					/>
+				)}
+				<img
+					src={rightHandPath}
+					alt=""
+					draggable={false}
+					className="absolute inset-0 h-full w-full select-none"
+				/>
 			</div>
 		</div>
 	);
