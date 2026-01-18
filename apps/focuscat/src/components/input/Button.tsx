@@ -6,7 +6,7 @@ import { cn } from '@/lib';
 const buttonVariants = cva(
 	[
 		'inline-flex items-center justify-center rounded-md font-medium select-none',
-		'outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+		'outline-none focus-visible:ring-2 focus-visible:ring-primary',
 		'disabled:cursor-not-allowed disabled:opacity-50',
 		'transition-colors duration-100'
 	],
@@ -14,25 +14,21 @@ const buttonVariants = cva(
 		variants: {
 			variant: {
 				default: [
-					'border border-gray-200 bg-gray-50 text-gray-900',
-					'hover:bg-gray-100',
-					'active:bg-gray-200'
+					'border border-base-200 bg-base-50 text-base-900',
+					'hover:bg-base-100',
+					'active:bg-base-200'
 				],
 				primary: [
-					'border border-blue-600 bg-blue-500 text-white',
-					'hover:bg-blue-600',
-					'active:bg-blue-700'
+					'border border-primary bg-primary text-primary-content',
+					'hover:brightness-110',
+					'active:brightness-90'
 				],
 				danger: [
-					'border border-red-200 bg-red-50 text-red-600',
-					'hover:bg-red-100',
-					'active:bg-red-200'
+					'border border-error/20 bg-error/10 text-error',
+					'hover:bg-error/20',
+					'active:bg-error/30'
 				],
-				ghost: [
-					'text-gray-600',
-					'hover:bg-gray-100 hover:text-gray-900',
-					'active:bg-gray-200'
-				]
+				ghost: ['text-base-600', 'hover:bg-base-100 hover:text-base-900', 'active:bg-base-200']
 			},
 			size: {
 				sm: 'h-8 px-2.5 text-sm',
@@ -58,5 +54,4 @@ export const Button: React.FC<TButtonProps> = (props) => {
 };
 
 export interface TButtonProps
-	extends React.ComponentProps<typeof BaseButton>,
-		VariantProps<typeof buttonVariants> {}
+	extends React.ComponentProps<typeof BaseButton>, VariantProps<typeof buttonVariants> {}

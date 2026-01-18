@@ -47,12 +47,12 @@ function RouteComponent() {
 	// MARK: - UI
 
 	return (
-		<div className="flex h-screen w-[300px] flex-col bg-white">
+		<div className="bg-base-0 flex h-screen w-[300px] flex-col">
 			<Navbar onMinimize={handleMinimize} onSettings={handleSettings} />
 
 			{/* Top section: Stats + Cat */}
 			<div className="flex shrink-0" style={{ height: topSection.height }}>
-				<div className="w-1/2 border-r border-gray-200">
+				<div className="border-base-200 w-1/2 border-r">
 					<StatsCard className="size-full" debug={settings.debug.enabled} />
 				</div>
 				<div className="relative z-30 w-1/2 overflow-visible">

@@ -71,11 +71,11 @@ export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
 					transform: `translateY(${bottomOffset}px)`
 				}}
 			>
-				<img src={basePath} alt="" className="absolute inset-0 h-full w-full" />
-				<img src={leftHandPath} alt="" className="absolute inset-0 h-full w-full" />
-				<img src={facePath} alt="" className="absolute inset-0 h-full w-full" />
-				{hatPath != null && <img src={hatPath} alt="" className="absolute inset-0 h-full w-full" />}
-				<img src={rightHandPath} alt="" className="absolute inset-0 h-full w-full" />
+				<img src={basePath} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none" />
+				<img src={leftHandPath} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none" />
+				<img src={facePath} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none" />
+				{hatPath != null && <img src={hatPath} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none" />}
+				<img src={rightHandPath} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none" />
 			</div>
 		</div>
 	);

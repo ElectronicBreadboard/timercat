@@ -6,7 +6,7 @@ import { cn } from '@/lib';
 const switchRootVariants = cva(
 	[
 		'group relative flex cursor-pointer items-center rounded-full p-px transition-colors',
-		'bg-gray-200 data-checked:bg-blue-500',
+		'bg-base-200 data-checked:bg-primary',
 		'data-disabled:cursor-not-allowed data-disabled:opacity-50'
 	],
 	{

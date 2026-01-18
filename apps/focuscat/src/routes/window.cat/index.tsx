@@ -1,7 +1,7 @@
 import { Button } from '@base-ui/react/button';
 import { createFileRoute } from '@tanstack/react-router';
-import { useFeatureState } from 'feature-react/state';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { ExpandIcon, GripIcon } from '@/components';
 import { specta } from '@/environment';
@@ -33,12 +33,14 @@ function RouteComponent() {
 	// MARK: - UI
 
 	return (
-		<div className={cn('flex flex-col items-center', settings.debug.cat && 'border border-red-500')}>
+		<div
+			className={cn('flex flex-col items-center', settings.debug.cat && 'border border-red-500')}
+		>
 			<Cat ref={catRef} className={cn('z-10', settings.debug.cat && 'border border-green-500')} />
 
 			<div
 				className={cn(
-					'flex items-center rounded-lg bg-gray-800/90 shadow-lg',
+					'bg-base-100 flex items-center rounded-lg shadow-lg',
 					settings.debug.cat && 'border border-blue-500'
 				)}
 			>
@@ -51,14 +53,14 @@ function RouteComponent() {
 						}
 					}}
 				>
-					<GripIcon size={14} className="text-gray-500" />
+					<GripIcon size={14} className="text-base-500" />
 				</div>
 
 				{/* Timer Display */}
 				<span
 					className={cn(
 						'min-w-[48px] px-2 text-center font-mono text-sm select-none',
-						timerState?.status === 'running' ? 'text-white' : 'text-gray-400'
+						timerState?.status === 'running' ? 'text-base-950' : 'text-base-400'
 					)}
 				>
 					{formatTime(timerState?.remainingSeconds ?? 0)}
@@ -66,7 +68,7 @@ function RouteComponent() {
 
 				{/* Expand Button */}
 				<Button
-					className="flex items-center px-2 py-2 text-gray-400 transition-colors hover:text-white"
+					className="text-base-400 hover:text-base-950 flex items-center px-2 py-2 transition-colors"
 					onClick={handleExpand}
 				>
 					<ExpandIcon size={14} />

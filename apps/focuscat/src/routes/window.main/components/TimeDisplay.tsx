@@ -32,20 +32,20 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 			{isOvertime ? (
 				<>
 					{/* Total time worked */}
-					<p className="font-mono text-3xl font-light tracking-wider text-gray-900">
+					<p className="text-base-900 font-mono text-3xl font-light tracking-wider">
 						{formatTime(state.totalSeconds + state.overtimeSeconds)}
 					</p>
 					{/* Overtime */}
-					<p className="text-sm text-gray-400">+{formatTime(state.overtimeSeconds)} overtime</p>
+					<p className="text-base-400 text-sm">+{formatTime(state.overtimeSeconds)} overtime</p>
 				</>
 			) : (
 				<>
 					{/* Remaining time */}
-					<p className="font-mono text-3xl font-light tracking-wider text-gray-900">
+					<p className="text-base-900 font-mono text-3xl font-light tracking-wider">
 						{formatTime(remainingSeconds)}
 					</p>
 					{/* Time range */}
-					<p className="text-sm text-gray-400">
+					<p className="text-base-400 text-sm">
 						{formatTimeOfDay(displayStartTime)} → {formatTimeOfDay(displayEndTime)}
 					</p>
 				</>

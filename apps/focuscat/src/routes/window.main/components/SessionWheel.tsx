@@ -59,13 +59,13 @@ const SessionItem: React.FC<TSessionItemProps> = (props) => {
 
 	return (
 		<div className="absolute inset-x-0 flex flex-col items-center" style={{ top, height }}>
-			<span className="flex flex-1 items-center justify-center font-mono text-sm font-medium text-gray-900 tabular-nums">
+			<span className="text-base-900 flex flex-1 items-center justify-center font-mono text-sm font-medium tabular-nums">
 				{index + 1}
 			</span>
 			{index > 0 && (
 				<div
 					className={cn(
-						'mt-0.5 rounded-full bg-gray-300',
+						'bg-base-300 mt-0.5 rounded-full',
 						showLongBreak ? 'h-1 w-3' : 'h-0.5 w-1.5'
 					)}
 				/>

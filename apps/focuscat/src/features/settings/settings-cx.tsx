@@ -28,6 +28,9 @@ export function useSettingsCx(): TSettingsCx {
 // MARK: - Factory
 
 const defaultSettings: specta.AppSettings = {
+	appearance: {
+		theme: 'auto'
+	},
 	debug: {
 		enabled: false,
 		cat: false,

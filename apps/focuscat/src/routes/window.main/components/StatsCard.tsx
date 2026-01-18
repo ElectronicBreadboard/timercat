@@ -70,21 +70,21 @@ export const StatsCard: React.FC<TStatsCardProps> = (props) => {
 		<div className={cn('flex flex-col px-3 pt-2 pb-3', className)}>
 			{/* Header */}
 			<div className="flex items-center justify-between">
-				<p className="text-[10px] font-medium tracking-wider text-gray-400 uppercase">
+				<p className="text-base-400 text-[10px] font-medium tracking-wider uppercase">
 					{labels[currentView] ?? currentView}
 				</p>
 				<div className="flex items-center gap-1">
 					<button
 						type="button"
 						onClick={handlePrev}
-						className="text-gray-300 transition-colors hover:text-gray-500"
+						className="text-base-300 hover:text-base-500 transition-colors"
 					>
 						<TriangleLeftIcon width={6} height={8} preserveAspectRatio="none" />
 					</button>
 					<button
 						type="button"
 						onClick={handleNext}
-						className="text-gray-300 transition-colors hover:text-gray-500"
+						className="text-base-300 hover:text-base-500 transition-colors"
 					>
 						<TriangleRightIcon width={6} height={8} preserveAspectRatio="none" />
 					</button>
@@ -114,13 +114,13 @@ const FocusGoalView: React.FC<TFocusGoalViewProps> = (props) => {
 
 	return (
 		<div className="mt-2 flex flex-col gap-1">
-			<span className="text-sm text-gray-900 tabular-nums">
+			<span className="text-base-900 text-sm tabular-nums">
 				<span className="font-semibold">{formatDuration(focusMinutes)}</span> /{' '}
 				{formatDuration(goalMinutes)}
 			</span>
-			<div className="h-1 overflow-hidden rounded-full bg-gray-200">
+			<div className="bg-base-200 h-1 overflow-hidden rounded-full">
 				<div
-					className="h-full bg-gray-900 transition-[width] duration-500"
+					className="bg-base-900 h-full transition-[width] duration-500"
 					style={{ width: `${progress * 100}%` }}
 				/>
 			</div>
@@ -139,7 +139,7 @@ const LastSessionView: React.FC<TLastSessionViewProps> = (props) => {
 	if (lastSession == null) {
 		return (
 			<div className="mt-2 flex flex-col gap-1">
-				<span className="text-sm text-gray-400">No session yet</span>
+				<span className="text-base-400 text-sm">No session yet</span>
 			</div>
 		);
 	}
@@ -151,17 +151,17 @@ const LastSessionView: React.FC<TLastSessionViewProps> = (props) => {
 
 	return (
 		<div className="mt-2 flex flex-col gap-1">
-			<span className="text-sm font-semibold text-gray-900 tabular-nums">
+			<span className="text-base-900 text-sm font-semibold tabular-nums">
 				{formatDuration(completedMinutes)}
 			</span>
 			{debug ? (
-				<div className="flex flex-wrap gap-x-2 text-[10px] text-gray-400">
+				<div className="text-base-400 flex flex-wrap gap-x-2 text-[10px]">
 					<span>Base: {formatDuration(baseMinutes)}</span>
 					{extendedMinutes > 0 && <span>Ext: +{formatDuration(extendedMinutes)}</span>}
 					{overtimeMinutes > 0 && <span>OT: +{formatDuration(overtimeMinutes)}</span>}
 				</div>
 			) : (
-				<div className="text-[10px] text-gray-400">
+				<div className="text-base-400 text-[10px]">
 					{overtimeMinutes > 0 ? (
 						<span>+{formatDuration(overtimeMinutes)} overtime</span>
 					) : (

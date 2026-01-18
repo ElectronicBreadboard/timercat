@@ -6,17 +6,21 @@ import { cn } from '@/lib';
 const iconButtonVariants = cva(
 	[
 		'inline-flex items-center justify-center rounded-md select-none',
-		'outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+		'outline-none focus-visible:ring-2 focus-visible:ring-primary',
 		'disabled:opacity-50 disabled:cursor-not-allowed',
 		'transition-colors duration-100'
 	],
 	{
 		variants: {
 			variant: {
-				default: ['bg-gray-100 text-gray-600', 'hover:bg-gray-200 hover:text-gray-900', 'active:bg-gray-300'],
-				ghost: ['text-gray-400', 'hover:text-gray-600 hover:bg-gray-100', 'active:bg-gray-200'],
-				bare: ['text-gray-400', 'hover:text-gray-600', 'active:text-gray-900'],
-				primary: ['bg-blue-500 text-white', 'hover:bg-blue-600', 'active:bg-blue-700']
+				default: [
+					'bg-base-100 text-base-600',
+					'hover:bg-base-200 hover:text-base-900',
+					'active:bg-base-300'
+				],
+				ghost: ['text-base-400', 'hover:text-base-600 hover:bg-base-100', 'active:bg-base-200'],
+				bare: ['text-base-400', 'hover:text-base-600', 'active:text-base-900'],
+				primary: ['bg-primary text-primary-content', 'hover:brightness-110', 'active:brightness-90']
 			},
 			size: {
 				sm: 'size-8',
@@ -42,5 +46,4 @@ export const IconButton: React.FC<TIconButtonProps> = (props) => {
 };
 
 export interface TIconButtonProps
-	extends React.ComponentProps<typeof BaseButton>,
-		VariantProps<typeof iconButtonVariants> {}
+	extends React.ComponentProps<typeof BaseButton>, VariantProps<typeof iconButtonVariants> {}

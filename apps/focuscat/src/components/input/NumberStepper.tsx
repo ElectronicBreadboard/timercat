@@ -28,10 +28,10 @@ export const NumberStepper: React.FC<TNumberStepperProps> = (props) => {
 
 	const buttonClasses = cn(
 		'flex size-8 items-center justify-center rounded-full',
-		'bg-gray-100 text-gray-600 transition-colors duration-100',
-		'hover:bg-gray-200 hover:text-gray-900',
-		'active:bg-gray-300',
-		'outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+		'bg-base-100 text-base-600 transition-colors duration-100',
+		'hover:bg-base-200 hover:text-base-900',
+		'active:bg-base-300',
+		'outline-none focus-visible:ring-2 focus-visible:ring-primary',
 		'disabled:cursor-not-allowed disabled:opacity-50'
 	);
 
@@ -45,7 +45,7 @@ export const NumberStepper: React.FC<TNumberStepperProps> = (props) => {
 			>
 				<MinusIcon size={14} />
 			</button>
-			<span className="min-w-8 text-center font-mono text-sm tabular-nums text-gray-900">
+			<span className="text-base-900 min-w-8 text-center font-mono text-sm tabular-nums">
 				{formatValue != null ? formatValue(value) : value}
 			</span>
 			<button

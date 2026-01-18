@@ -17,8 +17,8 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 	return (
 		<div className="relative flex w-full items-center">
 			{/* Border lines */}
-			<div className="absolute inset-x-0 top-0 z-20 h-px bg-gray-200" />
-			<div className="absolute inset-x-0 bottom-0 z-20 h-px bg-gray-200" />
+			<div className="bg-base-200 absolute inset-x-0 top-0 z-20 h-px" />
+			<div className="bg-base-200 absolute inset-x-0 bottom-0 z-20 h-px" />
 
 			{/* Time wheel */}
 			<div className="relative ml-2 flex-1">
@@ -31,8 +31,8 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 				/>
 
 				{/* Edge fades */}
-				<div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-linear-to-r from-white to-transparent" />
-				<div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-linear-to-l from-white to-transparent" />
+				<div className="from-base-0 pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-linear-to-r to-transparent" />
+				<div className="from-base-0 pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-linear-to-l to-transparent" />
 
 				{/* Center indicator */}
 				<div className="pointer-events-none absolute inset-x-0 top-px z-30 flex justify-center">
@@ -40,21 +40,21 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 						width={12}
 						height={8}
 						preserveAspectRatio="none"
-						className="text-gray-300"
+						className="text-base-300"
 					/>
 				</div>
 			</div>
 
 			{/* Divider */}
-			<div className="h-16 w-px bg-gray-200" />
+			<div className="bg-base-200 h-16 w-px" />
 
 			{/* Session wheel */}
 			<div className="relative mr-2">
 				<SessionWheel value={sessionProgress} sessionsBeforeLongBreak={sessionsBeforeLongBreak} />
 
 				{/* Edge fades */}
-				<div className="pointer-events-none absolute inset-x-0 top-px z-10 h-6 bg-linear-to-b from-white to-transparent" />
-				<div className="pointer-events-none absolute inset-x-0 bottom-px z-10 h-6 bg-linear-to-t from-white to-transparent" />
+				<div className="from-base-0 pointer-events-none absolute inset-x-0 top-px z-10 h-6 bg-linear-to-b to-transparent" />
+				<div className="from-base-0 pointer-events-none absolute inset-x-0 bottom-px z-10 h-6 bg-linear-to-t to-transparent" />
 
 				{/* Center indicator */}
 				<div className="pointer-events-none absolute inset-y-0 left-0 z-30 flex items-center">
@@ -62,7 +62,7 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 						width={6}
 						height={10}
 						preserveAspectRatio="none"
-						className="text-gray-300"
+						className="text-base-300"
 					/>
 				</div>
 			</div>

@@ -247,8 +247,9 @@ timerUpdatedEvent: "timer-updated-event"
 
 /** user-defined types **/
 
-export type AppSettings = { debug: DebugSettings; timer: TimerSettings; focusGoal: FocusGoalSettings }
+export type AppSettings = { appearance: AppearanceSettings; debug: DebugSettings; timer: TimerSettings; focusGoal: FocusGoalSettings }
 export type AppSettingsChangedEvent = AppSettings
+export type AppearanceSettings = { theme: Theme }
 export type DebugSettings = { enabled: boolean; cat: boolean; timerSpeed: number }
 export type FocusGoalSettings = { 
 /**
@@ -267,6 +268,7 @@ export type InputType = "keyboard" | "mouse"
 export type SessionTag = { id: number; name: string; color: string }
 export type SessionTagRule = { id: number; sessionTagId: number; appBundleId: string; appName: string | null }
 export type SessionTagWithRules = { id: number; name: string; color: string; rules: SessionTagRule[] }
+export type Theme = "light" | "dark" | "auto"
 export type Timer = { status: TimerStatus; phase: TimerPhase; totalSeconds: number; remainingSeconds: number; 
 /**
  * Counts up after timer hits zero

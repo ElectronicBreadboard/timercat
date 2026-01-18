@@ -7,9 +7,9 @@ export const SettingGroup: React.FC<TSettingGroupProps> = (props) => {
 	return (
 		<div className={cn('space-y-2', className)}>
 			{title != null && (
-				<h2 className="text-xs font-medium tracking-wider text-gray-500 uppercase">{title}</h2>
+				<h2 className="text-base-500 text-xs font-medium tracking-wider uppercase">{title}</h2>
 			)}
-			<div className="divide-y divide-gray-200 rounded-md border border-gray-200 bg-gray-50">
+			<div className="divide-base-200 border-base-200 bg-base-50 divide-y rounded-md border">
 				{children}
 			</div>
 		</div>

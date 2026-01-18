@@ -1,7 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { NumberStepper, SettingGroup, SettingItem } from '@/components';
+import {
+	MonitorIcon,
+	MoonIcon,
+	NumberStepper,
+	SegmentedControl,
+	SettingGroup,
+	SettingItem,
+	SunIcon
+} from '@/components';
 import { specta } from '@/environment';
 import { PermissionBadge, useAccessibilityPermission } from '@/features/permission';
 import { useSettingsCx } from '@/features/settings';
@@ -31,11 +39,18 @@ function RouteComponent() {
 		[settingsCx, settings.focusGoal]
 	);
 
+	const updateAppearance = React.useCallback(
+		(updates: Partial<specta.AppearanceSettings>) => {
+			settingsCx.update({ appearance: { ...settings.appearance, ...updates } });
+		},
+		[settingsCx, settings.appearance]
+	);
+
 	// MARK: - UI
 
 	return (
 		<div className="space-y-6">
-			<h1 className="text-xl font-semibold text-gray-900">General</h1>
+			<h1 className="text-base-900 text-xl font-semibold">General</h1>
 
 			<SettingGroup title="Timer">
 				<SettingItem label="Work Duration" description="Minutes per work session">
@@ -65,7 +80,10 @@ function RouteComponent() {
 						onChange={(v) => updateTimer({ longBreakMinutes: v })}
 					/>
 				</SettingItem>
-				<SettingItem label="Sessions Before Long Break" description="Work sessions before a long break">
+				<SettingItem
+					label="Sessions Before Long Break"
+					description="Work sessions before a long break"
+				>
 					<NumberStepper
 						value={settings.timer.sessionsBeforeLongBreak}
 						min={1}
@@ -98,6 +116,20 @@ function RouteComponent() {
 					<PermissionBadge status={accessibility.granted} />
 				</SettingItem>
 			</SettingGroup>
+
+			<SettingGroup title="Appearance">
+				<SettingItem label="Theme" description="Choose your preferred color scheme">
+					<SegmentedControl
+						value={settings.appearance.theme}
+						onChange={(theme) => updateAppearance({ theme })}
+						options={[
+							{ value: 'light', label: <SunIcon size={16} />, ariaLabel: 'Light theme' },
+							{ value: 'auto', label: <MonitorIcon size={16} />, ariaLabel: 'Auto theme' },
+							{ value: 'dark', label: <MoonIcon size={16} />, ariaLabel: 'Dark theme' }
+						]}
+					/>
+				</SettingItem>
+			</SettingGroup>
 		</div>
-	)
+	);
 }

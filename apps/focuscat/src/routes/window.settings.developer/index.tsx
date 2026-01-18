@@ -33,7 +33,7 @@ function RouteComponent() {
 
 	return (
 		<div className="space-y-6">
-			<h1 className="text-xl font-semibold text-gray-900">Developer</h1>
+			<h1 className="text-base-900 text-xl font-semibold">Developer</h1>
 
 			<SettingGroup title="Debug">
 				<SettingItem label="Debug Mode" description="Show debug tools and information">
@@ -52,7 +52,7 @@ function RouteComponent() {
 						description="Speed up timer for testing"
 						onClick={cycleTimerSpeed}
 					>
-						<span className="font-mono text-sm text-gray-500">{settings.debug.timerSpeed}x</span>
+						<span className="text-base-500 font-mono text-sm">{settings.debug.timerSpeed}x</span>
 					</SettingItem>
 					<SettingItem label="Cat Borders" description="Show cat widget debug borders">
 						<Switch
@@ -66,7 +66,7 @@ function RouteComponent() {
 						description="Open app data folder in Finder"
 						onClick={() => specta.commands.openDataDirectory()}
 					>
-						<FolderOpenIcon size={16} className="text-gray-400" />
+						<FolderOpenIcon size={16} className="text-base-400" />
 					</SettingItem>
 				</SettingGroup>
 			)}

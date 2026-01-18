@@ -20,10 +20,13 @@ export {
 	HelpCircle as HelpIcon,
 	Minimize2 as MinimizeIcon,
 	Minus as MinusIcon,
+	Monitor as MonitorIcon,
+	Moon as MoonIcon,
 	Pause as PauseIcon,
 	Play as PlayIcon,
 	Plus as PlusIcon,
 	Settings as SettingsIcon,
+	Sun as SunIcon,
 	Timer as TimerIcon,
 	X as XIcon
 } from 'lucide-react';

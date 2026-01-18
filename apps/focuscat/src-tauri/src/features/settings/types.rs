@@ -4,6 +4,21 @@ use std::ops::Deref;
 use std::sync::Mutex;
 use tauri::App;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum Theme {
+    Light,
+    Dark,
+    #[default]
+    Auto,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct AppearanceSettings {
+    pub theme: Theme,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct DebugSettings {
@@ -64,6 +79,7 @@ impl Default for FocusGoalSettings {
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSettings {
+    pub appearance: AppearanceSettings,
     pub debug: DebugSettings,
     pub timer: TimerSettings,
     pub focus_goal: FocusGoalSettings,
@@ -72,6 +88,7 @@ pub struct AppSettings {
 impl Default for AppSettings {
     fn default() -> Self {
         return Self {
+            appearance: AppearanceSettings::default(),
             debug: DebugSettings::default(),
             timer: TimerSettings::default(),
             focus_goal: FocusGoalSettings::default(),

@@ -107,7 +107,7 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	if (timer == null) {
 		return (
 			<div className={cn('flex items-center justify-center', className)} style={style}>
-				<p className="text-gray-400">Loading...</p>
+				<p className="text-base-400">Loading...</p>
 			</div>
 		);
 	}

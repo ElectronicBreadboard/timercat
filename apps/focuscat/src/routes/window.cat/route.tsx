@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { SettingsCxProvider } from '@/features/settings';
+import { ThemeCxProvider } from '@/features/theme';
 
 export const Route = createFileRoute('/window/cat')({
 	component: LayoutComponent
@@ -8,7 +9,9 @@ export const Route = createFileRoute('/window/cat')({
 function LayoutComponent() {
 	return (
 		<SettingsCxProvider>
-			<Outlet />
+			<ThemeCxProvider>
+				<Outlet />
+			</ThemeCxProvider>
 		</SettingsCxProvider>
 	);
 }

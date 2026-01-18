@@ -7,10 +7,10 @@ const badgeVariants = cva(
 	{
 		variants: {
 			variant: {
-				success: 'bg-green-50 text-green-600',
-				warning: 'bg-amber-50 text-amber-600',
-				error: 'bg-red-50 text-red-600',
-				neutral: 'bg-gray-100 text-gray-600'
+				success: 'bg-success/10 text-success',
+				warning: 'bg-warning/10 text-warning',
+				error: 'bg-error/10 text-error',
+				neutral: 'bg-base-100 text-base-600'
 			}
 		},
 		defaultVariants: {
@@ -30,5 +30,4 @@ export const Badge: React.FC<TBadgeProps> = (props) => {
 };
 
 export interface TBadgeProps
-	extends React.HTMLAttributes<HTMLSpanElement>,
-		VariantProps<typeof badgeVariants> {}
+	extends React.HTMLAttributes<HTMLSpanElement>, VariantProps<typeof badgeVariants> {}

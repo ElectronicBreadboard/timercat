@@ -10,13 +10,13 @@ export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 		<header
 			data-tauri-drag-region
 			className={cn(
-				'flex h-8 shrink-0 select-none items-center border-b border-gray-200 bg-gray-50',
+				'border-base-200 bg-base-50 flex h-8 shrink-0 items-center border-b select-none',
 				platform === 'macos' ? 'pl-[70px]' : 'pl-2',
 				className
 			)}
 		>
 			{title != null && (
-				<span data-tauri-drag-region className="ml-2 text-sm font-semibold text-gray-600">
+				<span data-tauri-drag-region className="text-base-600 ml-2 text-sm font-semibold">
 					{title}
 				</span>
 			)}
