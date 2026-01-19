@@ -1,4 +1,6 @@
-use super::types::{TimerCompleteEvent, TimerState, TimerStatus, TimerUpdatedEvent};
+use super::timer::TimerStatus;
+use super::types::{TimerCompleteEvent, TimerState, TimerUpdatedEvent};
+use crate::features::session::session::Phase;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
@@ -8,6 +10,8 @@ use tauri_specta::Event;
 
 #[cfg(target_os = "macos")]
 use crate::app::tray::TrayState;
+
+// MARK: - Timer Runner
 
 /// Handle to control the timer runner thread.
 pub struct TimerRunner {
@@ -33,13 +37,15 @@ impl TimerRunner {
     }
 }
 
+// MARK: - Timer Loop
+
 fn run_timer_loop(app: AppHandle, stop_flag: Arc<AtomicBool>) {
     loop {
         if stop_flag.load(Ordering::SeqCst) {
             break;
         }
 
-        // Get sleep duration based on speed (faster tick = faster countdown)
+        // Get sleep duration based on speed
         let sleep_duration = {
             let timer_state = match app.try_state::<TimerState>() {
                 Some(s) => s,
@@ -48,6 +54,7 @@ fn run_timer_loop(app: AppHandle, stop_flag: Arc<AtomicBool>) {
                     continue;
                 }
             };
+
             let timer = timer_state.lock().unwrap();
 
             if timer.status != TimerStatus::Running {
@@ -83,7 +90,8 @@ fn run_timer_loop(app: AppHandle, stop_flag: Arc<AtomicBool>) {
 
             // Emit complete event when hitting zero
             if timer.remaining_seconds == 0 {
-                let _ = TimerCompleteEvent(timer.phase).emit(&app);
+                let phase: Phase = timer.phase;
+                let _ = TimerCompleteEvent(phase).emit(&app);
             }
         } else {
             // Count overtime after completion

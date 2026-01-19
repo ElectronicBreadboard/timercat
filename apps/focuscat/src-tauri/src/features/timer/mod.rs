@@ -1,5 +1,6 @@
 pub mod commands;
 pub mod runner;
+pub mod timer;
 pub mod types;
 
 use std::sync::Mutex;

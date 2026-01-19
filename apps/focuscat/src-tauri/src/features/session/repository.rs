@@ -1,73 +1,136 @@
-use crate::features::timer::types::TimerPhase;
+use super::session::{Phase, Session, SessionEvent};
 use chrono::{Local, TimeZone};
 use sqlx::{Row, SqlitePool};
 
 pub struct SessionRepository;
 
 impl SessionRepository {
-    /// Insert a completed session and its applied tags.
-    pub async fn insert(pool: &SqlitePool, input: &InsertSessionInput) -> Result<i64, sqlx::Error> {
-        let phase_str = match input.phase {
-            TimerPhase::Work => "work",
-            TimerPhase::ShortBreak => "short_break",
-            TimerPhase::LongBreak => "long_break",
-        };
-
+    /// Create a new session in the database.
+    /// Returns the session with its DB id.
+    pub async fn create(
+        pool: &SqlitePool,
+        phase: Phase,
+        planned_seconds: u32,
+        started_at: i64,
+    ) -> Result<Session, sqlx::Error> {
         let result = sqlx::query(
             r#"
-            INSERT INTO sessions (
-                phase,
-                started_at,
-                ended_at,
-                base_seconds,
-                extended_seconds,
-                overtime_seconds
-            ) VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO sessions (phase, status, planned_seconds, started_at)
+            VALUES (?, 'active', ?, ?)
             RETURNING id
             "#,
         )
-        .bind(phase_str)
-        .bind(input.started_at)
-        .bind(input.ended_at)
-        .bind(input.base_seconds as i64)
-        .bind(input.extended_seconds as i64)
-        .bind(input.overtime_seconds as i64)
+        .bind(phase.as_str())
+        .bind(planned_seconds as i64)
+        .bind(started_at)
         .fetch_one(pool)
         .await?;
 
-        let session_id: i64 = result.get("id");
+        let id: i64 = result.get("id");
 
-        // Insert applied tags
-        Self::insert_applied_tags(pool, session_id, &input.session_tag_ids).await?;
+        // Insert the 'started' event
+        Self::insert_event(
+            pool,
+            id,
+            &SessionEvent::Started {
+                timestamp: started_at,
+            },
+        )
+        .await?;
 
-        return Ok(session_id);
+        return Ok(Session::new(id, phase, planned_seconds, started_at));
     }
 
-    /// Insert tags applied to a session.
-    pub async fn insert_applied_tags(
+    /// Insert a session event.
+    pub async fn insert_event(
         pool: &SqlitePool,
         session_id: i64,
-        tag_ids: &[i32],
+        event: &SessionEvent,
     ) -> Result<(), sqlx::Error> {
-        for (position, tag_id) in tag_ids.iter().enumerate() {
-            sqlx::query(
-                r#"
-                INSERT INTO session_applied_tags (session_id, session_tag_id, position)
-                VALUES (?, ?, ?)
-                "#,
-            )
-            .bind(session_id)
-            .bind(tag_id)
-            .bind(position as i64)
-            .execute(pool)
-            .await?;
-        }
+        sqlx::query(
+            r#"
+            INSERT INTO session_events (session_id, event_type, timestamp, content)
+            VALUES (?, ?, ?, ?)
+            "#,
+        )
+        .bind(session_id)
+        .bind(event.event_type())
+        .bind(event.timestamp())
+        .bind(event.content())
+        .execute(pool)
+        .await?;
+
+        return Ok(());
+    }
+
+    /// Complete a session (mark as completed with actual_seconds).
+    pub async fn complete(
+        pool: &SqlitePool,
+        session_id: i64,
+        ended_at: i64,
+        actual_seconds: u32,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query(
+            r#"
+            UPDATE sessions
+            SET status = 'completed', ended_at = ?, actual_seconds = ?
+            WHERE id = ?
+            "#,
+        )
+        .bind(ended_at)
+        .bind(actual_seconds as i64)
+        .bind(session_id)
+        .execute(pool)
+        .await?;
+
+        // Insert the 'completed' event
+        Self::insert_event(
+            pool,
+            session_id,
+            &SessionEvent::Completed {
+                timestamp: ended_at,
+            },
+        )
+        .await?;
+
+        return Ok(());
+    }
+
+    /// Cancel a session.
+    pub async fn cancel(
+        pool: &SqlitePool,
+        session_id: i64,
+        ended_at: i64,
+        actual_seconds: u32,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query(
+            r#"
+            UPDATE sessions
+            SET status = 'cancelled', ended_at = ?, actual_seconds = ?
+            WHERE id = ?
+            "#,
+        )
+        .bind(ended_at)
+        .bind(actual_seconds as i64)
+        .bind(session_id)
+        .execute(pool)
+        .await?;
+
+        // Insert the 'cancelled' event
+        Self::insert_event(
+            pool,
+            session_id,
+            &SessionEvent::Cancelled {
+                timestamp: ended_at,
+            },
+        )
+        .await?;
 
         return Ok(());
     }
 
     /// Get total focus seconds for today (midnight-to-now).
-    /// Includes base, extended, and overtime seconds from work sessions only.
+    /// Includes actual_seconds from completed work sessions only.
     pub async fn get_today_focus_seconds(pool: &SqlitePool) -> Result<u32, sqlx::Error> {
         // Get today's midnight in local time as Unix timestamp
         let today = Local::now().date_naive();
@@ -78,9 +141,11 @@ impl SessionRepository {
 
         let result: Option<i64> = sqlx::query_scalar(
             r#"
-            SELECT COALESCE(SUM(base_seconds + extended_seconds + overtime_seconds), 0)
+            SELECT COALESCE(SUM(actual_seconds), 0)
             FROM sessions
-            WHERE phase = 'work' AND started_at >= ?
+            WHERE phase = 'work'
+              AND status = 'completed'
+              AND started_at >= ?
             "#,
         )
         .bind(today_start)
@@ -89,14 +154,91 @@ impl SessionRepository {
 
         return Ok(result.unwrap_or(0) as u32);
     }
+
+    /// Get sessions within a time range.
+    pub async fn get_sessions(
+        pool: &SqlitePool,
+        input: &GetSessionsInput,
+    ) -> Result<Vec<SessionRow>, sqlx::Error> {
+        let limit = input.limit.unwrap_or(100);
+
+        let results = sqlx::query_as::<_, SessionRow>(
+            r#"
+            SELECT id, phase, status, planned_seconds, actual_seconds, started_at, ended_at
+            FROM sessions
+            WHERE started_at >= ? AND started_at < ?
+            ORDER BY started_at DESC
+            LIMIT ?
+            "#,
+        )
+        .bind(input.started_after)
+        .bind(input.started_before)
+        .bind(limit)
+        .fetch_all(pool)
+        .await?;
+
+        return Ok(results);
+    }
+
+    /// Get session by id.
+    pub async fn get_by_id(pool: &SqlitePool, id: i64) -> Result<Option<SessionRow>, sqlx::Error> {
+        let result = sqlx::query_as::<_, SessionRow>(
+            r#"
+            SELECT id, phase, status, planned_seconds, actual_seconds, started_at, ended_at
+            FROM sessions
+            WHERE id = ?
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(pool)
+        .await?;
+
+        return Ok(result);
+    }
+
+    /// Load session events for a session.
+    pub async fn get_events(
+        pool: &SqlitePool,
+        session_id: i64,
+    ) -> Result<Vec<SessionEventRow>, sqlx::Error> {
+        let results = sqlx::query_as::<_, SessionEventRow>(
+            r#"
+            SELECT id, session_id, event_type, timestamp, content
+            FROM session_events
+            WHERE session_id = ?
+            ORDER BY timestamp ASC
+            "#,
+        )
+        .bind(session_id)
+        .fetch_all(pool)
+        .await?;
+
+        return Ok(results);
+    }
 }
 
-pub struct InsertSessionInput {
-    pub phase: TimerPhase,
+pub struct GetSessionsInput {
+    pub started_after: i64,
+    pub started_before: i64,
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, sqlx::FromRow)]
+pub struct SessionRow {
+    pub id: i64,
+    pub phase: String,
+    pub status: String,
+    pub planned_seconds: i64,
+    pub actual_seconds: Option<i64>,
     pub started_at: i64,
-    pub ended_at: i64,
-    pub base_seconds: u32,
-    pub extended_seconds: u32,
-    pub overtime_seconds: u32,
-    pub session_tag_ids: Vec<i32>,
+    pub ended_at: Option<i64>,
+}
+
+#[derive(Debug, sqlx::FromRow)]
+pub struct SessionEventRow {
+    pub id: i64,
+    pub session_id: i64,
+    pub event_type: String,
+    pub timestamp: i64,
+    pub content: Option<String>,
 }

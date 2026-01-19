@@ -4,6 +4,34 @@ use std::ops::Deref;
 use std::sync::Mutex;
 use tauri::App;
 
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AppSettings {
+    pub appearance: AppearanceSettings,
+    pub debug: DebugSettings,
+    pub timer: TimerSettings,
+    pub focus_goal: FocusGoalSettings,
+    pub activity: ActivitySettings,
+}
+
+impl Default for AppSettings {
+    fn default() -> Self {
+        return Self {
+            appearance: AppearanceSettings::default(),
+            debug: DebugSettings::default(),
+            timer: TimerSettings::default(),
+            focus_goal: FocusGoalSettings::default(),
+            activity: ActivitySettings::default(),
+        };
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct AppearanceSettings {
+    pub theme: Theme,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum Theme {
@@ -11,12 +39,6 @@ pub enum Theme {
     Dark,
     #[default]
     Auto,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct AppearanceSettings {
-    pub theme: Theme,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
@@ -93,28 +115,6 @@ impl Default for ActivitySettings {
             enabled: true,
             track_windows: true,
             track_browser: false,
-        };
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
-#[serde(rename_all = "camelCase")]
-pub struct AppSettings {
-    pub appearance: AppearanceSettings,
-    pub debug: DebugSettings,
-    pub timer: TimerSettings,
-    pub focus_goal: FocusGoalSettings,
-    pub activity: ActivitySettings,
-}
-
-impl Default for AppSettings {
-    fn default() -> Self {
-        return Self {
-            appearance: AppearanceSettings::default(),
-            debug: DebugSettings::default(),
-            timer: TimerSettings::default(),
-            focus_goal: FocusGoalSettings::default(),
-            activity: ActivitySettings::default(),
         };
     }
 }

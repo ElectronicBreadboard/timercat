@@ -1,9 +1,9 @@
 use super::runner::TimerRunner;
-use super::types::{
-    Timer, TimerConfig, TimerPhase, TimerState, TimerStatus, TimerUpdatedEvent, WorkSessionStats,
-};
+use super::timer::{Timer, TimerConfig, TimerStatus, WorkSessionStats};
+use super::types::{TimerState, TimerUpdatedEvent};
 use crate::environment::db::DatabaseState;
-use crate::features::session::repository::{InsertSessionInput, SessionRepository};
+use crate::features::session::repository::SessionRepository;
+use crate::features::session::session::{Phase, SessionEvent, SessionStatus};
 use crate::features::settings::types::AppSettingsState;
 use chrono::Utc;
 use std::sync::Mutex;
@@ -13,9 +13,7 @@ use tauri_specta::Event;
 #[cfg(target_os = "macos")]
 use crate::app::tray::TrayState;
 
-// NOTE: Timer commands are async to avoid blocking the main thread.
-// The runner updates the tray (which dispatches to main thread on macOS) while holding
-// the timer lock. Sync commands would block the main thread waiting for that lock → deadlock.
+// MARK: - Commands
 
 #[tauri::command]
 #[specta::specta]
@@ -28,31 +26,42 @@ pub fn get_timer(state: State<'_, TimerState>) -> Timer {
 pub async fn start_timer(
     app: AppHandle,
     state: State<'_, TimerState>,
+    app_settings: State<'_, AppSettingsState>,
     runner: State<'_, Mutex<Option<TimerRunner>>>,
+    db: State<'_, DatabaseState>,
 ) -> Result<(), String> {
-    let mut timer = state.lock().unwrap();
+    let now = Utc::now().timestamp();
 
-    if timer.status != TimerStatus::Idle {
-        return Err("Timer is not idle".to_string());
-    }
+    // Extract data
+    let (phase, planned_seconds, config) = {
+        let timer = state.lock().unwrap();
+        if timer.status != TimerStatus::Idle {
+            return Err("Timer is not idle".to_string());
+        }
+        let settings = app_settings.lock().unwrap();
+        (timer.phase, timer.total_seconds, TimerConfig::from(&*settings))
+    };
 
-    timer.status = TimerStatus::Running;
-    timer.phase_started_at = Some(Utc::now().timestamp());
+    // DB operation
+    let session = SessionRepository::create(&db.pool, phase, planned_seconds, now)
+        .await
+        .map_err(db_err)?;
 
-    // Emit initial tick
+    // Update state
+    let timer = {
+        let mut timer = state.lock().unwrap();
+        timer.session = Some(session);
+        timer.status = TimerStatus::Running;
+        timer.speed = config.speed;
+        timer.clone()
+    };
+
     let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
 
-    // Update tray
     #[cfg(target_os = "macos")]
     TrayState::set_timer(&app, Some(timer.remaining_seconds));
 
-    // Start runner
-    let mut runner_guard = runner.lock().unwrap();
-    if runner_guard.is_some() {
-        runner_guard.as_ref().unwrap().stop();
-    }
-    *runner_guard = Some(TimerRunner::start(app));
-
+    start_runner(&app, &runner);
     return Ok(());
 }
 
@@ -62,24 +71,39 @@ pub async fn pause_timer(
     app: AppHandle,
     state: State<'_, TimerState>,
     runner: State<'_, Mutex<Option<TimerRunner>>>,
+    db: State<'_, DatabaseState>,
 ) -> Result<(), String> {
-    let mut timer = state.lock().unwrap();
+    let now = Utc::now().timestamp();
 
-    if timer.status != TimerStatus::Running {
-        return Err("Timer is not running".to_string());
+    // Extract data
+    let session_id = {
+        let timer = state.lock().unwrap();
+        if timer.status != TimerStatus::Running {
+            return Err("Timer is not running".to_string());
+        }
+        timer.session_id()
+    };
+
+    // DB operation
+    let event = SessionEvent::Paused { timestamp: now };
+    if let Some(id) = session_id {
+        SessionRepository::insert_event(&db.pool, id, &event)
+            .await
+            .map_err(db_err)?;
     }
 
-    timer.status = TimerStatus::Paused;
+    // Update state
+    let timer = {
+        let mut timer = state.lock().unwrap();
+        if let Some(session) = &mut timer.session {
+            session.add_event(event);
+        }
+        timer.status = TimerStatus::Paused;
+        timer.clone()
+    };
 
-    // Emit tick with paused state
-    let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
-
-    // Stop runner
-    let mut runner_guard = runner.lock().unwrap();
-    if let Some(r) = runner_guard.take() {
-        r.stop();
-    }
-
+    let _ = TimerUpdatedEvent(timer).emit(&app);
+    stop_runner(&runner);
     return Ok(());
 }
 
@@ -89,25 +113,39 @@ pub async fn resume_timer(
     app: AppHandle,
     state: State<'_, TimerState>,
     runner: State<'_, Mutex<Option<TimerRunner>>>,
+    db: State<'_, DatabaseState>,
 ) -> Result<(), String> {
-    let mut timer = state.lock().unwrap();
+    let now = Utc::now().timestamp();
 
-    if timer.status != TimerStatus::Paused {
-        return Err("Timer is not paused".to_string());
+    // Extract data
+    let session_id = {
+        let timer = state.lock().unwrap();
+        if timer.status != TimerStatus::Paused {
+            return Err("Timer is not paused".to_string());
+        }
+        timer.session_id()
+    };
+
+    // DB operation
+    let event = SessionEvent::Resumed { timestamp: now };
+    if let Some(id) = session_id {
+        SessionRepository::insert_event(&db.pool, id, &event)
+            .await
+            .map_err(db_err)?;
     }
 
-    timer.status = TimerStatus::Running;
+    // Update state
+    let timer = {
+        let mut timer = state.lock().unwrap();
+        if let Some(session) = &mut timer.session {
+            session.add_event(event);
+        }
+        timer.status = TimerStatus::Running;
+        timer.clone()
+    };
 
-    // Emit tick with running state
-    let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
-
-    // Start runner
-    let mut runner_guard = runner.lock().unwrap();
-    if runner_guard.is_some() {
-        runner_guard.as_ref().unwrap().stop();
-    }
-    *runner_guard = Some(TimerRunner::start(app));
-
+    let _ = TimerUpdatedEvent(timer).emit(&app);
+    start_runner(&app, &runner);
     return Ok(());
 }
 
@@ -118,36 +156,47 @@ pub async fn reset_timer(
     state: State<'_, TimerState>,
     app_settings: State<'_, AppSettingsState>,
     runner: State<'_, Mutex<Option<TimerRunner>>>,
+    db: State<'_, DatabaseState>,
 ) -> Result<(), String> {
-    let mut timer = state.lock().unwrap();
-    let settings = app_settings.lock().unwrap();
-    let config = TimerConfig::from(&*settings);
+    let now = Utc::now().timestamp();
 
-    // Reset to initial state
-    timer.status = TimerStatus::Idle;
-    timer.phase = TimerPhase::Work;
-    timer.total_seconds = config.work_duration;
-    timer.remaining_seconds = config.work_duration;
-    timer.overtime_seconds = 0;
-    timer.sessions_completed = 0;
-    timer.base_work_seconds = config.work_duration;
-    timer.accumulated_work_seconds = 0;
-    timer.total_extended_seconds = 0;
-    timer.phase_started_at = None;
+    // Extract data
+    let (config, session_data) = {
+        let timer = state.lock().unwrap();
+        let settings = app_settings.lock().unwrap();
+        let config = TimerConfig::from(&*settings);
+        let session_data = timer.session.as_ref().map(|s| {
+            (s.id, s.compute_actual_seconds(now))
+        });
+        (config, session_data)
+    };
 
-    // Emit tick with reset state
-    let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
+    // DB operation
+    if let Some((id, actual_seconds)) = session_data {
+        SessionRepository::cancel(&db.pool, id, now, actual_seconds)
+            .await
+            .map_err(db_err)?;
+    }
 
-    // Clear tray
+    // Update state
+    let timer = {
+        let mut timer = state.lock().unwrap();
+        timer.session = None;
+        timer.status = TimerStatus::Idle;
+        timer.phase = Phase::Work;
+        timer.total_seconds = config.work_duration;
+        timer.remaining_seconds = config.work_duration;
+        timer.overtime_seconds = 0;
+        timer.sessions_completed = 0;
+        timer.clone()
+    };
+
+    let _ = TimerUpdatedEvent(timer).emit(&app);
+
     #[cfg(target_os = "macos")]
     TrayState::set_timer(&app, None);
 
-    // Stop runner
-    let mut runner_guard = runner.lock().unwrap();
-    if let Some(r) = runner_guard.take() {
-        r.stop();
-    }
-
+    stop_runner(&runner);
     return Ok(());
 }
 
@@ -162,157 +211,138 @@ pub async fn skip_timer(
 ) -> Result<(), String> {
     let now = Utc::now().timestamp();
 
-    // Scope the locks to avoid holding them during async DB call
-    let session_input = {
-        let mut timer = state.lock().unwrap();
+    // Extract data
+    let (config, is_work_phase, session_data, sessions_completed) = {
+        let timer = state.lock().unwrap();
         let settings = app_settings.lock().unwrap();
         let config = TimerConfig::from(&*settings);
+        let is_work_phase = timer.phase == Phase::Work;
+        let session_data = timer.session.as_ref().map(|s| {
+            (s.id, s.planned_seconds, s.compute_actual_seconds(now), s.compute_extended_seconds())
+        });
+        (config, is_work_phase, session_data, timer.sessions_completed)
+    };
 
-        let is_work_phase = timer.phase == TimerPhase::Work;
+    // Complete current session
+    let work_stats = if let Some((id, planned, actual, extended)) = session_data {
+        SessionRepository::complete(&db.pool, id, now, actual)
+            .await
+            .map_err(db_err)?;
 
-        // Prepare session input for DB persistence
-        let session_input = if let Some(started_at) = timer.phase_started_at {
-            let current_work =
-                timer.total_seconds - timer.remaining_seconds + timer.overtime_seconds;
-            let completed = if is_work_phase {
-                timer.accumulated_work_seconds + current_work
-            } else {
-                current_work
-            };
-            let planned = timer.base_work_seconds + timer.total_extended_seconds;
-            let overtime = if is_work_phase {
-                completed.saturating_sub(planned)
-            } else {
-                0
-            };
-
-            Some(InsertSessionInput {
-                phase: timer.phase,
-                started_at,
-                ended_at: now,
-                base_seconds: if is_work_phase {
-                    timer.base_work_seconds
-                } else {
-                    timer.total_seconds
-                },
-                extended_seconds: if is_work_phase {
-                    timer.total_extended_seconds
-                } else {
-                    0
-                },
+        if is_work_phase {
+            // Overtime = time worked beyond planned (base + extensions)
+            let planned_total = planned + extended;
+            let overtime = actual.saturating_sub(planned_total);
+            Some(WorkSessionStats {
+                base_seconds: planned,
+                extended_seconds: extended,
                 overtime_seconds: overtime,
-                session_tag_ids: timer.session_tag_ids.clone(),
+                completed_seconds: actual,
             })
         } else {
             None
-        };
+        }
+    } else {
+        None
+    };
 
-        // Capture work session stats before transitioning to break
-        if is_work_phase {
-            let current_work =
-                timer.total_seconds - timer.remaining_seconds + timer.overtime_seconds;
-            let completed = timer.accumulated_work_seconds + current_work;
-            let planned = timer.base_work_seconds + timer.total_extended_seconds;
-            let overtime = completed.saturating_sub(planned);
+    // Determine next phase
+    let new_sessions_completed = if is_work_phase { sessions_completed + 1 } else { sessions_completed };
+    let next_phase = if is_work_phase {
+        if new_sessions_completed % config.sessions_before_long_break == 0 {
+            Phase::LongBreak
+        } else {
+            Phase::ShortBreak
+        }
+    } else {
+        Phase::Work
+    };
+    let next_duration = Timer::get_duration_for_phase(next_phase, &config);
 
-            timer.last_work_session = Some(WorkSessionStats {
-                base_seconds: timer.base_work_seconds,
-                extended_seconds: timer.total_extended_seconds,
-                overtime_seconds: overtime,
-                completed_seconds: completed,
-            });
-            timer.sessions_completed += 1;
+    // Create next session
+    let new_session = SessionRepository::create(&db.pool, next_phase, next_duration, now)
+        .await
+        .map_err(db_err)?;
 
-            // Reset accumulators for next work session
-            timer.accumulated_work_seconds = 0;
-            timer.total_extended_seconds = 0;
+    // Update state
+    let timer = {
+        let mut timer = state.lock().unwrap();
+
+        // Update completed session
+        if let Some(session) = &mut timer.session {
+            session.status = SessionStatus::Completed;
+            session.ended_at = Some(now);
+            session.add_event(SessionEvent::Completed { timestamp: now });
         }
 
-        // Determine next phase
-        let next_phase = if is_work_phase {
-            if timer.sessions_completed % config.sessions_before_long_break == 0 {
-                TimerPhase::LongBreak
-            } else {
-                TimerPhase::ShortBreak
-            }
-        } else {
-            TimerPhase::Work
-        };
+        if let Some(stats) = work_stats {
+            timer.last_work_session = Some(stats);
+            timer.sessions_completed += 1;
+        }
 
-        // Update state
-        let next_duration = Timer::get_duration_for_phase(next_phase, &config);
+        timer.session = Some(new_session);
         timer.phase = next_phase;
         timer.total_seconds = next_duration;
         timer.remaining_seconds = next_duration;
         timer.overtime_seconds = 0;
-        timer.phase_started_at = Some(now);
-
-        // Update base_work_seconds when transitioning to work phase
-        if next_phase == TimerPhase::Work {
-            timer.base_work_seconds = config.work_duration;
-        }
-
-        // Auto-start next phase
         timer.status = TimerStatus::Running;
-
-        // Emit tick with new state
-        let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
-
-        // Update tray with new time
-        #[cfg(target_os = "macos")]
-        TrayState::set_timer(&app, Some(timer.remaining_seconds));
-
-        // Always restart runner for clean state
-        let mut runner_guard = runner.lock().unwrap();
-        if let Some(r) = runner_guard.take() {
-            r.stop();
-        }
-        *runner_guard = Some(TimerRunner::start(app));
-
-        session_input
+        timer.clone()
     };
 
-    // Persist session to database (outside of lock scope)
-    if let Some(input) = session_input {
-        if let Err(e) = SessionRepository::insert(&db.pool, &input).await {
-            eprintln!("Failed to persist session: {}", e);
-        }
-    }
+    let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
 
+    #[cfg(target_os = "macos")]
+    TrayState::set_timer(&app, Some(timer.remaining_seconds));
+
+    restart_runner(&app, &runner);
     return Ok(());
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn set_timer_duration(
+pub async fn set_timer_duration(
     app: AppHandle,
     state: State<'_, TimerState>,
-    app_settings: State<'_, AppSettingsState>,
+    db: State<'_, DatabaseState>,
     minutes: u32,
 ) -> Result<(), String> {
-    let mut timer = state.lock().unwrap();
-    let settings = app_settings.lock().unwrap();
+    let now = Utc::now().timestamp();
     let seconds = minutes * 60;
 
-    // If extending mid-session, capture work done before this segment
-    if timer.status != TimerStatus::Idle {
-        let current_work = timer.total_seconds - timer.remaining_seconds + timer.overtime_seconds;
-        timer.accumulated_work_seconds += current_work;
-        timer.total_extended_seconds += seconds;
+    // Extract data
+    let (is_idle, session_id) = {
+        let timer = state.lock().unwrap();
+        (timer.status == TimerStatus::Idle, timer.session_id())
+    };
+
+    // DB operation (only if active)
+    let event = SessionEvent::Extended { timestamp: now, seconds };
+    if !is_idle {
+        if let Some(id) = session_id {
+            SessionRepository::insert_event(&db.pool, id, &event)
+                .await
+                .map_err(db_err)?;
+        }
     }
 
-    // Set both total and remaining to selected value
-    timer.total_seconds = seconds;
-    timer.remaining_seconds = seconds;
-    timer.overtime_seconds = 0;
+    // Update state
+    let timer = {
+        let mut timer = state.lock().unwrap();
 
-    // Store base work duration for progress calculation
-    timer.base_work_seconds = settings.timer.work_duration_minutes * 60;
+        if !is_idle {
+            if let Some(session) = &mut timer.session {
+                session.add_event(event);
+            }
+        }
 
-    // Emit tick with new duration
+        timer.total_seconds = seconds;
+        timer.remaining_seconds = seconds;
+        timer.overtime_seconds = 0;
+        timer.clone()
+    };
+
     let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
 
-    // Update tray if timer is active
     #[cfg(target_os = "macos")]
     if timer.status != TimerStatus::Idle {
         TrayState::set_timer(&app, Some(timer.remaining_seconds));
@@ -321,18 +351,31 @@ pub fn set_timer_duration(
     return Ok(());
 }
 
-#[tauri::command]
-#[specta::specta]
-pub fn set_timer_tags(
-    app: AppHandle,
-    state: State<'_, TimerState>,
-    session_tag_ids: Vec<i32>,
-) -> Result<(), String> {
-    let mut timer = state.lock().unwrap();
-    timer.session_tag_ids = session_tag_ids;
+// MARK: - Helpers
 
-    // Emit tick with new tags
-    let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
+fn db_err(e: sqlx::Error) -> String {
+    return format!("Database error: {}", e);
+}
 
-    return Ok(());
+fn start_runner(app: &AppHandle, runner: &State<'_, Mutex<Option<TimerRunner>>>) {
+    let mut guard = runner.lock().unwrap();
+    if guard.is_some() {
+        guard.as_ref().unwrap().stop();
+    }
+    *guard = Some(TimerRunner::start(app.clone()));
+}
+
+fn stop_runner(runner: &State<'_, Mutex<Option<TimerRunner>>>) {
+    let mut guard = runner.lock().unwrap();
+    if let Some(r) = guard.take() {
+        r.stop();
+    }
+}
+
+fn restart_runner(app: &AppHandle, runner: &State<'_, Mutex<Option<TimerRunner>>>) {
+    let mut guard = runner.lock().unwrap();
+    if let Some(r) = guard.take() {
+        r.stop();
+    }
+    *guard = Some(TimerRunner::start(app.clone()));
 }

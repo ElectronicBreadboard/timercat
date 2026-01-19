@@ -6,7 +6,7 @@ use crate::environment::db;
 use crate::features::{
     activity_window,
     input::{self, types::InputDetectedEvent},
-    permission, session, session_tag,
+    permission, session,
     settings::{self, types::AppSettingsChangedEvent},
     timer::{
         self,
@@ -40,19 +40,12 @@ pub fn run() {
             timer::commands::reset_timer,
             timer::commands::skip_timer,
             timer::commands::set_timer_duration,
-            timer::commands::set_timer_tags,
-            // Session tag commands
-            session_tag::commands::get_session_tags,
-            session_tag::commands::get_session_tag_with_rules,
-            session_tag::commands::create_session_tag,
-            session_tag::commands::update_session_tag,
-            session_tag::commands::delete_session_tag,
-            session_tag::commands::add_session_tag_rule,
-            session_tag::commands::delete_session_tag_rule,
             // Activity window commands
             activity_window::commands::get_window_activities,
             // Session commands
             session::commands::get_today_focus_seconds,
+            session::commands::get_sessions,
+            session::commands::get_session,
             // Permission commands
             permission::commands::is_accessibility_granted,
             permission::commands::open_accessibility_settings,
