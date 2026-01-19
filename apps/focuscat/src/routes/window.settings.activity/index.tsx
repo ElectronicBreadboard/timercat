@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { SettingGroup, SettingItem, Switch } from '@/components';
+import { Switch } from '@/components';
 import { specta } from '@/environment';
-import { useSettingsCx } from '@/features/settings';
+import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
 
 export const Route = createFileRoute('/window/settings/activity/')({
 	component: RouteComponent

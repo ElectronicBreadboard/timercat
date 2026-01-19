@@ -20,6 +20,7 @@ export {
 	FolderOpen as FolderOpenIcon,
 	GripVertical as GripIcon,
 	HelpCircle as HelpIcon,
+	History as HistoryIcon,
 	Minimize2 as MinimizeIcon,
 	Minus as MinusIcon,
 	Monitor as MonitorIcon,

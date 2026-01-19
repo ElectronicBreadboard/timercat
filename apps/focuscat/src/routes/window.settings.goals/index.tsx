@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { NumberStepper, SettingGroup, SettingItem } from '@/components';
+import { NumberStepper } from '@/components';
 import { specta } from '@/environment';
-import { useSettingsCx } from '@/features/settings';
+import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
 
 export const Route = createFileRoute('/window/settings/goals/')({
 	component: RouteComponent

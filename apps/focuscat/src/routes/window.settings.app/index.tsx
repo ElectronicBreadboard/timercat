@@ -1,18 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import {
-	MonitorIcon,
-	MoonIcon,
-	SegmentedControl,
-	SettingGroup,
-	SettingItem,
-	SunIcon,
-	Switch
-} from '@/components';
+import { MonitorIcon, MoonIcon, SunIcon, Switch, ToggleGroup } from '@/components';
 import { specta } from '@/environment';
 import { PermissionBadge, useAccessibilityPermission } from '@/features/permission';
-import { useSettingsCx } from '@/features/settings';
+import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
 
 export const Route = createFileRoute('/window/settings/app/')({
 	component: RouteComponent
@@ -47,15 +39,20 @@ function RouteComponent() {
 
 			<SettingGroup title="Appearance">
 				<SettingItem label="Theme" description="Choose your preferred color scheme">
-					<SegmentedControl
+					<ToggleGroup
 						value={settings.appearance.theme}
-						onChange={(theme) => updateAppearance({ theme })}
-						options={[
-							{ value: 'light', label: <SunIcon size={16} />, ariaLabel: 'Light theme' },
-							{ value: 'auto', label: <MonitorIcon size={16} />, ariaLabel: 'Auto theme' },
-							{ value: 'dark', label: <MoonIcon size={16} />, ariaLabel: 'Dark theme' }
-						]}
-					/>
+						onValueChange={(theme) => updateAppearance({ theme: theme as specta.Theme })}
+					>
+						<ToggleGroup.Item value="light" aria-label="Light theme">
+							<SunIcon size={16} />
+						</ToggleGroup.Item>
+						<ToggleGroup.Item value="auto" aria-label="Auto theme">
+							<MonitorIcon size={16} />
+						</ToggleGroup.Item>
+						<ToggleGroup.Item value="dark" aria-label="Dark theme">
+							<MoonIcon size={16} />
+						</ToggleGroup.Item>
+					</ToggleGroup>
 				</SettingItem>
 			</SettingGroup>
 

@@ -44,6 +44,11 @@ const defaultSettings: specta.AppSettings = {
 	},
 	focusGoal: {
 		dailyGoalMinutes: 120
+	},
+	activity: {
+		enabled: true,
+		trackWindows: true,
+		trackBrowser: false
 	}
 };
 

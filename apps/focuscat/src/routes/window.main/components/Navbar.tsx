@@ -1,8 +1,8 @@
 import React from 'react';
-import { IconButton, MinimizeIcon, SettingsIcon, WindowHeader } from '@/components';
+import { HistoryIcon, IconButton, MinimizeIcon, SettingsIcon, WindowHeader } from '@/components';
 
 export const Navbar: React.FC<TNavbarProps> = (props) => {
-	const { onMinimize, onSettings, className } = props;
+	const { onMinimize, onHistory, onSettings, className } = props;
 
 	return (
 		<WindowHeader className={className}>
@@ -14,6 +14,16 @@ export const Navbar: React.FC<TNavbarProps> = (props) => {
 				className="size-7"
 			>
 				<MinimizeIcon size={16} />
+			</IconButton>
+			<div className="flex-1" />
+			<IconButton
+				variant="bare"
+				size="sm"
+				onClick={onHistory}
+				aria-label="View history"
+				className="size-7"
+			>
+				<HistoryIcon size={16} />
 			</IconButton>
 			<IconButton
 				variant="bare"
@@ -30,6 +40,7 @@ export const Navbar: React.FC<TNavbarProps> = (props) => {
 
 interface TNavbarProps {
 	onMinimize: () => void;
+	onHistory: () => void;
 	onSettings: () => void;
 	className?: string;
 }
