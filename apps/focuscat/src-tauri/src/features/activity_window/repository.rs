@@ -22,8 +22,8 @@ impl AppRepository {
         // Insert new app
         let result = sqlx::query(
             r#"
-            INSERT INTO app (bundle_id, name, process_path, icon)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO app (bundle_id, name, process_path, icon, color)
+            VALUES (?, ?, ?, ?, ?)
             RETURNING id
             "#,
         )
@@ -31,6 +31,7 @@ impl AppRepository {
         .bind(&input.name)
         .bind(&input.process_path)
         .bind(&input.icon)
+        .bind(&input.color)
         .fetch_one(pool)
         .await?;
 
@@ -43,6 +44,7 @@ pub struct UpsertAppInput {
     pub name: Option<String>,
     pub process_path: Option<String>,
     pub icon: Option<String>,
+    pub color: Option<String>,
 }
 
 // MARK: - App Activity Repository
@@ -147,6 +149,7 @@ impl WindowActivityRepository {
                 a.bundle_id as app_bundle_id,
                 a.name as app_name,
                 a.icon as app_icon,
+                a.color as app_color,
                 aw.window_title,
                 aw.browser_url,
                 aw.started_at,
@@ -170,6 +173,7 @@ impl WindowActivityRepository {
                 app_bundle_id: row.get("app_bundle_id"),
                 app_name: row.get("app_name"),
                 app_icon: row.get("app_icon"),
+                app_color: row.get("app_color"),
                 window_title: row.get("window_title"),
                 browser_url: row.get("browser_url"),
                 started_at: row.get("started_at"),
@@ -191,6 +195,7 @@ pub struct WindowActivityRow {
     pub app_bundle_id: Option<String>,
     pub app_name: Option<String>,
     pub app_icon: Option<String>,
+    pub app_color: Option<String>,
     pub window_title: Option<String>,
     pub browser_url: Option<String>,
     pub started_at: i64,

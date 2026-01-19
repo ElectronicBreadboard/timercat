@@ -45,7 +45,7 @@ export const SessionList: React.FC<TSessionListProps> = (props) => {
 				<div key={dateKey}>
 					{/* Date Header */}
 					<div className="bg-base-50 border-base-200 sticky top-0 z-10 border-b px-3 py-2">
-						<span className="text-base-500 text-xs font-medium uppercase tracking-wide">
+						<span className="text-base-500 text-xs font-medium tracking-wide uppercase">
 							{dateKey}
 						</span>
 					</div>

@@ -128,6 +128,7 @@ impl WindowListener for WindowMonitorHandler {
                                 name: app_info.name,
                                 process_path: app_info.process_path,
                                 icon: app_info.icon,
+                                color: app_info.color,
                             },
                         )
                         .await
@@ -220,6 +221,7 @@ impl WindowListener for WindowMonitorHandler {
                                 name: window_info.app.name,
                                 process_path: window_info.app.process_path,
                                 icon: window_info.app.icon,
+                                color: window_info.app.color,
                             },
                         )
                         .await

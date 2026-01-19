@@ -4,7 +4,7 @@ import { specta } from '@/environment';
 import { cn, formatDurationSeconds } from '@/lib';
 
 export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
-	const { session, activities, className } = props;
+	const { session, activities, fallbackColor = '#9ca3af', className } = props;
 
 	const sessionStart = session.startedAt;
 	const sessionEnd = session.endedAt ?? Math.floor(Date.now() / 1000);
@@ -43,7 +43,7 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 
 	// Group activities by app name for legend, sorted by total time
 	const appGroups = React.useMemo(() => {
-		const groups = new Map<string, { count: number; totalSeconds: number }>();
+		const groups = new Map<string, { count: number; totalSeconds: number; color: string | null }>();
 
 		for (const activity of activities) {
 			const appName = activity.appName ?? 'Unknown';
@@ -53,36 +53,17 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 			if (existing != null) {
 				existing.count += 1;
 				existing.totalSeconds += duration;
+				// Keep first non-null color found for this app
+				if (existing.color == null && activity.appColor != null) {
+					existing.color = activity.appColor;
+				}
 			} else {
-				groups.set(appName, { count: 1, totalSeconds: duration });
+				groups.set(appName, { count: 1, totalSeconds: duration, color: activity.appColor });
 			}
 		}
 
 		return Array.from(groups.entries()).sort((a, b) => b[1].totalSeconds - a[1].totalSeconds);
 	}, [activities]);
-
-	// MARK: - Actions
-
-	// Assign colors by order (most used app gets first color)
-	// TODO: Replace with app.color from DB (like appIcon)
-	const getAppColor = React.useCallback(
-		(appName: string): string => {
-			const appColors = [
-				'bg-blue-400',
-				'bg-green-400',
-				'bg-amber-400',
-				'bg-purple-400',
-				'bg-pink-400',
-				'bg-cyan-400',
-				'bg-orange-400',
-				'bg-rose-400'
-			];
-
-			const index = appGroups.findIndex(([name]) => name === appName);
-			return appColors[index % appColors.length] ?? 'bg-base-400';
-		},
-		[appGroups]
-	);
 
 	// MARK: - UI
 
@@ -101,13 +82,13 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 							<div
 								className={cn(
 									'absolute top-0 h-full opacity-90 transition-opacity hover:opacity-100',
-									getAppColor(activity.appName ?? 'Unknown'),
 									index > 0 &&
 										(isSameApp ? 'border-base-900/20 border-l' : 'border-base-900/40 border-l')
 								)}
 								style={{
 									left: `${leftPercent}%`,
-									width: `${Math.max(widthPercent, 0.5)}%`
+									width: `${Math.max(widthPercent, 0.5)}%`,
+									backgroundColor: activity.appColor ?? fallbackColor
 								}}
 							/>
 						</Tooltip>
@@ -120,9 +101,12 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 				<div className="flex flex-col gap-2">
 					<div className="text-base-500 text-xs font-medium">Apps</div>
 					<div className="flex flex-wrap gap-2">
-						{appGroups.slice(0, 8).map(([appName, { totalSeconds }]) => (
+						{appGroups.slice(0, 8).map(([appName, { totalSeconds, color }]) => (
 							<div key={appName} className="flex items-center gap-1.5">
-								<div className={cn('size-2.5 rounded-sm', getAppColor(appName))} />
+								<div
+									className="size-2.5 rounded-sm"
+									style={{ backgroundColor: color ?? fallbackColor }}
+								/>
 								<span className="text-base-600 text-xs">{appName}</span>
 								<span className="text-base-400 text-xs">({Math.round(totalSeconds / 60)}m)</span>
 							</div>
@@ -141,6 +125,7 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 interface TSessionTimelineProps {
 	session: specta.SessionDetailDto;
 	activities: specta.WindowActivityDto[];
+	fallbackColor?: string;
 	className?: string;
 }
 

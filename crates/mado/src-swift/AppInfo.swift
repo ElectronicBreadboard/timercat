@@ -9,6 +9,7 @@ struct AppInfo {
     let bundleId: String?
     let processPath: String?
     let icon: String?
+    let color: String?
 
     /// Convert to dictionary for JSON serialization.
     func toDictionary() -> [String: Any?] {
@@ -18,6 +19,7 @@ struct AppInfo {
             "bundleId": bundleId,
             "processPath": processPath,
             "icon": icon,
+            "color": color,
         ]
     }
 
@@ -26,12 +28,19 @@ struct AppInfo {
         -> AppInfo
     {
         let bundlePath = app.bundleURL?.path
+        let bundleId = app.bundleIdentifier
+        let appIcon =
+            includeIcon
+            ? getAppIcon(forPath: bundlePath, bundleId: bundleId)
+            : AppIconResult(dataUrl: nil, color: nil)
+
         return AppInfo(
             pid: app.processIdentifier,
             name: app.localizedName,
-            bundleId: app.bundleIdentifier,
+            bundleId: bundleId,
             processPath: app.executableURL?.path,
-            icon: includeIcon ? getAppIcon(forPath: bundlePath) : nil
+            icon: appIcon.dataUrl,
+            color: appIcon.color
         )
     }
 
@@ -47,7 +56,8 @@ struct AppInfo {
             name: nil,
             bundleId: nil,
             processPath: nil,
-            icon: nil
+            icon: nil,
+            color: nil
         )
     }
 

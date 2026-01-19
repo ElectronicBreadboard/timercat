@@ -31,6 +31,7 @@ CREATE TABLE app (
     name TEXT,
     process_path TEXT,
     icon TEXT, -- base64 PNG data URL
+    color TEXT, -- hex color like "#5865F2"
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
 );
 

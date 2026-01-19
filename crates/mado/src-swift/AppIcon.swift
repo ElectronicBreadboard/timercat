@@ -1,26 +1,32 @@
 import AppKit
-import Foundation
 
-/// Extract app icon as base64 PNG data URL.
-/// Returns nil if icon cannot be extracted.
-func getAppIcon(forPath appPath: String?, size: Int = 32) -> String? {
-    guard let appPath = appPath else { return nil }
-
-    // NSWorkspace.shared.icon(forFile:) handles all the complexity:
-    // - Finds correct icon from app bundle (Info.plist CFBundleIconFile)
-    // - Tries standard icon names (AppIcon.icns, etc.)
-    // - Returns properly rendered NSImage
-    let icon = NSWorkspace.shared.icon(forFile: appPath)
-
-    guard let pngData = icon.pngData(size: size) else {
-        return nil
+/// Extract app icon as base64 PNG data URL with brand color.
+func getAppIcon(
+    forPath appPath: String?,
+    bundleId: String?,
+    size: Int = 32
+) -> AppIconResult {
+    guard let appPath = appPath else {
+        return AppIconResult(dataUrl: nil, color: nil)
     }
 
-    return "data:image/png;base64,\(pngData.base64EncodedString())"
+    let icon = NSWorkspace.shared.icon(forFile: appPath)
+    let dataUrl = icon.pngData(size: size).map {
+        "data:image/png;base64,\($0.base64EncodedString())"
+    }
+    let color = getAppColor(forBundleId: bundleId, icon: icon)
+
+    return AppIconResult(dataUrl: dataUrl, color: color)
+}
+
+/// Result containing icon data URL and extracted brand color.
+struct AppIconResult {
+    let dataUrl: String?
+    let color: String?
 }
 
 extension NSImage {
-    /// Convert NSImage to PNG data at specified size.
+    /// Convert to PNG data at specified size.
     func pngData(size: Int) -> Data? {
         let targetSize = NSSize(width: size, height: size)
 

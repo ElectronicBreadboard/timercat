@@ -14,6 +14,8 @@ pub struct AppInfo {
     pub process_path: Option<String>,
     /// App icon as base64 PNG data URL (only populated if `include_icon` is enabled)
     pub icon: Option<String>,
+    /// App brand color as hex string like "#5865F2" (only populated if `include_icon` is enabled)
+    pub color: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
@@ -105,7 +107,14 @@ impl fmt::Display for AppInfo {
         writeln!(f, "      Bundle ID:  {}", fmt_display(&self.bundle_id))?;
         writeln!(f, "      Path:       {}", fmt_display(&self.process_path))?;
         if self.icon.is_some() {
-            writeln!(f, "      Icon:       (base64 PNG, {} bytes)", self.icon.as_ref().unwrap().len())?;
+            writeln!(
+                f,
+                "      Icon:       (base64 PNG, {} bytes)",
+                self.icon.as_ref().unwrap().len()
+            )?;
+        }
+        if self.color.is_some() {
+            writeln!(f, "      Color:      {}", self.color.as_ref().unwrap())?;
         }
         Ok(())
     }

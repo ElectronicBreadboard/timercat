@@ -294,7 +294,7 @@ longBreakMinutes: number;
 sessionsBeforeLongBreak: number }
 export type TimerStatus = "idle" | "running" | "paused"
 export type TimerUpdatedEvent = Timer
-export type WindowActivityDto = { appBundleId: string | null; appName: string | null; appIcon: string | null; windowTitle: string | null; browserUrl: string | null; startedAt: number; endedAt: number }
+export type WindowActivityDto = { appBundleId: string | null; appName: string | null; appIcon: string | null; appColor: string | null; windowTitle: string | null; browserUrl: string | null; startedAt: number; endedAt: number }
 export type WorkSessionStats = { baseSeconds: number; extendedSeconds: number; overtimeSeconds: number; completedSeconds: number }
 
 /** tauri-specta globals **/
