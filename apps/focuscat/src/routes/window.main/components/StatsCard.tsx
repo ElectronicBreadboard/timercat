@@ -4,7 +4,7 @@ import { TriangleLeftIcon, TriangleRightIcon } from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
-import { cn, formatDuration } from '@/lib';
+import { cn, formatDuration, toTuple } from '@/lib';
 
 export const StatsCard: React.FC<TStatsCardProps> = (props) => {
 	const {
@@ -35,9 +35,9 @@ export const StatsCard: React.FC<TStatsCardProps> = (props) => {
 	}, [views.length]);
 
 	const fetchFocusSeconds = React.useCallback(async () => {
-		const result = await specta.commands.getTodayFocusSeconds();
-		if (result.status === 'ok') {
-			setFocusSeconds(result.data);
+		const [areFocusSecsOk, , focusSecs] = toTuple(await specta.commands.getTodayFocusSeconds());
+		if (areFocusSecsOk) {
+			setFocusSeconds(focusSecs);
 		}
 	}, []);
 

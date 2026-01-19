@@ -1,8 +1,10 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
+import { unwrapOrNull } from 'tuple-result';
 import { WindowHeader } from '@/components';
 import { specta } from '@/environment';
 import { SettingsCxProvider } from '@/features/settings';
 import { ThemeCxProvider } from '@/features/theme';
+import { toTuple } from '@/lib';
 import { SessionList } from './components';
 
 export const Route = createFileRoute('/window/history')({
@@ -10,12 +12,7 @@ export const Route = createFileRoute('/window/history')({
 		// Load sessions from the last 30 days
 		const now = Math.floor(Date.now() / 1000);
 		const thirtyDaysAgo = now - 30 * 24 * 60 * 60;
-
-		const result = await specta.commands.getSessions(thirtyDaysAgo, now, 100);
-		if (result.status === 'ok') {
-			return result.data;
-		}
-		return [];
+		return unwrapOrNull(toTuple(await specta.commands.getSessions(thirtyDaysAgo, now, 100))) ?? [];
 	},
 	pendingComponent: LoadingComponent,
 	component: LayoutComponent
@@ -34,7 +31,9 @@ function LayoutComponent() {
 						<div className="flex flex-1 items-center justify-center">
 							<div className="text-center">
 								<p className="text-base-600 text-sm font-medium">No sessions yet</p>
-								<p className="text-base-400 mt-1 text-xs">Complete a focus session to see it here</p>
+								<p className="text-base-400 mt-1 text-xs">
+									Complete a focus session to see it here
+								</p>
 							</div>
 						</div>
 					</div>
@@ -51,10 +50,7 @@ function LayoutComponent() {
 
 					{/* Main Content */}
 					<div className="flex flex-1 overflow-hidden">
-						<SessionList
-							sessions={sessions}
-							className="border-base-200 w-56 shrink-0 border-r"
-						/>
+						<SessionList sessions={sessions} className="border-base-200 w-56 shrink-0 border-r" />
 
 						{/* Content */}
 						<main className="bg-base-0 flex-1 overflow-y-auto p-4">
