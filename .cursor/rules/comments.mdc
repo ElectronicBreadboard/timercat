@@ -1,0 +1,163 @@
+---
+description: Comment guidelines for clear, valuable code documentation
+globs: ["**/*.rs", "**/*.ts", "**/*.tsx"]
+alwaysApply: true
+---
+
+# Comment Guidelines
+
+Guidelines for writing comments that help readers understand code faster. The goal is balance: enough signposts to navigate, not so many that they become noise.
+
+## Core Principles
+
+- **Value-Driven** - Always ask "Does this help the next reader?"
+- **Context-Aware** - Always write comments relevant to where they live
+- **Balanced** - Never over-comment obvious code, never under-comment complex logic
+
+## What TO Comment
+
+### Section Headers
+- Always use section headers to help readers skim longer functions
+- Always keep headers short and descriptive
+
+✅ Good:
+```rust
+// Start runner
+runner.start();
+register_callbacks();
+
+// Stop runner
+runner.stop();
+cleanup_resources();
+```
+
+❌ Bad:
+```rust
+// This section starts the runner by calling start() and registering callbacks
+runner.start();
+register_callbacks();
+```
+
+### WHY Comments
+- Always explain non-obvious constraints or tradeoffs
+- Always document reasoning that isn't clear from the code
+
+✅ Good:
+```rust
+// DB operations outside lock to avoid deadlock with tray updates
+if let Some(session_id) = session_id {
+    SessionEventRepository::insert(...).await;
+}
+```
+
+❌ Bad:
+```rust
+// Insert event into database
+if let Some(session_id) = session_id {
+    SessionEventRepository::insert(...).await;
+}
+```
+
+### Domain Logic Clarification
+- Always explain business rules that need context
+- Always document edge cases handled by the code
+
+✅ Good:
+```rust
+// Overtime = time worked beyond planned (base + extensions)
+let overtime = focus_seconds.saturating_sub(planned + extended);
+
+// Session ended while still paused - count remaining pause time
+if let Some(start) = pause_start {
+    paused_seconds += ended_at - start;
+}
+```
+
+### Data State Documentation
+- Always document non-obvious data states in doc comments
+- Never include caller context in generic/reusable code
+
+✅ Good:
+```rust
+/// Insert new session (ended_at is NULL until complete/cancel).
+pub async fn insert(pool: &SqlitePool, input: &InsertSessionInput) -> Result<i64, sqlx::Error>
+```
+
+❌ Bad:
+```rust
+/// Insert new session at timer start.
+pub async fn insert(pool: &SqlitePool, input: &InsertSessionInput) -> Result<i64, sqlx::Error>
+```
+
+## What NOT TO Comment
+
+### Restating Function Names
+- Never restate what the function name already says
+- Never add doc comments that don't provide new information
+
+✅ Good:
+```rust
+pub async fn insert(pool: &SqlitePool, input: &InsertSessionInput) -> Result<i64, sqlx::Error>
+```
+
+❌ Bad:
+```rust
+/// Insert a new session into the database.
+pub async fn insert(pool: &SqlitePool, input: &InsertSessionInput) -> Result<i64, sqlx::Error>
+```
+
+### Obvious Operations
+- Never comment self-explanatory code
+- Never add inline comments that restate what the code does
+
+✅ Good:
+```rust
+let timer = state.lock().unwrap();
+
+for event in events {
+    // ...
+}
+
+if sessions.is_empty() {
+    return vec![];
+}
+```
+
+❌ Bad:
+```rust
+// Get the timer
+let timer = state.lock().unwrap();
+
+// Loop through events
+for event in events {
+
+// Check if empty
+if sessions.is_empty() {
+```
+
+### Type Information
+- Never restate what types already document
+- Always comment only when the type doesn't convey meaning
+
+✅ Good:
+```rust
+// Unix timestamp in seconds
+let started_at: i64 = row.get("started_at");
+```
+
+❌ Bad:
+```rust
+// The session ID as an integer
+let session_id: i64 = row.get("id");
+```
+
+## Language Specifics
+
+### Rust
+- Always use `//` for inline comments
+- Always use `///` for doc comments (only when adding value)
+- Always use `// MARK: -` for IDE navigation (sparingly, in large files)
+
+### TypeScript
+- Always use `//` for inline comments
+- Always use `/** */` for JSDoc (only when adding value)
