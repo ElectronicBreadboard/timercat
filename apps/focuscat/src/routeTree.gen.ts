@@ -11,15 +11,18 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WindowSettingsRouteRouteImport } from './routes/window.settings/route'
 import { Route as WindowMainRouteRouteImport } from './routes/window.main/route'
+import { Route as WindowHistoryRouteRouteImport } from './routes/window.history/route'
 import { Route as WindowCatRouteRouteImport } from './routes/window.cat/route'
 import { Route as WindowSettingsIndexRouteImport } from './routes/window.settings/index'
 import { Route as WindowMainIndexRouteImport } from './routes/window.main/index'
+import { Route as WindowHistoryIndexRouteImport } from './routes/window.history/index'
 import { Route as WindowCatIndexRouteImport } from './routes/window.cat/index'
 import { Route as WindowSettingsTimerIndexRouteImport } from './routes/window.settings.timer/index'
 import { Route as WindowSettingsGoalsIndexRouteImport } from './routes/window.settings.goals/index'
 import { Route as WindowSettingsDeveloperIndexRouteImport } from './routes/window.settings.developer/index'
 import { Route as WindowSettingsAppIndexRouteImport } from './routes/window.settings.app/index'
 import { Route as WindowSettingsActivityIndexRouteImport } from './routes/window.settings.activity/index'
+import { Route as WindowHistorySessionIdIndexRouteImport } from './routes/window.history.$sessionId/index'
 
 const WindowSettingsRouteRoute = WindowSettingsRouteRouteImport.update({
   id: '/window/settings',
@@ -29,6 +32,11 @@ const WindowSettingsRouteRoute = WindowSettingsRouteRouteImport.update({
 const WindowMainRouteRoute = WindowMainRouteRouteImport.update({
   id: '/window/main',
   path: '/window/main',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WindowHistoryRouteRoute = WindowHistoryRouteRouteImport.update({
+  id: '/window/history',
+  path: '/window/history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WindowCatRouteRoute = WindowCatRouteRouteImport.update({
@@ -45,6 +53,11 @@ const WindowMainIndexRoute = WindowMainIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => WindowMainRouteRoute,
+} as any)
+const WindowHistoryIndexRoute = WindowHistoryIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WindowHistoryRouteRoute,
 } as any)
 const WindowCatIndexRoute = WindowCatIndexRouteImport.update({
   id: '/',
@@ -80,14 +93,23 @@ const WindowSettingsActivityIndexRoute =
     path: '/activity/',
     getParentRoute: () => WindowSettingsRouteRoute,
   } as any)
+const WindowHistorySessionIdIndexRoute =
+  WindowHistorySessionIdIndexRouteImport.update({
+    id: '/$sessionId/',
+    path: '/$sessionId/',
+    getParentRoute: () => WindowHistoryRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/window/cat': typeof WindowCatRouteRouteWithChildren
+  '/window/history': typeof WindowHistoryRouteRouteWithChildren
   '/window/main': typeof WindowMainRouteRouteWithChildren
   '/window/settings': typeof WindowSettingsRouteRouteWithChildren
   '/window/cat/': typeof WindowCatIndexRoute
+  '/window/history/': typeof WindowHistoryIndexRoute
   '/window/main/': typeof WindowMainIndexRoute
   '/window/settings/': typeof WindowSettingsIndexRoute
+  '/window/history/$sessionId': typeof WindowHistorySessionIdIndexRoute
   '/window/settings/activity': typeof WindowSettingsActivityIndexRoute
   '/window/settings/app': typeof WindowSettingsAppIndexRoute
   '/window/settings/developer': typeof WindowSettingsDeveloperIndexRoute
@@ -96,8 +118,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/window/cat': typeof WindowCatIndexRoute
+  '/window/history': typeof WindowHistoryIndexRoute
   '/window/main': typeof WindowMainIndexRoute
   '/window/settings': typeof WindowSettingsIndexRoute
+  '/window/history/$sessionId': typeof WindowHistorySessionIdIndexRoute
   '/window/settings/activity': typeof WindowSettingsActivityIndexRoute
   '/window/settings/app': typeof WindowSettingsAppIndexRoute
   '/window/settings/developer': typeof WindowSettingsDeveloperIndexRoute
@@ -107,11 +131,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/window/cat': typeof WindowCatRouteRouteWithChildren
+  '/window/history': typeof WindowHistoryRouteRouteWithChildren
   '/window/main': typeof WindowMainRouteRouteWithChildren
   '/window/settings': typeof WindowSettingsRouteRouteWithChildren
   '/window/cat/': typeof WindowCatIndexRoute
+  '/window/history/': typeof WindowHistoryIndexRoute
   '/window/main/': typeof WindowMainIndexRoute
   '/window/settings/': typeof WindowSettingsIndexRoute
+  '/window/history/$sessionId/': typeof WindowHistorySessionIdIndexRoute
   '/window/settings/activity/': typeof WindowSettingsActivityIndexRoute
   '/window/settings/app/': typeof WindowSettingsAppIndexRoute
   '/window/settings/developer/': typeof WindowSettingsDeveloperIndexRoute
@@ -122,11 +149,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/window/cat'
+    | '/window/history'
     | '/window/main'
     | '/window/settings'
     | '/window/cat/'
+    | '/window/history/'
     | '/window/main/'
     | '/window/settings/'
+    | '/window/history/$sessionId'
     | '/window/settings/activity'
     | '/window/settings/app'
     | '/window/settings/developer'
@@ -135,8 +165,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/window/cat'
+    | '/window/history'
     | '/window/main'
     | '/window/settings'
+    | '/window/history/$sessionId'
     | '/window/settings/activity'
     | '/window/settings/app'
     | '/window/settings/developer'
@@ -145,11 +177,14 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/window/cat'
+    | '/window/history'
     | '/window/main'
     | '/window/settings'
     | '/window/cat/'
+    | '/window/history/'
     | '/window/main/'
     | '/window/settings/'
+    | '/window/history/$sessionId/'
     | '/window/settings/activity/'
     | '/window/settings/app/'
     | '/window/settings/developer/'
@@ -159,6 +194,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   WindowCatRouteRoute: typeof WindowCatRouteRouteWithChildren
+  WindowHistoryRouteRoute: typeof WindowHistoryRouteRouteWithChildren
   WindowMainRouteRoute: typeof WindowMainRouteRouteWithChildren
   WindowSettingsRouteRoute: typeof WindowSettingsRouteRouteWithChildren
 }
@@ -177,6 +213,13 @@ declare module '@tanstack/react-router' {
       path: '/window/main'
       fullPath: '/window/main'
       preLoaderRoute: typeof WindowMainRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/window/history': {
+      id: '/window/history'
+      path: '/window/history'
+      fullPath: '/window/history'
+      preLoaderRoute: typeof WindowHistoryRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/window/cat': {
@@ -199,6 +242,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/window/main/'
       preLoaderRoute: typeof WindowMainIndexRouteImport
       parentRoute: typeof WindowMainRouteRoute
+    }
+    '/window/history/': {
+      id: '/window/history/'
+      path: '/'
+      fullPath: '/window/history/'
+      preLoaderRoute: typeof WindowHistoryIndexRouteImport
+      parentRoute: typeof WindowHistoryRouteRoute
     }
     '/window/cat/': {
       id: '/window/cat/'
@@ -242,6 +292,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WindowSettingsActivityIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
+    '/window/history/$sessionId/': {
+      id: '/window/history/$sessionId/'
+      path: '/$sessionId'
+      fullPath: '/window/history/$sessionId'
+      preLoaderRoute: typeof WindowHistorySessionIdIndexRouteImport
+      parentRoute: typeof WindowHistoryRouteRoute
+    }
   }
 }
 
@@ -256,6 +313,19 @@ const WindowCatRouteRouteChildren: WindowCatRouteRouteChildren = {
 const WindowCatRouteRouteWithChildren = WindowCatRouteRoute._addFileChildren(
   WindowCatRouteRouteChildren,
 )
+
+interface WindowHistoryRouteRouteChildren {
+  WindowHistoryIndexRoute: typeof WindowHistoryIndexRoute
+  WindowHistorySessionIdIndexRoute: typeof WindowHistorySessionIdIndexRoute
+}
+
+const WindowHistoryRouteRouteChildren: WindowHistoryRouteRouteChildren = {
+  WindowHistoryIndexRoute: WindowHistoryIndexRoute,
+  WindowHistorySessionIdIndexRoute: WindowHistorySessionIdIndexRoute,
+}
+
+const WindowHistoryRouteRouteWithChildren =
+  WindowHistoryRouteRoute._addFileChildren(WindowHistoryRouteRouteChildren)
 
 interface WindowMainRouteRouteChildren {
   WindowMainIndexRoute: typeof WindowMainIndexRoute
@@ -292,6 +362,7 @@ const WindowSettingsRouteRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   WindowCatRouteRoute: WindowCatRouteRouteWithChildren,
+  WindowHistoryRouteRoute: WindowHistoryRouteRouteWithChildren,
   WindowMainRouteRoute: WindowMainRouteRouteWithChildren,
   WindowSettingsRouteRoute: WindowSettingsRouteRouteWithChildren,
 }

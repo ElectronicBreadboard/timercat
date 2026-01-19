@@ -36,6 +36,10 @@ function RouteComponent() {
 		await specta.commands.showSettingsWindow();
 	}, []);
 
+	const handleHistory = React.useCallback(async () => {
+		await specta.commands.showHistoryWindow();
+	}, []);
+
 	const handleTick = React.useCallback(() => {
 		const now = Date.now();
 		if (now - lastTapTime.current >= catConfig.tapThrottleMs) {
@@ -48,7 +52,7 @@ function RouteComponent() {
 
 	return (
 		<div className="bg-base-0 flex h-screen w-[300px] flex-col">
-			<Navbar onMinimize={handleMinimize} onSettings={handleSettings} />
+			<Navbar onMinimize={handleMinimize} onHistory={handleHistory} onSettings={handleSettings} />
 
 			{/* Top section: Stats + Cat */}
 			<div className="flex shrink-0" style={{ height: topSection.height }}>

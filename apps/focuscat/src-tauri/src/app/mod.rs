@@ -23,9 +23,11 @@ pub fn run() {
             commands::show_main_window,
             commands::show_cat_window,
             commands::show_settings_window,
+            commands::show_history_window,
             commands::hide_main_window,
             commands::hide_cat_window,
             commands::hide_settings_window,
+            commands::hide_history_window,
             commands::quit_app,
             // Settings commands
             settings::commands::get_settings,

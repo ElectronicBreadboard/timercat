@@ -14,6 +14,7 @@ pub enum Window {
     Main,
     Cat,
     Settings,
+    History,
 }
 
 impl Window {
@@ -23,6 +24,7 @@ impl Window {
             Self::Main => "main",
             Self::Cat => "cat",
             Self::Settings => "settings",
+            Self::History => "history",
         };
     }
 
@@ -32,6 +34,7 @@ impl Window {
             Self::Main => "Focuscat",
             Self::Cat => "Focuscat",
             Self::Settings => "Focuscat Settings",
+            Self::History => "Focuscat History",
         };
     }
 
@@ -41,6 +44,7 @@ impl Window {
             Self::Main => "/window/main",
             Self::Cat => "/window/cat",
             Self::Settings => "/window/settings",
+            Self::History => "/window/history",
         };
     }
 
@@ -50,6 +54,7 @@ impl Window {
             Self::Main => (300.0, 500.0),
             Self::Cat => (180.0, 220.0),
             Self::Settings => (600.0, 450.0),
+            Self::History => (600.0, 450.0),
         };
     }
 
@@ -59,6 +64,7 @@ impl Window {
             Self::Main => None,
             Self::Cat => None,
             Self::Settings => Some((500.0, 400.0)),
+            Self::History => Some((500.0, 400.0)),
         };
     }
 
@@ -98,6 +104,7 @@ impl Window {
             Self::Main => self.build_main(app),
             Self::Cat => self.build_cat(app),
             Self::Settings => self.build_settings(app),
+            Self::History => self.build_history(app),
         };
     }
 
@@ -174,6 +181,40 @@ impl Window {
         return builder.build();
     }
 
+    fn build_history(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
+        let (width, height) = self.size();
+
+        let mut builder = self
+            .base_builder(app)
+            .resizable(true)
+            .maximizable(false)
+            .minimizable(true)
+            .transparent(false)
+            .always_on_top(false);
+
+        // Center over main window if available, otherwise center on screen
+        if let Some(pos) = Self::position_centered_over(app, Self::Main, width, height) {
+            builder = builder.position(pos.x as f64, pos.y as f64);
+        } else {
+            builder = builder.center();
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            builder = builder
+                .decorations(true)
+                .title_bar_style(TitleBarStyle::Overlay)
+                .hidden_title(true);
+        }
+
+        #[cfg(not(target_os = "macos"))]
+        {
+            builder = builder.decorations(false);
+        }
+
+        return builder.build();
+    }
+
     fn base_builder<'a>(
         &self,
         app: &'a AppHandle,
@@ -198,13 +239,13 @@ impl Window {
     /// Handle window close request.
     pub fn handle_close(label: &str, window: &tauri::Window, api: &CloseRequestApi) {
         // Main window hides instead of closing (can reopen from tray).
-        // Settings window hides and shows main window.
+        // Settings/History windows hide and show main window.
         match label {
             "main" => {
                 api.prevent_close();
                 let _ = window.hide();
             }
-            "settings" => {
+            "settings" | "history" => {
                 api.prevent_close();
                 let _ = window.hide();
                 let _ = Window::Main.show(window.app_handle());

@@ -47,6 +47,21 @@ pub fn hide_settings_window(app: tauri::AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 #[specta::specta]
+pub fn show_history_window(app: tauri::AppHandle) -> Result<(), String> {
+    Window::Main.hide(&app).map_err(|e| e.to_string())?;
+    Window::History.show(&app).map_err(|e| e.to_string())?;
+    return Ok(());
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn hide_history_window(app: tauri::AppHandle) -> Result<(), String> {
+    Window::History.hide(&app).map_err(|e| e.to_string())?;
+    return Ok(());
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn quit_app(app: tauri::AppHandle) {
     app.exit(0);
 }

@@ -8,6 +8,10 @@ export function formatTimeOfDay(date: Date): string {
 	return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
+export function formatTimeOfDayAmPm(date: Date): string {
+	return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
 /**
  * Format minutes as human-readable duration (e.g., "1h 30m", "45m", "2h")
  */
@@ -21,4 +25,11 @@ export function formatDuration(totalMinutes: number): string {
 		return `${hours}h`;
 	}
 	return `${hours}h ${minutes}m`;
+}
+
+/**
+ * Format seconds as human-readable duration (e.g., "1h 30m", "45m", "2h")
+ */
+export function formatDurationSeconds(totalSeconds: number): string {
+	return formatDuration(Math.round(totalSeconds / 60));
 }
