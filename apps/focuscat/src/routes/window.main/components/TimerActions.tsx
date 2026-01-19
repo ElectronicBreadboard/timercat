@@ -16,18 +16,16 @@ export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 
 	// Primary button content based on status and phase
 	const primary = React.useMemo((): { label: React.ReactNode; onClick: () => void } => {
-		switch (status) {
-			case 'idle':
-				return { label: 'START SESSION', onClick: onStart };
-			case 'running':
-			case 'paused':
-				switch (phase) {
-					case 'work':
-						return { label: <CoffeeIcon size={20} />, onClick: onSkip };
-					case 'shortBreak':
-					case 'longBreak':
-						return { label: <BriefcaseIcon size={20} />, onClick: onSkip };
-				}
+		if (status === 'idle') {
+			return { label: 'START SESSION', onClick: onStart };
+		}
+
+		switch (phase) {
+			case 'work':
+				return { label: <CoffeeIcon size={20} />, onClick: onSkip };
+			case 'shortBreak':
+			case 'longBreak':
+				return { label: <BriefcaseIcon size={20} />, onClick: onSkip };
 		}
 	}, [status, phase, onStart, onSkip]);
 
@@ -84,7 +82,7 @@ export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 
 interface TTimerActionsProps {
 	status: specta.TimerStatus;
-	phase: specta.TimerPhase;
+	phase: specta.Phase;
 	onStart: () => void;
 	onSkip: () => void;
 	onPause: () => void;
