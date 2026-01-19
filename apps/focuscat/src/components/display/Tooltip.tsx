@@ -5,13 +5,13 @@ import { cn } from '@/lib';
 export const TooltipProvider = BaseTooltip.Provider;
 
 export const Tooltip: React.FC<TTooltipProps> = (props) => {
-	const { children, content, side = 'top', sideOffset = 8, className } = props;
+	const { children, content, side = 'top', sideOffset = 8, delay, boundary, className } = props;
 
 	return (
 		<BaseTooltip.Root>
-			<BaseTooltip.Trigger render={children} />
+			<BaseTooltip.Trigger render={children} delay={delay} />
 			<BaseTooltip.Portal>
-				<BaseTooltip.Positioner side={side} sideOffset={sideOffset}>
+				<BaseTooltip.Positioner side={side} sideOffset={sideOffset} collisionBoundary={boundary ?? undefined}>
 					<BaseTooltip.Popup
 						className={cn(
 							'bg-base-0 text-base-900 z-50 rounded-md px-2.5 py-1.5 text-xs shadow-lg',
@@ -39,6 +39,8 @@ interface TTooltipProps {
 	content: React.ReactNode;
 	side?: 'top' | 'bottom' | 'left' | 'right';
 	sideOffset?: number;
+	delay?: number;
+	boundary?: Element | null;
 	className?: string;
 }
 

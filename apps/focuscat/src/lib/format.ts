@@ -28,8 +28,11 @@ export function formatDuration(totalMinutes: number): string {
 }
 
 /**
- * Format seconds as human-readable duration (e.g., "1h 30m", "45m", "2h")
+ * Format seconds as human-readable duration (e.g., "1h 30m", "45m", "30s")
  */
 export function formatDurationSeconds(totalSeconds: number): string {
+	if (totalSeconds < 60) {
+		return `${Math.round(totalSeconds)}s`;
+	}
 	return formatDuration(Math.round(totalSeconds / 60));
 }
