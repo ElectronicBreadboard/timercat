@@ -1,4 +1,38 @@
 use super::window::Window;
+use serde::Serialize;
+use specta::Type;
+
+// MARK: - App Info
+
+#[tauri::command]
+#[specta::specta]
+pub fn get_app_info() -> AppInfo {
+    let base_version = env!("CARGO_PKG_VERSION");
+    let (stage, suffix) = if cfg!(debug_assertions) {
+        (Stage::Dev, "-dev")
+    } else {
+        (Stage::Prod, "")
+    };
+
+    AppInfo {
+        version: format!("v{}{}", base_version, suffix),
+        stage,
+    }
+}
+
+#[derive(Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AppInfo {
+    pub version: String,
+    pub stage: Stage,
+}
+
+#[derive(Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum Stage {
+    Dev,
+    Prod,
+}
 
 // MARK: - Window Commands
 

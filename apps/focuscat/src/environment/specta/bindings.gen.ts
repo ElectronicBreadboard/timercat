@@ -5,6 +5,9 @@
 
 
 export const commands = {
+async getAppInfo() : Promise<AppInfo> {
+    return await TAURI_INVOKE("get_app_info");
+},
 async showMainWindow() : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("show_main_window") };
@@ -191,6 +194,18 @@ async isAccessibilityGranted() : Promise<boolean> {
  */
 async openAccessibilitySettings() : Promise<void> {
     await TAURI_INVOKE("open_accessibility_settings");
+},
+/**
+ * Check if input monitoring permission is granted.
+ */
+async isInputMonitoringGranted() : Promise<boolean> {
+    return await TAURI_INVOKE("is_input_monitoring_granted");
+},
+/**
+ * Open System Settings to Input Monitoring pane.
+ */
+async openInputMonitoringSettings() : Promise<void> {
+    await TAURI_INVOKE("open_input_monitoring_settings");
 }
 }
 
@@ -228,6 +243,7 @@ trackWindows: boolean;
  * Whether to track browser URLs
  */
 trackBrowser: boolean }
+export type AppInfo = { version: string; stage: Stage }
 export type AppSettings = { appearance: AppearanceSettings; debug: DebugSettings; timer: TimerSettings; focusGoal: FocusGoalSettings; activity: ActivitySettings }
 export type AppSettingsChangedEvent = AppSettings
 export type AppearanceSettings = { theme: Theme }
@@ -272,6 +288,7 @@ export type SessionStatus = "active" | "completed" | "cancelled"
  * Summary DTO for session list views.
  */
 export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; startedAt: number; endedAt: number | null }
+export type Stage = "dev" | "prod"
 export type Theme = "light" | "dark" | "auto"
 export type Timer = { status: TimerStatus; phase: Phase; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; lastWorkSession: WorkSessionStats | null; speed: number }
 export type TimerCompleteEvent = Phase

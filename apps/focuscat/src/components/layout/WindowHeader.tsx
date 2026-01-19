@@ -1,10 +1,12 @@
 import React from 'react';
-import { usePlatform } from '@/hooks';
+import { useAppInfo, usePlatform } from '@/hooks';
 import { cn } from '@/lib';
+import { Badge } from '../display';
 
 export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 	const { title, children, className } = props;
 	const platform = usePlatform();
+	const appInfo = useAppInfo();
 
 	return (
 		<header
@@ -19,6 +21,11 @@ export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 				<span data-tauri-drag-region className="text-base-600 ml-2 text-sm font-semibold">
 					{title}
 				</span>
+			)}
+			{appInfo.stage === 'dev' && (
+				<Badge variant="warning" className="ml-2">
+					DEV
+				</Badge>
 			)}
 			<div data-tauri-drag-region className="flex-1" />
 			{children != null && <div className="flex items-center gap-1 pr-1">{children}</div>}

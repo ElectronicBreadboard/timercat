@@ -3,11 +3,13 @@ import React from 'react';
 import { ActivityIcon, AppWindowIcon, Button, CodeIcon, TargetIcon, TimerIcon } from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
+import { useAppInfo } from '@/hooks';
 import { SidebarItem } from './SidebarItem';
 
 export const Sidebar: React.FC = () => {
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
+	const appInfo = useAppInfo();
 
 	return (
 		<aside className="border-base-200 bg-base-50 flex w-48 shrink-0 flex-col border-r">
@@ -39,7 +41,7 @@ export const Sidebar: React.FC = () => {
 				>
 					Quit Focuscat
 				</Button>
-				<p className="text-base-400 text-center text-xs">v0.1.0</p>
+				<p className="text-base-400 text-center text-xs">{appInfo.version}</p>
 			</div>
 		</aside>
 	);

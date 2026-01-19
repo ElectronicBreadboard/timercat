@@ -19,6 +19,8 @@ use tauri_specta::{collect_commands, collect_events, Builder};
 pub fn run() {
     let builder = Builder::<tauri::Wry>::new()
         .commands(collect_commands![
+            // App commands
+            commands::get_app_info,
             // Window commands
             commands::show_main_window,
             commands::show_cat_window,
@@ -51,6 +53,8 @@ pub fn run() {
             // Permission commands
             permission::commands::is_accessibility_granted,
             permission::commands::open_accessibility_settings,
+            permission::commands::is_input_monitoring_granted,
+            permission::commands::open_input_monitoring_settings,
         ])
         .events(collect_events![
             AppSettingsChangedEvent,
