@@ -1,5 +1,5 @@
 import React from 'react';
-import { specta, type TStage } from '@/environment';
+import { specta } from '@/environment';
 
 export function useAppInfo(): TAppInfo {
 	const [appInfo, setAppInfo] = React.useState<TAppInfo>({
@@ -22,5 +22,5 @@ export function useAppInfo(): TAppInfo {
 
 export interface TAppInfo {
 	version: string;
-	stage: TStage;
+	stage: specta.Stage;
 }
