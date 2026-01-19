@@ -5,26 +5,26 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionSummaryDto {
-    pub id: i64,
+    pub id: i32,
     pub phase: Phase,
     pub status: SessionStatus,
     pub planned_seconds: u32,
     pub actual_seconds: Option<u32>,
-    pub started_at: i64,
-    pub ended_at: Option<i64>,
+    pub started_at: f64,
+    pub ended_at: Option<f64>,
 }
 
 /// Detailed DTO with events and computed stats.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionDetailDto {
-    pub id: i64,
+    pub id: i32,
     pub phase: Phase,
     pub status: SessionStatus,
     pub planned_seconds: u32,
     pub actual_seconds: Option<u32>,
-    pub started_at: i64,
-    pub ended_at: Option<i64>,
+    pub started_at: f64,
+    pub ended_at: Option<f64>,
     pub events: Vec<SessionEventDto>,
     pub stats: SessionStatsDto,
 }
@@ -34,7 +34,7 @@ pub struct SessionDetailDto {
 #[serde(rename_all = "camelCase")]
 pub struct SessionEventDto {
     pub event_type: String,
-    pub timestamp: i64,
+    pub timestamp: f64,
     /// Extra data (e.g., seconds for Extended events)
     pub data: Option<SessionEventDataDto>,
 }

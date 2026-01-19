@@ -21,14 +21,14 @@ pub async fn get_today_focus_seconds(db: State<'_, DatabaseState>) -> Result<u32
 #[specta::specta]
 pub async fn get_sessions(
     db: State<'_, DatabaseState>,
-    started_after: i64,
-    started_before: i64,
-    limit: Option<i64>,
+    started_after: f64,
+    started_before: f64,
+    limit: Option<i32>,
 ) -> Result<Vec<SessionSummaryDto>, String> {
     let input = GetSessionsInput {
-        started_after,
-        started_before,
-        limit,
+        started_after: started_after as i64,
+        started_before: started_before as i64,
+        limit: limit.map(|l| l as i64),
     };
 
     let rows = SessionRepository::get_sessions(&db.pool, &input)
@@ -41,13 +41,13 @@ pub async fn get_sessions(
             let phase = Phase::from_str(&row.phase)?;
             let status = SessionStatus::from_str(&row.status)?;
             Some(SessionSummaryDto {
-                id: row.id,
+                id: row.id as i32,
                 phase,
                 status,
                 planned_seconds: row.planned_seconds as u32,
                 actual_seconds: row.actual_seconds.map(|s| s as u32),
-                started_at: row.started_at,
-                ended_at: row.ended_at,
+                started_at: row.started_at as f64,
+                ended_at: row.ended_at.map(|t| t as f64),
             })
         })
         .collect();
@@ -59,12 +59,13 @@ pub async fn get_sessions(
 #[specta::specta]
 pub async fn get_session(
     db: State<'_, DatabaseState>,
-    session_id: i64,
+    session_id: i32,
 ) -> Result<Option<SessionDetailDto>, String> {
     let now = Utc::now().timestamp();
+    let id = session_id as i64;
 
     // Get session row
-    let session_row = SessionRepository::get_by_id(&db.pool, session_id)
+    let session_row = SessionRepository::get_by_id(&db.pool, id)
         .await
         .map_err(|e| e.to_string())?;
 
@@ -73,7 +74,7 @@ pub async fn get_session(
     };
 
     // Get and parse events
-    let event_rows = SessionRepository::get_events(&db.pool, session_id)
+    let event_rows = SessionRepository::get_events(&db.pool, id)
         .await
         .map_err(|e| e.to_string())?;
 
@@ -108,20 +109,20 @@ pub async fn get_session(
             };
             SessionEventDto {
                 event_type: e.event_type().to_string(),
-                timestamp: e.timestamp(),
+                timestamp: e.timestamp() as f64,
                 data,
             }
         })
         .collect();
 
     return Ok(Some(SessionDetailDto {
-        id: session.id,
+        id: session.id as i32,
         phase: session.phase,
         status: session.status,
         planned_seconds: session.planned_seconds,
         actual_seconds: row.actual_seconds.map(|s| s as u32),
-        started_at: session.started_at,
-        ended_at: session.ended_at,
+        started_at: session.started_at as f64,
+        ended_at: session.ended_at.map(|t| t as f64),
         events: event_dtos,
         stats: SessionStatsDto {
             paused_seconds: session.compute_paused_seconds(now),

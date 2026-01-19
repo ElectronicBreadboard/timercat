@@ -129,70 +129,6 @@ async setTimerDuration(minutes: number) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async setTimerTags(sessionTagIds: number[]) : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("set_timer_tags", { sessionTagIds }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getSessionTags() : Promise<Result<SessionTag[], string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("get_session_tags") };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getSessionTagWithRules(id: number) : Promise<Result<SessionTagWithRules | null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("get_session_tag_with_rules", { id }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async createSessionTag(name: string, color: string) : Promise<Result<number, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("create_session_tag", { name, color }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async updateSessionTag(id: number, name: string, color: string) : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("update_session_tag", { id, name, color }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async deleteSessionTag(id: number) : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("delete_session_tag", { id }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async addSessionTagRule(sessionTagId: number, appBundleId: string, appName: string | null) : Promise<Result<number, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("add_session_tag_rule", { sessionTagId, appBundleId, appName }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async deleteSessionTagRule(ruleId: number) : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("delete_session_tag_rule", { ruleId }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
 /**
  * Get window activities within a time range.
  */
@@ -207,6 +143,22 @@ async getWindowActivities(params: GetWindowActivitiesParams) : Promise<Result<Wi
 async getTodayFocusSeconds() : Promise<Result<number, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_today_focus_seconds") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getSessions(startedAfter: number, startedBefore: number, limit: number | null) : Promise<Result<SessionSummaryDto[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_sessions", { startedAfter, startedBefore, limit }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getSession(sessionId: number) : Promise<Result<SessionDetailDto | null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_session", { sessionId }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -278,44 +230,35 @@ export type InputDetectedEvent = InputType
  * Type of input event detected.
  */
 export type InputType = "keyboard" | "mouse"
-export type SessionTag = { id: number; name: string; color: string }
-export type SessionTagRule = { id: number; sessionTagId: number; appBundleId: string; appName: string | null }
-export type SessionTagWithRules = { id: number; name: string; color: string; rules: SessionTagRule[] }
+export type Phase = "work" | "shortBreak" | "longBreak"
+/**
+ * Detailed DTO with events and computed stats.
+ */
+export type SessionDetailDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; startedAt: number; endedAt: number | null; events: SessionEventDto[]; stats: SessionStatsDto }
+/**
+ * Event data for events with extra fields.
+ */
+export type SessionEventDataDto = { seconds: number | null }
+/**
+ * Event DTO for frontend.
+ */
+export type SessionEventDto = { eventType: string; timestamp: number; 
+/**
+ * Extra data (e.g., seconds for Extended events)
+ */
+data: SessionEventDataDto | null }
+/**
+ * Computed stats for a session.
+ */
+export type SessionStatsDto = { pausedSeconds: number; extendedSeconds: number }
+export type SessionStatus = "active" | "completed" | "cancelled"
+/**
+ * Summary DTO for session list views.
+ */
+export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; startedAt: number; endedAt: number | null }
 export type Theme = "light" | "dark" | "auto"
-export type Timer = { status: TimerStatus; phase: TimerPhase; totalSeconds: number; remainingSeconds: number; 
-/**
- * Counts up after timer hits zero
- */
-overtimeSeconds: number; 
-/**
- * Session tag IDs applied to current session
- */
-sessionTagIds: number[]; sessionsCompleted: number; 
-/**
- * Base work duration from settings
- */
-baseWorkSeconds: number; 
-/**
- * Work done before current segment (for multi-extension tracking)
- */
-accumulatedWorkSeconds: number; 
-/**
- * Time added via wheel extensions this session
- */
-totalExtendedSeconds: number; 
-/**
- * Stats from last work session (shown during breaks)
- */
-lastWorkSession: WorkSessionStats | null; 
-/**
- * Debug: speed multiplier
- */
-speed: number }
-/**
- * Event emitted when timer phase completes.
- */
-export type TimerCompleteEvent = TimerPhase
-export type TimerPhase = "work" | "shortBreak" | "longBreak"
+export type Timer = { status: TimerStatus; phase: Phase; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; lastWorkSession: WorkSessionStats | null; speed: number }
+export type TimerCompleteEvent = Phase
 export type TimerSettings = { 
 /**
  * Work duration in minutes
@@ -334,31 +277,9 @@ longBreakMinutes: number;
  */
 sessionsBeforeLongBreak: number }
 export type TimerStatus = "idle" | "running" | "paused"
-/**
- * Event emitted when timer state changes.
- */
 export type TimerUpdatedEvent = Timer
 export type WindowActivityDto = { appBundleId: string | null; appName: string | null; appIcon: string | null; windowTitle: string | null; browserUrl: string | null; startedAt: number; endedAt: number }
-/**
- * Stats from the last completed work session (shown during breaks).
- */
-export type WorkSessionStats = { 
-/**
- * Original work duration from settings
- */
-baseSeconds: number; 
-/**
- * Time added via wheel adjustment
- */
-extendedSeconds: number; 
-/**
- * Time spent after timer hit zero (unplanned)
- */
-overtimeSeconds: number; 
-/**
- * Total time completed (base + extended + overtime)
- */
-completedSeconds: number }
+export type WorkSessionStats = { baseSeconds: number; extendedSeconds: number; overtimeSeconds: number; completedSeconds: number }
 
 /** tauri-specta globals **/
 
