@@ -110,13 +110,12 @@ const FocusGoalView: React.FC<TFocusGoalViewProps> = (props) => {
 
 	const goalSeconds = goalMinutes * 60;
 	const progress = Math.min(focusSeconds / goalSeconds, 1);
-	const focusMinutes = Math.floor(focusSeconds / 60);
 
 	return (
 		<div className="mt-2 flex flex-col gap-1">
 			<span className="text-base-900 text-sm tabular-nums">
-				<span className="font-semibold">{formatDuration(focusMinutes)}</span> /{' '}
-				{formatDuration(goalMinutes)}
+				<span className="font-semibold">{formatDuration(focusSeconds)}</span> /{' '}
+				{formatDuration(goalSeconds)}
 			</span>
 			<div className="bg-base-200 h-1 overflow-hidden rounded-full">
 				<div
@@ -144,26 +143,23 @@ const LastSessionView: React.FC<TLastSessionViewProps> = (props) => {
 		);
 	}
 
-	const completedMinutes = Math.floor(lastSession.completedSeconds / 60);
-	const baseMinutes = Math.floor(lastSession.baseSeconds / 60);
-	const extendedMinutes = Math.floor(lastSession.extendedSeconds / 60);
-	const overtimeMinutes = Math.floor(lastSession.overtimeSeconds / 60);
+	const { completedSeconds, baseSeconds, extendedSeconds, overtimeSeconds } = lastSession;
 
 	return (
 		<div className="mt-2 flex flex-col gap-1">
 			<span className="text-base-900 text-sm font-semibold tabular-nums">
-				{formatDuration(completedMinutes)}
+				{formatDuration(completedSeconds)}
 			</span>
 			{debug ? (
 				<div className="text-base-400 flex flex-wrap gap-x-2 text-[10px]">
-					<span>Base: {formatDuration(baseMinutes)}</span>
-					{extendedMinutes > 0 && <span>Ext: +{formatDuration(extendedMinutes)}</span>}
-					{overtimeMinutes > 0 && <span className="text-warning">OT: +{formatDuration(overtimeMinutes)}</span>}
+					<span>Base: {formatDuration(baseSeconds)}</span>
+					{extendedSeconds > 0 && <span>Ext: +{formatDuration(extendedSeconds)}</span>}
+					{overtimeSeconds > 0 && <span className="text-warning">OT: +{formatDuration(overtimeSeconds)}</span>}
 				</div>
 			) : (
 				<div className="text-base-400 text-[10px]">
-					{overtimeMinutes > 0 ? (
-						<span className="text-warning">+{formatDuration(overtimeMinutes)} overtime</span>
+					{overtimeSeconds > 0 ? (
+						<span className="text-warning">+{formatDuration(overtimeSeconds)} overtime</span>
 					) : (
 						<span>Completed</span>
 					)}

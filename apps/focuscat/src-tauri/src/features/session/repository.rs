@@ -137,7 +137,7 @@ impl SessionRepository {
         let midnight = Local
             .from_local_datetime(&today.and_hms_opt(0, 0, 0).unwrap())
             .unwrap();
-        let today_start = midnight.timestamp();
+        let today_start = midnight.timestamp_millis();
 
         let result: Option<i64> = sqlx::query_scalar(
             r#"

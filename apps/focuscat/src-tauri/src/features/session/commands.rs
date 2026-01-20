@@ -61,7 +61,7 @@ pub async fn get_session(
     db: State<'_, DatabaseState>,
     session_id: i32,
 ) -> Result<Option<SessionDetailDto>, String> {
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
     let id = session_id as i64;
 
     // Get session row

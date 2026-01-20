@@ -96,7 +96,7 @@ impl WindowListener for WindowMonitorHandler {
 
                 tauri::async_runtime::spawn(async move {
                     let mut active_app_guard = active_app.lock().await;
-                    let now = Utc::now().timestamp();
+                    let now = Utc::now().timestamp_millis();
 
                     // Save previous active app if app changed
                     if let Some(prev) = active_app_guard.take() {
@@ -161,7 +161,7 @@ impl WindowListener for WindowMonitorHandler {
 
                 tauri::async_runtime::spawn(async move {
                     let mut active_window_guard = active_window.lock().await;
-                    let now = Utc::now().timestamp();
+                    let now = Utc::now().timestamp_millis();
 
                     // Save previous active window if window changed
                     if let Some(prev) = active_window_guard.take() {

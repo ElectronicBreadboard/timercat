@@ -4,7 +4,7 @@ import React from 'react';
 import { BriefcaseIcon, CoffeeIcon } from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
-import { cn, formatDurationSeconds, formatTimeOfDayAmPm, toTuple } from '@/lib';
+import { cn, formatDuration, formatTimeOfDayAmPm, toTuple } from '@/lib';
 import { SessionTimeline } from './components';
 
 export const Route = createFileRoute('/window/history/$sessionId/')({
@@ -19,7 +19,7 @@ export const Route = createFileRoute('/window/history/$sessionId/')({
 
 		// Load activities that overlap with the session time range
 		const sessionStart = session.startedAt;
-		const sessionEnd = session.endedAt ?? Math.floor(Date.now() / 1000);
+		const sessionEnd = session.endedAt ?? Date.now();
 
 		const [areActivitiesOk, , rawActivities] = toTuple(
 			await specta.commands.getWindowActivities({
@@ -57,8 +57,8 @@ function RouteComponent() {
 		const isWork = session.phase === 'work';
 		const duration = session.actualSeconds ?? session.plannedSeconds;
 
-		const startDate = new Date(session.startedAt * 1000);
-		const endDate = session.endedAt != null ? new Date(session.endedAt * 1000) : null;
+		const startDate = new Date(session.startedAt);
+		const endDate = session.endedAt != null ? new Date(session.endedAt) : null;
 
 		const dateStr = startDate.toLocaleDateString('en-US', {
 			weekday: 'long',
@@ -116,7 +116,7 @@ function RouteComponent() {
 					<span>·</span>
 					<span>{sessionInfo.timeRange}</span>
 					<span>·</span>
-					<span className="font-medium">{formatDurationSeconds(sessionInfo.duration)}</span>
+					<span className="font-medium">{formatDuration(sessionInfo.duration)}</span>
 				</div>
 			</div>
 
@@ -128,7 +128,16 @@ function RouteComponent() {
 				<div className="border-base-200 mt-4 border-t pt-4">
 					<div className="text-base-500 mb-2 text-xs font-medium">Debug Data</div>
 					<pre className="bg-base-50 text-base-600 rounded p-3 text-xs break-all whitespace-pre-wrap">
-						{JSON.stringify(data, null, 2)}
+						{JSON.stringify(
+							data,
+							(key, value) => {
+								if (key === 'appIcon' && typeof value === 'string' && value.length > 50) {
+									return `${value.slice(0, 50)}... (${value.length} chars)`;
+								}
+								return value;
+							},
+							2
+						)}
 					</pre>
 				</div>
 			)}

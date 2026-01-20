@@ -1,28 +1,29 @@
 import React from 'react';
 import { Tooltip, TooltipProvider } from '@/components';
 import { specta } from '@/environment';
-import { cn, formatDurationSeconds } from '@/lib';
+import { cn, formatDuration } from '@/lib';
 
 export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 	const { session, activities, fallbackColor = '#9ca3af', className } = props;
 
 	const [hoveredBlock, setHoveredBlock] = React.useState<number | null>(null);
-	const [hoveredAppZone, setHoveredAppZone] = React.useState<number | null>(null);
 	const [hoveredWindow, setHoveredWindow] = React.useState<number | null>(null);
 	const [zoom, setZoom] = React.useState(1);
-	const now = React.useMemo(() => Math.floor(Date.now() / 1000), []);
+	const now = React.useMemo(() => Date.now(), []);
 	const timelineRef = React.useRef<HTMLDivElement>(null);
 
-	const sessionStart = session.startedAt;
-	const sessionEnd = session.endedAt ?? now;
-	const sessionDuration = sessionEnd - sessionStart;
+	const sessionStartMs = session.startedAt;
+	const sessionEndMs = session.endedAt ?? now;
+	const sessionDurationMs = sessionEndMs - sessionStartMs;
 
 	const activityBars = React.useMemo(() => {
-		if (sessionDuration <= 0) return [];
+		if (sessionDurationMs <= 0) return [];
 
 		const sorted = [...activities].sort((a, b) => a.startedAt - b.startedAt);
+		const minWidthPercent = 0.5;
 		let lastBundleId: string | null = null;
 		let blockIndex = 0;
+		let visualEndPercent = 0; // Track where the last bar visually ends
 
 		return sorted.map((activity, index) => {
 			const bundleId = activity.appBundleId;
@@ -30,19 +31,29 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 			if (isFirstOfBlock) blockIndex++;
 			lastBundleId = bundleId;
 
-			const start = Math.max(activity.startedAt, sessionStart);
-			const end = Math.min(activity.endedAt, sessionEnd);
+			const start = Math.max(activity.startedAt, sessionStartMs);
+			const end = Math.min(activity.endedAt, sessionEndMs);
+
+			const naturalLeft = ((start - sessionStartMs) / sessionDurationMs) * 100;
+			const naturalWidth = ((end - start) / sessionDurationMs) * 100;
+
+			// Push this bar's start to avoid overlapping with previous bar's visual end
+			const adjustedLeft = Math.max(naturalLeft, visualEndPercent);
+			const adjustedWidth = Math.max(naturalWidth - (adjustedLeft - naturalLeft), minWidthPercent);
+
+			// Update visual end for next iteration
+			visualEndPercent = adjustedLeft + adjustedWidth;
 
 			return {
 				activity,
 				index,
 				blockIndex,
-				leftPercent: ((start - sessionStart) / sessionDuration) * 100,
-				widthPercent: ((end - start) / sessionDuration) * 100,
+				leftPercent: adjustedLeft,
+				widthPercent: adjustedWidth,
 				isFirstOfBlock
 			};
 		});
-	}, [activities, sessionStart, sessionEnd, sessionDuration]);
+	}, [activities, sessionStartMs, sessionEndMs, sessionDurationMs]);
 
 	// App blocks - one per contiguous app segment for stable app-level tooltips
 	const appBlocks = React.useMemo(() => {
@@ -59,7 +70,7 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 		let current: (typeof blocks)[0] | null = null;
 
 		for (const bar of activityBars) {
-			const activityDuration = bar.activity.endedAt - bar.activity.startedAt;
+			const activityDuration = (bar.activity.endedAt - bar.activity.startedAt) / 1000;
 
 			if (bar.isFirstOfBlock || current == null) {
 				if (current != null) blocks.push(current);
@@ -81,7 +92,7 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 	}, [activityBars]);
 
 	const pausePeriods = React.useMemo(() => {
-		if (sessionDuration <= 0) return [];
+		if (sessionDurationMs <= 0) return [];
 
 		const periods: { leftPercent: number; widthPercent: number; duration: number }[] = [];
 		let pauseStart: number | null = null;
@@ -90,12 +101,12 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 			if (event.eventType === 'paused') {
 				pauseStart = event.timestamp;
 			} else if (event.eventType === 'resumed' && pauseStart != null) {
-				const start = Math.max(pauseStart, sessionStart);
-				const end = Math.min(event.timestamp, sessionEnd);
+				const start = Math.max(pauseStart, sessionStartMs);
+				const end = Math.min(event.timestamp, sessionEndMs);
 				periods.push({
-					leftPercent: ((start - sessionStart) / sessionDuration) * 100,
-					widthPercent: ((end - start) / sessionDuration) * 100,
-					duration: end - start
+					leftPercent: ((start - sessionStartMs) / sessionDurationMs) * 100,
+					widthPercent: ((end - start) / sessionDurationMs) * 100,
+					duration: (end - start) / 1000
 				});
 				pauseStart = null;
 			}
@@ -103,23 +114,23 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 
 		// Handle ongoing pause
 		if (pauseStart != null) {
-			const start = Math.max(pauseStart, sessionStart);
+			const start = Math.max(pauseStart, sessionStartMs);
 			periods.push({
-				leftPercent: ((start - sessionStart) / sessionDuration) * 100,
-				widthPercent: ((sessionEnd - start) / sessionDuration) * 100,
-				duration: sessionEnd - start
+				leftPercent: ((start - sessionStartMs) / sessionDurationMs) * 100,
+				widthPercent: ((sessionEndMs - start) / sessionDurationMs) * 100,
+				duration: (sessionEndMs - start) / 1000
 			});
 		}
 
 		return periods;
-	}, [session.events, sessionStart, sessionEnd, sessionDuration]);
+	}, [session.events, sessionStartMs, sessionEndMs, sessionDurationMs]);
 
 	const appLegend = React.useMemo(() => {
 		const groups = new Map<string, { totalSeconds: number; color: string | null }>();
 
 		for (const activity of activities) {
 			const appName = activity.appName ?? 'Unknown';
-			const duration = activity.endedAt - activity.startedAt;
+			const duration = (activity.endedAt - activity.startedAt) / 1000;
 			const existing = groups.get(appName);
 
 			if (existing != null) {
@@ -172,7 +183,10 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 					{zoom > 1 && <span className="text-base-400 font-normal">{Math.round(zoom * 100)}%</span>}
 				</div>
 				<TooltipProvider delay={200} closeDelay={100}>
-					<div ref={timelineRef} className="overflow-x-auto rounded">
+					<div
+						ref={timelineRef}
+						className={cn('rounded', zoom > 1 ? 'overflow-x-auto' : 'overflow-hidden')}
+					>
 						<div className="bg-base-100 relative h-8" style={{ width: `${zoom * 100}%` }}>
 							{/* Layer 1: Colored bars with app borders and split lines */}
 							{activityBars.map(
@@ -181,12 +195,11 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 										key={`bar-${index}`}
 										className={cn(
 											'absolute top-0 h-full',
-											isFirstOfBlock && 'border-base-900/40 border-l',
-											hoveredAppZone === blockIndex ? 'opacity-100' : 'opacity-90'
+											isFirstOfBlock && 'border-base-900/40 border-l'
 										)}
 										style={{
 											left: `${leftPercent}%`,
-											width: `${Math.max(widthPercent, 0.5)}%`,
+											width: `${widthPercent}%`,
 											backgroundColor: activity.appColor ?? fallbackColor
 										}}
 									>
@@ -212,14 +225,8 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 											left: `${block.leftPercent}%`,
 											width: `${Math.max(block.widthPercent, 0.5)}%`
 										}}
-										onMouseEnter={() => {
-											setHoveredBlock(block.blockIndex);
-											setHoveredAppZone(block.blockIndex);
-										}}
-										onMouseLeave={() => {
-											setHoveredBlock(null);
-											setHoveredAppZone(null);
-										}}
+										onMouseEnter={() => setHoveredBlock(block.blockIndex)}
+										onMouseLeave={() => setHoveredBlock(null)}
 									/>
 								</Tooltip>
 							))}
@@ -238,7 +245,7 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 										)}
 										style={{
 											left: `${leftPercent}%`,
-											width: `${Math.max(widthPercent, 0.5)}%`
+											width: `${widthPercent}%`
 										}}
 										onMouseEnter={() => {
 											setHoveredBlock(blockIndex);
@@ -318,7 +325,7 @@ const AppTooltipContent: React.FC<TAppTooltipContentProps> = (props) => {
 			)}
 			<div className="flex min-w-0 flex-col gap-0.5">
 				<span className="truncate text-sm font-medium">{activity.appName ?? 'Unknown'}</span>
-				<span className="text-base-500 text-xs">{formatDurationSeconds(duration)}</span>
+				<span className="text-base-500 text-xs">{formatDuration(duration)}</span>
 			</div>
 		</div>
 	);
@@ -331,7 +338,7 @@ interface TAppTooltipContentProps {
 
 const WindowTooltipContent: React.FC<TWindowTooltipContentProps> = (props) => {
 	const { activity } = props;
-	const duration = activity.endedAt - activity.startedAt;
+	const duration = (activity.endedAt - activity.startedAt) / 1000;
 
 	return (
 		<div className="flex max-w-xs items-center gap-2.5">
@@ -343,7 +350,7 @@ const WindowTooltipContent: React.FC<TWindowTooltipContentProps> = (props) => {
 				{activity.windowTitle != null && (
 					<span className="text-base-400 truncate text-xs">{activity.windowTitle}</span>
 				)}
-				<span className="text-base-500 text-xs">{formatDurationSeconds(duration)}</span>
+				<span className="text-base-500 text-xs">{formatDuration(duration)}</span>
 			</div>
 		</div>
 	);
@@ -359,7 +366,7 @@ const PauseTooltipContent: React.FC<TPauseTooltipContentProps> = (props) => {
 	return (
 		<div className="flex items-center gap-1.5">
 			<span className="text-sm font-medium">Paused</span>
-			<span className="text-base-500 text-xs">{formatDurationSeconds(duration)}</span>
+			<span className="text-base-500 text-xs">{formatDuration(duration)}</span>
 		</div>
 	);
 };

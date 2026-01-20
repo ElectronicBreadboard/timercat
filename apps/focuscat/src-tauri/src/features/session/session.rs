@@ -58,7 +58,7 @@ impl Session {
 
     /// Compute total paused time in seconds.
     pub fn compute_paused_seconds(&self, current_time: i64) -> u32 {
-        let mut total_paused: i64 = 0;
+        let mut total_paused_ms: i64 = 0;
         let mut pause_start: Option<i64> = None;
 
         for event in &self.events {
@@ -68,14 +68,14 @@ impl Session {
                 }
                 SessionEvent::Resumed { timestamp } => {
                     if let Some(start) = pause_start {
-                        total_paused += timestamp - start;
+                        total_paused_ms += timestamp - start;
                         pause_start = None;
                     }
                 }
                 SessionEvent::Completed { timestamp } | SessionEvent::Cancelled { timestamp } => {
                     // Session ended while paused - count remaining pause time
                     if let Some(start) = pause_start {
-                        total_paused += timestamp - start;
+                        total_paused_ms += timestamp - start;
                         pause_start = None;
                     }
                 }
@@ -85,10 +85,10 @@ impl Session {
 
         // Currently paused (no end event yet)
         if let Some(start) = pause_start {
-            total_paused += current_time - start;
+            total_paused_ms += current_time - start;
         }
 
-        return total_paused.max(0) as u32;
+        return (total_paused_ms / 1000).max(0) as u32;
     }
 
     /// Compute total extended time in seconds.
@@ -105,9 +105,10 @@ impl Session {
     /// Compute actual focused time (excludes pauses).
     pub fn compute_actual_seconds(&self, current_time: i64) -> u32 {
         let end_time = self.ended_at.unwrap_or(current_time);
-        let total_elapsed = (end_time - self.started_at).max(0) as u32;
+        let total_elapsed_ms = (end_time - self.started_at).max(0);
+        let total_elapsed_sec = (total_elapsed_ms / 1000) as u32;
         let paused = self.compute_paused_seconds(current_time);
-        return total_elapsed.saturating_sub(paused);
+        return total_elapsed_sec.saturating_sub(paused);
     }
 
     /// Compute overtime (actual time beyond planned + extensions).
@@ -255,50 +256,72 @@ impl SessionEvent {
 mod tests {
     use super::*;
 
+    const START_MS: i64 = 1_000_000; // 1 second
+
     fn make_session() -> Session {
-        return Session::new(1, Phase::Work, 1500, 1000);
+        return Session::new(1, Phase::Work, 1500, START_MS);
     }
 
     #[test]
     fn test_compute_paused_seconds_no_pauses() {
         let session = make_session();
-        assert_eq!(session.compute_paused_seconds(1500), 0);
+        // 500 seconds later
+        assert_eq!(session.compute_paused_seconds(START_MS + 500_000), 0);
     }
 
     #[test]
     fn test_compute_paused_seconds_single_pause() {
         let mut session = make_session();
-        session.add_event(SessionEvent::Paused { timestamp: 1100 });
-        session.add_event(SessionEvent::Resumed { timestamp: 1200 });
-        assert_eq!(session.compute_paused_seconds(1500), 100);
+        // Pause at +100s, resume at +200s = 100s paused
+        session.add_event(SessionEvent::Paused {
+            timestamp: START_MS + 100_000,
+        });
+        session.add_event(SessionEvent::Resumed {
+            timestamp: START_MS + 200_000,
+        });
+        assert_eq!(session.compute_paused_seconds(START_MS + 500_000), 100);
     }
 
     #[test]
     fn test_compute_paused_seconds_multiple_pauses() {
         let mut session = make_session();
-        session.add_event(SessionEvent::Paused { timestamp: 1100 });
-        session.add_event(SessionEvent::Resumed { timestamp: 1150 });
-        session.add_event(SessionEvent::Paused { timestamp: 1200 });
-        session.add_event(SessionEvent::Resumed { timestamp: 1300 });
-        assert_eq!(session.compute_paused_seconds(1500), 150);
+        // Pause at +100s, resume at +150s = 50s paused
+        // Pause at +200s, resume at +300s = 100s paused
+        // Total = 150s
+        session.add_event(SessionEvent::Paused {
+            timestamp: START_MS + 100_000,
+        });
+        session.add_event(SessionEvent::Resumed {
+            timestamp: START_MS + 150_000,
+        });
+        session.add_event(SessionEvent::Paused {
+            timestamp: START_MS + 200_000,
+        });
+        session.add_event(SessionEvent::Resumed {
+            timestamp: START_MS + 300_000,
+        });
+        assert_eq!(session.compute_paused_seconds(START_MS + 500_000), 150);
     }
 
     #[test]
     fn test_compute_paused_seconds_currently_paused() {
         let mut session = make_session();
-        session.add_event(SessionEvent::Paused { timestamp: 1100 });
-        assert_eq!(session.compute_paused_seconds(1500), 400);
+        // Pause at +100s, still paused at +500s = 400s paused
+        session.add_event(SessionEvent::Paused {
+            timestamp: START_MS + 100_000,
+        });
+        assert_eq!(session.compute_paused_seconds(START_MS + 500_000), 400);
     }
 
     #[test]
     fn test_compute_extended_seconds() {
         let mut session = make_session();
         session.add_event(SessionEvent::Extended {
-            timestamp: 1100,
+            timestamp: START_MS + 100_000,
             seconds: 300,
         });
         session.add_event(SessionEvent::Extended {
-            timestamp: 1200,
+            timestamp: START_MS + 200_000,
             seconds: 600,
         });
         assert_eq!(session.compute_extended_seconds(), 900);
@@ -307,41 +330,51 @@ mod tests {
     #[test]
     fn test_compute_actual_seconds() {
         let mut session = make_session();
-        session.add_event(SessionEvent::Paused { timestamp: 1100 });
-        session.add_event(SessionEvent::Resumed { timestamp: 1200 });
-        // Elapsed: 500, Paused: 100, Actual: 400
-        assert_eq!(session.compute_actual_seconds(1500), 400);
+        // Pause at +100s, resume at +200s = 100s paused
+        // Current time at +500s = 500s elapsed - 100s paused = 400s actual
+        session.add_event(SessionEvent::Paused {
+            timestamp: START_MS + 100_000,
+        });
+        session.add_event(SessionEvent::Resumed {
+            timestamp: START_MS + 200_000,
+        });
+        assert_eq!(session.compute_actual_seconds(START_MS + 500_000), 400);
     }
 
     #[test]
     fn test_compute_overtime_seconds() {
-        // Session: planned 1500s, started at 1000
+        // Session: planned 1500s, started at START_MS
         let mut session = make_session();
-        // Work until 4000 (3000s elapsed, no pauses = 3000 actual)
+        // Work until +3000s (3000s elapsed, no pauses = 3000 actual)
         // Overtime = 3000 - 1500 = 1500
-        assert_eq!(session.compute_overtime_seconds(4000), 1500);
+        assert_eq!(session.compute_overtime_seconds(START_MS + 3_000_000), 1500);
 
         // With extension of 500s: Overtime = 3000 - 2000 = 1000
         session.add_event(SessionEvent::Extended {
-            timestamp: 2000,
+            timestamp: START_MS + 1_000_000,
             seconds: 500,
         });
-        assert_eq!(session.compute_overtime_seconds(4000), 1000);
+        assert_eq!(session.compute_overtime_seconds(START_MS + 3_000_000), 1000);
     }
 
     #[test]
     fn test_compute_stats() {
         let mut session = make_session();
-        session.add_event(SessionEvent::Paused { timestamp: 1100 });
-        session.add_event(SessionEvent::Resumed { timestamp: 1200 });
+        // Pause at +100s, resume at +200s = 100s paused
+        session.add_event(SessionEvent::Paused {
+            timestamp: START_MS + 100_000,
+        });
+        session.add_event(SessionEvent::Resumed {
+            timestamp: START_MS + 200_000,
+        });
         session.add_event(SessionEvent::Extended {
-            timestamp: 1300,
+            timestamp: START_MS + 300_000,
             seconds: 300,
         });
 
-        // At time 2500: Elapsed 1500, Paused 100, Actual 1400
+        // At +1500s: Elapsed 1500s, Paused 100s, Actual 1400s
         // Planned 1500 + Extended 300 = 1800, Overtime = 0
-        let stats = session.compute_stats(2500);
+        let stats = session.compute_stats(START_MS + 1_500_000);
         assert_eq!(stats.actual_seconds, 1400);
         assert_eq!(stats.paused_seconds, 100);
         assert_eq!(stats.extended_seconds, 300);

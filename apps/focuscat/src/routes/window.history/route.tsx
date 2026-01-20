@@ -10,8 +10,8 @@ import { SessionList } from './components';
 export const Route = createFileRoute('/window/history')({
 	loader: async () => {
 		// Load sessions from the last 30 days
-		const now = Math.floor(Date.now() / 1000);
-		const thirtyDaysAgo = now - 30 * 24 * 60 * 60;
+		const now = Date.now();
+		const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
 		return unwrapOrNull(toTuple(await specta.commands.getSessions(thirtyDaysAgo, now, 100))) ?? [];
 	},
 	pendingComponent: LoadingComponent,

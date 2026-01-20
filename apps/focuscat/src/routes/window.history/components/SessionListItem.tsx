@@ -2,7 +2,7 @@ import { Link, useParams } from '@tanstack/react-router';
 import React from 'react';
 import { BriefcaseIcon, CoffeeIcon } from '@/components';
 import { specta } from '@/environment';
-import { cn, formatDurationSeconds, formatTimeOfDayAmPm } from '@/lib';
+import { cn, formatDuration, formatTimeOfDayAmPm } from '@/lib';
 
 export const SessionListItem: React.FC<TSessionListItemProps> = (props) => {
 	const { session } = props;
@@ -14,11 +14,11 @@ export const SessionListItem: React.FC<TSessionListItemProps> = (props) => {
 	const duration = session.actualSeconds ?? session.plannedSeconds;
 
 	const timeRange = React.useMemo(() => {
-		const start = new Date(session.startedAt * 1000);
+		const start = new Date(session.startedAt);
 		if (session.endedAt == null) {
 			return formatTimeOfDayAmPm(start);
 		}
-		const end = new Date(session.endedAt * 1000);
+		const end = new Date(session.endedAt);
 		return `${formatTimeOfDayAmPm(start)} - ${formatTimeOfDayAmPm(end)}`;
 	}, [session.startedAt, session.endedAt]);
 
@@ -42,7 +42,7 @@ export const SessionListItem: React.FC<TSessionListItemProps> = (props) => {
 					{sessionName}
 				</span>
 				<span className="text-base-500 shrink-0 text-xs tabular-nums">
-					{formatDurationSeconds(duration)}
+					{formatDuration(duration)}
 				</span>
 			</div>
 

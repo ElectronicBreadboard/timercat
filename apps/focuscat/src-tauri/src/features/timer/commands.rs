@@ -30,7 +30,7 @@ pub async fn start_timer(
     runner: State<'_, Mutex<Option<TimerRunner>>>,
     db: State<'_, DatabaseState>,
 ) -> Result<(), String> {
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
 
     // Extract data
     let (phase, planned_seconds, config) = {
@@ -73,7 +73,7 @@ pub async fn pause_timer(
     runner: State<'_, Mutex<Option<TimerRunner>>>,
     db: State<'_, DatabaseState>,
 ) -> Result<(), String> {
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
 
     // Extract data
     let session_id = {
@@ -115,7 +115,7 @@ pub async fn resume_timer(
     runner: State<'_, Mutex<Option<TimerRunner>>>,
     db: State<'_, DatabaseState>,
 ) -> Result<(), String> {
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
 
     // Extract data
     let session_id = {
@@ -158,7 +158,7 @@ pub async fn reset_timer(
     runner: State<'_, Mutex<Option<TimerRunner>>>,
     db: State<'_, DatabaseState>,
 ) -> Result<(), String> {
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
 
     // Extract data
     let (config, session_data) = {
@@ -209,7 +209,7 @@ pub async fn skip_timer(
     runner: State<'_, Mutex<Option<TimerRunner>>>,
     db: State<'_, DatabaseState>,
 ) -> Result<(), String> {
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
 
     // Extract data
     let (config, is_work_phase, session_data, sessions_completed) = {
@@ -306,7 +306,7 @@ pub async fn set_timer_duration(
     db: State<'_, DatabaseState>,
     minutes: u32,
 ) -> Result<(), String> {
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
     let seconds = minutes * 60;
 
     // Extract data

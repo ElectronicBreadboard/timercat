@@ -15,7 +15,7 @@ export const SessionList: React.FC<TSessionListProps> = (props) => {
 		yesterday.setDate(yesterday.getDate() - 1);
 
 		for (const session of sessions) {
-			const date = new Date(session.startedAt * 1000);
+			const date = new Date(session.startedAt);
 			const dateOnly = new Date(date);
 			dateOnly.setHours(0, 0, 0, 0);
 
