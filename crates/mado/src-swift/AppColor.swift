@@ -1,61 +1,37 @@
 import AppKit
-import CoreImage
 
 /// Get app brand color from preset or by extracting from icon.
 func getAppColor(forBundleId bundleId: String?, icon: NSImage?) -> String? {
+    // Check presets first (known brand colors)
     if let bundleId = bundleId, let preset = appColorPresets[bundleId] {
         return preset
     }
 
     guard let icon = icon else { return nil }
-    return extractDominantColor(from: icon)
+    return extractBrandColor(from: icon)
 }
 
-/// Extract dominant color from image using Core Image CIAreaAverage filter.
-/// Filters out low-saturation colors (grays/whites) that won't be visually distinctive.
-private func extractDominantColor(from image: NSImage) -> String? {
-    guard let tiffData = image.tiffRepresentation,
-        let ciImage = CIImage(data: tiffData)
-    else {
-        return nil
+// MARK: - Color Extraction
+
+/// Extract brand color using k-means palette.
+/// Picks most vibrant color, or falls back to dominant non-white for grayscale icons.
+private func extractBrandColor(from image: NSImage) -> String? {
+    let palette = extractColorPalette(from: image, numberOfColors: 5)
+    guard !palette.isEmpty else { return nil }
+
+    // Pick most vibrant color (threshold filters out near-grayscale)
+    if let bestVibrant = palette.max(by: { $0.vibrancy < $1.vibrancy }),
+        bestVibrant.vibrancy > 0.1
+    {
+        return bestVibrant.hexString
     }
 
-    guard let filter = CIFilter(name: "CIAreaAverage") else { return nil }
-    filter.setValue(ciImage, forKey: kCIInputImageKey)
-    filter.setValue(CIVector(cgRect: ciImage.extent), forKey: kCIInputExtentKey)
-
-    guard let outputImage = filter.outputImage else { return nil }
-
-    var bitmap = [UInt8](repeating: 0, count: 4)
-    let context = CIContext(options: [.workingColorSpace: NSNull()])
-    context.render(
-        outputImage,
-        toBitmap: &bitmap,
-        rowBytes: 4,
-        bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
-        format: .RGBA8,
-        colorSpace: nil
-    )
-
-    let r = CGFloat(bitmap[0]) / 255.0
-    let g = CGFloat(bitmap[1]) / 255.0
-    let b = CGFloat(bitmap[2]) / 255.0
-
-    let maxC = max(r, g, b)
-    let minC = min(r, g, b)
-    let saturation = maxC == 0 ? 0 : (maxC - minC) / maxC
-
-    // Filter out grays, whites, and near-blacks
-    if saturation < 0.15 || maxC < 0.1 || maxC > 0.95 {
-        return nil
+    // Fallback for grayscale icons: dominant non-white color
+    for color in palette where color.brightness <= 0.9 {
+        return color.hexString
     }
 
-    return String(
-        format: "#%02X%02X%02X",
-        Int(r * 255),
-        Int(g * 255),
-        Int(b * 255)
-    )
+    return palette.first?.hexString
 }
 
 // MARK: - Presets
