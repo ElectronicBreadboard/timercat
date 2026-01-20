@@ -67,7 +67,7 @@
 	}
 
 	*::-webkit-scrollbar-track {
-		background: var(--color-base-50);
+		background-color: var(--color-base-50);
 	}
 
 	*::-webkit-scrollbar-thumb {
