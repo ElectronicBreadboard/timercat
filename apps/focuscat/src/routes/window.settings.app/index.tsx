@@ -3,7 +3,11 @@ import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { MonitorIcon, MoonIcon, SunIcon, Switch, ToggleGroup } from '@/components';
 import { specta } from '@/environment';
-import { PermissionBadge, useAccessibilityPermission } from '@/features/permission';
+import {
+	PermissionBadge,
+	useAccessibilityPermission,
+	useInputMonitoringPermission
+} from '@/features/permission';
 import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
 
 export const Route = createFileRoute('/window/settings/app/')({
@@ -14,6 +18,7 @@ function RouteComponent() {
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 	const accessibility = useAccessibilityPermission();
+	const inputMonitoring = useInputMonitoringPermission();
 
 	// MARK: - Actions
 
@@ -64,6 +69,14 @@ function RouteComponent() {
 					onClick={accessibility.openSettings}
 				>
 					<PermissionBadge status={accessibility.granted} />
+				</SettingItem>
+				<SettingItem
+					variant="link"
+					label="Input Monitoring"
+					description="Required for idle detection"
+					onClick={inputMonitoring.openSettings}
+				>
+					<PermissionBadge status={inputMonitoring.granted} />
 				</SettingItem>
 			</SettingGroup>
 

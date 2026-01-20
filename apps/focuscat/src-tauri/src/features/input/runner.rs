@@ -1,11 +1,10 @@
+use super::types::{InputDetectedEvent, InputType};
+use rdev::{listen, Event as RdevEvent, EventType};
 use std::cell::Cell;
 use std::thread;
 use std::time::{Duration, Instant};
-use rdev::{listen, Event as RdevEvent, EventType};
 use tauri::AppHandle;
 use tauri_specta::Event;
-
-use super::types::{InputDetectedEvent, InputType};
 
 /// Minimum interval between events in ms (prevents animation spam).
 const THROTTLE_MS: u64 = 120;

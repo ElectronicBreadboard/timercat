@@ -17,3 +17,23 @@ pub fn open_accessibility_settings() {
             .spawn();
     }
 }
+
+/// Check if input monitoring permission is granted.
+#[tauri::command]
+#[specta::specta]
+pub fn is_input_monitoring_granted() -> bool {
+    focuscat_macos::is_input_monitoring_enabled()
+}
+
+/// Open System Settings to Input Monitoring pane.
+#[tauri::command]
+#[specta::specta]
+pub fn open_input_monitoring_settings() {
+    #[cfg(target_os = "macos")]
+    {
+        use std::process::Command;
+        let _ = Command::new("open")
+            .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")
+            .spawn();
+    }
+}

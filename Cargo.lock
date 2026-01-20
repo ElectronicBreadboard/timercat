@@ -1053,6 +1053,7 @@ name = "focuscat"
 version = "0.0.1"
 dependencies = [
  "chrono",
+ "focuscat-macos",
  "mado",
  "png 0.18.0",
  "rdev",
@@ -1067,6 +1068,14 @@ dependencies = [
  "tauri-plugin-os",
  "tauri-specta",
  "tokio",
+]
+
+[[package]]
+name = "focuscat-macos"
+version = "0.0.1"
+dependencies = [
+ "swift-rs",
+ "thiserror 2.0.17",
 ]
 
 [[package]]

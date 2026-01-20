@@ -158,12 +158,12 @@ const LastSessionView: React.FC<TLastSessionViewProps> = (props) => {
 				<div className="text-base-400 flex flex-wrap gap-x-2 text-[10px]">
 					<span>Base: {formatDuration(baseMinutes)}</span>
 					{extendedMinutes > 0 && <span>Ext: +{formatDuration(extendedMinutes)}</span>}
-					{overtimeMinutes > 0 && <span>OT: +{formatDuration(overtimeMinutes)}</span>}
+					{overtimeMinutes > 0 && <span className="text-warning">OT: +{formatDuration(overtimeMinutes)}</span>}
 				</div>
 			) : (
 				<div className="text-base-400 text-[10px]">
 					{overtimeMinutes > 0 ? (
-						<span>+{formatDuration(overtimeMinutes)} overtime</span>
+						<span className="text-warning">+{formatDuration(overtimeMinutes)} overtime</span>
 					) : (
 						<span>Completed</span>
 					)}

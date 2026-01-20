@@ -36,3 +36,4 @@ sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
 # TODO: Switch to crates.io version once 0.5.4+ is released with this fix.
 rdev = { git = "https://github.com/Narsil/rdev.git", rev = "c14f2dc" }
 mado = { path = "../../../crates/mado" }
+focuscat-macos = { path = "../crates/macos" }

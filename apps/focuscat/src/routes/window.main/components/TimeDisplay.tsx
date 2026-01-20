@@ -36,7 +36,7 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 						{formatTime(state.totalSeconds + state.overtimeSeconds)}
 					</p>
 					{/* Overtime */}
-					<p className="text-base-400 text-sm">+{formatTime(state.overtimeSeconds)} overtime</p>
+					<p className="text-warning text-sm">+{formatTime(state.overtimeSeconds)} overtime</p>
 				</>
 			) : (
 				<>
