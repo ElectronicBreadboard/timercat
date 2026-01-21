@@ -6,12 +6,10 @@ use crate::environment::db;
 use crate::features::{
     activity_window,
     input::{self, types::InputDetectedEvent},
-    permission, session,
+    permission,
+    session::{self, types::SessionCompletedEvent},
     settings::{self, types::AppSettingsChangedEvent},
-    timer::{
-        self,
-        types::{TimerCompleteEvent, TimerUpdatedEvent},
-    },
+    timer::{self, types::TimerUpdatedEvent},
 };
 use specta_typescript::Typescript;
 use tauri_specta::{collect_commands, collect_events, Builder};
@@ -57,10 +55,14 @@ pub fn run() {
             permission::commands::open_input_monitoring_settings,
         ])
         .events(collect_events![
+            // Settings events
             AppSettingsChangedEvent,
-            InputDetectedEvent,
+            // Timer events
             TimerUpdatedEvent,
-            TimerCompleteEvent
+            // Session events
+            SessionCompletedEvent,
+            // Input events
+            InputDetectedEvent,
         ]);
 
     #[cfg(debug_assertions)]

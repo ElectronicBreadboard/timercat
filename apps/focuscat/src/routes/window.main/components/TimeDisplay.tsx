@@ -55,7 +55,7 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 };
 
 interface TTimeDisplayProps {
-	state: specta.Timer;
+	state: specta.TimerDto;
 	remainingSeconds: number;
 	isRunning: boolean;
 	startTime: Date | null;

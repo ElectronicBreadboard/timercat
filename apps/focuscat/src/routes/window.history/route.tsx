@@ -1,9 +1,11 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router';
+import { createFileRoute, Outlet, useRouter } from '@tanstack/react-router';
+import React from 'react';
 import { unwrapOrNull } from 'tuple-result';
 import { WindowHeader } from '@/components';
 import { specta } from '@/environment';
 import { SettingsCxProvider } from '@/features/settings';
 import { ThemeCxProvider } from '@/features/theme';
+import { useOnSessionComplete } from '@/hooks';
 import { toTuple } from '@/lib';
 import { SessionList } from './components';
 
@@ -20,6 +22,13 @@ export const Route = createFileRoute('/window/history')({
 
 function LayoutComponent() {
 	const sessions = Route.useLoaderData();
+	const router = useRouter();
+
+	// MARK: - Effects
+
+	useOnSessionComplete(React.useCallback(() => router.invalidate(), [router]));
+
+	// MARK: - UI
 
 	// Empty state - no sessions
 	if (sessions.length === 0) {

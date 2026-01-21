@@ -29,11 +29,10 @@ export function useTimerCx(): TTimerCx {
 // MARK: - Factory
 
 function createTimerCx(): TTimerCx {
-	const $timer = createState<specta.Timer | null>(null);
+	const $timer = createState<specta.TimerDto | null>(null);
 	const $startTime = createState<Date | null>(null);
 
 	let unlistenUpdate: (() => void) | undefined;
-	let unlistenComplete: (() => void) | undefined;
 
 	return {
 		$timer,
@@ -53,14 +52,10 @@ function createTimerCx(): TTimerCx {
 			unlistenUpdate = await specta.events.timerUpdatedEvent.listen((event) => {
 				$timer.set(event.payload);
 			});
-			unlistenComplete = await specta.events.timerCompleteEvent.listen(() => {
-				$startTime.set(null);
-			});
 		},
 
 		unmount() {
 			unlistenUpdate?.();
-			unlistenComplete?.();
 		},
 
 		async start() {
@@ -118,7 +113,7 @@ function createTimerCx(): TTimerCx {
 export { createTimerCx };
 
 export interface TTimerCx {
-	$timer: ReturnType<typeof createState<specta.Timer | null>>;
+	$timer: ReturnType<typeof createState<specta.TimerDto | null>>;
 	$startTime: ReturnType<typeof createState<Date | null>>;
 
 	getEndTime: () => Date | null;

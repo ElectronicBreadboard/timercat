@@ -1,6 +1,5 @@
 use super::timer::TimerStatus;
-use super::types::{TimerCompleteEvent, TimerState, TimerUpdatedEvent};
-use crate::features::session::session::Phase;
+use super::types::{TimerDto, TimerState, TimerUpdatedEvent};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
@@ -87,18 +86,11 @@ fn run_timer_loop(app: AppHandle, stop_flag: Arc<AtomicBool>) {
         // Count down or count overtime
         if timer.remaining_seconds > 0 {
             timer.remaining_seconds -= 1;
-
-            // Emit complete event when hitting zero
-            if timer.remaining_seconds == 0 {
-                let phase: Phase = timer.phase;
-                let _ = TimerCompleteEvent(phase).emit(&app);
-            }
         } else {
-            // Count overtime after completion
             timer.overtime_seconds += 1;
         }
 
-        let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
+        let _ = TimerUpdatedEvent(TimerDto::from(&*timer)).emit(&app);
 
         // Update tray with remaining time
         #[cfg(target_os = "macos")]

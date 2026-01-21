@@ -4,6 +4,7 @@ import { TriangleLeftIcon, TriangleRightIcon } from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
+import { useOnSessionComplete } from '@/hooks';
 import { cn, formatDuration, toTuple } from '@/lib';
 
 export const StatsCard: React.FC<TStatsCardProps> = (props) => {
@@ -47,22 +48,7 @@ export const StatsCard: React.FC<TStatsCardProps> = (props) => {
 		fetchFocusSeconds();
 	}, [fetchFocusSeconds]);
 
-	React.useEffect(() => {
-		let lastPhase: string | null = null;
-
-		const unlistenPromise = specta.events.timerUpdatedEvent.listen((event) => {
-			const currentPhase = event.payload.phase;
-			// Refresh when phase changes (session completed)
-			if (lastPhase != null && lastPhase !== currentPhase) {
-				fetchFocusSeconds();
-			}
-			lastPhase = currentPhase;
-		});
-
-		return () => {
-			unlistenPromise.then((unlisten) => unlisten());
-		};
-	}, [fetchFocusSeconds]);
+	useOnSessionComplete(React.useCallback(() => fetchFocusSeconds(), [fetchFocusSeconds]));
 
 	// MARK: - UI
 

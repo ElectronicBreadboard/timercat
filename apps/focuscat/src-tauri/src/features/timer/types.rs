@@ -1,4 +1,4 @@
-use super::timer::{Timer, TimerConfig};
+use super::timer::{Timer, TimerConfig, TimerStatus, WorkSessionStats};
 use crate::features::session::session::Phase;
 use crate::features::settings::types::AppSettingsState;
 use serde::Serialize;
@@ -6,15 +6,39 @@ use std::ops::Deref;
 use std::sync::Mutex;
 use tauri::{App, Manager};
 
+#[derive(Debug, Clone, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct TimerDto {
+    pub status: TimerStatus,
+    pub phase: Phase,
+    pub total_seconds: u32,
+    pub remaining_seconds: u32,
+    pub overtime_seconds: u32,
+    pub sessions_completed: u32,
+    pub last_work_session: Option<WorkSessionStats>,
+    pub speed: u32,
+}
+
+impl From<&Timer> for TimerDto {
+    fn from(timer: &Timer) -> Self {
+        Self {
+            status: timer.status,
+            phase: timer.phase,
+            total_seconds: timer.total_seconds,
+            remaining_seconds: timer.remaining_seconds,
+            overtime_seconds: timer.overtime_seconds,
+            sessions_completed: timer.sessions_completed,
+            last_work_session: timer.last_work_session.clone(),
+            speed: timer.speed,
+        }
+    }
+}
+
 // MARK: - Events
 
 #[derive(Debug, Clone, Serialize, specta::Type, tauri_specta::Event)]
 #[serde(rename_all = "camelCase")]
-pub struct TimerUpdatedEvent(pub Timer);
-
-#[derive(Debug, Clone, Serialize, specta::Type, tauri_specta::Event)]
-#[serde(rename_all = "camelCase")]
-pub struct TimerCompleteEvent(pub Phase);
+pub struct TimerUpdatedEvent(pub TimerDto);
 
 // MARK: - State
 

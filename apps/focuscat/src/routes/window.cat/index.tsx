@@ -15,7 +15,8 @@ import {
 import { specta } from '@/environment';
 import { Cat, type TCatRef } from '@/features/cat';
 import { useSettingsCx } from '@/features/settings';
-import { useInputTap, useTimerState } from '@/hooks';
+import { useTimerCx } from '@/features/timer';
+import { useOnInputDetected } from '@/hooks';
 import { cn, formatTime } from '@/lib';
 
 export const Route = createFileRoute('/window/cat/')({
@@ -23,15 +24,16 @@ export const Route = createFileRoute('/window/cat/')({
 });
 
 function RouteComponent() {
-	const timerState = useTimerState();
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
+	const timerCx = useTimerCx();
+	const timer = useFeatureState(timerCx.$timer);
 	const catRef = React.useRef<TCatRef>(null);
 
-	const isBreak = timerState?.phase !== 'work';
-	const isOvertime = (timerState?.overtimeSeconds ?? 0) > 0;
-	const isRunning = timerState?.status === 'running';
-	const isPaused = timerState?.status === 'paused';
+	const isBreak = timer?.phase !== 'work';
+	const isOvertime = (timer?.overtimeSeconds ?? 0) > 0;
+	const isRunning = timer?.status === 'running';
+	const isPaused = timer?.status === 'paused';
 
 	// MARK: - Actions
 
@@ -56,7 +58,7 @@ function RouteComponent() {
 
 	// MARK: - Effects
 
-	useInputTap(catRef);
+	useOnInputDetected(React.useCallback(() => catRef.current?.tap(), []));
 
 	// MARK: - UI
 
@@ -104,8 +106,8 @@ function RouteComponent() {
 						)}
 					>
 						{isOvertime
-							? `+${formatTime(timerState?.overtimeSeconds ?? 0)}`
-							: formatTime(timerState?.remainingSeconds ?? 0)}
+							? `+${formatTime(timer?.overtimeSeconds ?? 0)}`
+							: formatTime(timer?.remainingSeconds ?? 0)}
 					</span>
 
 					{/* Hover Controls (overlay) */}

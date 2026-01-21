@@ -2,8 +2,7 @@ use crate::features::session::session::{Phase, Session};
 use crate::features::settings::types::AppSettings;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
 pub struct Timer {
     pub status: TimerStatus,
     pub phase: Phase,
@@ -13,9 +12,6 @@ pub struct Timer {
     pub sessions_completed: u32,
     pub last_work_session: Option<WorkSessionStats>,
     pub speed: u32,
-
-    #[serde(skip)]
-    #[specta(skip)]
     pub session: Option<Session>,
 }
 

@@ -1,9 +1,10 @@
 use super::runner::TimerRunner;
 use super::timer::{Timer, TimerConfig, TimerStatus, WorkSessionStats};
-use super::types::{TimerState, TimerUpdatedEvent};
+use super::types::{TimerDto, TimerState, TimerUpdatedEvent};
 use crate::environment::db::DatabaseState;
 use crate::features::session::repository::SessionRepository;
 use crate::features::session::session::{Phase, SessionEvent, SessionStatus};
+use crate::features::session::types::{SessionCompletedEvent, SessionSummaryDto};
 use crate::features::settings::types::AppSettingsState;
 use chrono::Utc;
 use std::sync::Mutex;
@@ -17,8 +18,8 @@ use crate::app::tray::TrayState;
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_timer(state: State<'_, TimerState>) -> Timer {
-    return state.lock().unwrap().clone();
+pub fn get_timer(state: State<'_, TimerState>) -> TimerDto {
+    return TimerDto::from(&*state.lock().unwrap());
 }
 
 #[tauri::command]
@@ -39,7 +40,11 @@ pub async fn start_timer(
             return Err("Timer is not idle".to_string());
         }
         let settings = app_settings.lock().unwrap();
-        (timer.phase, timer.total_seconds, TimerConfig::from(&*settings))
+        (
+            timer.phase,
+            timer.total_seconds,
+            TimerConfig::from(&*settings),
+        )
     };
 
     // DB operation
@@ -56,7 +61,7 @@ pub async fn start_timer(
         timer.clone()
     };
 
-    let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
+    let _ = TimerUpdatedEvent(TimerDto::from(&timer)).emit(&app);
 
     #[cfg(target_os = "macos")]
     TrayState::set_timer(&app, Some(timer.remaining_seconds));
@@ -102,7 +107,7 @@ pub async fn pause_timer(
         timer.clone()
     };
 
-    let _ = TimerUpdatedEvent(timer).emit(&app);
+    let _ = TimerUpdatedEvent(TimerDto::from(&timer)).emit(&app);
     stop_runner(&runner);
     return Ok(());
 }
@@ -144,7 +149,7 @@ pub async fn resume_timer(
         timer.clone()
     };
 
-    let _ = TimerUpdatedEvent(timer).emit(&app);
+    let _ = TimerUpdatedEvent(TimerDto::from(&timer)).emit(&app);
     start_runner(&app, &runner);
     return Ok(());
 }
@@ -165,9 +170,10 @@ pub async fn reset_timer(
         let timer = state.lock().unwrap();
         let settings = app_settings.lock().unwrap();
         let config = TimerConfig::from(&*settings);
-        let session_data = timer.session.as_ref().map(|s| {
-            (s.id, s.compute_actual_seconds(now))
-        });
+        let session_data = timer
+            .session
+            .as_ref()
+            .map(|s| (s.id, s.compute_actual_seconds(now)));
         (config, session_data)
     };
 
@@ -191,7 +197,7 @@ pub async fn reset_timer(
         timer.clone()
     };
 
-    let _ = TimerUpdatedEvent(timer).emit(&app);
+    let _ = TimerUpdatedEvent(TimerDto::from(&timer)).emit(&app);
 
     #[cfg(target_os = "macos")]
     TrayState::set_timer(&app, None);
@@ -212,22 +218,41 @@ pub async fn skip_timer(
     let now = Utc::now().timestamp_millis();
 
     // Extract data
-    let (config, is_work_phase, session_data, sessions_completed) = {
+    let (config, phase, session_data, sessions_completed) = {
         let timer = state.lock().unwrap();
         let settings = app_settings.lock().unwrap();
         let config = TimerConfig::from(&*settings);
-        let is_work_phase = timer.phase == Phase::Work;
+        let phase = timer.phase;
         let session_data = timer.session.as_ref().map(|s| {
-            (s.id, s.planned_seconds, s.compute_actual_seconds(now), s.compute_extended_seconds())
+            (
+                s.id,
+                s.planned_seconds,
+                s.compute_actual_seconds(now),
+                s.compute_extended_seconds(),
+                s.started_at,
+            )
         });
-        (config, is_work_phase, session_data, timer.sessions_completed)
+        (config, phase, session_data, timer.sessions_completed)
     };
+    let is_work_phase = phase == Phase::Work;
 
     // Complete current session
-    let work_stats = if let Some((id, planned, actual, extended)) = session_data {
+    let work_stats = if let Some((id, planned, actual, extended, started_at)) = session_data {
         SessionRepository::complete(&db.pool, id, now, actual)
             .await
             .map_err(db_err)?;
+
+        // Emit session completed event
+        let _ = SessionCompletedEvent(SessionSummaryDto {
+            id: id as i32,
+            phase,
+            status: SessionStatus::Completed,
+            planned_seconds: planned,
+            actual_seconds: Some(actual),
+            started_at: started_at as f64,
+            ended_at: Some(now as f64),
+        })
+        .emit(&app);
 
         if is_work_phase {
             // Overtime = time worked beyond planned (base + extensions)
@@ -247,7 +272,11 @@ pub async fn skip_timer(
     };
 
     // Determine next phase
-    let new_sessions_completed = if is_work_phase { sessions_completed + 1 } else { sessions_completed };
+    let new_sessions_completed = if is_work_phase {
+        sessions_completed + 1
+    } else {
+        sessions_completed
+    };
     let next_phase = if is_work_phase {
         if new_sessions_completed % config.sessions_before_long_break == 0 {
             Phase::LongBreak
@@ -289,7 +318,7 @@ pub async fn skip_timer(
         timer.clone()
     };
 
-    let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
+    let _ = TimerUpdatedEvent(TimerDto::from(&timer)).emit(&app);
 
     #[cfg(target_os = "macos")]
     TrayState::set_timer(&app, Some(timer.remaining_seconds));
@@ -316,7 +345,10 @@ pub async fn set_timer_duration(
     };
 
     // DB operation (only if active)
-    let event = SessionEvent::Extended { timestamp: now, seconds };
+    let event = SessionEvent::Extended {
+        timestamp: now,
+        seconds,
+    };
     if !is_idle {
         if let Some(id) = session_id {
             SessionRepository::insert_event(&db.pool, id, &event)
@@ -341,7 +373,7 @@ pub async fn set_timer_duration(
         timer.clone()
     };
 
-    let _ = TimerUpdatedEvent(timer.clone()).emit(&app);
+    let _ = TimerUpdatedEvent(TimerDto::from(&timer)).emit(&app);
 
     #[cfg(target_os = "macos")]
     if timer.status != TimerStatus::Idle {

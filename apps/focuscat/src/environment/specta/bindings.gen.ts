@@ -97,7 +97,7 @@ async openDataDirectory() : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async getTimer() : Promise<Timer> {
+async getTimer() : Promise<TimerDto> {
     return await TAURI_INVOKE("get_timer");
 },
 async startTimer() : Promise<Result<null, string>> {
@@ -215,12 +215,12 @@ async openInputMonitoringSettings() : Promise<void> {
 export const events = __makeEvents__<{
 appSettingsChangedEvent: AppSettingsChangedEvent,
 inputDetectedEvent: InputDetectedEvent,
-timerCompleteEvent: TimerCompleteEvent,
+sessionCompletedEvent: SessionCompletedEvent,
 timerUpdatedEvent: TimerUpdatedEvent
 }>({
 appSettingsChangedEvent: "app-settings-changed-event",
 inputDetectedEvent: "input-detected-event",
-timerCompleteEvent: "timer-complete-event",
+sessionCompletedEvent: "session-completed-event",
 timerUpdatedEvent: "timer-updated-event"
 })
 
@@ -264,16 +264,11 @@ export type InputDetectedEvent = InputType
 export type InputType = "keyboard" | "mouse"
 export type Phase = "work" | "shortBreak" | "longBreak"
 /**
- * Detailed DTO with events and computed stats.
+ * Event emitted when a session is completed.
  */
+export type SessionCompletedEvent = SessionSummaryDto
 export type SessionDetailDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; startedAt: number; endedAt: number | null; events: SessionEventDto[]; stats: SessionStatsDto }
-/**
- * Event data for events with extra fields.
- */
 export type SessionEventDataDto = { seconds: number | null }
-/**
- * Event DTO for frontend.
- */
 export type SessionEventDto = { eventType: string; timestamp: number; 
 /**
  * Extra data (e.g., seconds for Extended events)
@@ -284,14 +279,10 @@ data: SessionEventDataDto | null }
  */
 export type SessionStatsDto = { pausedSeconds: number; extendedSeconds: number }
 export type SessionStatus = "active" | "completed" | "cancelled"
-/**
- * Summary DTO for session list views.
- */
 export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; startedAt: number; endedAt: number | null }
 export type Stage = "dev" | "prod"
 export type Theme = "light" | "dark" | "auto"
-export type Timer = { status: TimerStatus; phase: Phase; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; lastWorkSession: WorkSessionStats | null; speed: number }
-export type TimerCompleteEvent = Phase
+export type TimerDto = { status: TimerStatus; phase: Phase; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; lastWorkSession: WorkSessionStats | null; speed: number }
 export type TimerSettings = { 
 /**
  * Work duration in minutes
@@ -310,7 +301,7 @@ longBreakMinutes: number;
  */
 sessionsBeforeLongBreak: number }
 export type TimerStatus = "idle" | "running" | "paused"
-export type TimerUpdatedEvent = Timer
+export type TimerUpdatedEvent = TimerDto
 export type WindowActivityDto = { appBundleId: string | null; appName: string | null; appIcon: string | null; appColor: string | null; windowTitle: string | null; browserUrl: string | null; startedAt: number; endedAt: number }
 export type WorkSessionStats = { baseSeconds: number; extendedSeconds: number; overtimeSeconds: number; completedSeconds: number }
 

@@ -1,7 +1,6 @@
 use super::session::{Phase, SessionStatus};
 use serde::{Deserialize, Serialize};
 
-/// Summary DTO for session list views.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionSummaryDto {
@@ -14,7 +13,6 @@ pub struct SessionSummaryDto {
     pub ended_at: Option<f64>,
 }
 
-/// Detailed DTO with events and computed stats.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionDetailDto {
@@ -29,7 +27,6 @@ pub struct SessionDetailDto {
     pub stats: SessionStatsDto,
 }
 
-/// Event DTO for frontend.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionEventDto {
@@ -39,7 +36,6 @@ pub struct SessionEventDto {
     pub data: Option<SessionEventDataDto>,
 }
 
-/// Event data for events with extra fields.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionEventDataDto {
@@ -53,3 +49,10 @@ pub struct SessionStatsDto {
     pub paused_seconds: u32,
     pub extended_seconds: u32,
 }
+
+// MARK: - Events
+
+/// Event emitted when a session is completed.
+#[derive(Debug, Clone, Serialize, specta::Type, tauri_specta::Event)]
+#[serde(rename_all = "camelCase")]
+pub struct SessionCompletedEvent(pub SessionSummaryDto);
