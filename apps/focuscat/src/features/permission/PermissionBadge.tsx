@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertIcon, Badge, CheckIcon, HelpIcon } from '@/components';
+import { AlertIcon, Badge, CheckCircleIcon, HelpIcon } from '@/components';
 
 export const PermissionBadge: React.FC<TPermissionBadgeProps> = (props) => {
 	const { status } = props;
@@ -7,7 +7,7 @@ export const PermissionBadge: React.FC<TPermissionBadgeProps> = (props) => {
 	if (status === true) {
 		return (
 			<Badge variant="success">
-				<CheckIcon className="size-3" />
+				<CheckCircleIcon className="size-3" />
 				Granted
 			</Badge>
 		);

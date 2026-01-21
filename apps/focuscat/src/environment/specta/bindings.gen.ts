@@ -140,6 +140,18 @@ async skipTimer() : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+/**
+ * Finish the current session and reset timer.
+ * Like reset, but marks session as completed instead of cancelled.
+ */
+async finishTimer() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("finish_timer") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async setTimerDuration(minutes: number) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("set_timer_duration", { minutes }) };

@@ -136,13 +136,15 @@ impl WindowActivityRepository {
         return Ok(sqlx::Row::get(&result, 0));
     }
 
-    /// Get window activities within a time range.
+    /// Get window activities that overlap with a time range.
     pub async fn get(
         pool: &SqlitePool,
         input: &GetWindowActivitiesInput,
     ) -> Result<Vec<WindowActivityRow>, sqlx::Error> {
         let limit = input.limit.unwrap_or(1000);
 
+        // Fetch activities that overlap with the time range:
+        // Activity started before range ends AND activity ended after range starts
         let rows = sqlx::query(
             r#"
             SELECT
@@ -156,13 +158,13 @@ impl WindowActivityRepository {
                 aw.ended_at
             FROM activity_window aw
             JOIN app a ON a.id = aw.app_id
-            WHERE aw.started_at >= ? AND aw.started_at < ?
+            WHERE aw.started_at < ? AND aw.ended_at > ?
             ORDER BY aw.started_at DESC
             LIMIT ?
             "#,
         )
-        .bind(input.started_after)
         .bind(input.started_before)
+        .bind(input.started_after)
         .bind(limit)
         .fetch_all(pool)
         .await?;

@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
+import { unwrapOr } from 'tuple-result';
 import { BriefcaseIcon, CoffeeIcon } from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
@@ -21,21 +22,16 @@ export const Route = createFileRoute('/window/history/$sessionId/')({
 		const sessionStart = session.startedAt;
 		const sessionEnd = session.endedAt ?? Date.now();
 
-		const [areActivitiesOk, , rawActivities] = toTuple(
-			await specta.commands.getWindowActivities({
-				startedAfter: sessionStart,
-				startedBefore: sessionEnd,
-				limit: null
-			})
+		const activities = unwrapOr(
+			toTuple(
+				await specta.commands.getWindowActivities({
+					startedAfter: sessionStart,
+					startedBefore: sessionEnd,
+					limit: null
+				})
+			),
+			[]
 		);
-
-		let activities: specta.WindowActivityDto[] = [];
-		if (areActivitiesOk && rawActivities != null) {
-			// Filter to include activities that overlap with session timeframe
-			activities = rawActivities.filter(
-				(a) => a.startedAt < sessionEnd && (a.endedAt == null || a.endedAt > sessionStart)
-			);
-		}
 
 		return { session, activities };
 	},
@@ -101,12 +97,11 @@ function RouteComponent() {
 					)}
 					<h2 className="text-base-900 text-lg font-medium">{sessionInfo.name}</h2>
 					<span
-						className={cn(
-							'rounded px-1.5 py-0.5 text-xs',
-							sessionInfo.status === 'completed'
-								? 'bg-green-100 text-green-700'
-								: 'bg-base-100 text-base-500'
-						)}
+						className={cn('rounded px-1.5 py-0.5 text-xs', {
+							'bg-green-100 text-green-700': sessionInfo.status === 'completed',
+							'bg-blue-100 text-blue-700': sessionInfo.status === 'active',
+							'bg-base-100 text-base-500': sessionInfo.status === 'cancelled'
+						})}
 					>
 						{sessionInfo.status}
 					</span>

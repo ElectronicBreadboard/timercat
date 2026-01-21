@@ -206,6 +206,76 @@ pub async fn reset_timer(
     return Ok(());
 }
 
+/// Finish the current session and reset timer.
+/// Like reset, but marks session as completed instead of cancelled.
+#[tauri::command]
+#[specta::specta]
+pub async fn finish_timer(
+    app: AppHandle,
+    state: State<'_, TimerState>,
+    app_settings: State<'_, AppSettingsState>,
+    runner: State<'_, Mutex<Option<TimerRunner>>>,
+    db: State<'_, DatabaseState>,
+) -> Result<(), String> {
+    let now = Utc::now().timestamp_millis();
+
+    // Extract data
+    let (config, session_data) = {
+        let timer = state.lock().unwrap();
+        let settings = app_settings.lock().unwrap();
+        let config = TimerConfig::from(&*settings);
+        let session_data = timer.session.as_ref().map(|s| {
+            (
+                s.id,
+                s.phase,
+                s.planned_seconds,
+                s.compute_actual_seconds(now),
+                s.started_at,
+            )
+        });
+        (config, session_data)
+    };
+
+    // Complete session in DB
+    if let Some((id, phase, planned, actual, started_at)) = session_data {
+        SessionRepository::complete(&db.pool, id, now, actual)
+            .await
+            .map_err(db_err)?;
+
+        let _ = SessionCompletedEvent(SessionSummaryDto {
+            id: id as i32,
+            phase,
+            status: SessionStatus::Completed,
+            planned_seconds: planned,
+            actual_seconds: Some(actual),
+            started_at: started_at as f64,
+            ended_at: Some(now as f64),
+        })
+        .emit(&app);
+    }
+
+    // Reset timer to idle
+    let timer = {
+        let mut timer = state.lock().unwrap();
+        timer.session = None;
+        timer.status = TimerStatus::Idle;
+        timer.phase = Phase::Work;
+        timer.total_seconds = config.work_duration;
+        timer.remaining_seconds = config.work_duration;
+        timer.overtime_seconds = 0;
+        timer.sessions_completed = 0;
+        timer.clone()
+    };
+
+    let _ = TimerUpdatedEvent(TimerDto::from(&timer)).emit(&app);
+
+    #[cfg(target_os = "macos")]
+    TrayState::set_timer(&app, None);
+
+    stop_runner(&runner);
+    return Ok(());
+}
+
 #[tauri::command]
 #[specta::specta]
 pub async fn skip_timer(
