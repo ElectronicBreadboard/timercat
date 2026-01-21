@@ -6,15 +6,13 @@ import { SessionWheel } from './SessionWheel';
 import { TimeWheel } from './TimeWheel';
 
 export const TimerDial: React.FC<TTimerDialProps> = (props) => {
-	const { cx, sessionsBeforeLongBreak } = props;
+	const { cx, previewMinutes, sessionsBeforeLongBreak, onPreviewChange } = props;
+
+	const wasRunningRef = React.useRef(false);
 
 	const { value, smooth } = useCombinedCompute(
-		[cx.$status, cx.$remainingSeconds, cx.$previewMinutes] as const,
-		([
-			{ value: status = 'idle' },
-			{ value: remainingSeconds = 0 },
-			{ value: previewMinutes = null }
-		]) => {
+		[cx.$status, cx.$remainingSeconds] as const,
+		([{ value: status = 'idle' }, { value: remainingSeconds = 0 }]) => {
 			const isActive = status !== 'idle';
 			const isPreviewing = previewMinutes != null;
 
@@ -26,7 +24,7 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 				smooth: isActive && !isPreviewing
 			};
 		},
-		[],
+		[previewMinutes],
 		{ isEqual: (a, b) => a.value === b.value && a.smooth === b.smooth }
 	);
 	const sessionProgress = useCombinedCompute(
@@ -50,6 +48,33 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 		}
 	);
 
+	// MARK: - Actions
+
+	const handleDragStart = React.useCallback(() => {
+		wasRunningRef.current = cx.$status.get() === 'running';
+		if (wasRunningRef.current) {
+			cx.pause();
+		}
+	}, [cx]);
+
+	const handleDragMove = React.useCallback(
+		(minutes: number) => {
+			onPreviewChange?.(minutes);
+		},
+		[onPreviewChange]
+	);
+
+	const handleDragEnd = React.useCallback(
+		async (minutes: number) => {
+			onPreviewChange?.(null);
+			await cx.setDuration(minutes);
+			if (wasRunningRef.current) {
+				cx.resume();
+			}
+		},
+		[cx, onPreviewChange]
+	);
+
 	// MARK: - UI
 
 	return (
@@ -63,9 +88,9 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 				<TimeWheel
 					value={value}
 					smooth={smooth}
-					onDragStart={() => cx.startPreview()}
-					onDragMove={(m) => cx.updatePreview(m)}
-					onDragEnd={(m) => cx.commitPreview(m)}
+					onDragStart={handleDragStart}
+					onDragMove={handleDragMove}
+					onDragEnd={handleDragEnd}
 				/>
 
 				{/* Edge fades */}
@@ -110,5 +135,7 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 
 interface TTimerDialProps {
 	cx: TimerCx;
+	previewMinutes: number | null;
 	sessionsBeforeLongBreak: number;
+	onPreviewChange?: (minutes: number | null) => void;
 }

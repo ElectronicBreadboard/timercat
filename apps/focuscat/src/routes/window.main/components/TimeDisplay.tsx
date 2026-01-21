@@ -4,21 +4,14 @@ import { type TimerCx } from '@/features/timer';
 import { cn, formatTime, formatTimeOfDay } from '@/lib';
 
 export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
-	const { cx, className } = props;
+	const { cx, previewMinutes, className } = props;
 
 	const { isOvertime, displaySeconds, displayStartTime, displayEndTime } = useCombinedCompute(
-		[
-			cx.$status,
-			cx.$remainingSeconds,
-			cx.$overtimeSeconds,
-			cx.$previewMinutes,
-			cx.$startTime
-		] as const,
+		[cx.$status, cx.$remainingSeconds, cx.$overtimeSeconds, cx.$startTime] as const,
 		([
 			{ value: status = 'idle' },
 			{ value: remainingSeconds = 0 },
 			{ value: overtimeSeconds = 0 },
-			{ value: previewMinutes = null },
 			{ value: startTime = null }
 		]) => {
 			const isRunning = status === 'running';
@@ -34,7 +27,7 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 
 			return { isOvertime, displaySeconds, displayStartTime, displayEndTime };
 		},
-		[],
+		[previewMinutes],
 		{
 			isEqual: (a, b) =>
 				a.isOvertime === b.isOvertime &&
@@ -86,5 +79,6 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 
 interface TTimeDisplayProps {
 	cx: TimerCx;
+	previewMinutes: number | null;
 	className?: string;
 }

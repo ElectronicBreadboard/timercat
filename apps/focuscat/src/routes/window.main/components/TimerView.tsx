@@ -15,17 +15,19 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	const settings = useFeatureState(settingsCx.$appSettings);
 	const speed = useFeatureState(timerCx.$speed);
 
+	const [previewMinutes, setPreviewMinutes] = React.useState<number | null>(null);
 	const lastPreviewMinute = React.useRef<number | null>(null);
 	const lastCountdownSecond = React.useRef<number | null>(null);
 
-	// MARK: - Effects
+	// MARK: - Actions
 
-	// Preview tick handler - fires on minute boundaries during dial drag
-	useListener(
-		timerCx.$previewMinutes,
-		({ value: previewMinutes }) => {
-			if (previewMinutes != null) {
-				const minute = Math.round(previewMinutes);
+	const handlePreviewChange = React.useCallback(
+		(minutes: number | null) => {
+			setPreviewMinutes(minutes);
+
+			// Tick on minute boundaries during preview
+			if (minutes != null) {
+				const minute = Math.round(minutes);
 				if (lastPreviewMinute.current != null && lastPreviewMinute.current !== minute) {
 					onTick?.(true);
 				}
@@ -38,11 +40,12 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 		[onTick]
 	);
 
+	// MARK: - Effects
+
 	// Countdown tick handler - fires every second when running
 	useListener(
 		timerCx.$remainingSeconds,
 		({ value: remainingSeconds }) => {
-			const previewMinutes = timerCx.$previewMinutes.get();
 			const status = timerCx.$status.get();
 
 			if (previewMinutes == null && status === 'running') {
@@ -57,16 +60,21 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 				lastCountdownSecond.current = null;
 			}
 		},
-		[onTick]
+		[onTick, previewMinutes]
 	);
 
 	// MARK: - UI
 
 	return (
 		<div className={cn('flex flex-col items-center pb-4', className)} style={style}>
-			<TimerDial cx={timerCx} sessionsBeforeLongBreak={settings.timer.sessionsBeforeLongBreak} />
+			<TimerDial
+				cx={timerCx}
+				previewMinutes={previewMinutes}
+				sessionsBeforeLongBreak={settings.timer.sessionsBeforeLongBreak}
+				onPreviewChange={handlePreviewChange}
+			/>
 
-			<TimeDisplay cx={timerCx} className="mt-4" />
+			<TimeDisplay cx={timerCx} previewMinutes={previewMinutes} className="mt-4" />
 
 			{settings.debug.enabled && speed > 1 && (
 				<Badge variant="warning" className="mt-1 font-mono">

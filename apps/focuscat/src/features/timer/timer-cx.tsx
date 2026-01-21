@@ -15,14 +15,7 @@ export class TimerCx {
 	public readonly $sessionsCompleted = createState(0);
 	public readonly $speed = createState(1);
 	public readonly $lastWorkSession = createState<specta.WorkSessionStats | null>(null);
-
-	private _wasRunningBeforePreview = false;
-	public readonly $previewMinutes = createState<number | null>(null);
 	public readonly $startTime = createState<Date | null>(null);
-
-	public get isRunning(): boolean {
-		return this.$status.get() === 'running';
-	}
 
 	constructor() {
 		this.init();
@@ -121,29 +114,11 @@ export class TimerCx {
 		}
 	}
 
-	// Preview (time adjustment via dial drag)
-
-	public startPreview(): void {
-		this._wasRunningBeforePreview = this.isRunning;
-		if (this._wasRunningBeforePreview) {
-			specta.commands.pauseTimer();
+	public async setDuration(minutes: number): Promise<void> {
+		const [ok, , err] = toTuple(await specta.commands.setTimerDuration(minutes));
+		if (!ok) {
+			console.error('Failed to set timer duration:', err);
 		}
-	}
-
-	public updatePreview(minutes: number): void {
-		this.$previewMinutes.set(minutes);
-	}
-
-	public async commitPreview(minutes: number): Promise<void> {
-		this.$previewMinutes.set(null);
-		await specta.commands.setTimerDuration(minutes);
-		if (this._wasRunningBeforePreview) {
-			const [ok] = toTuple(await specta.commands.resumeTimer());
-			if (ok) {
-				this.$startTime.set(new Date());
-			}
-		}
-		this._wasRunningBeforePreview = false;
 	}
 }
 
