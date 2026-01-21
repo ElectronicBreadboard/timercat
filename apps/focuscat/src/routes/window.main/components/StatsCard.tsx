@@ -21,7 +21,7 @@ export const StatsCard: React.FC<TStatsCardProps> = (props) => {
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 	const timerCx = useTimerCx();
-	const timer = useFeatureState(timerCx.$timer);
+	const lastWorkSession = useFeatureState(timerCx.$lastWorkSession);
 
 	const currentView = views[viewIndex] ?? 'focus-goal';
 
@@ -85,7 +85,7 @@ export const StatsCard: React.FC<TStatsCardProps> = (props) => {
 				/>
 			)}
 			{currentView === 'last-session' && (
-				<LastSessionView lastSession={timer?.lastWorkSession} debug={debug} />
+				<LastSessionView lastSession={lastWorkSession} debug={debug} />
 			)}
 		</div>
 	);
@@ -140,7 +140,9 @@ const LastSessionView: React.FC<TLastSessionViewProps> = (props) => {
 				<div className="text-base-400 flex flex-wrap gap-x-2 text-[10px]">
 					<span>Base: {formatDuration(baseSeconds)}</span>
 					{extendedSeconds > 0 && <span>Ext: +{formatDuration(extendedSeconds)}</span>}
-					{overtimeSeconds > 0 && <span className="text-warning">OT: +{formatDuration(overtimeSeconds)}</span>}
+					{overtimeSeconds > 0 && (
+						<span className="text-warning">OT: +{formatDuration(overtimeSeconds)}</span>
+					)}
 				</div>
 			) : (
 				<div className="text-base-400 text-[10px]">

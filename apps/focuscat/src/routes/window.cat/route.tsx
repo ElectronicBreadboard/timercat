@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
+import { ThemeProvider } from '@/components';
 import { SettingsCxProvider } from '@/features/settings';
-import { ThemeCxProvider } from '@/features/theme';
 import { TimerCxProvider } from '@/features/timer';
 
 export const Route = createFileRoute('/window/cat')({
@@ -10,11 +10,11 @@ export const Route = createFileRoute('/window/cat')({
 function LayoutComponent() {
 	return (
 		<SettingsCxProvider>
-			<ThemeCxProvider>
-				<TimerCxProvider>
+			<TimerCxProvider>
+				<ThemeProvider>
 					<Outlet />
-				</TimerCxProvider>
-			</ThemeCxProvider>
+				</ThemeProvider>
+			</TimerCxProvider>
 		</SettingsCxProvider>
 	);
 }

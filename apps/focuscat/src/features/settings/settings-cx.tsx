@@ -3,89 +3,72 @@ import React from 'react';
 import { specta } from '@/environment';
 import { useMemoCleanup } from '@/hooks';
 
-// MARK: - Context
+export class SettingsCx {
+	private _unlisten?: () => void;
 
-const SettingsCx = React.createContext<TSettingsCx | null>(null);
+	public readonly $appSettings = createState<specta.AppSettings>({
+		appearance: {
+			theme: 'auto'
+		},
+		debug: {
+			enabled: false,
+			cat: false,
+			timerSpeed: 1
+		},
+		timer: {
+			workDurationMinutes: 25,
+			shortBreakMinutes: 5,
+			longBreakMinutes: 15,
+			sessionsBeforeLongBreak: 4
+		},
+		focusGoal: {
+			dailyGoalMinutes: 120
+		},
+		activity: {
+			enabled: true,
+			trackWindows: true,
+			trackBrowser: false
+		}
+	});
+
+	constructor() {
+		this.init();
+	}
+
+	private async init(): Promise<void> {
+		this.$appSettings.set(await specta.commands.getSettings());
+		this._unlisten = await specta.events.appSettingsChangedEvent.listen((event) => {
+			this.$appSettings.set(event.payload);
+		});
+	}
+
+	public unmount(): void {
+		this._unlisten?.();
+	}
+
+	public async update(updates: Partial<specta.AppSettings>): Promise<void> {
+		const current = this.$appSettings.get();
+		const updated = { ...current, ...updates };
+		this.$appSettings.set(updated);
+		await specta.commands.setSettings(updated);
+	}
+}
+
+const ReactSettingsCx = React.createContext<SettingsCx | null>(null);
 
 export const SettingsCxProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 	const cx = useMemoCleanup(() => {
-		const settingsCx = createSettingsCx();
-		settingsCx.mount();
+		const settingsCx = new SettingsCx();
 		return [settingsCx, () => settingsCx.unmount()];
 	}, []);
 
-	return <SettingsCx.Provider value={cx}>{children}</SettingsCx.Provider>;
+	return <ReactSettingsCx.Provider value={cx}>{children}</ReactSettingsCx.Provider>;
 };
 
-export function useSettingsCx(): TSettingsCx {
-	const cx = React.useContext(SettingsCx);
+export function useSettingsCx(): SettingsCx {
+	const cx = React.useContext(ReactSettingsCx);
 	if (cx == null) {
 		throw new Error('useSettingsCx must be used within a SettingsCxProvider');
 	}
 	return cx;
-}
-
-// MARK: - Factory
-
-const defaultSettings: specta.AppSettings = {
-	appearance: {
-		theme: 'auto'
-	},
-	debug: {
-		enabled: false,
-		cat: false,
-		timerSpeed: 1
-	},
-	timer: {
-		workDurationMinutes: 25,
-		shortBreakMinutes: 5,
-		longBreakMinutes: 15,
-		sessionsBeforeLongBreak: 4
-	},
-	focusGoal: {
-		dailyGoalMinutes: 120
-	},
-	activity: {
-		enabled: true,
-		trackWindows: true,
-		trackBrowser: false
-	}
-};
-
-function createSettingsCx(): TSettingsCx {
-	const $appSettings = createState<specta.AppSettings>(defaultSettings);
-
-	let unlisten: (() => void) | undefined;
-
-	return {
-		$appSettings,
-
-		async mount() {
-			$appSettings.set(await specta.commands.getSettings());
-
-			unlisten = await specta.events.appSettingsChangedEvent.listen((event) => {
-				$appSettings.set(event.payload);
-			});
-		},
-
-		unmount() {
-			unlisten?.();
-		},
-
-		async update(updates: Partial<specta.AppSettings>) {
-			const current = $appSettings.get();
-			const updated = { ...current, ...updates };
-			$appSettings.set(updated);
-			await specta.commands.setSettings(updated);
-		}
-	};
-}
-
-export interface TSettingsCx {
-	$appSettings: ReturnType<typeof createState<specta.AppSettings>>;
-
-	mount: () => Promise<void>;
-	unmount: () => void;
-
-	update: (updates: Partial<specta.AppSettings>) => Promise<void>;
 }

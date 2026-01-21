@@ -1,7 +1,6 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
-import { WindowHeader } from '@/components';
+import { ThemeProvider, WindowHeader } from '@/components';
 import { SettingsCxProvider } from '@/features/settings';
-import { ThemeCxProvider } from '@/features/theme';
 import { TimerCxProvider } from '@/features/timer';
 import { Sidebar } from './components';
 
@@ -12,8 +11,8 @@ export const Route = createFileRoute('/window/settings')({
 function LayoutComponent() {
 	return (
 		<SettingsCxProvider>
-			<ThemeCxProvider>
-				<TimerCxProvider>
+			<TimerCxProvider>
+				<ThemeProvider>
 					<div className="bg-base-0 flex h-screen flex-col">
 						<WindowHeader title="Settings" />
 
@@ -27,8 +26,8 @@ function LayoutComponent() {
 							</main>
 						</div>
 					</div>
-				</TimerCxProvider>
-			</ThemeCxProvider>
+				</ThemeProvider>
+			</TimerCxProvider>
 		</SettingsCxProvider>
 	);
 }

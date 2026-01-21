@@ -1,10 +1,9 @@
 import { createFileRoute, Outlet, useRouter } from '@tanstack/react-router';
 import React from 'react';
 import { unwrapOrNull } from 'tuple-result';
-import { WindowHeader } from '@/components';
+import { ThemeProvider, WindowHeader } from '@/components';
 import { specta } from '@/environment';
 import { SettingsCxProvider } from '@/features/settings';
-import { ThemeCxProvider } from '@/features/theme';
 import { useOnSessionComplete } from '@/hooks';
 import { toTuple } from '@/lib';
 import { SessionList } from './components';
@@ -34,7 +33,7 @@ function LayoutComponent() {
 	if (sessions.length === 0) {
 		return (
 			<SettingsCxProvider>
-				<ThemeCxProvider>
+				<ThemeProvider>
 					<div className="bg-base-0 flex h-screen flex-col">
 						<WindowHeader title="History" />
 						<div className="flex flex-1 items-center justify-center">
@@ -46,14 +45,14 @@ function LayoutComponent() {
 							</div>
 						</div>
 					</div>
-				</ThemeCxProvider>
+				</ThemeProvider>
 			</SettingsCxProvider>
 		);
 	}
 
 	return (
 		<SettingsCxProvider>
-			<ThemeCxProvider>
+			<ThemeProvider>
 				<div className="bg-base-0 flex h-screen flex-col">
 					<WindowHeader title="History" />
 
@@ -67,7 +66,7 @@ function LayoutComponent() {
 						</main>
 					</div>
 				</div>
-			</ThemeCxProvider>
+			</ThemeProvider>
 		</SettingsCxProvider>
 	);
 }

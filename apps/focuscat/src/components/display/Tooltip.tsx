@@ -11,7 +11,11 @@ export const Tooltip: React.FC<TTooltipProps> = (props) => {
 		<BaseTooltip.Root>
 			<BaseTooltip.Trigger render={children} delay={delay} />
 			<BaseTooltip.Portal>
-				<BaseTooltip.Positioner side={side} sideOffset={sideOffset} collisionBoundary={boundary ?? undefined}>
+				<BaseTooltip.Positioner
+					side={side}
+					sideOffset={sideOffset}
+					collisionBoundary={boundary ?? undefined}
+				>
 					<BaseTooltip.Popup
 						className={cn(
 							'bg-base-0 text-base-900 z-50 rounded-md px-2.5 py-1.5 text-xs shadow-lg',

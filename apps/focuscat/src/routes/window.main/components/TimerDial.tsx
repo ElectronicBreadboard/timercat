@@ -1,18 +1,56 @@
+import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
 import { TriangleDownIcon, TriangleRightIcon } from '@/components';
+import { type TimerCx } from '@/features/timer';
 import { SessionWheel } from './SessionWheel';
 import { TimeWheel } from './TimeWheel';
 
 export const TimerDial: React.FC<TTimerDialProps> = (props) => {
-	const {
-		value,
-		sessionProgress,
-		sessionsBeforeLongBreak,
-		smooth = false,
-		onDragStart,
-		onDragMove,
-		onDragEnd
-	} = props;
+	const { cx, sessionsBeforeLongBreak } = props;
+
+	const { value, smooth } = useCombinedCompute(
+		[cx.$status, cx.$remainingSeconds, cx.$previewMinutes] as const,
+		([
+			{ value: status = 'idle' },
+			{ value: remainingSeconds = 0 },
+			{ value: previewMinutes = null }
+		]) => {
+			const isActive = status !== 'idle';
+			const isPreviewing = previewMinutes != null;
+
+			// Display minutes: fractional when active (smooth animation), whole when idle
+			const displayMinutes = isActive ? remainingSeconds / 60 : Math.ceil(remainingSeconds / 60);
+
+			return {
+				value: isPreviewing ? previewMinutes : displayMinutes,
+				smooth: isActive && !isPreviewing
+			};
+		},
+		[],
+		{ isEqual: (a, b) => a.value === b.value && a.smooth === b.smooth }
+	);
+	const sessionProgress = useCombinedCompute(
+		[cx.$status, cx.$phase, cx.$remainingSeconds, cx.$totalSeconds, cx.$sessionsCompleted] as const,
+		([
+			{ value: status = 'idle' },
+			{ value: phase = 'work' },
+			{ value: remainingSeconds = 0 },
+			{ value: totalSeconds = 0 },
+			{ value: sessionsCompleted = 0 }
+		]) => {
+			if (status === 'idle') {
+				return 0;
+			}
+
+			// Session progress: each session spans 0→1, split into work (0→0.5) and break (0.5→1.0)
+			const phaseProgress = totalSeconds > 0 ? (totalSeconds - remainingSeconds) / totalSeconds : 0;
+			return phase === 'work'
+				? sessionsCompleted + phaseProgress * 0.5
+				: sessionsCompleted - 0.5 + phaseProgress * 0.5;
+		}
+	);
+
+	// MARK: - UI
 
 	return (
 		<div className="relative flex w-full items-center">
@@ -25,9 +63,9 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 				<TimeWheel
 					value={value}
 					smooth={smooth}
-					onDragStart={onDragStart}
-					onDragMove={onDragMove}
-					onDragEnd={onDragEnd}
+					onDragStart={() => cx.startPreview()}
+					onDragMove={(m) => cx.updatePreview(m)}
+					onDragEnd={(m) => cx.commitPreview(m)}
 				/>
 
 				{/* Edge fades */}
@@ -71,11 +109,6 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 };
 
 interface TTimerDialProps {
-	value: number;
-	sessionProgress: number;
+	cx: TimerCx;
 	sessionsBeforeLongBreak: number;
-	smooth?: boolean;
-	onDragStart?: () => void;
-	onDragMove?: (minutes: number) => void;
-	onDragEnd?: (minutes: number) => void;
 }

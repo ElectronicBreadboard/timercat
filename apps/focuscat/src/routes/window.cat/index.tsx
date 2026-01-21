@@ -1,7 +1,7 @@
 import { Button } from '@base-ui/react/button';
 import { createFileRoute } from '@tanstack/react-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { useFeatureState } from 'feature-react/state';
+import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
 import {
 	BriefcaseIcon,
@@ -27,13 +27,36 @@ function RouteComponent() {
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 	const timerCx = useTimerCx();
-	const timer = useFeatureState(timerCx.$timer);
 	const catRef = React.useRef<TCatRef>(null);
 
-	const isBreak = timer?.phase !== 'work';
-	const isOvertime = (timer?.overtimeSeconds ?? 0) > 0;
-	const isRunning = timer?.status === 'running';
-	const isPaused = timer?.status === 'paused';
+	const { isBreak, isOvertime, isRunning, isPaused, displayTime } = useCombinedCompute(
+		[timerCx.$status, timerCx.$phase, timerCx.$remainingSeconds, timerCx.$overtimeSeconds] as const,
+		([
+			{ value: status = 'idle' },
+			{ value: phase = 'work' },
+			{ value: remainingSeconds = 0 },
+			{ value: overtimeSeconds = 0 }
+		]) => {
+			const isOvertime = overtimeSeconds > 0;
+
+			return {
+				isBreak: phase !== 'work',
+				isOvertime,
+				isRunning: status === 'running',
+				isPaused: status === 'paused',
+				displayTime: isOvertime ? `+${formatTime(overtimeSeconds)}` : formatTime(remainingSeconds)
+			};
+		},
+		[],
+		{
+			isEqual: (a, b) =>
+				a.isBreak === b.isBreak &&
+				a.isOvertime === b.isOvertime &&
+				a.isRunning === b.isRunning &&
+				a.isPaused === b.isPaused &&
+				a.displayTime === b.displayTime
+		}
+	);
 
 	// MARK: - Actions
 
@@ -105,9 +128,7 @@ function RouteComponent() {
 							isOvertime ? 'text-warning' : isRunning ? 'text-base-950' : 'text-base-400'
 						)}
 					>
-						{isOvertime
-							? `+${formatTime(timer?.overtimeSeconds ?? 0)}`
-							: formatTime(timer?.remainingSeconds ?? 0)}
+						{displayTime}
 					</span>
 
 					{/* Hover Controls (overlay) */}

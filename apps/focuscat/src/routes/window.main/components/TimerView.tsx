@@ -1,4 +1,4 @@
-import { useFeatureState } from 'feature-react/state';
+import { useFeatureState, useListener } from 'feature-react/state';
 import React from 'react';
 import { Badge } from '@/components';
 import { useSettingsCx } from '@/features/settings';
@@ -11,152 +11,77 @@ import { TimerDial } from './TimerDial';
 export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	const { onTick, className, style } = props;
 	const timerCx = useTimerCx();
-	const timer = useFeatureState(timerCx.$timer);
-	const startTime = useFeatureState(timerCx.$startTime);
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
+	const speed = useFeatureState(timerCx.$speed);
 
-	const [dragMinutes, setDragMinutes] = React.useState<number | null>(null);
-	const wasRunning = React.useRef(false);
-	const isDragging = dragMinutes != null;
-	const isRunning = timer?.status === 'running';
-	const isActive = timer != null && timer.status !== 'idle';
-	const lastTickValue = React.useRef<number | null>(null);
-
-	// Display values: fractional when active (smooth animation), whole when idle (snap to minutes)
-	const { displayMinutes, displaySeconds } = React.useMemo(() => {
-		if (dragMinutes != null) {
-			return { displayMinutes: dragMinutes, displaySeconds: dragMinutes * 60 };
-		}
-		if (timer == null) {
-			return { displayMinutes: 0, displaySeconds: 0 };
-		}
-		const minutes = isActive ? timer.remainingSeconds / 60 : Math.ceil(timer.remainingSeconds / 60);
-		return { displayMinutes: minutes, displaySeconds: timer.remainingSeconds };
-	}, [dragMinutes, timer, isActive]);
-
-	// Session progress: each session spans 0→1, split into work (0→0.5) and break (0.5→1.0)
-	const sessionProgress = React.useMemo(() => {
-		if (timer == null || timer.status === 'idle') {
-			return 0;
-		}
-		const { totalSeconds, remainingSeconds, sessionsCompleted, phase } = timer;
-		const phaseProgress = totalSeconds > 0 ? (totalSeconds - remainingSeconds) / totalSeconds : 0;
-
-		// Work fills first half (0→0.5), break fills second half (0.5→1.0)
-		// Note: Backend increments sessionsCompleted when work ends, but visually
-		// we want the counter to increment when break ends, so we subtract 0.5 during break
-		return phase === 'work'
-			? sessionsCompleted + phaseProgress * 0.5
-			: sessionsCompleted - 0.5 + phaseProgress * 0.5;
-	}, [timer]);
-
-	// MARK: - Actions
-
-	const handleDragStart = React.useCallback(() => {
-		wasRunning.current = isRunning ?? false;
-		if (isRunning) {
-			timerCx.pause();
-		}
-	}, [isRunning, timerCx]);
-
-	const handleDragMove = React.useCallback((minutes: number) => {
-		setDragMinutes(minutes);
-	}, []);
-
-	const handleDragEnd = React.useCallback(
-		(minutes: number) => {
-			setDragMinutes(null);
-			timerCx.setDurationMinutes(minutes);
-			if (wasRunning.current) {
-				timerCx.resume();
-			}
-		},
-		[timerCx]
-	);
+	const lastPreviewMinute = React.useRef<number | null>(null);
+	const lastCountdownSecond = React.useRef<number | null>(null);
 
 	// MARK: - Effects
 
-	React.useEffect(() => {
-		if (timer == null) {
-			lastTickValue.current = null;
-			return;
-		}
+	// Preview tick handler - fires on minute boundaries during dial drag
+	useListener(
+		timerCx.$previewMinutes,
+		({ value: previewMinutes }) => {
+			if (previewMinutes != null) {
+				const minute = Math.round(previewMinutes);
+				if (lastPreviewMinute.current != null && lastPreviewMinute.current !== minute) {
+					onTick?.(true);
+				}
+				lastPreviewMinute.current = minute;
+				lastCountdownSecond.current = null;
+			} else {
+				lastPreviewMinute.current = null;
+			}
+		},
+		[onTick]
+	);
 
-		if (isDragging) {
-			// During drag: tick on minute boundaries
-			const minute = Math.round(dragMinutes);
-			if (lastTickValue.current != null && lastTickValue.current !== minute) {
-				onTick?.(true);
+	// Countdown tick handler - fires every second when running
+	useListener(
+		timerCx.$remainingSeconds,
+		({ value: remainingSeconds }) => {
+			const previewMinutes = timerCx.$previewMinutes.get();
+			const status = timerCx.$status.get();
+
+			if (previewMinutes == null && status === 'running') {
+				if (
+					lastCountdownSecond.current != null &&
+					lastCountdownSecond.current !== remainingSeconds
+				) {
+					onTick?.(false);
+				}
+				lastCountdownSecond.current = remainingSeconds;
+			} else if (status !== 'running') {
+				lastCountdownSecond.current = null;
 			}
-			lastTickValue.current = minute;
-		} else if (isRunning) {
-			// During countdown: tick every second
-			const second = timer.remainingSeconds;
-			if (lastTickValue.current != null && lastTickValue.current !== second) {
-				onTick?.(false);
-			}
-			lastTickValue.current = second;
-		} else {
-			lastTickValue.current = null;
-		}
-	}, [isDragging, dragMinutes, isRunning, timer, onTick]);
+		},
+		[onTick]
+	);
 
 	// MARK: - UI
 
-	if (timer == null) {
-		return (
-			<div className={cn('flex items-center justify-center', className)} style={style}>
-				<p className="text-base-400">Loading...</p>
-			</div>
-		);
-	}
-
 	return (
 		<div className={cn('flex flex-col items-center pb-4', className)} style={style}>
-			<TimerDial
-				value={displayMinutes}
-				sessionProgress={sessionProgress}
-				sessionsBeforeLongBreak={settings.timer.sessionsBeforeLongBreak}
-				smooth={isActive && !isDragging}
-				onDragStart={handleDragStart}
-				onDragMove={handleDragMove}
-				onDragEnd={handleDragEnd}
-			/>
+			<TimerDial cx={timerCx} sessionsBeforeLongBreak={settings.timer.sessionsBeforeLongBreak} />
 
-			<TimeDisplay
-				state={timer}
-				remainingSeconds={displaySeconds}
-				isRunning={isRunning ?? false}
-				startTime={startTime}
-				endTime={timerCx.getEndTime()}
-				debug={settings.debug.enabled}
-				className="mt-4"
-			/>
+			<TimeDisplay cx={timerCx} className="mt-4" />
 
-			{settings.debug.enabled && timer.speed > 1 && (
+			{settings.debug.enabled && speed > 1 && (
 				<Badge variant="warning" className="mt-1 font-mono">
-					{timer.speed}x
+					{speed}x
 				</Badge>
 			)}
 
-			<TimerActions
-				status={timer.status}
-				phase={timer.phase}
-				onStart={timerCx.start}
-				onSkip={timerCx.skip}
-				onPause={timerCx.pause}
-				onResume={timerCx.resume}
-				onCancel={timerCx.reset}
-				className="mt-auto"
-			/>
+			<TimerActions cx={timerCx} className="mt-auto" />
 		</div>
 	);
 };
 
 interface TTimerViewProps {
-	/** Fires every second when running, every minute boundary when dragging */
-	onTick?: (isDragging: boolean) => void;
+	/** Fires every second when running, every minute boundary when previewing */
+	onTick?: (isPreviewing: boolean) => void;
 	className?: string;
 	style?: React.CSSProperties;
 }
