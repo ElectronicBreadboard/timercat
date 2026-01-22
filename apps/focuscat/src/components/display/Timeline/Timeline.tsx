@@ -32,6 +32,10 @@ const InnerTimeline: React.FC<TInnerTimelineProps> = (props) => {
 
 	const handleScroll = React.useCallback(
 		(e: React.UIEvent<HTMLDivElement>) => {
+			// Skip if this scroll was triggered programmatically (e.g., during zoom)
+			if (cx.isProgrammaticScroll) {
+				return;
+			}
 			cx.setScrollLeft(e.currentTarget.scrollLeft);
 		},
 		[cx]
@@ -57,7 +61,7 @@ const InnerTimeline: React.FC<TInnerTimelineProps> = (props) => {
 			if (e.ctrlKey || e.metaKey) {
 				e.preventDefault();
 				e.stopPropagation();
-				const factor = e.deltaY > 0 ? 0.8 : 1.25;
+				const factor = e.deltaY > 0 ? 0.9 : 1.1; // Smoother zoom steps
 				cx.zoomAtPoint(factor, e.clientX);
 				return;
 			}
@@ -65,6 +69,7 @@ const InnerTimeline: React.FC<TInnerTimelineProps> = (props) => {
 			// Regular scroll when zoomed in (use deltaY for horizontal panning)
 			if (zoom > 1) {
 				e.preventDefault();
+				cx.isProgrammaticScroll = true;
 				const newScrollLeft = el.scrollLeft + e.deltaY;
 				el.scrollLeft = newScrollLeft;
 				cx.setScrollLeft(newScrollLeft);
@@ -81,8 +86,14 @@ const InnerTimeline: React.FC<TInnerTimelineProps> = (props) => {
 
 		// Sync scroll when changed externally (e.g. from zoomAtPoint)
 		if (Math.abs(el.scrollLeft - scrollLeft) > 1) {
+			cx.isProgrammaticScroll = true;
 			el.scrollLeft = scrollLeft;
 		}
+
+		// Reset flag after a frame to allow future user scrolls
+		requestAnimationFrame(() => {
+			cx.isProgrammaticScroll = false;
+		});
 	}, [cx, scrollLeft]);
 
 	// MARK: - UI

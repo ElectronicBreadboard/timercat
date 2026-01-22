@@ -24,8 +24,8 @@ export class ActivityRowCx {
 
 		// Listen for zoom/container changes to auto-update blocks
 		this._unlisteners.push(
-			timelineCx.$zoom.listen(() => this.update()),
-			timelineCx.$containerRect.listen(() => this.update())
+			timelineCx.$zoom.listen(() => this.update())
+			// timelineCx.$containerRect.listen(() => this.update())
 		);
 
 		// Initial block computation
@@ -48,7 +48,9 @@ export class ActivityRowCx {
 	/** Recompute blocks if resolution changed */
 	private update(): void {
 		const resolution = this.timelineCx.getMarkerResolution();
-		if (resolution === this._lastResolution) return;
+		if (resolution === this._lastResolution) {
+			return;
+		}
 
 		this._lastResolution = resolution;
 		const blocks = this.createBlocks();

@@ -12,6 +12,9 @@ export class TimelineCx {
 	public readonly $zoom = createState(1);
 	public readonly $scrollLeft = createState(0);
 
+	// Flag to prevent scroll event feedback loop during programmatic scrolls
+	public isProgrammaticScroll = false;
+
 	constructor(startMs: number, endMs: number, options: TTimelineOptions = {}) {
 		const {
 			// Marker resolutions in seconds: 1s to 4h
@@ -89,14 +92,24 @@ export class TimelineCx {
 		);
 		if (newZoom === currentZoom) return;
 
-		this.$zoom.set(newZoom);
-
-		// Scroll to keep same time position under mouse
+		// Calculate new scroll position to keep same time under mouse
 		const newTotalWidth = this.containerWidth * newZoom;
 		const newPxPerMs = newTotalWidth / this.durationMs;
 		const newPxAtMouse = (msAtMouse - this.startMs) * newPxPerMs;
+		const newScrollLeft = Math.max(0, newPxAtMouse - mouseX);
 
-		this.$scrollLeft.set(Math.max(0, newPxAtMouse - mouseX));
+		// Set flag before any state changes to prevent feedback loop
+		this.isProgrammaticScroll = true;
+
+		// Update state
+		this.$zoom.set(newZoom);
+		this.$scrollLeft.set(newScrollLeft);
+
+		// Sync DOM immediately for smoother feel
+		const el = this.containerRef.current;
+		if (el != null) {
+			el.scrollLeft = newScrollLeft;
+		}
 	}
 
 	public setScrollLeft(scrollLeft: number): void {
