@@ -1,7 +1,7 @@
 import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
 import { cn } from '@/lib';
-import { useTimelineCx } from './timeline-cx';
+import { useTimelineCx } from './TimelineCx';
 
 export const TimelineAxis: React.FC<TTimelineAxisProps> = (props) => {
 	const { className } = props;

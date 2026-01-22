@@ -9,7 +9,7 @@ export const Tooltip: React.FC<TTooltipProps> = (props) => {
 		children,
 		content,
 		side = 'top',
-		sideOffset = 8,
+		sideOffset = 10,
 		delay,
 		boundary,
 		className,
@@ -28,16 +28,11 @@ export const Tooltip: React.FC<TTooltipProps> = (props) => {
 				>
 					<BaseTooltip.Popup
 						className={cn(
-							'bg-base-0 text-base-900 max-w-xs rounded-md px-2.5 py-1.5 text-xs shadow-lg',
-							'outline-base-200 outline-1',
-							'origin-(--transform-origin)',
-							'transition-[transform,scale,opacity] duration-150',
-							'data-starting-style:scale-90 data-starting-style:opacity-0',
-							'data-ending-style:scale-90 data-ending-style:opacity-0',
+							'text-base-900 shadow-base-200 outline-base-200 flex max-w-xs origin-(--transform-origin) flex-col rounded-md bg-[canvas] px-2.5 py-1.5 text-xs shadow-lg outline-1 transition-[transform,scale,opacity] data-ending-style:scale-90 data-ending-style:opacity-0 data-instant:transition-none data-starting-style:scale-90 data-starting-style:opacity-0',
 							className
 						)}
 					>
-						<BaseTooltip.Arrow className="data-[side=bottom]:-top-1.5 data-[side=left]:-right-1.5 data-[side=left]:rotate-90 data-[side=right]:-left-1.5 data-[side=right]:-rotate-90 data-[side=top]:-bottom-1.5 data-[side=top]:rotate-180">
+						<BaseTooltip.Arrow className="flex data-[side=bottom]:-top-2 data-[side=bottom]:rotate-0 data-[side=left]:-right-3 data-[side=left]:rotate-90 data-[side=right]:-left-3 data-[side=right]:-rotate-90 data-[side=top]:-bottom-2 data-[side=top]:rotate-180">
 							<ArrowSvg />
 						</BaseTooltip.Arrow>
 						{content}
@@ -60,13 +55,15 @@ interface TTooltipProps {
 }
 
 const ArrowSvg: React.FC<React.ComponentProps<'svg'>> = (props) => (
-	<svg width="12" height="6" viewBox="0 0 12 6" fill="none" {...props}>
+	<svg width="20" height="10" viewBox="0 0 20 10" fill="none" {...props}>
+		{/* Arrow fill - matches popup background */}
 		<path
-			d="M5.79862 1.56124L2.88455 4.18391C2.44385 4.58054 1.87193 4.8 1.27903 4.8H0V6H12V4.8H11.121C10.5281 4.8 9.95617 4.58054 9.51546 4.18391L6.60139 1.56124C6.33721 1.3159 5.92278 1.3159 5.65862 1.56124Z"
-			className="fill-base-0"
+			d="M9.66437 2.60207L4.80758 6.97318C4.07308 7.63423 3.11989 8 2.13172 8H0V10H20V8H18.5349C17.5468 8 16.5936 7.63423 15.8591 6.97318L11.0023 2.60207C10.622 2.2598 10.0447 2.25979 9.66437 2.60207Z"
+			className="fill-[canvas]"
 		/>
+		{/* Arrow border - matches popup outline */}
 		<path
-			d="M5.79862 1.56124L2.88455 4.18391C2.44385 4.58054 1.87193 4.8 1.27903 4.8H0V5H12V4.8H11.121C10.5281 4.8 9.95617 4.58054 9.51546 4.18391L6.60139 1.56124C6.33721 1.3159 5.92278 1.3159 5.65862 1.56124Z"
+			d="M8.99542 1.85876C9.75604 1.17425 10.9106 1.17422 11.6713 1.85878L16.5281 6.22989C17.0789 6.72568 17.7938 7.00001 18.5349 7.00001L15.89 7L11.0023 2.60207C10.622 2.2598 10.0447 2.2598 9.66436 2.60207L4.77734 7L2.13171 7.00001C2.87284 7.00001 3.58774 6.72568 4.13861 6.22989L8.99542 1.85876Z"
 			className="fill-base-200"
 		/>
 	</svg>

@@ -2,7 +2,7 @@ import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { useBoundingRectObserver } from '@/hooks';
 import { cn } from '@/lib';
-import { TimelineCxProvider, useTimelineCx, type TTimelineOptions } from './timeline-cx';
+import { TimelineCxProvider, useTimelineCx, type TTimelineOptions } from './TimelineCx';
 
 export const Timeline: React.FC<TTimelineProps> = (props) => {
 	const { startMs, endMs, config, className, children } = props;
