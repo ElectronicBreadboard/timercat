@@ -18,6 +18,7 @@ Contains 1 or more windows from the **same app**.
 
 ### 2. AppBlock
 Contains 1 or more **apps** (used when different apps merge, or when only app-level tracking).
+- `apps[0]` is the **dominant app** (most total time), determines block color
 - `apps.length === 1` → solid color, no visual distinction
 - `apps.length > 1` → dominant app color + diagonal stripe overlay
 - Tooltip shows app(s) involved
@@ -31,7 +32,7 @@ Contains 1 or more **apps** (used when different apps merge, or when only app-le
 
 ### Overview
 
-Two-level merging with minimum block width of 8px:
+Two-level merging with configurable minimum block width (default 8px):
 1. **Window level** - within same-app segments, merge small windows
 2. **App level** - across segments, merge small items
 
@@ -44,21 +45,60 @@ Two-level merging with minimum block width of 8px:
 
 3. For each same-app segment, apply window-level merging:
    Go left-to-right through windows:
-     if window >= 8px → keep as individual
-     if window < 8px → merge with neighbors until >= 8px
+     if window >= minBlockPx AND no pending small windows → keep as individual
+     if window >= minBlockPx AND pending small windows → combine all together
+     if window < minBlockPx → accumulate until combined width >= minBlockPx
 
-   Each resulting item becomes a WindowBlock (1+ windows, same app)
+   Each resulting item becomes a WindowLevelItem (1+ windows, same app)
 
-4. Apply app-level merging across all WindowBlocks:
+4. Apply app-level merging across all items:
    Go left-to-right:
-     if block >= 8px → keep as is
-     if block < 8px → merge with neighbors until >= 8px
+     if item >= minBlockPx AND no pending small items → create WindowBlock
+     if item >= minBlockPx AND pending small items → combine into single block
+     if item < minBlockPx → accumulate until combined width >= minBlockPx
 
-   If merged blocks have different apps → AppBlock
-   If merged blocks have same app → stays WindowBlock
+   If combined items have different apps → AppBlock
+   If combined items have same app → WindowBlock
 
-5. Assign positions to consecutive same-app WindowBlocks
+5. Merge consecutive AppBlocks with same dominant app into one
+
+6. Assign positions to consecutive same-app WindowBlocks
+
+7. Clip first/last block to timeline bounds
 ```
+
+### Key Behavior: Combine with Large Neighbor
+
+Small items are always combined with their next large neighbor to prevent undersized blocks:
+
+```
+Before fix (wrong):
+[Chrome 4px][VSCode 20px]  ← Chrome block is undersized!
+
+After fix (correct):
+[AppBlock: Chrome+VSCode 24px]  ← Small Chrome combined with large VSCode
+```
+
+### Key Behavior: Merge Consecutive AppBlocks with Same Dominant App
+
+Consecutive AppBlocks where the dominant app (apps[0]) is the same are merged:
+
+```
+Before:
+[AppBlock: Cursor+Chrome][AppBlock: Cursor+Slack][AppBlock: Cursor+VSCode]
+         ↑ striped              ↑ striped              ↑ striped
+
+After:
+[AppBlock: Cursor+Chrome+Slack+VSCode]
+         ↑ single striped block with Cursor as dominant
+```
+
+### Edge Cases
+
+Blocks may still be smaller than minBlockPx in these cases:
+- **Timeline bounds**: First/last block clipped to visible area
+- **Only small items**: If ALL items are small with no large neighbor to combine with
+- **Render minimum**: Components enforce `Math.max(width, 2)` for visibility
 
 ### Position Chaining
 
@@ -98,7 +138,7 @@ Very zoomed out (apps merged):
 WindowActivityDto[]
         │
         ▼
-createBlocks(activities, { bounds, msToPx })
+ActivityRowCx.update()
         │
         ├─► Filter to visible activities
         ├─► Sort by start time
@@ -108,10 +148,10 @@ createBlocks(activities, { bounds, msToPx })
         └─► Assign positions to same-app WindowBlock sequences
         │
         ▼
-TActivityBlock[] (WindowBlock | AppBlock)
+$blocks (TActivityBlock[])
         │
         ▼
-ActivityRow renders each block with type-specific styling
+ActivityRow renders each block via WindowBlock/AppBlock components
 ```
 
 ## Types
@@ -150,18 +190,28 @@ interface TAppBlock {
 ## Configuration
 
 ```typescript
-const MIN_BLOCK_PX = 8;  // Minimum block width before merging
+// Via ActivityRowCx options
+const cx = new ActivityRowCx(timelineCx, activities, {
+  minBlockPx: 16  // Minimum block width before merging (default: 8)
+});
 ```
 
 ## File Structure
 
 ```
 ActivityTimeline/
-├── README.md           # This file
-├── index.ts            # Public exports
-├── types.ts            # TActivityBlock union type
-├── create-blocks.ts    # Block creation algorithm
-└── ActivityRow.tsx     # Row component + block renderers
+├── README.md              # This file
+├── index.ts               # Public exports
+├── types.ts               # TActivityBlock union type
+├── ActivityRowCx.ts       # State management + block creation algorithm
+├── ActivityRow.tsx        # Slim coordinator component
+├── components/
+│   ├── index.ts
+│   ├── WindowBlock.tsx    # Window block view + tooltip
+│   └── AppBlock.tsx       # App block view + tooltip
+└── hooks/
+    ├── index.ts
+    └── use-block-position.ts
 ```
 
 ## Rendering Details
@@ -211,12 +261,25 @@ import { ActivityRow } from './ActivityTimeline';
 </Timeline>
 ```
 
+### With Custom Options
+
+```tsx
+// In ActivityRow.tsx, customize via ActivityRowCx constructor:
+const cx = useMemoCleanup(() => {
+  const instance = new ActivityRowCx(timelineCx, activities, {
+    minBlockPx: 16  // Larger minimum = more aggressive merging
+  });
+  return [instance, () => instance.unmount()];
+}, [timelineCx, activities]);
+```
+
 ## Relationship to Timeline
 
 - `Timeline` is a generic component providing zoom, pan, and coordinate conversion
-- `ActivityTimeline` is activity-specific, handling aggregation and rendering
-- `TimelineCx` provides `msToPx()` which ActivityTimeline uses for width calculations
-- All aggregation logic lives here, keeping Timeline generic
+- `TimelineCx` is generic - only time/pixel conversion, zoom, scroll
+- `ActivityRowCx` owns activity-specific logic - block creation, resolution tracking
+- `ActivityRow` is a slim coordinator that uses ActivityRowCx
+- All aggregation logic lives in ActivityRowCx, keeping Timeline generic
 
 ## Design Decisions
 

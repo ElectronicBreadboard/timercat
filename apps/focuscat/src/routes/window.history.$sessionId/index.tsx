@@ -6,7 +6,7 @@ import { BriefcaseIcon, CoffeeIcon } from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
 import { cn, formatDuration, formatTimeOfDayAmPm, toTuple } from '@/lib';
-import { SessionTimeline, SimpleSessionTimeline } from './components';
+import { SessionTimeline } from './components';
 
 export const Route = createFileRoute('/window/history/$sessionId/')({
 	loader: async ({ params }) => {
@@ -146,9 +146,6 @@ function RouteComponent() {
 
 			{/* New Timeline */}
 			<SessionTimeline session={data.session} activities={data.activities} />
-
-			{/* Reference Timeline */}
-			<SimpleSessionTimeline session={data.session} activities={data.activities} />
 
 			{/* Debug JSON */}
 			{settings.debug.enabled && (

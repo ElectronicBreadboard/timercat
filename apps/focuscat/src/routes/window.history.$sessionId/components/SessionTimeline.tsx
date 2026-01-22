@@ -2,8 +2,7 @@ import React from 'react';
 import { Timeline, TimelineAxis } from '@/components';
 import { specta } from '@/environment';
 import { cn } from '@/lib';
-
-import { ActivityRow } from './ActivityTimeline';
+import { ActivityRow } from './ActivityRow';
 
 export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 	const { session, activities, className } = props;
