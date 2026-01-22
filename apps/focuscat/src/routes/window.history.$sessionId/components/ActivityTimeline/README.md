@@ -10,38 +10,30 @@ The timeline shows activity at the "right" level of detail - like Google Maps. W
 
 ## Block Types
 
-### 1. Window
-Individual window activity shown when there's enough space (>= 8px wide).
+### 1. WindowBlock
+Contains 1 or more windows from the **same app**.
+- Has position styling for visual chaining (solo/start/center/end)
+- Consecutive WindowBlocks from the same app connect with dashed dividers
+- Tooltip shows window title (if 1 window) or "N windows" (if multiple)
 
-**Visual composition within same app:**
-- `solo` - single window, fully rounded corners
-- `start` - left rounded, right has dashed line (no rounding)
-- `center` - no rounded corners, right has dashed line
-- `end` - right rounded, no dashed lines
+### 2. AppBlock
+Contains 1 or more **apps** (used when different apps merge, or when only app-level tracking).
+- `apps.length === 1` → solid color, no visual distinction
+- `apps.length > 1` → dominant app color + diagonal stripe overlay
+- Tooltip shows app(s) involved
 
-This creates a continuous visual appearance for same-app window sequences.
+## When to Use Each
 
-### 2. WindowMerged
-Multiple windows from the **same app** merged together because some were too small individually.
-- Solid colored block with rounded corners
-- Tooltip shows window count
-- Same visual style as Window but represents multiple windows
-
-### 3. AppMerged
-Multiple **different apps** merged together because individual apps would be too small.
-- Colored by dominant app (longest duration)
-- Diagonal stripe overlay (white at 20% opacity) to indicate mixed content
-- Tooltip shows all apps involved
+- **WindowBlock**: Same app, we have window-level detail
+- **AppBlock**: Different apps merged together, OR only app-level tracking (no window info)
 
 ## Algorithm
 
 ### Overview
 
-The algorithm applies the same merge logic at two levels:
+Two-level merging with minimum block width of 8px:
 1. **Window level** - within same-app segments, merge small windows
-2. **App level** - across apps, merge small app segments
-
-This ensures we never lose detail unnecessarily - if only one window is small, we merge just that one with its neighbor, not the entire app.
+2. **App level** - across segments, merge small items
 
 ### Step-by-Step
 
@@ -55,77 +47,49 @@ This ensures we never lose detail unnecessarily - if only one window is small, w
      if window >= 8px → keep as individual
      if window < 8px → merge with neighbors until >= 8px
 
-   Result: list of (single window) or (merged windows) within this app
+   Each resulting item becomes a WindowBlock (1+ windows, same app)
 
-4. Flatten all segments into a single list of "app-level items"
-   Each item is either:
-   - A single Window block
-   - A WindowMerged block (multiple windows, same app)
-
-5. Apply app-level merging on this list:
+4. Apply app-level merging across all WindowBlocks:
    Go left-to-right:
-     if item >= 8px → keep as is
-     if item < 8px → merge with neighbors until >= 8px
+     if block >= 8px → keep as is
+     if block < 8px → merge with neighbors until >= 8px
 
-   If merged items have different apps → AppMerged block
+   If merged blocks have different apps → AppBlock
+   If merged blocks have same app → stays WindowBlock
 
-6. Assign window positions (start/center/end/solo) for Window blocks
+5. Assign positions to consecutive same-app WindowBlocks
 ```
 
-### Merge Logic Details
+### Position Chaining
 
-When merging small items:
-1. Start accumulating small items into a "merge group"
-2. Keep adding until total width >= 8px
-3. If a large item (>= 8px) is encountered:
-   - First finalize the pending merge group (even if < 8px, absorb into adjacent)
-   - Then add the large item as its own block
-4. At the end, any remaining merge group gets finalized
-
-**Same-app merge** → WindowMerged block
-**Different-app merge** → AppMerged block
-
-### Example
+All WindowBlocks from the same app participate in position chaining:
 
 ```
-Input at current zoom:
-[VS Code: file1 (20px)] [VS Code: file2 (3px)] [VS Code: file3 (4px)] [VS Code: file4 (25px)] [Chrome: tab1 (5px)] [Chrome: tab2 (30px)]
-
-Step 3 - Window-level merge within each app:
-  VS Code: [file1: 20px] [file2+file3: 7px] [file4: 25px]
-           Note: file2+file3 is only 7px, will be handled at app level
-  Chrome: [tab1: 5px] [tab2: 30px]
-          Note: tab1 is only 5px, will be handled at app level
-
-Step 5 - App-level merge:
-  [file1: 20px] [file2+file3: 7px] [file4: 25px] [tab1: 5px] [tab2: 30px]
-
-  file1 >= 8px → Window block
-  file2+file3 < 8px → start merge group
-  file4 >= 8px → finalize merge group (absorb file2+file3 into file1 or file4)
-  ...
-
-Final result (one possibility):
-  [Window: file1] [WindowMerged: file2+file3+file4] [WindowMerged: tab1+tab2]
-
-  Or if we merge backward:
-  [WindowMerged: file1+file2+file3] [Window: file4] [WindowMerged: tab1+tab2]
+[Brave: window A (start) | Brave: windows B+C (center) | Brave: window D (end)]
+                        ↑                            ↑
+                  dashed dividers connect same-app blocks
 ```
+
+Positions:
+- `solo` - only block from this app, fully rounded
+- `start` - first in sequence, left rounded, right dashed
+- `center` - middle, no rounding, right dashed
+- `end` - last in sequence, right rounded, no dashed
 
 ## Visual Examples
 
 ```
-Zoomed in (all items >= 8px):
-[VS Code: file1.ts|file2.ts|file3.ts][Chrome: tab1|tab2][Slack]
-     └─ start ─┘└─ center ─┘└─ end ─┘
+Zoomed in (all windows >= 8px):
+[VS Code: file1|file2|file3][Chrome: tab1|tab2][Slack]
+   start   center   end      start    end      solo
 
-Partially zoomed (some windows merged):
+Partially zoomed (some merged):
 [VS Code: file1|merged(2)|file4][Chrome: merged(3)][Slack]
-         Window  WindowMerged     WindowMerged     Window
+   start    center     end           solo          solo
 
 Very zoomed out (apps merged):
-[========= AppMerged (VS Code + Chrome + Slack) =========]
-            Striped overlay indicates mixed apps
+[========= AppBlock (VS Code + Chrome + Slack) =========]
+            Striped overlay indicates multiple apps
 ```
 
 ## Data Flow
@@ -139,12 +103,12 @@ createBlocks(activities, { bounds, msToPx })
         ├─► Filter to visible activities
         ├─► Sort by start time
         ├─► Group by same-app segments
-        ├─► Window-level merge within each segment
-        ├─► App-level merge across segments
-        └─► Assign window positions
+        ├─► Window-level merge within each segment → WindowBlocks
+        ├─► App-level merge across segments → may create AppBlocks
+        └─► Assign positions to same-app WindowBlock sequences
         │
         ▼
-TActivityBlock[] (Window | WindowMerged | AppMerged)
+TActivityBlock[] (WindowBlock | AppBlock)
         │
         ▼
 ActivityRow renders each block with type-specific styling
@@ -153,39 +117,33 @@ ActivityRow renders each block with type-specific styling
 ## Types
 
 ```typescript
-type TActivityBlock = TWindowBlock | TWindowMergedBlock | TAppMergedBlock;
+type TActivityBlock = TWindowBlock | TAppBlock;
 
 interface TWindowBlock {
   type: 'window';
   startMs: number;
   endMs: number;
-  activity: WindowActivityDto;
+  app: {
+    bundleId: string;
+    name: string;
+    icon: string | null;
+    color: string | null;
+  };
+  windows: WindowActivityDto[];  // 1+, all same app
   position: 'solo' | 'start' | 'center' | 'end';
 }
 
-interface TWindowMergedBlock {
-  type: 'window-merged';
+interface TAppBlock {
+  type: 'app';
   startMs: number;
   endMs: number;
-  bundleId: string;
-  appName: string;
-  appIcon: string | null;
-  appColor: string | null;
-  windows: WindowActivityDto[];
-}
-
-interface TAppMergedBlock {
-  type: 'app-merged';
-  startMs: number;
-  endMs: number;
-  dominantApp: {
+  apps: Array<{
     bundleId: string;
-    appName: string;
-    appIcon: string | null;
-    appColor: string | null;
-  };
+    name: string;
+    icon: string | null;
+    color: string | null;
+  }>;  // 1+ apps
   activities: WindowActivityDto[];
-  uniqueApps: Array<{ bundleId: string; appName: string; appIcon: string | null }>;
 }
 ```
 
@@ -208,7 +166,7 @@ ActivityTimeline/
 
 ## Rendering Details
 
-### Window Block
+### WindowBlock
 ```tsx
 <div
   className={cn(
@@ -217,7 +175,7 @@ ActivityTimeline/
     position === 'start' && "rounded-l",
     position === 'end' && "rounded-r",
   )}
-  style={{ backgroundColor: appColor, left, width }}
+  style={{ backgroundColor: app.color, left, width }}
 >
   {(position === 'start' || position === 'center') && (
     <div className="absolute right-0 inset-y-0 border-r border-dashed border-white/30" />
@@ -225,26 +183,20 @@ ActivityTimeline/
 </div>
 ```
 
-### WindowMerged Block
-```tsx
-<div
-  className="absolute top-1 bottom-1 rounded"
-  style={{ backgroundColor: appColor, left, width }}
-/>
-```
-
-### AppMerged Block
+### AppBlock
 ```tsx
 <div
   className="absolute top-1 bottom-1 rounded overflow-hidden"
-  style={{ backgroundColor: dominantAppColor, left, width }}
+  style={{ backgroundColor: dominantApp.color, left, width }}
 >
-  <div
-    className="absolute inset-0 opacity-20"
-    style={{
-      backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, white 4px, white 8px)'
-    }}
-  />
+  {apps.length > 1 && (
+    <div
+      className="absolute inset-0 opacity-20"
+      style={{
+        backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, white 4px, white 8px)'
+      }}
+    />
+  )}
 </div>
 ```
 
@@ -268,10 +220,10 @@ import { ActivityRow } from './ActivityTimeline';
 
 ## Design Decisions
 
-1. **Two-level merging** - Apply same logic at window level (within app) and app level (across apps). This preserves maximum detail.
+1. **Two block types** - WindowBlock (same app, window detail) and AppBlock (mixed apps or app-only tracking). Simple and covers all cases.
 
-2. **Merge small with neighbors** - When an item is too small, merge with adjacent items until >= 8px. If still small at end, absorb into nearest block.
+2. **Two-level merging** - Apply same logic at window level (within app) and app level (across apps). Preserves maximum detail.
 
-3. **Visual distinction for AppMerged** - Diagonal stripes indicate mixed apps, so users know it's not a single app.
+3. **Position chaining for ALL same-app WindowBlocks** - Whether a WindowBlock has 1 window or 5, it participates in the visual chain with dashed dividers.
 
-4. **Position styling for Window sequences** - Windows from same app visually connect with dashed dividers, appearing as one continuous block.
+4. **Stripes only when apps.length > 1** - No redundant flags, just check array length.

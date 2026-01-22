@@ -1,12 +1,11 @@
 import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
 import { Tooltip, TooltipProvider, useTimelineCx } from '@/components';
-import { cn } from '@/lib';
 import { specta } from '@/environment';
-import { formatDuration } from '@/lib';
+import { cn, formatDuration } from '@/lib';
 
 import { createBlocks } from './create-blocks';
-import type { TActivityBlock, TAppMergedBlock, TWindowBlock, TWindowMergedBlock } from './types';
+import type { TActivityBlock, TAppBlock, TWindowBlock } from './types';
 
 const FALLBACK_COLOR = '#9ca3af';
 
@@ -51,10 +50,8 @@ const ActivityBlockView: React.FC<TActivityBlockViewProps> = React.memo(({ block
 	switch (block.type) {
 		case 'window':
 			return <WindowBlockView block={block} cx={cx} />;
-		case 'window-merged':
-			return <WindowMergedBlockView block={block} cx={cx} />;
-		case 'app-merged':
-			return <AppMergedBlockView block={block} cx={cx} />;
+		case 'app':
+			return <AppBlockView block={block} cx={cx} />;
 	}
 });
 
@@ -70,7 +67,7 @@ interface TActivityBlockViewProps {
 const WindowBlockView: React.FC<TWindowBlockViewProps> = React.memo(({ block, cx }) => {
 	const { leftPx, widthPx, visibleLeftPx, visibleWidthPx } = useBlockPosition(block, cx);
 	const durationSec = (block.endMs - block.startMs) / 1000;
-	const color = block.activity.appColor ?? FALLBACK_COLOR;
+	const color = block.app.color ?? FALLBACK_COLOR;
 
 	return (
 		<div
@@ -112,45 +109,13 @@ interface TWindowBlockViewProps {
 	cx: ReturnType<typeof useTimelineCx>;
 }
 
-// MARK: - WindowMerged Block View
+// MARK: - App Block View
 
-const WindowMergedBlockView: React.FC<TWindowMergedBlockViewProps> = React.memo(({ block, cx }) => {
+const AppBlockView: React.FC<TAppBlockViewProps> = React.memo(({ block, cx }) => {
 	const { leftPx, widthPx, visibleLeftPx, visibleWidthPx } = useBlockPosition(block, cx);
 	const durationSec = (block.endMs - block.startMs) / 1000;
-	const color = block.appColor ?? FALLBACK_COLOR;
-
-	return (
-		<div
-			className="absolute top-1 bottom-1 rounded transition-opacity hover:opacity-80"
-			style={{
-				left: leftPx,
-				width: Math.max(widthPx, 2),
-				backgroundColor: color
-			}}
-		>
-			<Tooltip content={<WindowMergedTooltip block={block} durationSec={durationSec} />} side="top">
-				<div
-					className="absolute inset-y-0"
-					style={{ left: visibleLeftPx, width: Math.max(visibleWidthPx, 2) }}
-				/>
-			</Tooltip>
-		</div>
-	);
-});
-
-WindowMergedBlockView.displayName = 'WindowMergedBlockView';
-
-interface TWindowMergedBlockViewProps {
-	block: TWindowMergedBlock;
-	cx: ReturnType<typeof useTimelineCx>;
-}
-
-// MARK: - AppMerged Block View
-
-const AppMergedBlockView: React.FC<TAppMergedBlockViewProps> = React.memo(({ block, cx }) => {
-	const { leftPx, widthPx, visibleLeftPx, visibleWidthPx } = useBlockPosition(block, cx);
-	const durationSec = (block.endMs - block.startMs) / 1000;
-	const color = block.dominantApp.appColor ?? FALLBACK_COLOR;
+	const dominantApp = block.apps[0]!;
+	const color = dominantApp.color ?? FALLBACK_COLOR;
 
 	return (
 		<div
@@ -161,16 +126,18 @@ const AppMergedBlockView: React.FC<TAppMergedBlockViewProps> = React.memo(({ blo
 				backgroundColor: color
 			}}
 		>
-			{/* Diagonal stripe overlay for merged app blocks */}
-			<div
-				className="absolute inset-0 opacity-20 pointer-events-none"
-				style={{
-					backgroundImage:
-						'repeating-linear-gradient(45deg, transparent, transparent 4px, white 4px, white 8px)'
-				}}
-			/>
+			{/* Diagonal stripe overlay when multiple apps are merged */}
+			{block.apps.length > 1 && (
+				<div
+					className="absolute inset-0 opacity-20 pointer-events-none"
+					style={{
+						backgroundImage:
+							'repeating-linear-gradient(45deg, transparent, transparent 4px, white 4px, white 8px)'
+					}}
+				/>
+			)}
 
-			<Tooltip content={<AppMergedTooltip block={block} durationSec={durationSec} />} side="top">
+			<Tooltip content={<AppTooltip block={block} durationSec={durationSec} />} side="top">
 				<div
 					className="absolute inset-y-0"
 					style={{ left: visibleLeftPx, width: Math.max(visibleWidthPx, 2) }}
@@ -180,10 +147,10 @@ const AppMergedBlockView: React.FC<TAppMergedBlockViewProps> = React.memo(({ blo
 	);
 });
 
-AppMergedBlockView.displayName = 'AppMergedBlockView';
+AppBlockView.displayName = 'AppBlockView';
 
-interface TAppMergedBlockViewProps {
-	block: TAppMergedBlock;
+interface TAppBlockViewProps {
+	block: TAppBlock;
 	cx: ReturnType<typeof useTimelineCx>;
 }
 
@@ -193,72 +160,51 @@ const WindowTooltip: React.FC<{ block: TWindowBlock; durationSec: number }> = ({
 	block,
 	durationSec
 }) => {
-	const { activity } = block;
+	const { app, windows } = block;
+	// Show first window's title if single window, otherwise show count
+	const firstWindow = windows[0];
 
 	return (
 		<div className="flex items-center gap-2.5">
-			{activity.appIcon != null && (
-				<img src={activity.appIcon} alt="" className="size-8 shrink-0 rounded" />
-			)}
+			{app.icon != null && <img src={app.icon} alt="" className="size-8 shrink-0 rounded" />}
 			<div className="flex min-w-0 flex-col gap-0.5">
-				<span className="truncate text-sm font-medium">{activity.appName ?? 'Unknown'}</span>
-				{activity.windowTitle != null && (
-					<span className="text-base-400 truncate text-xs">{activity.windowTitle}</span>
-				)}
+				<span className="truncate text-sm font-medium">{app.name}</span>
+				{windows.length === 1 && firstWindow?.windowTitle != null ? (
+					<span className="text-base-400 truncate text-xs">{firstWindow.windowTitle}</span>
+				) : windows.length > 1 ? (
+					<span className="text-base-400 truncate text-xs">{windows.length} windows</span>
+				) : null}
 				<span className="text-base-500 text-xs">{formatDuration(durationSec)}</span>
 			</div>
 		</div>
 	);
 };
 
-const WindowMergedTooltip: React.FC<{ block: TWindowMergedBlock; durationSec: number }> = ({
-	block,
-	durationSec
-}) => {
-	return (
-		<div className="flex items-center gap-2.5">
-			{block.appIcon != null && (
-				<img src={block.appIcon} alt="" className="size-8 shrink-0 rounded" />
-			)}
-			<div className="flex min-w-0 flex-col gap-0.5">
-				<span className="truncate text-sm font-medium">{block.appName}</span>
-				{block.windows.length > 1 && (
-					<span className="text-base-400 truncate text-xs">
-						{block.windows.length} windows
-					</span>
-				)}
-				<span className="text-base-500 text-xs">{formatDuration(durationSec)}</span>
-			</div>
-		</div>
-	);
-};
+const AppTooltip: React.FC<{ block: TAppBlock; durationSec: number }> = ({ block, durationSec }) => {
+	const dominantApp = block.apps[0]!;
 
-const AppMergedTooltip: React.FC<{ block: TAppMergedBlock; durationSec: number }> = ({
-	block,
-	durationSec
-}) => {
 	return (
 		<div className="flex flex-col gap-2">
 			<div className="flex items-center gap-2.5">
-				{block.dominantApp.appIcon != null && (
-					<img src={block.dominantApp.appIcon} alt="" className="size-8 shrink-0 rounded" />
+				{dominantApp.icon != null && (
+					<img src={dominantApp.icon} alt="" className="size-8 shrink-0 rounded" />
 				)}
 				<div className="flex min-w-0 flex-col gap-0.5">
-					<span className="truncate text-sm font-medium">{block.dominantApp.appName}</span>
+					<span className="truncate text-sm font-medium">{dominantApp.name}</span>
 					<span className="text-base-400 truncate text-xs">
-						{block.uniqueApps.length} apps · {block.activities.length} activities
+						{block.apps.length} apps · {block.activities.length} activities
 					</span>
 					<span className="text-base-500 text-xs">{formatDuration(durationSec)}</span>
 				</div>
 			</div>
-			{block.uniqueApps.length > 1 && (
+			{block.apps.length > 1 && (
 				<div className="border-base-200 flex flex-wrap gap-1 border-t pt-2">
-					{block.uniqueApps.map((app, i) => (
+					{block.apps.map((app, i) => (
 						<div key={i} className="flex items-center gap-1">
-							{app.appIcon != null && (
-								<img src={app.appIcon} alt="" className="size-4 shrink-0 rounded" />
+							{app.icon != null && (
+								<img src={app.icon} alt="" className="size-4 shrink-0 rounded" />
 							)}
-							<span className="text-base-400 text-xs">{app.appName}</span>
+							<span className="text-base-400 text-xs">{app.name}</span>
 						</div>
 					))}
 				</div>

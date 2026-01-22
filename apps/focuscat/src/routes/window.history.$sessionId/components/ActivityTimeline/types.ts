@@ -2,63 +2,52 @@ import type { specta } from '@/environment';
 
 /**
  * Activity block union type for timeline display.
- * - Window: Individual window shown when space permits
- * - WindowMerged: Multiple windows from same app merged
- * - AppMerged: Multiple different apps merged together
+ * - Window: 1+ windows from same app (has window-level detail)
+ * - App: 1+ apps (used when different apps merge or app-only tracking)
  */
-export type TActivityBlock = TWindowBlock | TWindowMergedBlock | TAppMergedBlock;
+export type TActivityBlock = TWindowBlock | TAppBlock;
 
 /**
- * Position within a same-app window sequence for visual styling.
- * - solo: Single window, fully rounded
- * - start: First window, left rounded, right dashed
- * - center: Middle window, no rounding, right dashed
- * - end: Last window, right rounded, no dashed
+ * Position within a same-app block sequence for visual styling.
+ * - solo: Only block from this app, fully rounded
+ * - start: First in sequence, left rounded, right dashed
+ * - center: Middle, no rounding, right dashed
+ * - end: Last in sequence, right rounded, no dashed
  */
 export type TWindowPosition = 'solo' | 'start' | 'center' | 'end';
 
 /**
- * Individual window block - shown when there's enough space (>= 8px).
+ * App info structure used in blocks.
+ */
+export interface TAppInfo {
+	bundleId: string;
+	name: string;
+	icon: string | null;
+	color: string | null;
+}
+
+/**
+ * Window block - contains 1+ windows from the SAME app.
+ * Has position styling for visual chaining with other same-app blocks.
  */
 export interface TWindowBlock {
 	type: 'window';
 	startMs: number;
 	endMs: number;
-	activity: specta.WindowActivityDto;
-	/** Position within app segment for visual styling */
+	app: TAppInfo;
+	windows: specta.WindowActivityDto[];
 	position: TWindowPosition;
 }
 
 /**
- * Merged window block - multiple windows from the SAME app merged together.
- * Created when some windows are too small individually.
+ * App block - contains 1+ apps.
+ * Used when different apps are merged together, or for app-only tracking.
+ * Shows stripe overlay when apps.length > 1.
  */
-export interface TWindowMergedBlock {
-	type: 'window-merged';
+export interface TAppBlock {
+	type: 'app';
 	startMs: number;
 	endMs: number;
-	bundleId: string;
-	appName: string;
-	appIcon: string | null;
-	appColor: string | null;
-	windows: specta.WindowActivityDto[];
-}
-
-/**
- * Merged app block - multiple DIFFERENT apps merged together.
- * Created when app segments are too small individually.
- * Has a stripe overlay to indicate mixed content.
- */
-export interface TAppMergedBlock {
-	type: 'app-merged';
-	startMs: number;
-	endMs: number;
-	dominantApp: {
-		bundleId: string;
-		appName: string;
-		appIcon: string | null;
-		appColor: string | null;
-	};
+	apps: TAppInfo[];
 	activities: specta.WindowActivityDto[];
-	uniqueApps: Array<{ bundleId: string; appName: string; appIcon: string | null }>;
 }
