@@ -5,7 +5,16 @@ import { cn } from '@/lib';
 export const TooltipProvider = BaseTooltip.Provider;
 
 export const Tooltip: React.FC<TTooltipProps> = (props) => {
-	const { children, content, side = 'top', sideOffset = 8, delay, boundary, className } = props;
+	const {
+		children,
+		content,
+		side = 'top',
+		sideOffset = 8,
+		delay,
+		boundary,
+		className,
+		positionerClassName
+	} = props;
 
 	return (
 		<BaseTooltip.Root>
@@ -15,10 +24,11 @@ export const Tooltip: React.FC<TTooltipProps> = (props) => {
 					side={side}
 					sideOffset={sideOffset}
 					collisionBoundary={boundary ?? undefined}
+					className={positionerClassName}
 				>
 					<BaseTooltip.Popup
 						className={cn(
-							'bg-base-0 text-base-900 z-[1000] max-w-xs rounded-md px-2.5 py-1.5 text-xs shadow-lg',
+							'bg-base-0 text-base-900 max-w-xs rounded-md px-2.5 py-1.5 text-xs shadow-lg',
 							'outline-base-200 outline-1',
 							'origin-(--transform-origin)',
 							'transition-[transform,scale,opacity] duration-150',
@@ -46,6 +56,7 @@ interface TTooltipProps {
 	delay?: number;
 	boundary?: Element | null;
 	className?: string;
+	positionerClassName?: string;
 }
 
 const ArrowSvg: React.FC<React.ComponentProps<'svg'>> = (props) => (

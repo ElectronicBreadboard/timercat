@@ -1,1 +1,1 @@
-export * from './timer-cx';
+export * from './TimerCx';

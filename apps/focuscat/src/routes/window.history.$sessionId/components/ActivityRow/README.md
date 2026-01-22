@@ -1,4 +1,4 @@
-# ActivityTimeline
+# ActivityRow
 
 Renders window activity data as a timeline with automatic aggregation based on pixel density.
 
@@ -11,30 +11,62 @@ The timeline shows activity at the "right" level of detail - like Google Maps. W
 ## Block Types
 
 ### 1. WindowBlock
-Contains 1 or more windows from the **same app**.
+
+Contains 1+ windows from the **same app**.
+
 - Has position styling for visual chaining (solo/start/center/end)
 - Consecutive WindowBlocks from the same app connect with dashed dividers
 - Tooltip shows window title (if 1 window) or "N windows" (if multiple)
 
 ### 2. AppBlock
-Contains 1 or more **apps** (used when different apps merge, or when only app-level tracking).
+
+Contains 1+ **apps** (used when different apps merge).
+
 - `apps[0]` is the **dominant app** (most total time), determines block color
-- `apps.length === 1` → solid color, no visual distinction
 - `apps.length > 1` → dominant app color + diagonal stripe overlay
-- Tooltip shows app(s) involved
+- Tooltip shows ALL apps involved (no data hidden)
 
-## When to Use Each
+## Design Philosophy
 
-- **WindowBlock**: Same app, we have window-level detail
-- **AppBlock**: Different apps merged together, OR only app-level tracking (no window info)
+### No Data Hiding
+
+We never discard activity data. Even a 1-second app switch is preserved:
+
+- **Visually**: Merged into larger block, stripe indicates "multiple apps"
+- **Tooltip**: Shows full list of apps and activity counts
+- **Data**: All activities remain in `block.activities` array
+
+A 90% Brave + 10% Cursor block shows:
+
+- Brave's color (dominant)
+- Stripe overlay (indicates multiple apps)
+- Tooltip: "Brave, Cursor - 2 apps · N activities"
+
+### Absorption Behavior
+
+Small items get **absorbed** into large neighbors, not vice versa:
+
+```
+[1s Chrome][30min VSCode] → [AppBlock: Chrome+VSCode]
+                            ↑ Chrome absorbed into VSCode
+                            ↑ Cannot see Chrome standalone even when zooming
+```
+
+This is intentional:
+
+1. **1-second activities are noise** - Brief app switches don't represent meaningful work
+2. **Visual clarity** - Tiny blocks would be unclickable and create clutter
+3. **Data preserved** - Tooltip reveals the truth, nothing lost
 
 ## Algorithm
 
 ### Overview
 
-Two-level merging with configurable minimum block width (default 8px):
-1. **Window level** - within same-app segments, merge small windows
-2. **App level** - across segments, merge small items
+Three-level processing with configurable minimum block width (default 16px):
+
+1. **Window-level merge** - within same-app segments
+2. **App-level merge** - across different apps
+3. **AppBlock consolidation** - merge consecutive same-dominant-app blocks
 
 ### Step-by-Step
 
@@ -43,93 +75,65 @@ Two-level merging with configurable minimum block width (default 8px):
 
 2. Group consecutive same-app activities into segments
 
-3. For each same-app segment, apply window-level merging:
-   Go left-to-right through windows:
-     if window >= minBlockPx AND no pending small windows → keep as individual
-     if window >= minBlockPx AND pending small windows → combine all together
-     if window < minBlockPx → accumulate until combined width >= minBlockPx
-
-   Each resulting item becomes a WindowLevelItem (1+ windows, same app)
-
-4. Apply app-level merging across all items:
+3. Window-level merge (within each same-app segment):
    Go left-to-right:
-     if item >= minBlockPx AND no pending small items → create WindowBlock
-     if item >= minBlockPx AND pending small items → combine into single block
-     if item < minBlockPx → accumulate until combined width >= minBlockPx
+   - Small window (< minBlockPx): accumulate in pending group
+   - Large window (>= minBlockPx):
+     - If pending small windows exist → absorb them, flush combined
+     - If no pending → keep as standalone
+   - End of segment: merge remaining small into previous item
 
-   If combined items have different apps → AppBlock
-   If combined items have same app → WindowBlock
+4. App-level merge (across all segments):
+   Go left-to-right:
+   - Small item: accumulate in pending group
+   - Large item:
+     - If pending small items exist → absorb them, flush combined
+     - If no pending → create WindowBlock
+   - End: merge remaining small into previous block
 
-5. Merge consecutive AppBlocks with same dominant app into one
+   Combined items with different apps → AppBlock
+   Combined items with same app → WindowBlock
 
-6. Assign positions to consecutive same-app WindowBlocks
+5. Consolidate consecutive AppBlocks with same dominant app
+
+6. Assign positions to consecutive same-app WindowBlocks (start/center/end)
 
 7. Clip first/last block to timeline bounds
 ```
 
-### Key Behavior: Combine with Large Neighbor
+### Why Absorb Small Into Large?
 
-Small items are always combined with their next large neighbor to prevent undersized blocks:
+Alternative: Only merge trailing small items (small stays separate until zoomed).
+Problem: Creates unusable tiny blocks that can't be clicked or read.
 
-```
-Before fix (wrong):
-[Chrome 4px][VSCode 20px]  ← Chrome block is undersized!
+Current approach: Small absorbed into next large neighbor.
+Benefit: Every block is usable, data accessible via tooltip.
 
-After fix (correct):
-[AppBlock: Chrome+VSCode 24px]  ← Small Chrome combined with large VSCode
-```
+### Dominant App Determination
 
-### Key Behavior: Merge Consecutive AppBlocks with Same Dominant App
-
-Consecutive AppBlocks where the dominant app (apps[0]) is the same are merged:
+Apps in a merged block are sorted by **total duration**, not count:
 
 ```
-Before:
-[AppBlock: Cursor+Chrome][AppBlock: Cursor+Slack][AppBlock: Cursor+VSCode]
-         ↑ striped              ↑ striped              ↑ striped
-
-After:
-[AppBlock: Cursor+Chrome+Slack+VSCode]
-         ↑ single striped block with Cursor as dominant
+[Cursor 45s + Chrome 10s + Slack 5s] → apps[0] = Cursor (45s > 10s > 5s)
 ```
 
-### Edge Cases
-
-Blocks may still be smaller than minBlockPx in these cases:
-- **Timeline bounds**: First/last block clipped to visible area
-- **Only small items**: If ALL items are small with no large neighbor to combine with
-- **Render minimum**: Components enforce `Math.max(width, 2)` for visibility
-
-### Position Chaining
-
-All WindowBlocks from the same app participate in position chaining:
-
-```
-[Brave: window A (start) | Brave: windows B+C (center) | Brave: window D (end)]
-                        ↑                            ↑
-                  dashed dividers connect same-app blocks
-```
-
-Positions:
-- `solo` - only block from this app, fully rounded
-- `start` - first in sequence, left rounded, right dashed
-- `center` - middle, no rounding, right dashed
-- `end` - last in sequence, right rounded, no dashed
+This ensures the block's color represents the primary activity.
 
 ## Visual Examples
 
 ```
-Zoomed in (all windows >= 8px):
-[VS Code: file1|file2|file3][Chrome: tab1|tab2][Slack]
-   start   center   end      start    end      solo
+Zoomed in (all windows >= minBlockPx):
+[VS Code: file1 | file2 | file3][Chrome: tab1 | tab2][Slack]
+   start    center   end         start     end       solo
+         ↑ dashed dividers
 
 Partially zoomed (some merged):
-[VS Code: file1|merged(2)|file4][Chrome: merged(3)][Slack]
-   start    center     end           solo          solo
+[VS Code: file1 | merged(3)][Chrome: merged(2)][Slack]
+   start      end                 solo          solo
 
 Very zoomed out (apps merged):
-[========= AppBlock (VS Code + Chrome + Slack) =========]
-            Striped overlay indicates multiple apps
+[=========== AppBlock (VS Code + Chrome + Slack) ===========]
+              ↑ Striped overlay, VS Code color (dominant)
 ```
 
 ## Data Flow
@@ -138,155 +142,19 @@ Very zoomed out (apps merged):
 WindowActivityDto[]
         │
         ▼
-ActivityRowCx.update()
+ActivityRowCx.createBlocks()
         │
-        ├─► Filter to visible activities
-        ├─► Sort by start time
-        ├─► Group by same-app segments
-        ├─► Window-level merge within each segment → WindowBlocks
-        ├─► App-level merge across segments → may create AppBlocks
-        └─► Assign positions to same-app WindowBlock sequences
+        ├─► 1. Filter to visible, sort by time
+        ├─► 2. Group by consecutive same-app
+        ├─► 3. Window-level merge within segments
+        ├─► 4. App-level merge across segments
+        ├─► 5. Consolidate consecutive same-dominant AppBlocks
+        ├─► 6. Assign positions to WindowBlock sequences
+        └─► 7. Clip to timeline bounds
         │
         ▼
 $blocks (TActivityBlock[])
         │
         ▼
-ActivityRow renders each block via WindowBlock/AppBlock components
+ActivityRow renders WindowBlock/AppBlock components
 ```
-
-## Types
-
-```typescript
-type TActivityBlock = TWindowBlock | TAppBlock;
-
-interface TWindowBlock {
-  type: 'window';
-  startMs: number;
-  endMs: number;
-  app: {
-    bundleId: string;
-    name: string;
-    icon: string | null;
-    color: string | null;
-  };
-  windows: WindowActivityDto[];  // 1+, all same app
-  position: 'solo' | 'start' | 'center' | 'end';
-}
-
-interface TAppBlock {
-  type: 'app';
-  startMs: number;
-  endMs: number;
-  apps: Array<{
-    bundleId: string;
-    name: string;
-    icon: string | null;
-    color: string | null;
-  }>;  // 1+ apps
-  activities: WindowActivityDto[];
-}
-```
-
-## Configuration
-
-```typescript
-// Via ActivityRowCx options
-const cx = new ActivityRowCx(timelineCx, activities, {
-  minBlockPx: 16  // Minimum block width before merging (default: 8)
-});
-```
-
-## File Structure
-
-```
-ActivityTimeline/
-├── README.md              # This file
-├── index.ts               # Public exports
-├── types.ts               # TActivityBlock union type
-├── ActivityRowCx.ts       # State management + block creation algorithm
-├── ActivityRow.tsx        # Slim coordinator component
-├── components/
-│   ├── index.ts
-│   ├── WindowBlock.tsx    # Window block view + tooltip
-│   └── AppBlock.tsx       # App block view + tooltip
-└── hooks/
-    ├── index.ts
-    └── use-block-position.ts
-```
-
-## Rendering Details
-
-### WindowBlock
-```tsx
-<div
-  className={cn(
-    "absolute top-1 bottom-1",
-    position === 'solo' && "rounded",
-    position === 'start' && "rounded-l",
-    position === 'end' && "rounded-r",
-  )}
-  style={{ backgroundColor: app.color, left, width }}
->
-  {(position === 'start' || position === 'center') && (
-    <div className="absolute right-0 inset-y-0 border-r border-dashed border-white/30" />
-  )}
-</div>
-```
-
-### AppBlock
-```tsx
-<div
-  className="absolute top-1 bottom-1 rounded overflow-hidden"
-  style={{ backgroundColor: dominantApp.color, left, width }}
->
-  {apps.length > 1 && (
-    <div
-      className="absolute inset-0 opacity-20"
-      style={{
-        backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, white 4px, white 8px)'
-      }}
-    />
-  )}
-</div>
-```
-
-## Usage
-
-```tsx
-import { ActivityRow } from './ActivityTimeline';
-
-<Timeline startMs={sessionStart} endMs={sessionEnd}>
-  <TimelineAxis />
-  <ActivityRow activities={activities} />
-</Timeline>
-```
-
-### With Custom Options
-
-```tsx
-// In ActivityRow.tsx, customize via ActivityRowCx constructor:
-const cx = useMemoCleanup(() => {
-  const instance = new ActivityRowCx(timelineCx, activities, {
-    minBlockPx: 16  // Larger minimum = more aggressive merging
-  });
-  return [instance, () => instance.unmount()];
-}, [timelineCx, activities]);
-```
-
-## Relationship to Timeline
-
-- `Timeline` is a generic component providing zoom, pan, and coordinate conversion
-- `TimelineCx` is generic - only time/pixel conversion, zoom, scroll
-- `ActivityRowCx` owns activity-specific logic - block creation, resolution tracking
-- `ActivityRow` is a slim coordinator that uses ActivityRowCx
-- All aggregation logic lives in ActivityRowCx, keeping Timeline generic
-
-## Design Decisions
-
-1. **Two block types** - WindowBlock (same app, window detail) and AppBlock (mixed apps or app-only tracking). Simple and covers all cases.
-
-2. **Two-level merging** - Apply same logic at window level (within app) and app level (across apps). Preserves maximum detail.
-
-3. **Position chaining for ALL same-app WindowBlocks** - Whether a WindowBlock has 1 window or 5, it participates in the visual chain with dashed dividers.
-
-4. **Stripes only when apps.length > 1** - No redundant flags, just check array length.

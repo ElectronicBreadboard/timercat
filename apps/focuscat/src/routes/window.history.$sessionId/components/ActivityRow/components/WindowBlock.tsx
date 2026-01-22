@@ -8,10 +8,7 @@ import type { TWindowBlock } from '../types';
 export const WindowBlock: React.FC<TWindowBlockProps> = React.memo((props) => {
 	const { block, cx, fallbackColor = '#9ca3af' } = props;
 	const { leftPx, widthPx, visibleLeftPx, visibleWidthPx } = useBlockPosition(block, cx);
-	const durationSec = React.useMemo(
-		() => (block.endMs - block.startMs) / 1000,
-		[block.endMs, block.startMs]
-	);
+	const durationSec = (block.endMs - block.startMs) / 1000;
 	const color = block.app.color ?? fallbackColor;
 
 	return (
@@ -34,7 +31,11 @@ export const WindowBlock: React.FC<TWindowBlockProps> = React.memo((props) => {
 			)}
 
 			{/* Tooltip anchor */}
-			<Tooltip content={<WindowTooltip block={block} durationSec={durationSec} />} side="top">
+			<Tooltip
+				content={<WindowTooltip block={block} durationSec={durationSec} />}
+				side="top"
+				positionerClassName="z-50"
+			>
 				<div
 					className="absolute inset-y-0"
 					style={{ left: visibleLeftPx, width: Math.max(visibleWidthPx, 2) }}
@@ -57,7 +58,7 @@ export interface TWindowBlockProps {
 const WindowTooltip: React.FC<TWindowTooltipProps> = (props) => {
 	const { block, durationSec } = props;
 	const { app, windows } = block;
-	const firstWindow = React.useMemo(() => windows[0], [windows]);
+	const firstWindow = windows[0];
 
 	return (
 		<div className="flex items-center gap-2.5">

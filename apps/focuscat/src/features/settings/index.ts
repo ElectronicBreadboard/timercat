@@ -1,2 +1,2 @@
 export * from './components';
-export * from './settings-cx';
+export * from './SettingsCx';

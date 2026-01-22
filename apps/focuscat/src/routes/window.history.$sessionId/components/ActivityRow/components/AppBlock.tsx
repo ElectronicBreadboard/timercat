@@ -8,11 +8,8 @@ import type { TAppBlock } from '../types';
 export const AppBlock: React.FC<TAppBlockProps> = React.memo((props) => {
 	const { block, cx, fallbackColor = '#9ca3af' } = props;
 	const { leftPx, widthPx, visibleLeftPx, visibleWidthPx } = useBlockPosition(block, cx);
-	const durationSec = React.useMemo(
-		() => (block.endMs - block.startMs) / 1000,
-		[block.endMs, block.startMs]
-	);
-	const dominantApp = React.useMemo(() => block.apps[0], [block.apps]);
+	const durationSec = (block.endMs - block.startMs) / 1000;
+	const dominantApp = block.apps[0];
 	const color = dominantApp?.color ?? fallbackColor;
 
 	if (dominantApp == null) {
@@ -40,7 +37,11 @@ export const AppBlock: React.FC<TAppBlockProps> = React.memo((props) => {
 			)}
 
 			{/* Tooltip anchor */}
-			<Tooltip content={<AppTooltip block={block} durationSec={durationSec} />} side="top">
+			<Tooltip
+				content={<AppTooltip block={block} durationSec={durationSec} />}
+				side="top"
+				positionerClassName="z-50"
+			>
 				<div
 					className="absolute inset-y-0"
 					style={{ left: visibleLeftPx, width: Math.max(visibleWidthPx, 2) }}
@@ -62,7 +63,7 @@ export interface TAppBlockProps {
 
 const AppTooltip: React.FC<TAppTooltipProps> = (props) => {
 	const { block, durationSec } = props;
-	const dominantApp = React.useMemo(() => block.apps[0], [block.apps]);
+	const dominantApp = block.apps[0];
 
 	if (dominantApp == null) {
 		return null;
