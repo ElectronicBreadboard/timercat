@@ -28,7 +28,7 @@ export const Tooltip: React.FC<TTooltipProps> = (props) => {
 				>
 					<BaseTooltip.Popup
 						className={cn(
-							'text-base-900 shadow-base-200 outline-base-200 flex max-w-xs origin-(--transform-origin) flex-col rounded-md bg-[canvas] px-2.5 py-1.5 text-xs shadow-lg outline-1 transition-[transform,scale,opacity] data-ending-style:scale-90 data-ending-style:opacity-0 data-instant:transition-none data-starting-style:scale-90 data-starting-style:opacity-0',
+							'text-base-900 shadow-base-200 outline-base-200 flex max-w-xs origin-(--transform-origin) flex-col rounded-md bg-base-0 px-2.5 py-1.5 text-xs shadow-lg outline-1 transition-[transform,scale,opacity] data-ending-style:scale-90 data-ending-style:opacity-0 data-instant:transition-none data-starting-style:scale-90 data-starting-style:opacity-0',
 							className
 						)}
 					>
@@ -59,7 +59,7 @@ const ArrowSvg: React.FC<React.ComponentProps<'svg'>> = (props) => (
 		{/* Arrow fill - matches popup background */}
 		<path
 			d="M9.66437 2.60207L4.80758 6.97318C4.07308 7.63423 3.11989 8 2.13172 8H0V10H20V8H18.5349C17.5468 8 16.5936 7.63423 15.8591 6.97318L11.0023 2.60207C10.622 2.2598 10.0447 2.25979 9.66437 2.60207Z"
-			className="fill-[canvas]"
+			className="fill-base-0"
 		/>
 		{/* Arrow border - matches popup outline */}
 		<path
