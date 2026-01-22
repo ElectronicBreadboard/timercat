@@ -13,7 +13,7 @@ export const Route = createFileRoute('/window/history/$sessionId/')({
 		// Debug mode: "debug" loads last 4h of activities
 		if (params.sessionId === 'debug') {
 			const now = Date.now();
-			const startedAt = now - 4 * 60 * 60 * 1000;
+			const startedAt = now - 1 * 60 * 60 * 1000;
 			return {
 				session: {
 					id: -1,

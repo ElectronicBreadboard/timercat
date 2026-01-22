@@ -53,11 +53,17 @@ const InnerTimeline: React.FC<TInnerTimelineProps> = (props) => {
 		if (el == null) return;
 
 		const handleWheel = (e: WheelEvent) => {
+			// Ctrl/Cmd + scroll = zoom (never scroll)
 			if (e.ctrlKey || e.metaKey) {
 				e.preventDefault();
+				e.stopPropagation();
 				const factor = e.deltaY > 0 ? 0.8 : 1.25;
 				cx.zoomAtPoint(factor, e.clientX);
-			} else if (zoom > 1) {
+				return;
+			}
+
+			// Regular scroll when zoomed in (use deltaY for horizontal panning)
+			if (zoom > 1) {
 				e.preventDefault();
 				const newScrollLeft = el.scrollLeft + e.deltaY;
 				el.scrollLeft = newScrollLeft;

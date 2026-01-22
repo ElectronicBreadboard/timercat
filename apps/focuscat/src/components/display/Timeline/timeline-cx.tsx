@@ -2,7 +2,7 @@ import { createState } from 'feature-state';
 import React from 'react';
 
 export class TimelineCx {
-	public readonly config: Required<TTimelineOptions>;
+	public readonly config: TTimelineCxConfig;
 	public readonly startMs: number;
 	public readonly endMs: number;
 	public readonly durationMs: number;
@@ -18,7 +18,8 @@ export class TimelineCx {
 			markerResolutions = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400],
 			minMarkerSpacingPx = 50,
 			minZoom = 1,
-			maxZoom = 512
+			maxZoom = 512,
+			blocks = {}
 		} = options;
 		this.startMs = startMs;
 		this.endMs = endMs;
@@ -27,7 +28,52 @@ export class TimelineCx {
 			markerResolutions,
 			minMarkerSpacingPx,
 			minZoom,
-			maxZoom
+			maxZoom,
+			blocks: {
+				minBlockPx: blocks.minBlockPx ?? 8,
+				// Show individual windows when axis resolution is <= 30 seconds
+				windowDetailThresholdSec: blocks.windowDetailThresholdSec ?? 30
+			}
+		};
+	}
+
+	/**
+	 * Get the current marker resolution in seconds.
+	 * This determines the "granularity" of time visible to the user.
+	 */
+	public getMarkerResolution(): number {
+		const visibleDurationSec = (this.containerWidth * this.msPerPx) / 1000;
+		const maxMarkers = this.containerWidth / this.config.minMarkerSpacingPx;
+
+		for (const res of this.config.markerResolutions) {
+			if (visibleDurationSec / res <= maxMarkers) {
+				return res;
+			}
+		}
+
+		return this.config.markerResolutions.at(-1) as number;
+	}
+
+	/**
+	 * Get block configuration for the current zoom level.
+	 * Returns minimum block duration in ms and whether to show individual windows.
+	 */
+	public getBlockConfig(): TBlockConfig {
+		const resolution = this.getMarkerResolution();
+		const { minBlockPx, windowDetailThresholdSec } = this.config.blocks;
+
+		// Show individual windows when zoomed in enough (resolution <= threshold)
+		const showWindows = resolution <= windowDetailThresholdSec;
+
+		// Calculate minimum block duration based on current pixel density
+		// A block should be at least minBlockPx wide
+		const minBlockMs = minBlockPx * this.msPerPx;
+
+		return {
+			minBlockMs,
+			minBlockPx,
+			showWindows,
+			resolution
 		};
 	}
 
@@ -49,19 +95,6 @@ export class TimelineCx {
 
 	public msToPx(ms: number): number {
 		return (ms - this.startMs) * this.pxPerMs;
-	}
-
-	public getMarkerResolution(): number {
-		const visibleDurationSec = (this.containerWidth * this.msPerPx) / 1000;
-		const maxMarkers = this.containerWidth / this.config.minMarkerSpacingPx;
-
-		for (const res of this.config.markerResolutions) {
-			if (visibleDurationSec / res <= maxMarkers) {
-				return res;
-			}
-		}
-
-		return this.config.markerResolutions.at(-1) as number;
 	}
 
 	public setZoom(zoom: number): void {
@@ -132,6 +165,15 @@ export interface TTimelineOptions {
 	minMarkerSpacingPx?: number;
 	minZoom?: number;
 	maxZoom?: number;
+	/** Activity block configuration */
+	blocks?: TBlockOptions;
+}
+
+export interface TBlockOptions {
+	/** Minimum block width in pixels before aggregation (default: 8) */
+	minBlockPx?: number;
+	/** Resolution threshold in seconds - when axis resolution <= this, show individual windows (default: 5) */
+	windowDetailThresholdSec?: number;
 }
 
 const ReactTimelineCx = React.createContext<TimelineCx | null>(null);
@@ -164,4 +206,25 @@ interface TTimelineCxProviderProps {
 interface TContainerRect {
 	width: number;
 	left: number;
+}
+
+/** Internal config with all defaults resolved */
+interface TTimelineCxConfig {
+	markerResolutions: number[];
+	minMarkerSpacingPx: number;
+	minZoom: number;
+	maxZoom: number;
+	blocks: Required<TBlockOptions>;
+}
+
+/** Block configuration for current zoom level */
+export interface TBlockConfig {
+	/** Minimum block duration in milliseconds */
+	minBlockMs: number;
+	/** Minimum block width in pixels */
+	minBlockPx: number;
+	/** Whether to show individual windows (true when zoomed in enough) */
+	showWindows: boolean;
+	/** Current axis resolution in seconds */
+	resolution: number;
 }

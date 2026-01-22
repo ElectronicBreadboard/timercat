@@ -1,298 +1,510 @@
 import type { specta } from '@/environment';
 
-import {
-	DEFAULT_BLOCK_CONFIG,
-	type TActivityBlock,
-	type TAppBlock,
-	type TBlockConfig,
-	type TWindowBlock
+import type {
+	TActivityBlock,
+	TAppMergedBlock,
+	TWindowBlock,
+	TWindowMergedBlock,
+	TWindowPosition
 } from './types';
 
+const MIN_BLOCK_PX = 8;
+
 export interface TCreateBlocksOptions {
-	config?: TBlockConfig;
-	bounds?: { startMs: number; endMs: number };
+	bounds: { startMs: number; endMs: number };
+	msToPx: (ms: number) => number;
 }
 
 /**
- * Creates activity blocks with density-based aggregation.
+ * Creates activity blocks with two-level merging:
+ * 1. Window-level merge within same-app segments
+ * 2. App-level merge across segments
  *
- * Approach:
- * 1. At low density (zoomed in): show individual window blocks
- * 2. At high density (zoomed out): show dominant app for each time region
- *
- * The "dominant app" approach groups by which app has the most duration
- * in each time region, creating a visual representation that matches
- * the color distribution you see when fully zoomed in.
+ * This preserves maximum detail - only merging what's necessary.
  */
 export function createBlocks(
 	activities: specta.WindowActivityDto[],
-	msToPx: (ms: number) => number,
-	options: TCreateBlocksOptions = {}
+	options: TCreateBlocksOptions
 ): TActivityBlock[] {
-	const { config = DEFAULT_BLOCK_CONFIG, bounds } = options;
+	const { bounds, msToPx } = options;
 
 	if (activities.length === 0) return [];
-	if (bounds == null) {
-		// Need bounds to calculate buckets
-		return createWindowBlocks(activities);
-	}
 
-	const totalPixelWidth = msToPx(bounds.endMs) - msToPx(bounds.startMs);
-	const totalDurationMs = bounds.endMs - bounds.startMs;
+	// Step 1: Filter to visible and sort
+	const visible = activities.filter(
+		(a) => a.endedAt > bounds.startMs && a.startedAt < bounds.endMs
+	);
+	if (visible.length === 0) return [];
 
-	// Calculate overall density
-	const overallDensity = activities.length / Math.max(totalPixelWidth, 1);
+	const sorted = [...visible].sort((a, b) => a.startedAt - b.startedAt);
 
-	// If low density, show individual windows
-	if (overallDensity <= config.windowToAppThreshold) {
-		return clampBlocksToBounds(createWindowBlocks(activities), bounds.startMs, bounds.endMs);
-	}
+	// Step 2: Group consecutive same-app activities
+	const appSegments = groupByApp(sorted);
 
-	// High density: use time-bucket dominance approach
-	const blocks = createDominanceBlocks(
-		activities,
-		bounds.startMs,
-		bounds.endMs,
-		totalPixelWidth,
-		config
+	// Step 3: Window-level merge within each segment
+	const windowLevelItems = appSegments.flatMap((segment) =>
+		mergeWindowsInSegment(segment, msToPx)
 	);
 
-	return clampBlocksToBounds(blocks, bounds.startMs, bounds.endMs);
+	// Step 4: App-level merge across segments
+	const appLevelBlocks = mergeAcrossApps(windowLevelItems, msToPx);
+
+	// Step 5: Assign window positions
+	const blocksWithPositions = assignWindowPositions(appLevelBlocks);
+
+	// Clip to bounds
+	return clipToBounds(blocksWithPositions, bounds.startMs, bounds.endMs);
 }
 
-/**
- * Creates window blocks from activities (no grouping).
- */
-function createWindowBlocks(activities: specta.WindowActivityDto[]): TWindowBlock[] {
-	const sorted = [...activities].sort((a, b) => a.startedAt - b.startedAt);
+// MARK: - Types for intermediate stages
 
-	return sorted.map((activity, index) => {
-		const prevActivity = sorted[index - 1];
-		const nextActivity = sorted[index + 1];
-
-		const bundleId = activity.appBundleId ?? 'unknown';
-		const prevBundleId = prevActivity?.appBundleId ?? null;
-		const nextBundleId = nextActivity?.appBundleId ?? null;
-
-		return {
-			type: 'window',
-			activity,
-			startMs: activity.startedAt,
-			endMs: activity.endedAt,
-			isAppStart: bundleId !== prevBundleId,
-			isAppEnd: bundleId !== nextBundleId
-		};
-	});
-}
-
-/**
- * Creates blocks based on dominant app in each time region.
- * Divides timeline into buckets, finds dominant app per bucket,
- * then merges consecutive buckets with same dominant app.
- */
-function createDominanceBlocks(
-	activities: specta.WindowActivityDto[],
-	startMs: number,
-	endMs: number,
-	totalPixelWidth: number,
-	config: TBlockConfig
-): TActivityBlock[] {
-	// Target ~10-20 pixels per bucket for smooth grouping
-	const targetBucketPixels = 15;
-	const bucketCount = Math.max(1, Math.round(totalPixelWidth / targetBucketPixels));
-	const bucketDurationMs = (endMs - startMs) / bucketCount;
-
-	// Create buckets and find dominant app for each
-	const buckets: TBucket[] = [];
-
-	for (let i = 0; i < bucketCount; i++) {
-		const bucketStart = startMs + i * bucketDurationMs;
-		const bucketEnd = startMs + (i + 1) * bucketDurationMs;
-
-		const dominant = findDominantApp(activities, bucketStart, bucketEnd);
-		buckets.push({
-			startMs: bucketStart,
-			endMs: bucketEnd,
-			dominant
-		});
-	}
-
-	// Merge consecutive buckets with same dominant app
-	const merged = mergeBuckets(buckets);
-
-	// Convert to app blocks
-	return merged.map((region) => createAppBlockFromRegion(region, activities));
-}
-
-interface TBucket {
-	startMs: number;
-	endMs: number;
-	dominant: TDominantApp | null;
-}
-
-interface TDominantApp {
+interface TAppSegment {
 	bundleId: string;
 	appName: string;
 	appIcon: string | null;
 	appColor: string | null;
-	durationMs: number;
+	windows: specta.WindowActivityDto[];
 }
 
-/**
- * Finds the dominant app (by duration) in a time range.
- */
-function findDominantApp(
-	activities: specta.WindowActivityDto[],
-	rangeStart: number,
-	rangeEnd: number
-): TDominantApp | null {
+/** Item after window-level merge, before app-level merge */
+interface TWindowLevelItem {
+	type: 'single' | 'merged';
+	startMs: number;
+	endMs: number;
+	bundleId: string;
+	appName: string;
+	appIcon: string | null;
+	appColor: string | null;
+	windows: specta.WindowActivityDto[];
+}
+
+// MARK: - Step 2: Group by app
+
+function groupByApp(activities: specta.WindowActivityDto[]): TAppSegment[] {
+	if (activities.length === 0) return [];
+
+	const segments: TAppSegment[] = [];
+	let current: TAppSegment = {
+		bundleId: activities[0]!.appBundleId ?? 'unknown',
+		appName: activities[0]!.appName ?? 'Unknown',
+		appIcon: activities[0]!.appIcon,
+		appColor: activities[0]!.appColor,
+		windows: [activities[0]!]
+	};
+
+	for (let i = 1; i < activities.length; i++) {
+		const activity = activities[i]!;
+		const bundleId = activity.appBundleId ?? 'unknown';
+
+		if (bundleId === current.bundleId) {
+			current.windows.push(activity);
+		} else {
+			segments.push(current);
+			current = {
+				bundleId,
+				appName: activity.appName ?? 'Unknown',
+				appIcon: activity.appIcon,
+				appColor: activity.appColor,
+				windows: [activity]
+			};
+		}
+	}
+	segments.push(current);
+
+	return segments;
+}
+
+// MARK: - Step 3: Window-level merge within segment
+
+function mergeWindowsInSegment(
+	segment: TAppSegment,
+	msToPx: (ms: number) => number
+): TWindowLevelItem[] {
+	const { bundleId, appName, appIcon, appColor, windows } = segment;
+	const items: TWindowLevelItem[] = [];
+	let mergeGroup: specta.WindowActivityDto[] = [];
+
+	const flushMergeGroup = () => {
+		if (mergeGroup.length === 0) return;
+
+		if (mergeGroup.length === 1) {
+			items.push({
+				type: 'single',
+				startMs: mergeGroup[0]!.startedAt,
+				endMs: mergeGroup[0]!.endedAt,
+				bundleId,
+				appName,
+				appIcon,
+				appColor,
+				windows: [mergeGroup[0]!]
+			});
+		} else {
+			items.push({
+				type: 'merged',
+				startMs: mergeGroup[0]!.startedAt,
+				endMs: mergeGroup[mergeGroup.length - 1]!.endedAt,
+				bundleId,
+				appName,
+				appIcon,
+				appColor,
+				windows: [...mergeGroup]
+			});
+		}
+		mergeGroup = [];
+	};
+
+	for (const window of windows) {
+		const widthPx = msToPx(window.endedAt) - msToPx(window.startedAt);
+
+		if (widthPx >= MIN_BLOCK_PX) {
+			// Window is large enough on its own
+			flushMergeGroup();
+			items.push({
+				type: 'single',
+				startMs: window.startedAt,
+				endMs: window.endedAt,
+				bundleId,
+				appName,
+				appIcon,
+				appColor,
+				windows: [window]
+			});
+		} else {
+			// Window is too small, add to merge group
+			mergeGroup.push(window);
+
+			// Check if merge group is now large enough
+			const groupStartMs = mergeGroup[0]!.startedAt;
+			const groupEndMs = window.endedAt;
+			const groupWidthPx = msToPx(groupEndMs) - msToPx(groupStartMs);
+
+			if (groupWidthPx >= MIN_BLOCK_PX) {
+				flushMergeGroup();
+			}
+		}
+	}
+
+	// Handle remaining merge group
+	if (mergeGroup.length > 0) {
+		// Try to absorb into previous item if exists
+		if (items.length > 0) {
+			const lastItem = items[items.length - 1]!;
+			lastItem.windows.push(...mergeGroup);
+			lastItem.endMs = mergeGroup[mergeGroup.length - 1]!.endedAt;
+			lastItem.type = 'merged';
+		} else {
+			flushMergeGroup();
+		}
+	}
+
+	return items;
+}
+
+// MARK: - Step 4: App-level merge across segments
+
+function mergeAcrossApps(
+	items: TWindowLevelItem[],
+	msToPx: (ms: number) => number
+): TActivityBlock[] {
+	if (items.length === 0) return [];
+
+	const blocks: TActivityBlock[] = [];
+	let mergeGroup: TWindowLevelItem[] = [];
+
+	const getMergeGroupWidth = () => {
+		if (mergeGroup.length === 0) return 0;
+		const startMs = mergeGroup[0]!.startMs;
+		const endMs = mergeGroup[mergeGroup.length - 1]!.endMs;
+		return msToPx(endMs) - msToPx(startMs);
+	};
+
+	const flushMergeGroup = () => {
+		if (mergeGroup.length === 0) return;
+
+		const uniqueBundleIds = new Set(mergeGroup.map((item) => item.bundleId));
+
+		if (uniqueBundleIds.size === 1) {
+			// Same app - create Window or WindowMerged blocks
+			const allWindows = mergeGroup.flatMap((item) => item.windows);
+			if (allWindows.length === 1) {
+				blocks.push(createWindowBlock(allWindows[0]!, 'solo'));
+			} else {
+				blocks.push(createWindowMergedBlock(mergeGroup));
+			}
+		} else {
+			// Different apps - create AppMerged block
+			blocks.push(createAppMergedBlock(mergeGroup));
+		}
+
+		mergeGroup = [];
+	};
+
+	for (const item of items) {
+		const widthPx = msToPx(item.endMs) - msToPx(item.startMs);
+
+		if (widthPx >= MIN_BLOCK_PX) {
+			// Item is large enough on its own
+			flushMergeGroup();
+
+			// Add as appropriate block type
+			if (item.type === 'single') {
+				blocks.push(createWindowBlock(item.windows[0]!, 'solo'));
+			} else {
+				blocks.push(createWindowMergedBlock([item]));
+			}
+		} else {
+			// Item is too small, add to merge group
+			mergeGroup.push(item);
+
+			// Check if merge group is now large enough
+			if (getMergeGroupWidth() >= MIN_BLOCK_PX) {
+				flushMergeGroup();
+			}
+		}
+	}
+
+	// Handle remaining merge group
+	if (mergeGroup.length > 0) {
+		// Try to absorb into previous block if exists
+		if (blocks.length > 0) {
+			const lastBlock = blocks.pop()!;
+			const combinedItems = blockToItems(lastBlock).concat(mergeGroup);
+			const uniqueBundleIds = new Set(combinedItems.map((item) => item.bundleId));
+
+			if (uniqueBundleIds.size === 1) {
+				const allWindows = combinedItems.flatMap((item) => item.windows);
+				if (allWindows.length === 1) {
+					blocks.push(createWindowBlock(allWindows[0]!, 'solo'));
+				} else {
+					blocks.push(createWindowMergedBlock(combinedItems));
+				}
+			} else {
+				blocks.push(createAppMergedBlock(combinedItems));
+			}
+		} else {
+			flushMergeGroup();
+		}
+	}
+
+	return blocks;
+}
+
+/** Convert a block back to items for re-merging */
+function blockToItems(block: TActivityBlock): TWindowLevelItem[] {
+	switch (block.type) {
+		case 'window':
+			return [
+				{
+					type: 'single',
+					startMs: block.startMs,
+					endMs: block.endMs,
+					bundleId: block.activity.appBundleId ?? 'unknown',
+					appName: block.activity.appName ?? 'Unknown',
+					appIcon: block.activity.appIcon,
+					appColor: block.activity.appColor,
+					windows: [block.activity]
+				}
+			];
+		case 'window-merged':
+			return [
+				{
+					type: 'merged',
+					startMs: block.startMs,
+					endMs: block.endMs,
+					bundleId: block.bundleId,
+					appName: block.appName,
+					appIcon: block.appIcon,
+					appColor: block.appColor,
+					windows: block.windows
+				}
+			];
+		case 'app-merged':
+			// For AppMerged, return each activity as a separate item
+			return block.activities.map((activity) => ({
+				type: 'single' as const,
+				startMs: activity.startedAt,
+				endMs: activity.endedAt,
+				bundleId: activity.appBundleId ?? 'unknown',
+				appName: activity.appName ?? 'Unknown',
+				appIcon: activity.appIcon,
+				appColor: activity.appColor,
+				windows: [activity]
+			}));
+	}
+}
+
+// MARK: - Step 5: Assign window positions
+
+function assignWindowPositions(blocks: TActivityBlock[]): TActivityBlock[] {
+	// Group consecutive Window blocks by app for position assignment
+	const result: TActivityBlock[] = [];
+	let windowSequence: TWindowBlock[] = [];
+	let currentBundleId: string | null = null;
+
+	const flushWindowSequence = () => {
+		if (windowSequence.length === 0) return;
+
+		if (windowSequence.length === 1) {
+			windowSequence[0]!.position = 'solo';
+		} else {
+			windowSequence[0]!.position = 'start';
+			for (let i = 1; i < windowSequence.length - 1; i++) {
+				windowSequence[i]!.position = 'center';
+			}
+			windowSequence[windowSequence.length - 1]!.position = 'end';
+		}
+
+		result.push(...windowSequence);
+		windowSequence = [];
+		currentBundleId = null;
+	};
+
+	for (const block of blocks) {
+		if (block.type === 'window') {
+			const bundleId = block.activity.appBundleId ?? 'unknown';
+
+			if (currentBundleId === null || bundleId === currentBundleId) {
+				windowSequence.push(block);
+				currentBundleId = bundleId;
+			} else {
+				flushWindowSequence();
+				windowSequence.push(block);
+				currentBundleId = bundleId;
+			}
+		} else {
+			flushWindowSequence();
+			result.push(block);
+		}
+	}
+
+	flushWindowSequence();
+	return result;
+}
+
+// MARK: - Block creators
+
+function createWindowBlock(
+	activity: specta.WindowActivityDto,
+	position: TWindowPosition
+): TWindowBlock {
+	return {
+		type: 'window',
+		startMs: activity.startedAt,
+		endMs: activity.endedAt,
+		activity,
+		position
+	};
+}
+
+function createWindowMergedBlock(items: TWindowLevelItem[]): TWindowMergedBlock {
+	const allWindows = items.flatMap((item) => item.windows);
+	const firstItem = items[0]!;
+
+	return {
+		type: 'window-merged',
+		startMs: items[0]!.startMs,
+		endMs: items[items.length - 1]!.endMs,
+		bundleId: firstItem.bundleId,
+		appName: firstItem.appName,
+		appIcon: firstItem.appIcon,
+		appColor: firstItem.appColor,
+		windows: allWindows
+	};
+}
+
+function createAppMergedBlock(items: TWindowLevelItem[]): TAppMergedBlock {
+	const allActivities = items.flatMap((item) => item.windows);
+	const dominant = getDominantApp(allActivities);
+	const uniqueApps = getUniqueApps(allActivities);
+
+	return {
+		type: 'app-merged',
+		startMs: items[0]!.startMs,
+		endMs: items[items.length - 1]!.endMs,
+		dominantApp: dominant,
+		activities: allActivities,
+		uniqueApps
+	};
+}
+
+// MARK: - Helpers
+
+function getDominantApp(activities: specta.WindowActivityDto[]): {
+	bundleId: string;
+	appName: string;
+	appIcon: string | null;
+	appColor: string | null;
+} {
 	const appDurations = new Map<
 		string,
-		{ durationMs: number; appName: string; appIcon: string | null; appColor: string | null }
+		{ duration: number; activity: specta.WindowActivityDto }
 	>();
 
 	for (const activity of activities) {
-		// Check if activity overlaps with range
-		if (activity.endedAt <= rangeStart || activity.startedAt >= rangeEnd) {
-			continue;
-		}
-
-		// Calculate overlap duration
-		const overlapStart = Math.max(activity.startedAt, rangeStart);
-		const overlapEnd = Math.min(activity.endedAt, rangeEnd);
-		const overlapDuration = overlapEnd - overlapStart;
-
-		if (overlapDuration <= 0) continue;
-
 		const bundleId = activity.appBundleId ?? 'unknown';
+		const duration = activity.endedAt - activity.startedAt;
 		const existing = appDurations.get(bundleId);
 
-		if (existing != null) {
-			existing.durationMs += overlapDuration;
+		if (existing) {
+			existing.duration += duration;
 		} else {
-			appDurations.set(bundleId, {
-				durationMs: overlapDuration,
+			appDurations.set(bundleId, { duration, activity });
+		}
+	}
+
+	let dominant = { bundleId: 'unknown', duration: 0, activity: activities[0]! };
+	for (const [bundleId, data] of appDurations) {
+		if (data.duration > dominant.duration) {
+			dominant = { bundleId, ...data };
+		}
+	}
+
+	return {
+		bundleId: dominant.bundleId,
+		appName: dominant.activity.appName ?? 'Unknown',
+		appIcon: dominant.activity.appIcon,
+		appColor: dominant.activity.appColor
+	};
+}
+
+function getUniqueApps(
+	activities: specta.WindowActivityDto[]
+): Array<{ bundleId: string; appName: string; appIcon: string | null }> {
+	const seen = new Map<
+		string,
+		{ bundleId: string; appName: string; appIcon: string | null }
+	>();
+
+	for (const activity of activities) {
+		const bundleId = activity.appBundleId ?? 'unknown';
+		if (!seen.has(bundleId)) {
+			seen.set(bundleId, {
+				bundleId,
 				appName: activity.appName ?? 'Unknown',
-				appIcon: activity.appIcon,
-				appColor: activity.appColor
+				appIcon: activity.appIcon
 			});
 		}
 	}
 
-	// Find app with most duration
-	let dominant: TDominantApp | null = null;
-
-	for (const [bundleId, data] of appDurations) {
-		if (dominant == null || data.durationMs > dominant.durationMs) {
-			dominant = {
-				bundleId,
-				appName: data.appName,
-				appIcon: data.appIcon,
-				appColor: data.appColor,
-				durationMs: data.durationMs
-			};
-		}
-	}
-
-	return dominant;
+	return Array.from(seen.values());
 }
 
-/**
- * Merges consecutive buckets that have the same dominant app.
- */
-function mergeBuckets(
-	buckets: TBucket[]
-): Array<{ startMs: number; endMs: number; dominant: TDominantApp | null }> {
-	if (buckets.length === 0) return [];
-
-	const merged: Array<{ startMs: number; endMs: number; dominant: TDominantApp | null }> = [];
-	let current = { ...buckets[0]! };
-
-	for (let i = 1; i < buckets.length; i++) {
-		const bucket = buckets[i]!;
-
-		// Same dominant app? Merge
-		if (current.dominant?.bundleId === bucket.dominant?.bundleId) {
-			current.endMs = bucket.endMs;
-			// Accumulate duration
-			if (current.dominant != null && bucket.dominant != null) {
-				current.dominant.durationMs += bucket.dominant.durationMs;
-			}
-		} else {
-			// Different app, start new region
-			merged.push(current);
-			current = { ...bucket };
-		}
-	}
-
-	merged.push(current);
-	return merged;
-}
-
-/**
- * Creates an app block from a merged region.
- */
-function createAppBlockFromRegion(
-	region: { startMs: number; endMs: number; dominant: TDominantApp | null },
-	activities: specta.WindowActivityDto[]
-): TAppBlock {
-	// Find all activities that overlap with this region
-	const regionActivities = activities.filter(
-		(a) => a.endedAt > region.startMs && a.startedAt < region.endMs
-	);
-
-	const dominant = region.dominant ?? {
-		bundleId: 'unknown',
-		appName: 'Unknown',
-		appIcon: null,
-		appColor: null
-	};
-
-	return {
-		type: 'app',
-		bundleId: dominant.bundleId,
-		appName: dominant.appName,
-		appIcon: dominant.appIcon,
-		appColor: dominant.appColor,
-		startMs: region.startMs,
-		endMs: region.endMs,
-		windowCount: regionActivities.length,
-		windows: regionActivities
-	};
-}
-
-/**
- * Filter blocks to only those within a time range.
- */
-export function filterBlocksInRange<T extends { startMs: number; endMs: number }>(
-	blocks: T[],
-	rangeStartMs: number,
-	rangeEndMs: number
-): T[] {
-	return blocks.filter((block) => block.endMs > rangeStartMs && block.startMs < rangeEndMs);
-}
-
-/**
- * Clamp blocks to session boundaries.
- */
-function clampBlocksToBounds(
+function clipToBounds(
 	blocks: TActivityBlock[],
-	boundsStartMs: number,
-	boundsEndMs: number
+	startMs: number,
+	endMs: number
 ): TActivityBlock[] {
-	const result: TActivityBlock[] = [];
+	if (blocks.length === 0) return blocks;
 
-	for (const block of blocks) {
-		if (block.endMs <= boundsStartMs || block.startMs >= boundsEndMs) {
-			continue;
+	return blocks.map((block, i) => {
+		const clippedStart = i === 0 ? Math.max(block.startMs, startMs) : block.startMs;
+		const clippedEnd =
+			i === blocks.length - 1 ? Math.min(block.endMs, endMs) : block.endMs;
+
+		if (clippedStart === block.startMs && clippedEnd === block.endMs) {
+			return block;
 		}
 
-		result.push({
-			...block,
-			startMs: Math.max(block.startMs, boundsStartMs),
-			endMs: Math.min(block.endMs, boundsEndMs)
-		});
-	}
-
-	return result;
+		return { ...block, startMs: clippedStart, endMs: clippedEnd };
+	});
 }

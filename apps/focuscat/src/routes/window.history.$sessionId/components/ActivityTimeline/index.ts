@@ -1,10 +1,9 @@
 export { ActivityRow, type TActivityRowProps } from './ActivityRow';
-export { createBlocks, filterBlocksInRange } from './create-blocks';
+export { createBlocks, type TCreateBlocksOptions } from './create-blocks';
 export {
-	DEFAULT_BLOCK_CONFIG,
 	type TActivityBlock,
-	type TAppBlock,
-	type TBlockConfig,
-	type TClusterBlock,
-	type TWindowBlock
+	type TAppMergedBlock,
+	type TWindowBlock,
+	type TWindowMergedBlock,
+	type TWindowPosition
 } from './types';
