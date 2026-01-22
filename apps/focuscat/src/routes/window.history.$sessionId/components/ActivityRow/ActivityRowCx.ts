@@ -11,6 +11,7 @@ export class ActivityRowCx {
 	private _activities: specta.WindowActivityDto[];
 	private _lastResolution: number = -1;
 	private _unlisteners: Array<() => void> = [];
+	private _updateTimeout: ReturnType<typeof setTimeout> | null = null;
 
 	constructor(
 		timelineCx: TimelineCx,
@@ -37,6 +38,10 @@ export class ActivityRowCx {
 			unlisten();
 		}
 		this._unlisteners = [];
+		if (this._updateTimeout != null) {
+			clearTimeout(this._updateTimeout);
+			this._updateTimeout = null;
+		}
 	}
 
 	public setActivities(activities: specta.WindowActivityDto[]): void {
@@ -47,14 +52,29 @@ export class ActivityRowCx {
 
 	/** Recompute blocks if resolution changed */
 	private update(): void {
-		const resolution = this.timelineCx.getMarkerResolution();
-		if (resolution === this._lastResolution) {
+		const applyUpdate = () => {
+			const resolution = this.timelineCx.getMarkerResolution();
+			if (resolution === this._lastResolution) {
+				return;
+			}
+			this._lastResolution = resolution;
+			this.$blocks.set(this.createBlocks());
+		};
+
+		// First update should be immediate
+		if (this._lastResolution === -1) {
+			applyUpdate();
 			return;
 		}
 
-		this._lastResolution = resolution;
-		const blocks = this.createBlocks();
-		this.$blocks.set(blocks);
+		// Debounce subsequent updates to avoid jumpy reorganization during zoom
+		if (this._updateTimeout != null) {
+			clearTimeout(this._updateTimeout);
+		}
+		this._updateTimeout = setTimeout(() => {
+			this._updateTimeout = null;
+			applyUpdate();
+		}, 150);
 	}
 
 	// MARK: - Position Helpers
