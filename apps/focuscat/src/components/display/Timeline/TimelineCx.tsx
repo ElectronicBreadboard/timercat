@@ -17,7 +17,6 @@ export class TimelineCx {
 
 	constructor(startMs: number, endMs: number, options: TTimelineOptions = {}) {
 		const {
-			// Marker resolutions in seconds: 1s to 4h
 			markerResolutions = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400],
 			minMarkerSpacingPx = 50,
 			minZoom = 1,
@@ -119,6 +118,37 @@ export class TimelineCx {
 		}
 	}
 
+	public zoomToRange(rangeStartMs: number, rangeEndMs: number, targetFraction = 0.5): void {
+		const rangeDurationMs = rangeEndMs - rangeStartMs;
+		if (rangeDurationMs <= 0) {
+			return;
+		}
+
+		// Calculate zoom needed for range to fill targetFraction of container
+		const targetZoom = (targetFraction * this.durationMs) / rangeDurationMs;
+		const newZoom = Math.max(this.config.minZoom, Math.min(this.config.maxZoom, targetZoom));
+
+		// Calculate scroll position to center the range
+		const newTotalWidth = this.containerWidth * newZoom;
+		const newPxPerMs = newTotalWidth / this.durationMs;
+		const rangeCenterMs = (rangeStartMs + rangeEndMs) / 2;
+		const rangeCenterPx = (rangeCenterMs - this.startMs) * newPxPerMs;
+		const newScrollLeft = Math.max(0, rangeCenterPx - this.containerWidth / 2);
+
+		// Set flag before any state changes to prevent feedback loop
+		this.isProgrammaticScroll = true;
+
+		// Update state
+		this.$zoom.set(newZoom);
+		this.$scrollLeft.set(newScrollLeft);
+
+		// Sync DOM immediately for smoother feel
+		const el = this.containerRef.current;
+		if (el != null) {
+			el.scrollLeft = newScrollLeft;
+		}
+	}
+
 	/** Get visible time range based on current scroll position */
 	public getVisibleRange(): { startMs: number; endMs: number } {
 		const scrollLeft = this.$scrollLeft.get();
@@ -145,9 +175,13 @@ export class TimelineCx {
 }
 
 export interface TTimelineOptions {
+	/** Available marker intervals in seconds (default: 1s to 4h) */
 	markerResolutions?: number[];
+	/** Minimum spacing between markers in pixels (default: 50) */
 	minMarkerSpacingPx?: number;
+	/** Minimum zoom level (default: 1) */
 	minZoom?: number;
+	/** Maximum zoom level (default: 512) */
 	maxZoom?: number;
 }
 

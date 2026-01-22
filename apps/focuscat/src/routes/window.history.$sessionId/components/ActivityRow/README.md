@@ -62,10 +62,15 @@ This is intentional:
 
 ### Overview
 
-Three-level processing with configurable minimum block width (default 16px):
+Three-level processing with separate configurable thresholds:
 
-1. **Window-level merge** - within same-app segments
-2. **App-level merge** - across different apps
+- **Window-level threshold** (default 8px) - for merging windows within same app
+- **App-level threshold** (default 12px) - for merging across different apps
+
+Steps:
+
+1. **Window-level merge** - within same-app segments (uses window threshold)
+2. **App-level merge** - across different apps (uses app threshold)
 3. **AppBlock consolidation** - merge consecutive same-dominant-app blocks
 
 ### Step-by-Step
@@ -76,17 +81,19 @@ Three-level processing with configurable minimum block width (default 16px):
 2. Group consecutive same-app activities into segments
 
 3. Window-level merge (within each same-app segment):
+   Uses minWindowBlockPx threshold (default 8px)
    Go left-to-right:
-   - Small window (< minBlockPx): accumulate in pending group
-   - Large window (>= minBlockPx):
+   - Small window (< threshold): accumulate in pending group
+   - Large window (>= threshold):
      - If pending small windows exist → absorb them, flush combined
      - If no pending → keep as standalone
    - End of segment: merge remaining small into previous item
 
 4. App-level merge (across all segments):
+   Uses minAppBlockPx threshold (default 12px)
    Go left-to-right:
-   - Small item: accumulate in pending group
-   - Large item:
+   - Small item (< threshold): accumulate in pending group
+   - Large item (>= threshold):
      - If pending small items exist → absorb them, flush combined
      - If no pending → create WindowBlock
    - End: merge remaining small into previous block
@@ -122,19 +129,33 @@ This ensures the block's color represents the primary activity.
 ## Visual Examples
 
 ```
-Zoomed in (all windows >= minBlockPx):
+Zoomed in (all windows >= minWindowBlockPx):
 [VS Code: file1 | file2 | file3][Chrome: tab1 | tab2][Slack]
    start    center   end         start     end       solo
          ↑ dashed dividers
 
-Partially zoomed (some merged):
+Partially zoomed (some windows merged):
 [VS Code: file1 | merged(3)][Chrome: merged(2)][Slack]
    start      end                 solo          solo
 
-Very zoomed out (apps merged):
+Very zoomed out (apps merged, items < minAppBlockPx):
 [=========== AppBlock (VS Code + Chrome + Slack) ===========]
               ↑ Striped overlay, VS Code color (dominant)
 ```
+
+## Interactions
+
+### Click to Zoom
+
+Clicking any block zooms to make that block fill ~70% of the visible area and centers it. This allows users to quickly drill down into merged blocks to see more detail while still showing neighboring blocks for context. The zoom is clamped to min/max bounds.
+
+### Scroll to Pan
+
+When zoomed in (zoom > 1), vertical scroll is converted to horizontal panning for easier navigation.
+
+### Ctrl/Cmd + Scroll to Zoom
+
+Hold Ctrl (or Cmd on Mac) while scrolling to zoom in/out centered on the mouse position.
 
 ## Data Flow
 

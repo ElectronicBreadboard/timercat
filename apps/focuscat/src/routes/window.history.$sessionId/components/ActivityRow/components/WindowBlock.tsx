@@ -11,6 +11,10 @@ export const WindowBlock: React.FC<TWindowBlockProps> = React.memo((props) => {
 	const durationSec = (block.endMs - block.startMs) / 1000;
 	const color = block.app.color ?? fallbackColor;
 
+	const handleClick = React.useCallback(() => {
+		cx.timelineCx.zoomToRange(block.startMs, block.endMs, 0.7);
+	}, [cx, block.startMs, block.endMs]);
+
 	return (
 		<div
 			className={cn(
@@ -30,21 +34,21 @@ export const WindowBlock: React.FC<TWindowBlockProps> = React.memo((props) => {
 				<div className="absolute inset-y-0 right-0 border-r border-dashed border-white/30" />
 			)}
 
-			{/* Tooltip anchor */}
+			{/* Tooltip anchor + click to zoom */}
 			<Tooltip
 				content={<WindowTooltip block={block} durationSec={durationSec} />}
 				side="top"
 				positionerClassName="z-50"
 			>
 				<div
-					className="absolute inset-y-0"
+					className="absolute inset-y-0 cursor-pointer"
 					style={{ left: visibleLeftPx, width: Math.max(visibleWidthPx, 2) }}
+					onClick={handleClick}
 				/>
 			</Tooltip>
 		</div>
 	);
 });
-
 WindowBlock.displayName = 'WindowBlock';
 
 export interface TWindowBlockProps {

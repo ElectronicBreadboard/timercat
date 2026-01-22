@@ -10,7 +10,7 @@ export const ActivityRow: React.FC<TActivityRowProps> = (props) => {
 	const { activities } = props;
 	const timelineCx = useTimelineCx();
 	const cx = useMemoCleanup(() => {
-		const instance = new ActivityRowCx(timelineCx, activities, { minBlockPx: 12 });
+		const instance = new ActivityRowCx(timelineCx, activities);
 		return [instance, () => instance.unmount()];
 	}, [timelineCx, activities]);
 

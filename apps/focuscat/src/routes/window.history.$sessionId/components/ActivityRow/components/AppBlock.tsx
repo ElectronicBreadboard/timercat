@@ -12,6 +12,10 @@ export const AppBlock: React.FC<TAppBlockProps> = React.memo((props) => {
 	const dominantApp = block.apps[0];
 	const color = dominantApp?.color ?? fallbackColor;
 
+	const handleClick = React.useCallback(() => {
+		cx.timelineCx.zoomToRange(block.startMs, block.endMs, 0.7);
+	}, [cx, block.startMs, block.endMs]);
+
 	if (dominantApp == null) {
 		return null;
 	}
@@ -36,21 +40,21 @@ export const AppBlock: React.FC<TAppBlockProps> = React.memo((props) => {
 				/>
 			)}
 
-			{/* Tooltip anchor */}
+			{/* Tooltip anchor + click to zoom */}
 			<Tooltip
 				content={<AppTooltip block={block} durationSec={durationSec} />}
 				side="top"
 				positionerClassName="z-50"
 			>
 				<div
-					className="absolute inset-y-0"
+					className="absolute inset-y-0 cursor-pointer"
 					style={{ left: visibleLeftPx, width: Math.max(visibleWidthPx, 2) }}
+					onClick={handleClick}
 				/>
 			</Tooltip>
 		</div>
 	);
 });
-
 AppBlock.displayName = 'AppBlock';
 
 export interface TAppBlockProps {
@@ -85,8 +89,8 @@ const AppTooltip: React.FC<TAppTooltipProps> = (props) => {
 			</div>
 			{block.apps.length > 1 && (
 				<div className="border-base-200 flex flex-wrap gap-1 border-t pt-2">
-					{block.apps.map((app, i) => (
-						<div key={i} className="flex items-center gap-1">
+					{block.apps.map((app) => (
+						<div key={app.bundleId} className="flex items-center gap-1">
 							{app.icon != null && (
 								<img src={app.icon} alt="" className="size-4 shrink-0 rounded" />
 							)}
