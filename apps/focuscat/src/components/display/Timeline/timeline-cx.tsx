@@ -14,10 +14,11 @@ export class TimelineCx {
 
 	constructor(startMs: number, endMs: number, options: TTimelineOptions = {}) {
 		const {
-			markerResolutions = [5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600],
-			minMarkerSpacingPx = 60,
+			// Marker resolutions in seconds: 1s to 4h
+			markerResolutions = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400],
+			minMarkerSpacingPx = 50,
 			minZoom = 1,
-			maxZoom = 32
+			maxZoom = 512
 		} = options;
 		this.startMs = startMs;
 		this.endMs = endMs;
@@ -99,6 +100,30 @@ export class TimelineCx {
 		if (this.$scrollLeft.get() !== clamped) {
 			this.$scrollLeft.set(clamped);
 		}
+	}
+
+	/** Get visible time range based on current scroll position */
+	public getVisibleRange(): { startMs: number; endMs: number } {
+		const scrollLeft = this.$scrollLeft.get();
+		const containerWidth = this.containerWidth;
+
+		const startMs = this.startMs + scrollLeft * this.msPerPx;
+		const endMs = startMs + containerWidth * this.msPerPx;
+
+		return {
+			startMs: Math.max(this.startMs, startMs),
+			endMs: Math.min(this.endMs, endMs)
+		};
+	}
+
+	/** Get visible time range with buffer for smooth scrolling */
+	public getVisibleRangeWithBuffer(bufferMs: number): { startMs: number; endMs: number } {
+		const { startMs, endMs } = this.getVisibleRange();
+
+		return {
+			startMs: Math.max(this.startMs, startMs - bufferMs),
+			endMs: Math.min(this.endMs, endMs + bufferMs)
+		};
 	}
 }
 

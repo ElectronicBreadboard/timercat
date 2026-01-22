@@ -1,3 +1,3 @@
 export * from './ActivityTimeline';
 export * from './SessionTimeline';
-export * from './SessionTimelineV2';
+export * from './SimpleSessionTimeline';

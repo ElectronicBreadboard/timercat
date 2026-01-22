@@ -11,6 +11,7 @@ export {
 	AppWindow as AppWindowIcon,
 	ArrowLeft as ArrowLeftIcon,
 	Briefcase as BriefcaseIcon,
+	Bug as BugIcon,
 	Check as CheckIcon,
 	CheckCircle2 as CheckCircleIcon,
 	ChevronLeft as ChevronLeftIcon,

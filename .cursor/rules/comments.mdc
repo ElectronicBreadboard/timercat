@@ -6,158 +6,144 @@ alwaysApply: true
 
 # Comment Guidelines
 
-Guidelines for writing comments that help readers understand code faster. The goal is balance: enough signposts to navigate, not so many that they become noise.
+The goal is balance: enough signposts to navigate, not so many that they become noise.
 
 ## Core Principles
 
 - **Value-Driven** - Always ask "Does this help the next reader?"
-- **Context-Aware** - Always write comments relevant to where they live
 - **Balanced** - Never over-comment obvious code, never under-comment complex logic
 
 ## What TO Comment
 
 ### Section Headers
-- Always use section headers to help readers skim longer functions
-- Always keep headers short and descriptive
+Short labels to help readers skim longer functions.
 
 ✅ Good:
 ```rust
-// Start runner
-runner.start();
-register_callbacks();
+// Validate input
+...
 
-// Stop runner
-runner.stop();
-cleanup_resources();
+// Process data
+...
+
+// Save results
+...
 ```
 
 ❌ Bad:
 ```rust
-// This section starts the runner by calling start() and registering callbacks
-runner.start();
-register_callbacks();
+// This section validates the input by checking all required fields
+...
 ```
 
 ### WHY Comments
-- Always explain non-obvious constraints or tradeoffs
-- Always document reasoning that isn't clear from the code
+Explain non-obvious constraints or tradeoffs.
 
 ✅ Good:
 ```rust
-// DB operations outside lock to avoid deadlock with tray updates
-if let Some(session_id) = session_id {
-    SessionEventRepository::insert(...).await;
-}
+// Outside lock to avoid deadlock with UI updates
+db.insert(...).await;
 ```
 
 ❌ Bad:
 ```rust
-// Insert event into database
-if let Some(session_id) = session_id {
-    SessionEventRepository::insert(...).await;
-}
+// Insert into database
+db.insert(...).await;
 ```
 
-### Domain Logic Clarification
-- Always explain business rules that need context
-- Always document edge cases handled by the code
+### Domain Logic
+Explain business rules that need context.
 
 ✅ Good:
 ```rust
-// Overtime = time worked beyond planned (base + extensions)
-let overtime = focus_seconds.saturating_sub(planned + extended);
+// Overtime = time beyond planned (base + extensions)
+let overtime = actual.saturating_sub(planned + extended);
+```
 
-// Session ended while still paused - count remaining pause time
-if let Some(start) = pause_start {
-    paused_seconds += ended_at - start;
+### Thresholds and Config Values
+Explain what a value means, not its literal value. Document on props/parameters.
+
+✅ Good:
+```typescript
+interface TProps {
+    /** Minimum size (px) for element to be visible */
+    minSizePx?: number;
+}
+```
+
+❌ Bad:
+```typescript
+interface TProps {
+    minSizePx?: number; // 8
 }
 ```
 
 ### Data State Documentation
-- Always document non-obvious data states in doc comments
-- Never include caller context in generic/reusable code
+Document non-obvious data states.
 
 ✅ Good:
 ```rust
-/// Insert new session (ended_at is NULL until complete/cancel).
-pub async fn insert(pool: &SqlitePool, input: &InsertSessionInput) -> Result<i64, sqlx::Error>
+/// Insert new record (ended_at is NULL until complete).
+pub async fn insert(...) -> Result<i64>
 ```
 
 ❌ Bad:
 ```rust
-/// Insert new session at timer start.
-pub async fn insert(pool: &SqlitePool, input: &InsertSessionInput) -> Result<i64, sqlx::Error>
+/// Insert a new record into the database.
+pub async fn insert(...) -> Result<i64>
 ```
 
 ## What NOT TO Comment
 
-### Restating Function Names
-- Never restate what the function name already says
-- Never add doc comments that don't provide new information
+### Restating Code
+Never restate what the code literally does.
 
-✅ Good:
-```rust
-pub async fn insert(pool: &SqlitePool, input: &InsertSessionInput) -> Result<i64, sqlx::Error>
-```
-
-❌ Bad:
-```rust
-/// Insert a new session into the database.
-pub async fn insert(pool: &SqlitePool, input: &InsertSessionInput) -> Result<i64, sqlx::Error>
-```
-
-### Obvious Operations
-- Never comment self-explanatory code
-- Never add inline comments that restate what the code does
-
-✅ Good:
-```rust
-let timer = state.lock().unwrap();
-
-for event in events {
-    // ...
-}
-
-if sessions.is_empty() {
-    return vec![];
+✅ Good - Intent helps readers skim:
+```typescript
+if (current == null || current.id !== id) {
+    // Start new group
+    ...
+} else {
+    // Extend current group
+    ...
 }
 ```
 
-❌ Bad:
+❌ Bad - Restates mechanics:
 ```rust
 // Get the timer
-let timer = state.lock().unwrap();
+let timer = state.lock();
 
-// Loop through events
-for event in events {
+// Loop through items
+for item in items {
 
-// Check if empty
-if sessions.is_empty() {
+// Check if null or id different
+if (current == null || current.id !== id) {
 ```
 
 ### Type Information
-- Never restate what types already document
-- Always comment only when the type doesn't convey meaning
+Never restate what types already document.
 
 ✅ Good:
 ```rust
 // Unix timestamp in seconds
-let started_at: i64 = row.get("started_at");
+let timestamp: i64 = row.get("created_at");
 ```
 
 ❌ Bad:
 ```rust
-// The session ID as an integer
-let session_id: i64 = row.get("id");
+// The ID as an integer
+let id: i64 = row.get("id");
 ```
 
 ## Language Specifics
 
 ### Rust
-- Always use `//` for inline comments
-- Always use `///` for doc comments (only when adding value)
-- Always use `// MARK: -` for IDE navigation (sparingly, in large files)
+- `//` for inline comments
+- `///` for doc comments (only when adding value)
+- `// MARK: -` for IDE navigation (sparingly)
 
 ### TypeScript
-- Always use `//` for inline comments
-- Always use `/** */` for JSDoc (only when adding value)
+- `//` for inline comments
+- `/** */` for JSDoc (only when adding value)
+- `// MARK: -` for IDE navigation (sparingly)

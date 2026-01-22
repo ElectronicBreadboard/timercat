@@ -6,10 +6,39 @@ import { BriefcaseIcon, CoffeeIcon } from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
 import { cn, formatDuration, formatTimeOfDayAmPm, toTuple } from '@/lib';
-import { SessionTimeline, SessionTimelineV2 } from './components';
+import { SessionTimeline, SimpleSessionTimeline } from './components';
 
 export const Route = createFileRoute('/window/history/$sessionId/')({
 	loader: async ({ params }) => {
+		// Debug mode: "debug" loads last 4h of activities
+		if (params.sessionId === 'debug') {
+			const now = Date.now();
+			const startedAt = now - 4 * 60 * 60 * 1000;
+			return {
+				session: {
+					id: -1,
+					phase: 'work',
+					status: 'completed',
+					plannedSeconds: 4 * 60 * 60,
+					actualSeconds: 4 * 60 * 60,
+					startedAt,
+					endedAt: now,
+					events: [],
+					stats: { pausedSeconds: 0, extendedSeconds: 0 }
+				} satisfies specta.SessionDetailDto,
+				activities: unwrapOr(
+					toTuple(
+						await specta.commands.getWindowActivities({
+							startedAfter: startedAt,
+							startedBefore: now,
+							limit: null
+						})
+					),
+					[]
+				)
+			};
+		}
+
 		const sessionId = Number(params.sessionId);
 
 		// Load session detail
@@ -115,11 +144,11 @@ function RouteComponent() {
 				</div>
 			</div>
 
-			{/* Timeline */}
+			{/* New Timeline */}
 			<SessionTimeline session={data.session} activities={data.activities} />
 
-			{/* Timeline V2 */}
-			<SessionTimelineV2 session={data.session} activities={data.activities} />
+			{/* Reference Timeline */}
+			<SimpleSessionTimeline session={data.session} activities={data.activities} />
 
 			{/* Debug JSON */}
 			{settings.debug.enabled && (
