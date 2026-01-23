@@ -169,6 +169,7 @@ const EventMarker: React.FC<TEventMarkerProps> = (props) => {
 				</div>
 			}
 			side="top"
+			positionerClassName="z-50"
 		>
 			<div
 				className="pointer-events-auto absolute top-0 bottom-0 flex flex-col items-center"
