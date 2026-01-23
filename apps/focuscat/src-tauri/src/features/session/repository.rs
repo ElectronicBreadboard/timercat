@@ -215,6 +215,57 @@ impl SessionRepository {
 
         return Ok(results);
     }
+
+    /// Find and cancel all orphaned sessions (active sessions without ended_at).
+    /// Sets ended_at to the last event timestamp, marking them as cancelled.
+    /// Returns the number of sessions that were cleaned up.
+    pub async fn cleanup_orphaned(pool: &SqlitePool) -> Result<u32, sqlx::Error> {
+        // Find orphaned sessions with their last event timestamp
+        let orphaned = sqlx::query_as::<_, OrphanedSessionRow>(
+            r#"
+            SELECT s.id, s.started_at, MAX(e.timestamp) as last_event_at
+            FROM sessions s
+            JOIN session_events e ON e.session_id = s.id
+            WHERE s.status = 'active' AND s.ended_at IS NULL
+            GROUP BY s.id
+            "#,
+        )
+        .fetch_all(pool)
+        .await?;
+
+        let count = orphaned.len() as u32;
+
+        for session in orphaned {
+            let ended_at = session.last_event_at;
+            let actual_seconds = ((ended_at - session.started_at) / 1000) as i64;
+
+            // Update session to cancelled
+            sqlx::query(
+                r#"
+                UPDATE sessions
+                SET status = 'cancelled', ended_at = ?, actual_seconds = ?
+                WHERE id = ?
+                "#,
+            )
+            .bind(ended_at)
+            .bind(actual_seconds)
+            .bind(session.id)
+            .execute(pool)
+            .await?;
+
+            // Insert cancelled event
+            Self::insert_event(
+                pool,
+                session.id,
+                &SessionEvent::Cancelled {
+                    timestamp: ended_at,
+                },
+            )
+            .await?;
+        }
+
+        return Ok(count);
+    }
 }
 
 pub struct GetSessionsInput {
@@ -241,4 +292,11 @@ pub struct SessionEventRow {
     pub event_type: String,
     pub timestamp: i64,
     pub content: Option<String>,
+}
+
+#[derive(Debug, sqlx::FromRow)]
+struct OrphanedSessionRow {
+    pub id: i64,
+    pub started_at: i64,
+    pub last_event_at: i64,
 }

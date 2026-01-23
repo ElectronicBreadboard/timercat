@@ -84,6 +84,7 @@ pub fn run() {
 
             // Setup modules
             db::setup(app);
+            session::setup(app);
             settings::setup(app);
             timer::setup(app);
             input::setup(app);
@@ -103,5 +104,9 @@ pub fn run() {
         })
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
-        .run(|_app_handle, _event| {});
+        .run(|app_handle, event| {
+            if let tauri::RunEvent::ExitRequested { .. } = event {
+                session::exit(app_handle);
+            }
+        });
 }

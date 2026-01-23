@@ -13,6 +13,17 @@ export const SessionListItem: React.FC<TSessionListItemProps> = (props) => {
 	const sessionName = isWork ? 'Focus Session' : 'Break';
 	const duration = session.actualSeconds ?? session.plannedSeconds;
 
+	const iconColor = React.useMemo(() => {
+		switch (session.status) {
+			case 'active':
+				return 'text-blue-500';
+			case 'completed':
+				return 'text-green-500';
+			case 'cancelled':
+				return 'text-base-400';
+		}
+	}, [session.status]);
+
 	const timeRange = React.useMemo(() => {
 		const start = new Date(session.startedAt);
 		if (session.endedAt == null) {
@@ -34,9 +45,9 @@ export const SessionListItem: React.FC<TSessionListItemProps> = (props) => {
 			{/* Header: Icon + Name + Duration */}
 			<div className="flex items-center gap-2">
 				{isWork ? (
-					<BriefcaseIcon size={14} className="text-base-500 shrink-0" />
+					<BriefcaseIcon size={14} className={cn(iconColor, 'shrink-0')} />
 				) : (
-					<CoffeeIcon size={14} className="text-base-500 shrink-0" />
+					<CoffeeIcon size={14} className={cn(iconColor, 'shrink-0')} />
 				)}
 				<span className={cn('text-base-800 flex-1 truncate text-sm', isSelected && 'font-medium')}>
 					{sessionName}
