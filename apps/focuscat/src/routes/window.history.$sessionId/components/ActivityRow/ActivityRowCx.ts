@@ -5,7 +5,7 @@ import type { TActivityBlock, TAppBlock, TAppInfo, TWindowBlock } from './types'
 
 export class ActivityRowCx {
 	public readonly timelineCx: TimelineCx;
-	public readonly config: TActivityRowCxConfig;
+	public config: TActivityRowCxConfig;
 	public readonly $blocks = createState<TActivityBlock[]>([]);
 
 	private _activities: specta.WindowActivityDto[];
@@ -62,6 +62,12 @@ export class ActivityRowCx {
 
 	public setActivities(activities: specta.WindowActivityDto[]): void {
 		this._activities = activities;
+		this._lastResolution = -1;
+		this.update();
+	}
+
+	public setConfig(config: Partial<TActivityRowCxConfig>): void {
+		this.config = { ...this.config, ...config };
 		this._lastResolution = -1;
 		this.update();
 	}

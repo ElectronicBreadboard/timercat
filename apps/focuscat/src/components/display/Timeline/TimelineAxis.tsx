@@ -1,11 +1,10 @@
 import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
 import { cn } from '@/lib';
-import { useTimelineCx } from './TimelineCx';
+import type { TimelineCx } from './TimelineCx';
 
 export const TimelineAxis: React.FC<TTimelineAxisProps> = (props) => {
-	const { className } = props;
-	const cx = useTimelineCx();
+	const { cx, className } = props;
 
 	const markers = useCombinedCompute(
 		[cx.$zoom, cx.$containerRect] as const,
@@ -46,10 +45,11 @@ export const TimelineAxis: React.FC<TTimelineAxisProps> = (props) => {
 };
 
 export interface TTimelineAxisProps {
+	cx: TimelineCx;
 	className?: string;
 }
 
-function createMarkers(cx: ReturnType<typeof useTimelineCx>): TMarker[] {
+function createMarkers(cx: TimelineCx): TMarker[] {
 	const resolution = cx.getMarkerResolution();
 	const resolutionMs = resolution * 1000;
 	const markers: TMarker[] = [];

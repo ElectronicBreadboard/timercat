@@ -1,22 +1,12 @@
-import { useFeatureState } from 'feature-react/state';
+import { useFeatureState } from 'feature-react';
 import React from 'react';
-import { TooltipProvider, useTimelineCx } from '@/components';
-import type { specta } from '@/environment';
-import { useMemoCleanup } from '@/hooks';
+import { TooltipProvider } from '@/components';
 import { ActivityRowCx } from './ActivityRowCx';
 import { AppBlock, WindowBlock } from './components';
 
 export const ActivityRow: React.FC<TActivityRowProps> = (props) => {
-	const { activities } = props;
-	const timelineCx = useTimelineCx();
-	const cx = useMemoCleanup(() => {
-		const instance = new ActivityRowCx(timelineCx, activities);
-		return [instance, () => instance.unmount()];
-	}, [timelineCx, activities]);
-
+	const { cx } = props;
 	const blocks = useFeatureState(cx.$blocks);
-
-	// MARK: - UI
 
 	return (
 		<TooltipProvider delay={200} closeDelay={100}>
@@ -34,5 +24,5 @@ export const ActivityRow: React.FC<TActivityRowProps> = (props) => {
 };
 
 export interface TActivityRowProps {
-	activities: specta.WindowActivityDto[];
+	cx: ActivityRowCx;
 }

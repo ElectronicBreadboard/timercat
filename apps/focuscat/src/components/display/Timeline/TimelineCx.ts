@@ -185,42 +185,9 @@ export interface TTimelineOptions {
 	maxZoom?: number;
 }
 
-const ReactTimelineCx = React.createContext<TimelineCx | null>(null);
-
-export const TimelineCxProvider: React.FC<TTimelineCxProviderProps> = (props) => {
-	const { startMs, endMs, config, children } = props;
-
-	const cx = React.useMemo(() => {
-		return new TimelineCx(startMs, endMs, config);
-	}, [startMs, endMs, config]);
-
-	return <ReactTimelineCx.Provider value={cx}>{children}</ReactTimelineCx.Provider>;
-};
-
-export function useTimelineCx(): TimelineCx {
-	const cx = React.useContext(ReactTimelineCx);
-	if (cx == null) {
-		throw new Error('useTimelineCx must be used within a TimelineCxProvider');
-	}
-	return cx;
-}
-
-interface TTimelineCxProviderProps {
-	startMs: number;
-	endMs: number;
-	config?: TTimelineOptions;
-	children: React.ReactNode;
-}
+type TTimelineCxConfig = Required<TTimelineOptions>;
 
 export interface TContainerRect {
 	width: number;
 	left: number;
-}
-
-/** Internal config with all defaults resolved */
-interface TTimelineCxConfig {
-	markerResolutions: number[];
-	minMarkerSpacingPx: number;
-	minZoom: number;
-	maxZoom: number;
 }

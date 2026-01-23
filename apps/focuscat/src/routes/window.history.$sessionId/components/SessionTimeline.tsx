@@ -1,15 +1,23 @@
+import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { Timeline, TimelineAxis } from '@/components';
-import { specta } from '@/environment';
+import { Slider, Timeline, TimelineAxis } from '@/components';
+import type { specta } from '@/environment';
+import { useMemoCleanup } from '@/hooks';
 import { cn } from '@/lib';
 import { ActivityRow } from './ActivityRow';
+import { SessionTimelineCx } from './SessionTimelineCx';
 
 export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 	const { session, activities, className } = props;
 
-	const now = React.useMemo(() => Date.now(), []);
-	const sessionStartMs = session.startedAt;
-	const sessionEndMs = session.endedAt ?? now;
+	const cx = useMemoCleanup(() => {
+		const instance = new SessionTimelineCx(session, activities);
+		return [instance, () => instance.unmount()];
+	}, [session, activities]);
+
+	const granularity = useFeatureState(cx.$granularity);
+
+	// MARK: - UI
 
 	if (activities.length === 0) {
 		return <div className="text-base-400 text-sm">No activity recorded</div>;
@@ -17,14 +25,31 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 
 	return (
 		<div className={cn('flex flex-col gap-2', className)}>
-			<div className="text-base-500 text-xs font-medium">Activity Timeline</div>
+			{/* Header */}
+			<div className="text-base-500 px-2 text-xs font-medium">Activity Timeline</div>
 
-			<Timeline startMs={sessionStartMs} endMs={sessionEndMs}>
-				<TimelineAxis />
-				<ActivityRow activities={activities} />
+			{/* Timeline */}
+			<Timeline cx={cx.timelineCx}>
+				<TimelineAxis cx={cx.timelineCx} />
+				<ActivityRow cx={cx.activityRowCx} />
 			</Timeline>
 
-			<p className="text-base-400 text-xs">Cmd+scroll to zoom · scroll to pan</p>
+			{/* Footer */}
+			<div className="flex items-center justify-between">
+				<span className="text-base-400 text-xs leading-none">
+					Cmd+scroll to zoom · scroll to pan
+				</span>
+				<Slider
+					value={granularity}
+					onValueChange={(v) => cx.setGranularity(v)}
+					min={cx.config.granularityMin}
+					max={cx.config.granularityMax}
+					step={1}
+					size="sm"
+					className="w-16 py-0"
+					aria-label="Timeline detail"
+				/>
+			</div>
 		</div>
 	);
 };

@@ -2,29 +2,10 @@ import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { useBoundingRectObserver } from '@/hooks';
 import { cn } from '@/lib';
-import { TimelineCxProvider, useTimelineCx, type TTimelineOptions } from './TimelineCx';
+import type { TimelineCx } from './TimelineCx';
 
 export const Timeline: React.FC<TTimelineProps> = (props) => {
-	const { startMs, endMs, config, className, children } = props;
-
-	return (
-		<TimelineCxProvider startMs={startMs} endMs={endMs} config={config}>
-			<InnerTimeline className={className}>{children}</InnerTimeline>
-		</TimelineCxProvider>
-	);
-};
-
-export interface TTimelineProps {
-	startMs: number;
-	endMs: number;
-	config?: TTimelineOptions;
-	className?: string;
-	children: React.ReactNode;
-}
-
-const InnerTimeline: React.FC<TInnerTimelineProps> = (props) => {
-	const { className, children } = props;
-	const cx = useTimelineCx();
+	const { cx, className, children } = props;
 	const zoom = useFeatureState(cx.$zoom);
 	const scrollLeft = useFeatureState(cx.$scrollLeft);
 
@@ -32,7 +13,6 @@ const InnerTimeline: React.FC<TInnerTimelineProps> = (props) => {
 
 	const handleScroll = React.useCallback(
 		(e: React.UIEvent<HTMLDivElement>) => {
-			// Skip if this scroll was triggered programmatically (e.g., during zoom)
 			if (cx.isProgrammaticScroll) {
 				return;
 			}
@@ -57,16 +37,16 @@ const InnerTimeline: React.FC<TInnerTimelineProps> = (props) => {
 		if (el == null) return;
 
 		const handleWheel = (e: WheelEvent) => {
-			// Ctrl/Cmd + scroll = zoom (never scroll)
+			// Ctrl/Cmd + scroll = zoom
 			if (e.ctrlKey || e.metaKey) {
 				e.preventDefault();
 				e.stopPropagation();
-				const factor = e.deltaY > 0 ? 0.9 : 1.1; // Smoother zoom steps
+				const factor = e.deltaY > 0 ? 0.9 : 1.1;
 				cx.zoomAtPoint(factor, e.clientX);
 				return;
 			}
 
-			// Regular scroll when zoomed in (use deltaY for horizontal panning)
+			// Regular scroll when zoomed in
 			if (zoom > 1) {
 				e.preventDefault();
 				cx.isProgrammaticScroll = true;
@@ -90,7 +70,6 @@ const InnerTimeline: React.FC<TInnerTimelineProps> = (props) => {
 			el.scrollLeft = scrollLeft;
 		}
 
-		// Reset flag after a frame to allow future user scrolls
 		requestAnimationFrame(() => {
 			cx.isProgrammaticScroll = false;
 		});
@@ -113,7 +92,8 @@ const InnerTimeline: React.FC<TInnerTimelineProps> = (props) => {
 	);
 };
 
-interface TInnerTimelineProps {
+export interface TTimelineProps {
+	cx: TimelineCx;
 	className?: string;
 	children: React.ReactNode;
 }
