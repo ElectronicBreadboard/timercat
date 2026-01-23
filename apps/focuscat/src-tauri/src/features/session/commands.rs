@@ -1,8 +1,7 @@
 use super::repository::{GetSessionsInput, SessionRepository};
 use super::session::{Phase, Session, SessionEvent, SessionStatus};
 use super::types::{
-    LastWorkSessionDto, SessionDetailDto, SessionEventDataDto, SessionEventDto, SessionStatsDto,
-    SessionSummaryDto,
+    SessionDetailDto, SessionEventDataDto, SessionEventDto, SessionStatsDto, SessionSummaryDto,
 };
 use crate::environment::db::DatabaseState;
 use chrono::Utc;
@@ -130,6 +129,7 @@ pub async fn get_session(
         stats: SessionStatsDto {
             paused_seconds: session.compute_paused_seconds(now),
             extended_seconds: session.compute_extended_seconds(),
+            overtime_seconds: session.compute_overtime_seconds(now),
         },
     }));
 }
@@ -139,27 +139,15 @@ pub async fn get_session(
 #[specta::specta]
 pub async fn get_last_work_session(
     db: State<'_, DatabaseState>,
-) -> Result<Option<LastWorkSessionDto>, String> {
-    let Some(session) = SessionRepository::get_last_work_session_stats(&db.pool)
-        .await
-        .map_err(|e| e.to_string())?
+    min_duration_secs: Option<i32>,
+) -> Result<Option<SessionDetailDto>, String> {
+    let Some(id) =
+        SessionRepository::get_last_work_session_id(&db.pool, min_duration_secs.map(|s| s as i64))
+            .await
+            .map_err(|e| e.to_string())?
     else {
         return Ok(None);
     };
 
-    let extended_seconds = SessionRepository::get_extended_seconds(&db.pool, session.id)
-        .await
-        .map_err(|e| e.to_string())?;
-
-    let planned_total = session.planned_seconds as u32 + extended_seconds;
-    let overtime_seconds = (session.actual_seconds as u32).saturating_sub(planned_total);
-
-    return Ok(Some(LastWorkSessionDto {
-        id: session.id as i32,
-        base_seconds: session.planned_seconds as u32,
-        extended_seconds,
-        overtime_seconds,
-        completed_seconds: session.actual_seconds as u32,
-        started_at: session.started_at as f64,
-    }));
+    return get_session(db, id as i32).await;
 }

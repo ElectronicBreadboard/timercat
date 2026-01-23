@@ -16,7 +16,7 @@ export const StatsCard: React.FC<TStatsCardProps> = (props) => {
 
 	const [viewIndex, setViewIndex] = React.useState(0);
 	const [focusSeconds, setFocusSeconds] = React.useState(0);
-	const [lastWorkSession, setLastWorkSession] = React.useState<specta.LastWorkSessionDto | null>(
+	const [lastWorkSession, setLastWorkSession] = React.useState<specta.SessionDetailDto | null>(
 		null
 	);
 
@@ -42,7 +42,8 @@ export const StatsCard: React.FC<TStatsCardProps> = (props) => {
 		}
 
 		const [isLastSessionOk, , lastSession] = toTuple(
-			await specta.commands.getLastWorkSession()
+			// Note: Use same min duration as session list (30s) for consistency
+			await specta.commands.getLastWorkSession(30)
 		);
 		if (isLastSessionOk) {
 			setLastWorkSession(lastSession);
@@ -163,16 +164,12 @@ const LastSessionView: React.FC<TLastSessionViewProps> = (props) => {
 		);
 	}
 
-	const { completedSeconds, baseSeconds, extendedSeconds, overtimeSeconds, startedAt } =
-		lastSession;
+	const { plannedSeconds, actualSeconds, startedAt, stats } = lastSession;
+	const completedSeconds = actualSeconds ?? plannedSeconds;
 	const sessionDate = formatRelativeDate(new Date(startedAt));
 
 	return (
-		<button
-			type="button"
-			onClick={onNavigate}
-			className="mt-2 flex flex-col gap-1 text-left"
-		>
+		<button type="button" onClick={onNavigate} className="mt-2 flex flex-col gap-1 text-left">
 			{/* Duration */}
 			<span className="text-base-900 text-sm font-semibold tabular-nums">
 				{formatDuration(completedSeconds)}
@@ -181,17 +178,17 @@ const LastSessionView: React.FC<TLastSessionViewProps> = (props) => {
 			{/* Status + Date */}
 			{debug ? (
 				<div className="text-base-400 flex flex-wrap gap-x-2 text-[10px]">
-					<span>Base: {formatDuration(baseSeconds)}</span>
-					{extendedSeconds > 0 && <span>Ext: +{formatDuration(extendedSeconds)}</span>}
-					{overtimeSeconds > 0 && (
-						<span className="text-warning">OT: +{formatDuration(overtimeSeconds)}</span>
+					<span>Base: {formatDuration(plannedSeconds)}</span>
+					{stats.extendedSeconds > 0 && <span>Ext: +{formatDuration(stats.extendedSeconds)}</span>}
+					{stats.overtimeSeconds > 0 && (
+						<span className="text-warning">OT: +{formatDuration(stats.overtimeSeconds)}</span>
 					)}
 				</div>
 			) : (
 				<div className="text-base-400 text-[10px]">
-					{overtimeSeconds > 0 ? (
+					{stats.overtimeSeconds > 0 ? (
 						<>
-							<span className="text-warning">+{formatDuration(overtimeSeconds)} overtime</span>
+							<span className="text-warning">+{formatDuration(stats.overtimeSeconds)} overtime</span>
 							<span> · {sessionDate}</span>
 						</>
 					) : (
@@ -204,7 +201,7 @@ const LastSessionView: React.FC<TLastSessionViewProps> = (props) => {
 };
 
 interface TLastSessionViewProps {
-	lastSession: specta.LastWorkSessionDto | null | undefined;
+	lastSession: specta.SessionDetailDto | null | undefined;
 	debug?: boolean;
 	onNavigate?: () => void;
 }

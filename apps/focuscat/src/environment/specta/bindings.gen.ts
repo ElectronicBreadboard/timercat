@@ -206,9 +206,9 @@ async getSession(sessionId: number) : Promise<Result<SessionDetailDto | null, st
 /**
  * Get the most recent completed work session.
  */
-async getLastWorkSession() : Promise<Result<LastWorkSessionDto | null, string>> {
+async getLastWorkSession(minDurationSecs: number | null) : Promise<Result<SessionDetailDto | null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_last_work_session") };
+    return { status: "ok", data: await TAURI_INVOKE("get_last_work_session", { minDurationSecs }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -293,10 +293,6 @@ export type InputDetectedEvent = InputType
  * Type of input event detected.
  */
 export type InputType = "keyboard" | "mouse"
-/**
- * Stats for the last completed work session.
- */
-export type LastWorkSessionDto = { id: number; baseSeconds: number; extendedSeconds: number; overtimeSeconds: number; completedSeconds: number; startedAt: number }
 export type Phase = "work" | "shortBreak" | "longBreak"
 /**
  * Event emitted when a session is completed.
@@ -312,7 +308,7 @@ data: SessionEventDataDto | null }
 /**
  * Computed stats for a session.
  */
-export type SessionStatsDto = { pausedSeconds: number; extendedSeconds: number }
+export type SessionStatsDto = { pausedSeconds: number; extendedSeconds: number; overtimeSeconds: number }
 export type SessionStatus = "active" | "completed" | "cancelled"
 export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; startedAt: number; endedAt: number | null }
 export type Stage = "dev" | "prod"

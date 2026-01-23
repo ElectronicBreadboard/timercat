@@ -48,18 +48,7 @@ pub struct SessionEventDataDto {
 pub struct SessionStatsDto {
     pub paused_seconds: u32,
     pub extended_seconds: u32,
-}
-
-/// Stats for the last completed work session.
-#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
-#[serde(rename_all = "camelCase")]
-pub struct LastWorkSessionDto {
-    pub id: i32,
-    pub base_seconds: u32,
-    pub extended_seconds: u32,
     pub overtime_seconds: u32,
-    pub completed_seconds: u32,
-    pub started_at: f64,
 }
 
 // MARK: - Events
