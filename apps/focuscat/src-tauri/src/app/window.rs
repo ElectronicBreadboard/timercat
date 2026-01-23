@@ -73,7 +73,11 @@ impl Window {
         return app.get_webview_window(self.label());
     }
 
-    /// Show window (reuse existing or create new).
+    /// Show window.
+    ///
+    /// Handles two cases:
+    /// - Window exists: Show and focus
+    /// - Window doesn't exist: Create, show, and focus
     pub fn show(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
         // Reuse existing window if available
         if let Some(window) = self.get(app) {
@@ -97,6 +101,30 @@ impl Window {
         return Ok(());
     }
 
+    /// Show window at a specific path (for dynamic routing).
+    ///
+    /// Handles two cases:
+    /// - Window exists: Show, focus, and navigate via router
+    /// - Window doesn't exist: Create with path, show, and focus
+    pub fn show_at_path(&self, app: &AppHandle, path: &str) -> tauri::Result<WebviewWindow> {
+        // Reuse existing window if available
+        if let Some(window) = self.get(app) {
+            window.show()?;
+            window.set_focus()?;
+            window.eval(&format!(
+                "window.__TAURI_ROUTER__?.navigate({{ to: '{}' }});",
+                path
+            ))?;
+            return Ok(window);
+        }
+
+        // Create new window
+        let window = self.build_at_path(app, path)?;
+        window.show()?;
+        window.set_focus()?;
+        return Ok(window);
+    }
+
     // MARK: - Build
 
     fn build(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
@@ -105,6 +133,15 @@ impl Window {
             Self::Cat => self.build_cat(app),
             Self::Settings => self.build_settings(app),
             Self::History => self.build_history(app),
+        };
+    }
+
+    /// Build window with a custom path (for dynamic routing).
+    fn build_at_path(&self, app: &AppHandle, path: &str) -> tauri::Result<WebviewWindow> {
+        return match self {
+            Self::History => self.build_history_at_path(app, path),
+            // Other windows don't support dynamic paths, fall back to default
+            _ => self.build(app),
         };
     }
 
@@ -182,10 +219,14 @@ impl Window {
     }
 
     fn build_history(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
+        return self.build_history_at_path(app, self.path());
+    }
+
+    fn build_history_at_path(&self, app: &AppHandle, path: &str) -> tauri::Result<WebviewWindow> {
         let (width, height) = self.size();
 
         let mut builder = self
-            .base_builder(app)
+            .base_builder_at_path(app, path)
             .resizable(true)
             .maximizable(false)
             .minimizable(true)
@@ -219,10 +260,18 @@ impl Window {
         &self,
         app: &'a AppHandle,
     ) -> WebviewWindowBuilder<'a, tauri::Wry, AppHandle> {
+        return self.base_builder_at_path(app, self.path());
+    }
+
+    fn base_builder_at_path<'a>(
+        &self,
+        app: &'a AppHandle,
+        path: &str,
+    ) -> WebviewWindowBuilder<'a, tauri::Wry, AppHandle> {
         let (width, height) = self.size();
 
         let mut builder =
-            WebviewWindowBuilder::new(app, self.label(), WebviewUrl::App(self.path().into()))
+            WebviewWindowBuilder::new(app, self.label(), WebviewUrl::App(path.into()))
                 .title(self.title())
                 .visible(false)
                 .inner_size(width, height);

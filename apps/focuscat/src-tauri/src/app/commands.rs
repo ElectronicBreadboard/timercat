@@ -93,11 +93,12 @@ pub fn show_history_window_at_session(
     app: tauri::AppHandle,
     session_id: i32,
 ) -> Result<(), String> {
-    // TODO: Navigate to specific session in history window
-    println!("[TODO] Navigate to session: {}", session_id);
+    let path = format!("/window/history/{}", session_id);
 
     Window::Main.hide(&app).map_err(|e| e.to_string())?;
-    Window::History.show(&app).map_err(|e| e.to_string())?;
+    Window::History
+        .show_at_path(&app, &path)
+        .map_err(|e| e.to_string())?;
     return Ok(());
 }
 
