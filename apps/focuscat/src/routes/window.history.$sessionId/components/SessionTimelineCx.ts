@@ -22,13 +22,14 @@ export class SessionTimelineCx {
 	) {
 		const {
 			storageKey = 'focuscat:timeline-granularity',
-			granularityMin = 0,
+			granularityMin = 1,
 			granularityMax = 5,
 			granularityDefault = 3
 		} = options;
 
 		this.config = { storageKey, granularityMin, granularityMax, granularityDefault };
 		this.$granularity = withLocalStorage(createState(granularityDefault), storageKey);
+		this.$granularity.persist();
 
 		// Compute periods and timeline
 		const { eventPeriods, timelineEndMs } = this.computeEventPeriods(session);

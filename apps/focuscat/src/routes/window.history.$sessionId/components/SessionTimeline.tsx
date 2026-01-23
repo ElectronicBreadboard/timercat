@@ -1,6 +1,6 @@
 import { useFeatureState } from 'feature-react/state';
-import React from 'react';
-import { Slider, Timeline, TimelineAxis, TooltipProvider } from '@/components';
+import React, { useCallback } from 'react';
+import { Timeline, TimelineAxis, TooltipProvider } from '@/components';
 import type { specta } from '@/environment';
 import { useMemoCleanup } from '@/hooks';
 import { cn } from '@/lib';
@@ -17,6 +17,14 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 	}, [session, activities]);
 
 	const granularity = useFeatureState(cx.$granularity);
+
+	// MARK: - Actions
+
+	const cycleGranularity = useCallback(() => {
+		const next =
+			granularity >= cx.config.granularityMax ? cx.config.granularityMin : granularity + 1;
+		cx.setGranularity(next);
+	}, [granularity, cx]);
 
 	// MARK: - UI
 
@@ -54,16 +62,12 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 				<span className="text-base-400 text-xs leading-none">
 					Cmd+scroll to zoom · scroll to pan
 				</span>
-				<Slider
-					value={granularity}
-					onValueChange={(v) => cx.setGranularity(v)}
-					min={cx.config.granularityMin}
-					max={cx.config.granularityMax}
-					step={1}
-					size="sm"
-					className="w-16 py-0"
-					aria-label="Timeline detail"
-				/>
+				<button
+					onClick={cycleGranularity}
+					className="text-base-400 hover:text-base-600 text-xs leading-none"
+				>
+					Granularity: {granularity}
+				</button>
 			</div>
 		</div>
 	);
