@@ -2,67 +2,78 @@ import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { Tooltip } from '@/components';
 import { formatDuration } from '@/lib';
-import type { SessionTimelineCx, TTimePeriod } from './SessionTimelineCx';
+import type { SessionTimelineCx } from './SessionTimelineCx';
 
-// MARK: - Overlay
+// MARK: - Event Period Overlays
 
-export const SessionEventPauseOverlays: React.FC<TSessionOverlaysProps> = (props) => {
+export const SessionEventPeriodOverlays: React.FC<TSessionEventPeriodOverlaysProps> = (props) => {
 	const { cx } = props;
 	useFeatureState(cx.timelineCx.$zoom);
 	useFeatureState(cx.timelineCx.$containerRect);
 
 	return (
 		<>
-			{cx.pausePeriods.map((period, index) => (
-				<PeriodOverlay key={`pause-${index}`} period={period} cx={cx} className="bg-amber-500/20" />
-			))}
+			{cx.eventPeriods.map((period, index) => {
+				if (!period.isVisible) {
+					return null;
+				}
+
+				const left = cx.timelineCx.msToPx(period.startMs);
+				const width = cx.timelineCx.msToPx(period.endMs) - left;
+
+				switch (period.type) {
+					case 'pause':
+						return (
+							<EventPeriodOverlay
+								key={`${period.type}-${index}`}
+								left={left}
+								width={width}
+								color="#f59e0b33"
+							/>
+						);
+					case 'overtime':
+						return (
+							<EventPeriodOverlay
+								key={`${period.type}-${index}`}
+								left={left}
+								width={width}
+								color="#ef444433"
+							/>
+						);
+					case 'cancelled':
+						return (
+							<EventPeriodOverlay
+								key={`${period.type}-${index}`}
+								left={left}
+								width={width}
+								color="#9ca3af4d"
+							/>
+						);
+				}
+			})}
 		</>
 	);
 };
 
-export const SessionStatusOverlays: React.FC<TSessionOverlaysProps> = (props) => {
-	const { cx } = props;
-	useFeatureState(cx.timelineCx.$zoom);
-	useFeatureState(cx.timelineCx.$containerRect);
-
-	return (
-		<>
-			{cx.cancelledPeriod != null && (
-				<PeriodOverlay period={cx.cancelledPeriod} cx={cx} className="bg-base-400/30" />
-			)}
-			{cx.overtimePeriods.map((period, index) => (
-				<PeriodOverlay
-					key={`overtime-${index}`}
-					period={period}
-					cx={cx}
-					className="bg-red-500/20"
-				/>
-			))}
-		</>
-	);
-};
-
-export interface TSessionOverlaysProps {
+export interface TSessionEventPeriodOverlaysProps {
 	cx: SessionTimelineCx;
 }
 
-const PeriodOverlay: React.FC<TPeriodOverlayProps> = (props) => {
-	const { period, cx, className } = props;
-	const left = cx.timelineCx.msToPx(period.startMs);
-	const width = cx.timelineCx.msToPx(period.endMs) - left;
+const EventPeriodOverlay: React.FC<TEventPeriodOverlayProps> = (props) => {
+	const { left, width, color } = props;
 
 	return (
 		<div
-			className={`pointer-events-none absolute top-0 h-full ${className}`}
-			style={{ left, width: Math.max(width, 2) }}
+			className="pointer-events-none absolute top-0 h-full"
+			style={{ left, width: Math.max(width, 2), backgroundColor: color }}
 		/>
 	);
 };
 
-interface TPeriodOverlayProps {
-	period: TTimePeriod;
-	cx: SessionTimelineCx;
-	className: string;
+interface TEventPeriodOverlayProps {
+	left: number;
+	width: number;
+	color: string;
 }
 
 // MARK: - Event Markers
@@ -81,7 +92,7 @@ export const SessionEventMarkers: React.FC<TSessionMarkersProps> = (props) => {
 					minute: '2-digit'
 				});
 
-				switch (marker.eventType) {
+				switch (marker.type) {
 					case 'paused':
 						return (
 							<EventMarker
@@ -90,6 +101,7 @@ export const SessionEventMarkers: React.FC<TSessionMarkersProps> = (props) => {
 								color="#f59e0b"
 								label="Paused"
 								time={time}
+								subtitle={formatDuration(marker.seconds)}
 							/>
 						);
 					case 'resumed':
@@ -110,7 +122,7 @@ export const SessionEventMarkers: React.FC<TSessionMarkersProps> = (props) => {
 								color="#3b82f6"
 								label="Extended"
 								time={time}
-								subtitle={marker.data?.seconds != null ? `+${formatDuration(marker.data.seconds)}` : undefined}
+								subtitle={`+${formatDuration(marker.seconds)}`}
 							/>
 						);
 					case 'cancelled':
@@ -131,7 +143,7 @@ export const SessionEventMarkers: React.FC<TSessionMarkersProps> = (props) => {
 								color="#ef4444"
 								label="Overtime"
 								time={time}
-								subtitle={marker.data?.seconds != null ? formatDuration(marker.data.seconds) : undefined}
+								subtitle={formatDuration(marker.seconds)}
 							/>
 						);
 				}

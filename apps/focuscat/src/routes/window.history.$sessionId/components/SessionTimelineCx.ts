@@ -10,9 +10,7 @@ export class SessionTimelineCx {
 	public readonly $granularity;
 	public readonly config: TSessionTimelineCxConfig;
 
-	public readonly pausePeriods: TTimePeriod[];
-	public readonly overtimePeriods: TTimePeriod[];
-	public readonly cancelledPeriod: TTimePeriod | null;
+	public readonly eventPeriods: TEventPeriod[];
 	public readonly eventMarkers: TEventMarker[];
 
 	private _unlisteners: Array<() => void> = [];
@@ -32,45 +30,15 @@ export class SessionTimelineCx {
 		this.config = { storageKey, granularityMin, granularityMax, granularityDefault };
 		this.$granularity = withLocalStorage(createState(granularityDefault), storageKey);
 
-		const actualEndMs = session.endedAt ?? Date.now();
-		const plannedRunningMs = session.plannedSeconds * 1000;
-
-		// 1. Compute pause periods (needed for wall clock calculations)
-		this.pausePeriods = this.computePausePeriods(session.events, actualEndMs);
-
-		// 2. Compute total extended time
-		const totalExtendedMs = session.events
-			.filter((e) => e.eventType === 'extended' && e.data?.seconds != null)
-			.reduce((sum, e) => sum + (e.data?.seconds ?? 0) * 1000, 0);
-
-		// 3. Compute effective planned end (when timer would hit 0, accounting for pauses)
-		const effectivePlannedEndMs = this.computeWallClockForRunningTime(
-			session.startedAt,
-			plannedRunningMs + totalExtendedMs
-		);
-
-		// 4. Timeline extends to whichever is later: planned end or actual end
-		const timelineEndMs = Math.max(effectivePlannedEndMs, actualEndMs);
+		// Compute periods and timeline
+		const { eventPeriods, timelineEndMs } = this.computeEventPeriods(session);
+		this.eventPeriods = eventPeriods;
 		this.timelineCx = new TimelineCx(session.startedAt, timelineEndMs);
 
-		// 5. Compute overtime periods (gaps between timer hitting 0 and extending)
-		this.overtimePeriods = this.computeOvertimePeriods(
-			session.startedAt,
-			session.events,
-			plannedRunningMs,
-			actualEndMs
-		);
+		// Compute event markers
+		this.eventMarkers = this.computeEventMarkers(session.events, eventPeriods);
 
-		// 6. Compute cancelled period (if quit early)
-		this.cancelledPeriod =
-			session.status === 'cancelled' && actualEndMs < effectivePlannedEndMs
-				? { startMs: actualEndMs, endMs: effectivePlannedEndMs }
-				: null;
-
-		// 7. Compute event markers
-		this.eventMarkers = this.computeEventMarkers(session.events);
-
-		// 8. Setup activity row
+		// Setup activity row
 		const { minWindowBlockPx, minAppBlockPx } = this.granularityToConfig(this.$granularity.get());
 		this.activityRowCx = new ActivityRowCx(this.timelineCx, activities, {
 			minWindowBlockPx,
@@ -111,103 +79,136 @@ export class SessionTimelineCx {
 		};
 	}
 
-	private computeWallClockForRunningTime(startedAt: number, targetRunningMs: number): number {
-		const sortedPauses = [...this.pausePeriods].sort((a, b) => a.startMs - b.startMs);
+	private computeEventPeriods(session: specta.SessionDetailDto): {
+		eventPeriods: TEventPeriod[];
+		timelineEndMs: number;
+	} {
+		const { events, startedAt, plannedSeconds, status } = session;
+		const actualEndMs = session.endedAt ?? Date.now();
+		const plannedRunningMs = plannedSeconds * 1000;
 
-		let runningTime = 0;
-		let wallClock = startedAt;
-
-		for (const pause of sortedPauses) {
-			const segmentMs = pause.startMs - wallClock;
-
-			if (runningTime + segmentMs >= targetRunningMs) {
-				return wallClock + (targetRunningMs - runningTime);
+		// Find pauses that are part of extend UX flow (paused → extended)
+		const extendPauseTimestamps = new Set<number>();
+		const keyEvents = events.filter((e) => ['paused', 'resumed', 'extended'].includes(e.eventType));
+		for (let i = 0; i < keyEvents.length; i++) {
+			if (keyEvents[i]!.eventType === 'paused' && keyEvents[i + 1]?.eventType === 'extended') {
+				extendPauseTimestamps.add(keyEvents[i]!.timestamp);
 			}
-
-			runningTime += segmentMs;
-			wallClock = pause.endMs;
 		}
 
-		return wallClock + (targetRunningMs - runningTime);
-	}
-
-	private computePausePeriods(
-		events: specta.SessionEventDto[],
-		sessionEndMs: number
-	): TTimePeriod[] {
-		const periods: TTimePeriod[] = [];
+		// Build pause periods
+		const pausePeriods: TPauseEventPeriod[] = [];
 		let pauseStartMs: number | null = null;
-
 		for (const event of events) {
 			if (event.eventType === 'paused') {
 				pauseStartMs = event.timestamp;
 			} else if (event.eventType === 'resumed' && pauseStartMs != null) {
-				periods.push({ startMs: pauseStartMs, endMs: event.timestamp });
+				pausePeriods.push({
+					type: 'pause',
+					startMs: pauseStartMs,
+					endMs: event.timestamp,
+					isVisible: !extendPauseTimestamps.has(pauseStartMs)
+				});
 				pauseStartMs = null;
 			}
 		}
-
 		if (pauseStartMs != null) {
-			periods.push({ startMs: pauseStartMs, endMs: sessionEndMs });
+			pausePeriods.push({
+				type: 'pause',
+				startMs: pauseStartMs,
+				endMs: actualEndMs,
+				isVisible: !extendPauseTimestamps.has(pauseStartMs)
+			});
 		}
 
-		return periods;
-	}
+		// Helper: convert running time to wall clock (accounting for pauses)
+		const toWallClock = (targetRunningMs: number): number => {
+			let runningTime = 0;
+			let wallClock = startedAt;
+			for (const pause of pausePeriods) {
+				const segmentMs = pause.startMs - wallClock;
+				if (runningTime + segmentMs >= targetRunningMs) {
+					return wallClock + (targetRunningMs - runningTime);
+				}
+				runningTime += segmentMs;
+				wallClock = pause.endMs;
+			}
+			return wallClock + (targetRunningMs - runningTime);
+		};
 
-	private computeOvertimePeriods(
-		startedAt: number,
-		events: specta.SessionEventDto[],
-		plannedRunningMs: number,
-		actualEndMs: number
-	): TTimePeriod[] {
-		const periods: TTimePeriod[] = [];
-
+		// Get extensions sorted by time
 		const extensions = events
 			.filter((e) => e.eventType === 'extended' && e.data?.seconds != null)
 			.sort((a, b) => a.timestamp - b.timestamp);
 
-		let currentPlannedRunningMs = plannedRunningMs;
+		const totalExtendedMs = extensions.reduce((sum, e) => sum + (e.data?.seconds ?? 0) * 1000, 0);
 
+		// Build overtime periods (gaps between timer hitting 0 and extending)
+		const overtimePeriods: TOvertimeEventPeriod[] = [];
+		let currentPlannedMs = plannedRunningMs;
 		for (const ext of extensions) {
-			const timerEndWallClock = this.computeWallClockForRunningTime(
-				startedAt,
-				currentPlannedRunningMs
-			);
-
+			const timerEndWallClock = toWallClock(currentPlannedMs);
 			if (ext.timestamp > timerEndWallClock) {
-				periods.push({ startMs: timerEndWallClock, endMs: ext.timestamp });
+				overtimePeriods.push({
+					type: 'overtime',
+					startMs: timerEndWallClock,
+					endMs: ext.timestamp,
+					isVisible: true
+				});
 			}
-
-			currentPlannedRunningMs += (ext.data?.seconds ?? 0) * 1000;
+			currentPlannedMs += (ext.data?.seconds ?? 0) * 1000;
 		}
 
-		const finalTimerEndWallClock = this.computeWallClockForRunningTime(
-			startedAt,
-			currentPlannedRunningMs
-		);
-
-		if (actualEndMs > finalTimerEndWallClock) {
-			periods.push({ startMs: finalTimerEndWallClock, endMs: actualEndMs });
+		// Check for final overtime (after all extensions)
+		const finalTimerEnd = toWallClock(currentPlannedMs);
+		if (actualEndMs > finalTimerEnd) {
+			overtimePeriods.push({
+				type: 'overtime',
+				startMs: finalTimerEnd,
+				endMs: actualEndMs,
+				isVisible: true
+			});
 		}
 
-		return periods;
+		// Compute timeline end and cancelled period
+		const effectivePlannedEndMs = toWallClock(plannedRunningMs + totalExtendedMs);
+		const timelineEndMs = Math.max(effectivePlannedEndMs, actualEndMs);
+
+		const cancelledPeriod: TCancelledEventPeriod | null =
+			status === 'cancelled' && actualEndMs < effectivePlannedEndMs
+				? {
+						type: 'cancelled',
+						startMs: actualEndMs,
+						endMs: effectivePlannedEndMs,
+						isVisible: true
+					}
+				: null;
+
+		return {
+			eventPeriods: [
+				...pausePeriods,
+				...overtimePeriods,
+				...(cancelledPeriod != null ? [cancelledPeriod] : [])
+			],
+			timelineEndMs
+		};
 	}
 
-	private computeEventMarkers(events: specta.SessionEventDto[]): TEventMarker[] {
+	private computeEventMarkers(
+		events: specta.SessionEventDto[],
+		eventPeriods: TEventPeriod[]
+	): TEventMarker[] {
 		const markers: TEventMarker[] = [];
 
-		// Filter to key events only
-		const keyEventTypes = ['paused', 'resumed', 'extended'];
-		const keyEvents = events.filter((e) => keyEventTypes.includes(e.eventType));
+		// Filter to key events
+		const keyEvents = events.filter((e) => ['paused', 'resumed', 'extended'].includes(e.eventType));
 
 		for (let i = 0; i < keyEvents.length; i++) {
 			const event = keyEvents[i]!;
 			const prevEvent = keyEvents[i - 1];
 			const nextEvent = keyEvents[i + 1];
 
-			// Filter out pause/resume that are part of the extend UX flow:
-			// - paused followed by extended → filter out (pause before drag)
-			// - resumed preceded by extended → filter out (resume after drag)
+			// Skip pause/resume that are part of extend UX flow
 			if (event.eventType === 'paused' && nextEvent?.eventType === 'extended') {
 				continue;
 			}
@@ -215,28 +216,42 @@ export class SessionTimelineCx {
 				continue;
 			}
 
-			markers.push({
-				timestamp: event.timestamp,
-				eventType: event.eventType as 'paused' | 'resumed' | 'extended',
-				data: event.data
-			});
+			switch (event.eventType) {
+				case 'paused': {
+					// Find matching pause period to get duration
+					const pausePeriod = eventPeriods.find(
+						(p) => p.type === 'pause' && p.startMs === event.timestamp
+					);
+					const seconds = pausePeriod
+						? Math.round((pausePeriod.endMs - pausePeriod.startMs) / 1000)
+						: 0;
+					markers.push({ type: 'paused', timestamp: event.timestamp, seconds });
+					break;
+				}
+				case 'resumed':
+					markers.push({ type: 'resumed', timestamp: event.timestamp });
+					break;
+				case 'extended':
+					markers.push({
+						type: 'extended',
+						timestamp: event.timestamp,
+						seconds: event.data?.seconds ?? 0
+					});
+					break;
+			}
 		}
 
-		for (const period of this.overtimePeriods) {
-			const durationSeconds = Math.round((period.endMs - period.startMs) / 1000);
-			markers.push({
-				timestamp: period.startMs,
-				eventType: 'overtime',
-				data: { seconds: durationSeconds }
-			});
-		}
-
-		if (this.cancelledPeriod != null) {
-			markers.push({
-				timestamp: this.cancelledPeriod.startMs,
-				eventType: 'cancelled',
-				data: null
-			});
+		// Add markers for overtime and cancelled periods
+		for (const period of eventPeriods) {
+			if (period.type === 'overtime') {
+				markers.push({
+					type: 'overtime',
+					timestamp: period.startMs,
+					seconds: Math.round((period.endMs - period.startMs) / 1000)
+				});
+			} else if (period.type === 'cancelled') {
+				markers.push({ type: 'cancelled', timestamp: period.startMs });
+			}
 		}
 
 		return markers.sort((a, b) => a.timestamp - b.timestamp);
@@ -252,13 +267,57 @@ export interface TSessionTimelineCxOptions {
 
 export type TSessionTimelineCxConfig = Required<TSessionTimelineCxOptions>;
 
-export interface TTimePeriod {
+export type TEventPeriod = TPauseEventPeriod | TOvertimeEventPeriod | TCancelledEventPeriod;
+
+interface TBaseEventPeriod {
 	startMs: number;
 	endMs: number;
+	isVisible: boolean;
 }
 
-export interface TEventMarker {
+export interface TPauseEventPeriod extends TBaseEventPeriod {
+	type: 'pause';
+}
+
+export interface TOvertimeEventPeriod extends TBaseEventPeriod {
+	type: 'overtime';
+}
+
+export interface TCancelledEventPeriod extends TBaseEventPeriod {
+	type: 'cancelled';
+}
+
+export type TEventMarker =
+	| TPausedEventMarker
+	| TResumedEventMarker
+	| TExtendedEventMarker
+	| TCancelledEventMarker
+	| TOvertimeEventMarker;
+
+export interface TPausedEventMarker {
+	type: 'paused';
 	timestamp: number;
-	eventType: 'paused' | 'resumed' | 'extended' | 'cancelled' | 'overtime';
-	data: { seconds: number | null } | null;
+	seconds: number;
+}
+
+export interface TResumedEventMarker {
+	type: 'resumed';
+	timestamp: number;
+}
+
+export interface TExtendedEventMarker {
+	type: 'extended';
+	timestamp: number;
+	seconds: number;
+}
+
+export interface TCancelledEventMarker {
+	type: 'cancelled';
+	timestamp: number;
+}
+
+export interface TOvertimeEventMarker {
+	type: 'overtime';
+	timestamp: number;
+	seconds: number;
 }
