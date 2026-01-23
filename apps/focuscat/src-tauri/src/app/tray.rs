@@ -42,7 +42,8 @@ impl TrayState {
     fn set_title(app: &AppHandle, title: Option<&str>) {
         if let Some(state) = app.try_state::<TrayState>() {
             if let Some(tray) = state.lock().unwrap().as_ref() {
-                let _ = tray.set_title(title);
+                // Tauri's set_title(None) doesn't seem to clear, use empty string
+                let _ = tray.set_title(title.or(Some("")));
             }
         }
     }
