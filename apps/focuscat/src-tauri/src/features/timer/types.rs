@@ -1,4 +1,4 @@
-use super::timer::{Timer, TimerConfig, TimerStatus, WorkSessionStats};
+use super::timer::{Timer, TimerConfig, TimerStatus};
 use crate::features::session::session::Phase;
 use crate::features::settings::types::AppSettingsState;
 use serde::Serialize;
@@ -15,7 +15,6 @@ pub struct TimerDto {
     pub remaining_seconds: u32,
     pub overtime_seconds: u32,
     pub sessions_completed: u32,
-    pub last_work_session: Option<WorkSessionStats>,
     pub speed: u32,
 }
 
@@ -28,7 +27,6 @@ impl From<&Timer> for TimerDto {
             remaining_seconds: timer.remaining_seconds,
             overtime_seconds: timer.overtime_seconds,
             sessions_completed: timer.sessions_completed,
-            last_work_session: timer.last_work_session.clone(),
             speed: timer.speed,
         }
     }

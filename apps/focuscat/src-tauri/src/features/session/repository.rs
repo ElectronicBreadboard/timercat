@@ -219,6 +219,47 @@ impl SessionRepository {
         return Ok(results);
     }
 
+    /// Get the most recent completed work session (min 30s).
+    pub async fn get_last_work_session_stats(
+        pool: &SqlitePool,
+    ) -> Result<Option<LastWorkSessionRow>, sqlx::Error> {
+        let session = sqlx::query_as::<_, LastWorkSessionRow>(
+            r#"
+            SELECT id, planned_seconds, actual_seconds, started_at
+            FROM sessions
+            WHERE phase = 'work'
+              AND status = 'completed'
+              AND actual_seconds >= 30
+            ORDER BY started_at DESC
+            LIMIT 1
+            "#,
+        )
+        .fetch_optional(pool)
+        .await?;
+
+        return Ok(session);
+    }
+
+    /// Get total extended seconds for a session from its events.
+    pub async fn get_extended_seconds(
+        pool: &SqlitePool,
+        session_id: i64,
+    ) -> Result<u32, sqlx::Error> {
+        // Extended events store seconds in JSON content: {"seconds": N}
+        let result: Option<i64> = sqlx::query_scalar(
+            r#"
+            SELECT COALESCE(SUM(json_extract(content, '$.seconds')), 0)
+            FROM session_events
+            WHERE session_id = ? AND event_type = 'extended'
+            "#,
+        )
+        .bind(session_id)
+        .fetch_one(pool)
+        .await?;
+
+        return Ok(result.unwrap_or(0) as u32);
+    }
+
     /// Find and cancel all orphaned sessions (active sessions without ended_at).
     /// Sets ended_at to the last event timestamp, marking them as cancelled.
     /// Returns the number of sessions that were cleaned up.
@@ -303,4 +344,12 @@ struct OrphanedSessionRow {
     pub id: i64,
     pub started_at: i64,
     pub last_event_at: i64,
+}
+
+#[derive(Debug, sqlx::FromRow)]
+pub struct LastWorkSessionRow {
+    pub id: i64,
+    pub planned_seconds: i64,
+    pub actual_seconds: i64,
+    pub started_at: i64,
 }

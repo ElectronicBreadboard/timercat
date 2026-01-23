@@ -40,6 +40,14 @@ async showHistoryWindow() : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async showHistoryWindowAtSession(sessionId: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("show_history_window_at_session", { sessionId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async hideMainWindow() : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("hide_main_window") };
@@ -196,6 +204,17 @@ async getSession(sessionId: number) : Promise<Result<SessionDetailDto | null, st
 }
 },
 /**
+ * Get the most recent completed work session.
+ */
+async getLastWorkSession() : Promise<Result<LastWorkSessionDto | null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_last_work_session") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Check if accessibility permission is granted.
  */
 async isAccessibilityGranted() : Promise<boolean> {
@@ -274,6 +293,10 @@ export type InputDetectedEvent = InputType
  * Type of input event detected.
  */
 export type InputType = "keyboard" | "mouse"
+/**
+ * Stats for the last completed work session.
+ */
+export type LastWorkSessionDto = { id: number; baseSeconds: number; extendedSeconds: number; overtimeSeconds: number; completedSeconds: number; startedAt: number }
 export type Phase = "work" | "shortBreak" | "longBreak"
 /**
  * Event emitted when a session is completed.
@@ -294,7 +317,7 @@ export type SessionStatus = "active" | "completed" | "cancelled"
 export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; startedAt: number; endedAt: number | null }
 export type Stage = "dev" | "prod"
 export type Theme = "light" | "dark" | "auto"
-export type TimerDto = { status: TimerStatus; phase: Phase; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; lastWorkSession: WorkSessionStats | null; speed: number }
+export type TimerDto = { status: TimerStatus; phase: Phase; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; speed: number }
 export type TimerSettings = { 
 /**
  * Work duration in minutes
@@ -315,7 +338,6 @@ sessionsBeforeLongBreak: number }
 export type TimerStatus = "idle" | "running" | "paused"
 export type TimerUpdatedEvent = TimerDto
 export type WindowActivityDto = { appBundleId: string | null; appName: string | null; appIcon: string | null; appColor: string | null; windowTitle: string | null; browserUrl: string | null; startedAt: number; endedAt: number }
-export type WorkSessionStats = { baseSeconds: number; extendedSeconds: number; overtimeSeconds: number; completedSeconds: number }
 
 /** tauri-specta globals **/
 

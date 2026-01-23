@@ -1,7 +1,8 @@
 use super::repository::{GetSessionsInput, SessionRepository};
 use super::session::{Phase, Session, SessionEvent, SessionStatus};
 use super::types::{
-    SessionDetailDto, SessionEventDataDto, SessionEventDto, SessionStatsDto, SessionSummaryDto,
+    LastWorkSessionDto, SessionDetailDto, SessionEventDataDto, SessionEventDto, SessionStatsDto,
+    SessionSummaryDto,
 };
 use crate::environment::db::DatabaseState;
 use chrono::Utc;
@@ -130,5 +131,35 @@ pub async fn get_session(
             paused_seconds: session.compute_paused_seconds(now),
             extended_seconds: session.compute_extended_seconds(),
         },
+    }));
+}
+
+/// Get the most recent completed work session.
+#[tauri::command]
+#[specta::specta]
+pub async fn get_last_work_session(
+    db: State<'_, DatabaseState>,
+) -> Result<Option<LastWorkSessionDto>, String> {
+    let Some(session) = SessionRepository::get_last_work_session_stats(&db.pool)
+        .await
+        .map_err(|e| e.to_string())?
+    else {
+        return Ok(None);
+    };
+
+    let extended_seconds = SessionRepository::get_extended_seconds(&db.pool, session.id)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let planned_total = session.planned_seconds as u32 + extended_seconds;
+    let overtime_seconds = (session.actual_seconds as u32).saturating_sub(planned_total);
+
+    return Ok(Some(LastWorkSessionDto {
+        id: session.id as i32,
+        base_seconds: session.planned_seconds as u32,
+        extended_seconds,
+        overtime_seconds,
+        completed_seconds: session.actual_seconds as u32,
+        started_at: session.started_at as f64,
     }));
 }

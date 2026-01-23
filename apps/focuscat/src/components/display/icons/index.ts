@@ -10,6 +10,7 @@ export {
 	AlertTriangle as AlertIcon,
 	AppWindow as AppWindowIcon,
 	ArrowLeft as ArrowLeftIcon,
+	ArrowUpRight as ArrowUpRightIcon,
 	Briefcase as BriefcaseIcon,
 	Bug as BugIcon,
 	Check as CheckIcon,

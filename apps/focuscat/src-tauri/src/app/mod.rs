@@ -24,6 +24,7 @@ pub fn run() {
             commands::show_cat_window,
             commands::show_settings_window,
             commands::show_history_window,
+            commands::show_history_window_at_session,
             commands::hide_main_window,
             commands::hide_cat_window,
             commands::hide_settings_window,
@@ -49,6 +50,7 @@ pub fn run() {
             session::commands::get_today_focus_seconds,
             session::commands::get_sessions,
             session::commands::get_session,
+            session::commands::get_last_work_session,
             // Permission commands
             permission::commands::is_accessibility_granted,
             permission::commands::open_accessibility_settings,

@@ -30,3 +30,24 @@ export function formatDuration(totalSeconds: number): string {
 	}
 	return `${hours}h ${minutes}m`;
 }
+
+/**
+ * Format date as relative string (e.g., "Today", "Yesterday", "Jan 15")
+ */
+export function formatRelativeDate(date: Date): string {
+	const now = new Date();
+	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+	const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+	const diffDays = Math.floor((today.getTime() - target.getTime()) / (1000 * 60 * 60 * 24));
+
+	if (diffDays === 0) {
+		return 'Today';
+	}
+	if (diffDays === 1) {
+		return 'Yesterday';
+	}
+	if (diffDays < 7) {
+		return date.toLocaleDateString('en-US', { weekday: 'long' });
+	}
+	return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}

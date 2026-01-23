@@ -10,7 +10,6 @@ pub struct Timer {
     pub remaining_seconds: u32,
     pub overtime_seconds: u32,
     pub sessions_completed: u32,
-    pub last_work_session: Option<WorkSessionStats>,
     pub speed: u32,
     pub session: Option<Session>,
 }
@@ -24,7 +23,6 @@ impl Timer {
             remaining_seconds: config.work_duration,
             overtime_seconds: 0,
             sessions_completed: 0,
-            last_work_session: None,
             speed: config.speed,
             session: None,
         };
@@ -83,13 +81,4 @@ pub enum TimerStatus {
     Idle,
     Running,
     Paused,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
-#[serde(rename_all = "camelCase")]
-pub struct WorkSessionStats {
-    pub base_seconds: u32,
-    pub extended_seconds: u32,
-    pub overtime_seconds: u32,
-    pub completed_seconds: u32,
 }

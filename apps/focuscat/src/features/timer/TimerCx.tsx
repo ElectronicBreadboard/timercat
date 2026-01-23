@@ -14,7 +14,6 @@ export class TimerCx {
 	public readonly $overtimeSeconds = createState(0);
 	public readonly $sessionsCompleted = createState(0);
 	public readonly $speed = createState(1);
-	public readonly $lastWorkSession = createState<specta.WorkSessionStats | null>(null);
 	public readonly $startTime = createState<Date | null>(null);
 
 	constructor() {
@@ -54,9 +53,6 @@ export class TimerCx {
 		}
 		if (this.$speed.get() !== timer.speed) {
 			this.$speed.set(timer.speed);
-		}
-		if (this.$lastWorkSession.get() !== timer.lastWorkSession) {
-			this.$lastWorkSession.set(timer.lastWorkSession);
 		}
 	}
 

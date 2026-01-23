@@ -1,5 +1,5 @@
 use super::runner::TimerRunner;
-use super::timer::{Timer, TimerConfig, TimerStatus, WorkSessionStats};
+use super::timer::{Timer, TimerConfig, TimerStatus};
 use super::types::{TimerDto, TimerState, TimerUpdatedEvent};
 use crate::environment::db::DatabaseState;
 use crate::features::session::repository::SessionRepository;
@@ -293,21 +293,16 @@ pub async fn skip_timer(
         let settings = app_settings.lock().unwrap();
         let config = TimerConfig::from(&*settings);
         let phase = timer.phase;
-        let session_data = timer.session.as_ref().map(|s| {
-            (
-                s.id,
-                s.planned_seconds,
-                s.compute_actual_seconds(now),
-                s.compute_extended_seconds(),
-                s.started_at,
-            )
-        });
+        let session_data = timer
+            .session
+            .as_ref()
+            .map(|s| (s.id, s.planned_seconds, s.compute_actual_seconds(now), s.started_at));
         (config, phase, session_data, timer.sessions_completed)
     };
     let is_work_phase = phase == Phase::Work;
 
     // Complete current session
-    let work_stats = if let Some((id, planned, actual, extended, started_at)) = session_data {
+    if let Some((id, planned, actual, started_at)) = session_data {
         SessionRepository::complete(&db.pool, id, now, actual)
             .await
             .map_err(db_err)?;
@@ -323,23 +318,7 @@ pub async fn skip_timer(
             ended_at: Some(now as f64),
         })
         .emit(&app);
-
-        if is_work_phase {
-            // Overtime = time worked beyond planned (base + extensions)
-            let planned_total = planned + extended;
-            let overtime = actual.saturating_sub(planned_total);
-            Some(WorkSessionStats {
-                base_seconds: planned,
-                extended_seconds: extended,
-                overtime_seconds: overtime,
-                completed_seconds: actual,
-            })
-        } else {
-            None
-        }
-    } else {
-        None
-    };
+    }
 
     // Determine next phase
     let new_sessions_completed = if is_work_phase {
@@ -374,8 +353,7 @@ pub async fn skip_timer(
             session.add_event(SessionEvent::Completed { timestamp: now });
         }
 
-        if let Some(stats) = work_stats {
-            timer.last_work_session = Some(stats);
+        if is_work_phase {
             timer.sessions_completed += 1;
         }
 

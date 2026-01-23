@@ -1,11 +1,10 @@
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { TriangleLeftIcon, TriangleRightIcon } from '@/components';
+import { ArrowUpRightIcon, TriangleLeftIcon, TriangleRightIcon } from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
-import { useTimerCx } from '@/features/timer';
 import { useOnSessionComplete } from '@/hooks';
-import { cn, formatDuration, toTuple } from '@/lib';
+import { cn, formatDuration, formatRelativeDate, toTuple } from '@/lib';
 
 export const StatsCard: React.FC<TStatsCardProps> = (props) => {
 	const {
@@ -17,11 +16,12 @@ export const StatsCard: React.FC<TStatsCardProps> = (props) => {
 
 	const [viewIndex, setViewIndex] = React.useState(0);
 	const [focusSeconds, setFocusSeconds] = React.useState(0);
+	const [lastWorkSession, setLastWorkSession] = React.useState<specta.LastWorkSessionDto | null>(
+		null
+	);
 
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
-	const timerCx = useTimerCx();
-	const lastWorkSession = useFeatureState(timerCx.$lastWorkSession);
 
 	const currentView = views[viewIndex] ?? 'focus-goal';
 
@@ -35,20 +35,34 @@ export const StatsCard: React.FC<TStatsCardProps> = (props) => {
 		setViewIndex((i) => (i + 1) % views.length);
 	}, [views.length]);
 
-	const fetchFocusSeconds = React.useCallback(async () => {
+	const fetchStats = React.useCallback(async () => {
 		const [areFocusSecsOk, , focusSecs] = toTuple(await specta.commands.getTodayFocusSeconds());
 		if (areFocusSecsOk) {
 			setFocusSeconds(focusSecs);
 		}
+
+		const [isLastSessionOk, , lastSession] = toTuple(
+			await specta.commands.getLastWorkSession()
+		);
+		if (isLastSessionOk) {
+			setLastWorkSession(lastSession);
+		}
 	}, []);
+
+	const handleNavigateToLastSession = React.useCallback(async () => {
+		if (lastWorkSession == null) {
+			return;
+		}
+		await specta.commands.showHistoryWindowAtSession(lastWorkSession.id);
+	}, [lastWorkSession]);
 
 	// MARK: - Effects
 
 	React.useEffect(() => {
-		fetchFocusSeconds();
-	}, [fetchFocusSeconds]);
+		fetchStats();
+	}, [fetchStats]);
 
-	useOnSessionComplete(React.useCallback(() => fetchFocusSeconds(), [fetchFocusSeconds]));
+	useOnSessionComplete(React.useCallback(() => fetchStats(), [fetchStats]));
 
 	// MARK: - UI
 
@@ -56,9 +70,25 @@ export const StatsCard: React.FC<TStatsCardProps> = (props) => {
 		<div className={cn('flex flex-col px-3 pt-2 pb-3', className)}>
 			{/* Header */}
 			<div className="flex items-center justify-between">
-				<p className="text-base-400 text-[10px] font-medium tracking-wider uppercase">
-					{labels[currentView] ?? currentView}
-				</p>
+				{currentView === 'last-session' && lastWorkSession != null ? (
+					<button
+						type="button"
+						onClick={handleNavigateToLastSession}
+						className="group flex items-center gap-1"
+					>
+						<span className="text-base-400 group-hover:text-base-500 text-[10px] font-medium tracking-wider uppercase transition-colors">
+							{labels[currentView] ?? currentView}
+						</span>
+						<ArrowUpRightIcon
+							size={10}
+							className="text-base-300 group-hover:text-base-500 transition-colors"
+						/>
+					</button>
+				) : (
+					<p className="text-base-400 text-[10px] font-medium tracking-wider uppercase">
+						{labels[currentView] ?? currentView}
+					</p>
+				)}
 				<div className="-mr-2 flex items-center">
 					<button
 						type="button"
@@ -85,7 +115,11 @@ export const StatsCard: React.FC<TStatsCardProps> = (props) => {
 				/>
 			)}
 			{currentView === 'last-session' && (
-				<LastSessionView lastSession={lastWorkSession} debug={debug} />
+				<LastSessionView
+					lastSession={lastWorkSession}
+					debug={debug}
+					onNavigate={handleNavigateToLastSession}
+				/>
 			)}
 		</div>
 	);
@@ -119,7 +153,7 @@ interface TFocusGoalViewProps {
 }
 
 const LastSessionView: React.FC<TLastSessionViewProps> = (props) => {
-	const { lastSession, debug = false } = props;
+	const { lastSession, debug = false, onNavigate } = props;
 
 	if (lastSession == null) {
 		return (
@@ -129,13 +163,22 @@ const LastSessionView: React.FC<TLastSessionViewProps> = (props) => {
 		);
 	}
 
-	const { completedSeconds, baseSeconds, extendedSeconds, overtimeSeconds } = lastSession;
+	const { completedSeconds, baseSeconds, extendedSeconds, overtimeSeconds, startedAt } =
+		lastSession;
+	const sessionDate = formatRelativeDate(new Date(startedAt));
 
 	return (
-		<div className="mt-2 flex flex-col gap-1">
+		<button
+			type="button"
+			onClick={onNavigate}
+			className="mt-2 flex flex-col gap-1 text-left"
+		>
+			{/* Duration */}
 			<span className="text-base-900 text-sm font-semibold tabular-nums">
 				{formatDuration(completedSeconds)}
 			</span>
+
+			{/* Status + Date */}
 			{debug ? (
 				<div className="text-base-400 flex flex-wrap gap-x-2 text-[10px]">
 					<span>Base: {formatDuration(baseSeconds)}</span>
@@ -147,19 +190,23 @@ const LastSessionView: React.FC<TLastSessionViewProps> = (props) => {
 			) : (
 				<div className="text-base-400 text-[10px]">
 					{overtimeSeconds > 0 ? (
-						<span className="text-warning">+{formatDuration(overtimeSeconds)} overtime</span>
+						<>
+							<span className="text-warning">+{formatDuration(overtimeSeconds)} overtime</span>
+							<span> · {sessionDate}</span>
+						</>
 					) : (
-						<span>Completed</span>
+						<span>{sessionDate}</span>
 					)}
 				</div>
 			)}
-		</div>
+		</button>
 	);
 };
 
 interface TLastSessionViewProps {
-	lastSession: specta.WorkSessionStats | null | undefined;
+	lastSession: specta.LastWorkSessionDto | null | undefined;
 	debug?: boolean;
+	onNavigate?: () => void;
 }
 
 type TView = 'focus-goal' | 'last-session';
