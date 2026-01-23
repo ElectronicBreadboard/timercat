@@ -179,9 +179,9 @@ async getTodayFocusSeconds() : Promise<Result<number, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async getSessions(startedAfter: number, startedBefore: number, limit: number | null) : Promise<Result<SessionSummaryDto[], string>> {
+async getSessions(startedAfter: number, startedBefore: number, limit: number | null, minDurationSecs: number | null) : Promise<Result<SessionSummaryDto[], string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_sessions", { startedAfter, startedBefore, limit }) };
+    return { status: "ok", data: await TAURI_INVOKE("get_sessions", { startedAfter, startedBefore, limit, minDurationSecs }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };

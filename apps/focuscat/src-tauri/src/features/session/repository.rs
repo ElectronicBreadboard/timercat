@@ -167,12 +167,15 @@ impl SessionRepository {
             SELECT id, phase, status, planned_seconds, actual_seconds, started_at, ended_at
             FROM sessions
             WHERE started_at >= ? AND started_at < ?
+              AND (? IS NULL OR actual_seconds IS NULL OR actual_seconds >= ?)
             ORDER BY started_at DESC
             LIMIT ?
             "#,
         )
         .bind(input.started_after)
         .bind(input.started_before)
+        .bind(input.min_duration_secs)
+        .bind(input.min_duration_secs)
         .bind(limit)
         .fetch_all(pool)
         .await?;
@@ -272,6 +275,7 @@ pub struct GetSessionsInput {
     pub started_after: i64,
     pub started_before: i64,
     pub limit: Option<i64>,
+    pub min_duration_secs: Option<i64>,
 }
 
 #[derive(Debug, sqlx::FromRow)]

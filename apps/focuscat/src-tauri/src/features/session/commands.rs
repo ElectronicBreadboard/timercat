@@ -24,11 +24,13 @@ pub async fn get_sessions(
     started_after: f64,
     started_before: f64,
     limit: Option<i32>,
+    min_duration_secs: Option<i32>,
 ) -> Result<Vec<SessionSummaryDto>, String> {
     let input = GetSessionsInput {
         started_after: started_after as i64,
         started_before: started_before as i64,
         limit: limit.map(|l| l as i64),
+        min_duration_secs: min_duration_secs.map(|s| s as i64),
     };
 
     let rows = SessionRepository::get_sessions(&db.pool, &input)
