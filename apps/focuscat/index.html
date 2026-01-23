@@ -5,6 +5,19 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tauri + React + Typescript</title>
+    <script>
+      // Prevent white flash on window open (CSS not loaded yet)
+      (function() {
+        var theme = localStorage.getItem('theme');
+        var isDark = theme === 'dark' || ((!theme || theme === 'auto') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#09090b';
+        } else {
+          document.documentElement.style.backgroundColor = '#ffffff';
+        }
+      })();
+    </script>
   </head>
 
   <body>

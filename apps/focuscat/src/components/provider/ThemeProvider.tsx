@@ -12,10 +12,15 @@ export const ThemeProvider: React.FC<TThemeProviderProps> = (props) => {
 
 	const applyThemeClass = React.useCallback((theme: TauriTheme) => {
 		document.documentElement.classList.toggle('dark', theme === 'dark');
+		// Clear index.html inline background (interferes with transparency)
+		document.documentElement.style.backgroundColor = '';
 	}, []);
 
 	const applyTheme = React.useCallback(
 		async (theme: specta.Theme) => {
+			// For index.html to apply theme before CSS loads (prevents flash)
+			localStorage.setItem('theme', theme);
+
 			if (theme === 'auto') {
 				await getCurrentWindow().setTheme(null);
 				const effectiveTheme = await getCurrentWindow().theme();
