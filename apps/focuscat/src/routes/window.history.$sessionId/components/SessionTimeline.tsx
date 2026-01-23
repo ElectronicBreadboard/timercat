@@ -1,10 +1,15 @@
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { Slider, Timeline, TimelineAxis } from '@/components';
+import { Slider, Timeline, TimelineAxis, TooltipProvider } from '@/components';
 import type { specta } from '@/environment';
 import { useMemoCleanup } from '@/hooks';
 import { cn } from '@/lib';
 import { ActivityRow } from './ActivityRow';
+import {
+	SessionEventMarkers,
+	SessionEventPauseOverlays,
+	SessionStatusOverlays
+} from './SessionEventIndicators';
 import { SessionTimelineCx } from './SessionTimelineCx';
 
 export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
@@ -30,8 +35,27 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 
 			{/* Timeline */}
 			<Timeline cx={cx.timelineCx}>
-				<TimelineAxis cx={cx.timelineCx} />
-				<ActivityRow cx={cx.activityRowCx} />
+				<TooltipProvider delay={200} closeDelay={100}>
+					<div className="relative">
+						<TimelineAxis cx={cx.timelineCx} />
+						<ActivityRow cx={cx.activityRowCx} />
+
+						{/* Event markers at top of axis with dashed line through */}
+						<div className="pointer-events-none absolute inset-0">
+							<SessionEventMarkers cx={cx} />
+						</div>
+
+						{/* Pause overlays on activity row */}
+						<div className="pointer-events-none absolute inset-x-0 top-6 bottom-0">
+							<SessionEventPauseOverlays cx={cx} />
+						</div>
+
+						{/* Cancelled/overtime overlays on activity row */}
+						<div className="pointer-events-none absolute inset-x-0 top-6 bottom-0">
+							<SessionStatusOverlays cx={cx} />
+						</div>
+					</div>
+				</TooltipProvider>
 			</Timeline>
 
 			{/* Footer */}

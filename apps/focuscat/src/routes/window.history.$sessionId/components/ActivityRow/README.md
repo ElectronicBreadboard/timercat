@@ -179,3 +179,44 @@ $blocks (TActivityBlock[])
         ▼
 ActivityRow renders WindowBlock/AppBlock components
 ```
+
+## Session Event Indicators
+
+The timeline also shows session events as overlays and markers.
+
+### Overlays
+
+| Type      | Color             | Description                                        |
+| --------- | ----------------- | -------------------------------------------------- |
+| Pause     | `bg-amber-500/20` | Timer was paused                                   |
+| Cancelled | `bg-base-400/30`  | Session ended early (shows remaining planned time) |
+| Overtime  | `bg-red-500/20`   | Timer at 0 but session continued                   |
+
+### Markers
+
+Pin markers at the top of the timeline with dashed vertical lines:
+
+| Event     | Color     | Description                                |
+| --------- | --------- | ------------------------------------------ |
+| paused    | amber-500 | Timer paused                               |
+| resumed   | green-500 | Timer resumed                              |
+| extended  | blue-500  | Duration extended (+time shown in tooltip) |
+| cancelled | base-400  | Session ended early                        |
+| overtime  | red-500   | Timer hit 0                                |
+
+### Pause and Overtime Interaction
+
+Pauses affect overtime calculation. The timer doesn't run during pauses, so overtime starts at `wall_clock_time(planned_running_time)`, not `start_time + planned_time`.
+
+```
+Example: 25min session, paused for 5min at minute 10
+
+Without pause logic (wrong):
+[===running===][overtime starts at 25min mark]
+
+With pause logic (correct):
+[===running===][5min pause][===running===][overtime starts at 30min mark]
+                                           ↑ accounts for pause
+```
+
+The `computeWallClockForRunningTime()` method converts timer running time to wall clock time by iterating through pause periods.

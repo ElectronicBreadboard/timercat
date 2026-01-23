@@ -67,17 +67,17 @@ function RouteComponent() {
 
 	const handlePlayPause = React.useCallback(async () => {
 		if (isRunning) {
-			await specta.commands.pauseTimer();
+			await timerCx.pause();
 		} else if (isPaused) {
-			await specta.commands.resumeTimer();
+			await timerCx.resume();
 		} else {
-			await specta.commands.startTimer();
+			await timerCx.start();
 		}
-	}, [isRunning, isPaused]);
+	}, [timerCx, isRunning, isPaused]);
 
 	const handleSkip = React.useCallback(async () => {
-		await specta.commands.skipTimer();
-	}, []);
+		await timerCx.skip();
+	}, [timerCx]);
 
 	// MARK: - Effects
 

@@ -78,7 +78,7 @@ export const Slider: React.FC<TSliderProps> = (props) => {
 		>
 			<BaseSlider.Control className={cn(sliderControlVariants({ size }), className)}>
 				<BaseSlider.Track className={sliderTrackVariants({ size })}>
-					<BaseSlider.Indicator className="rounded bg-primary select-none" />
+					<BaseSlider.Indicator className="bg-primary rounded select-none" />
 					<BaseSlider.Thumb aria-label={ariaLabel} className={sliderThumbVariants({ size })} />
 				</BaseSlider.Track>
 			</BaseSlider.Control>

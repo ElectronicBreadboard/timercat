@@ -406,39 +406,41 @@ pub async fn set_timer_duration(
     minutes: u32,
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
-    let seconds = minutes * 60;
+    let new_seconds = minutes * 60;
 
     // Extract data
-    let (is_idle, session_id) = {
+    let (is_idle, session_id, old_seconds) = {
         let timer = state.lock().unwrap();
-        (timer.status == TimerStatus::Idle, timer.session_id())
+        (timer.status == TimerStatus::Idle, timer.session_id(), timer.total_seconds)
     };
 
-    // DB operation (only if active)
-    let event = SessionEvent::Extended {
-        timestamp: now,
-        seconds,
-    };
-    if !is_idle {
+    // Calculate delta (how much time was added/removed)
+    let delta_seconds = new_seconds as i64 - old_seconds as i64;
+
+    // DB operation (only if active and time was added)
+    if !is_idle && delta_seconds > 0 {
+        let event = SessionEvent::Extended {
+            timestamp: now,
+            seconds: delta_seconds as u32,
+        };
         if let Some(id) = session_id {
             SessionRepository::insert_event(&db.pool, id, &event)
                 .await
                 .map_err(db_err)?;
         }
+
+        // Update session state
+        let mut timer = state.lock().unwrap();
+        if let Some(session) = &mut timer.session {
+            session.add_event(event);
+        }
     }
 
-    // Update state
+    // Update timer state
     let timer = {
         let mut timer = state.lock().unwrap();
-
-        if !is_idle {
-            if let Some(session) = &mut timer.session {
-                session.add_event(event);
-            }
-        }
-
-        timer.total_seconds = seconds;
-        timer.remaining_seconds = seconds;
+        timer.total_seconds = new_seconds;
+        timer.remaining_seconds = new_seconds;
         timer.overtime_seconds = 0;
         timer.clone()
     };
