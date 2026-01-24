@@ -2,20 +2,31 @@ import React from 'react';
 import { Tooltip } from '@/components';
 import { cn, formatDuration, isColorDark } from '@/lib';
 import type { ActivityRowCx } from '../ActivityRowCx';
-import { useBlockPosition } from '../hooks';
+import { useBlockStyle, useVisibleRangeStyle } from '../hooks';
 import type { TAppBlock } from '../types';
 
 export const AppBlock: React.FC<TAppBlockProps> = React.memo((props) => {
 	const { block, cx, gapPx = 1, fallbackColor = '#9ca3af' } = props;
-	const { leftPx, widthPx, visibleLeftPx, visibleWidthPx } = useBlockPosition(block, cx);
-	const durationSec = (block.endMs - block.startMs) / 1000;
+	const blockRef = React.useRef<HTMLDivElement>(null);
+	const triggerRef = React.useRef<HTMLDivElement>(null);
+
 	const dominantApp = block.apps[0];
 	const color = dominantApp?.color ?? fallbackColor;
 	const isDark = isColorDark(color);
+	const durationSec = (block.endMs - block.startMs) / 1000;
+
+	// MARK: - Actions
 
 	const handleClick = React.useCallback(() => {
 		cx.timelineCx.zoomToRange(block.startMs, block.endMs, 0.7);
 	}, [cx, block.startMs, block.endMs]);
+
+	// MARK: - Effects
+
+	useBlockStyle(blockRef, block, cx, { gapPx });
+	useVisibleRangeStyle(triggerRef, block, cx, { offsetPx: gapPx });
+
+	// MARK: - UI
 
 	if (dominantApp == null) {
 		return null;
@@ -23,17 +34,14 @@ export const AppBlock: React.FC<TAppBlockProps> = React.memo((props) => {
 
 	return (
 		<div
+			ref={blockRef}
 			className={cn(
 				'absolute top-1 bottom-1 overflow-hidden rounded transition-opacity hover:opacity-80',
 				isDark && 'border border-white/30'
 			)}
-			style={{
-				left: leftPx + gapPx,
-				width: Math.max(widthPx - gapPx * 2, 2),
-				backgroundColor: color
-			}}
+			style={{ backgroundColor: color }}
 		>
-			{/* Diagonal stripe overlay when multiple apps are merged */}
+			{/* Stripe overlay for merged apps */}
 			{block.apps.length > 1 && (
 				<div
 					className="pointer-events-none absolute inset-0 opacity-20"
@@ -44,17 +52,13 @@ export const AppBlock: React.FC<TAppBlockProps> = React.memo((props) => {
 				/>
 			)}
 
-			{/* Tooltip anchor + click to zoom */}
+			{/* Tooltip trigger */}
 			<Tooltip
-				content={<AppTooltip block={block} durationSec={durationSec} />}
+				content={<AppTooltipContent block={block} durationSec={durationSec} />}
 				side="top"
 				positionerClassName="z-50"
 			>
-				<div
-					className="absolute inset-y-0 cursor-pointer"
-					style={{ left: Math.max(visibleLeftPx - gapPx, 0), width: Math.max(visibleWidthPx, 2) }}
-					onClick={handleClick}
-				/>
+				<div ref={triggerRef} className="absolute inset-y-0 cursor-pointer" onClick={handleClick} />
 			</Tooltip>
 		</div>
 	);
@@ -68,9 +72,9 @@ interface TAppBlockProps {
 	fallbackColor?: string;
 }
 
-// MARK: - Tooltip
+// MARK: - Tooltip Content
 
-const AppTooltip: React.FC<TAppTooltipProps> = (props) => {
+const AppTooltipContent: React.FC<TAppTooltipContentProps> = (props) => {
 	const { block, durationSec } = props;
 	const dominantApp = block.apps[0];
 
@@ -80,6 +84,7 @@ const AppTooltip: React.FC<TAppTooltipProps> = (props) => {
 
 	return (
 		<div className="flex flex-col gap-2">
+			{/* Primary app info */}
 			<div className="flex items-center gap-2.5">
 				{dominantApp.icon != null && (
 					<img src={dominantApp.icon} alt="" className="size-8 shrink-0 rounded" />
@@ -92,6 +97,8 @@ const AppTooltip: React.FC<TAppTooltipProps> = (props) => {
 					<span className="text-base-500 text-xs">{formatDuration(durationSec)}</span>
 				</div>
 			</div>
+
+			{/* Additional apps list */}
 			{block.apps.length > 1 && (
 				<div className="border-base-200 flex flex-wrap gap-1 border-t pt-2">
 					{block.apps.map((app) => (
@@ -108,7 +115,7 @@ const AppTooltip: React.FC<TAppTooltipProps> = (props) => {
 	);
 };
 
-interface TAppTooltipProps {
+interface TAppTooltipContentProps {
 	block: TAppBlock;
 	durationSec: number;
 }

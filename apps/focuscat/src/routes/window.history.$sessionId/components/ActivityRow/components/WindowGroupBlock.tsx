@@ -1,46 +1,40 @@
-import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
 import { Tooltip } from '@/components';
 import { cn, formatDuration, isColorDark } from '@/lib';
 import type { ActivityRowCx } from '../ActivityRowCx';
-import { useBlockPosition } from '../hooks';
+import { useBlockStyle, useVisibleRangeStyle } from '../hooks';
 import type { TAppInfo, TWindowGroupBlock, TWindowSegment } from '../types';
 
 export const WindowGroupBlock: React.FC<TWindowGroupBlockProps> = React.memo((props) => {
 	const { block, cx, gapPx = 1 } = props;
-	const { startMs, endMs, app, segments } = block;
+	const { app, segments } = block;
+
+	const blockRef = React.useRef<HTMLDivElement>(null);
 	const color = app.color ?? '#9ca3af';
 	const isDark = isColorDark(color);
 
-	const { leftPx, widthPx } = useCombinedCompute(
-		[cx.$zoom, cx.$containerRect] as const,
-		() => ({
-			leftPx: cx.msToPx(startMs),
-			widthPx: cx.msToPx(endMs) - cx.msToPx(startMs)
-		}),
-		[cx, startMs, endMs],
-		{ isEqual: (a, b) => a.leftPx === b.leftPx && a.widthPx === b.widthPx }
-	);
+	// MARK: - Effects
+
+	useBlockStyle(blockRef, block, cx, { gapPx });
+
+	// MARK: - UI
 
 	return (
 		<div
+			ref={blockRef}
 			className={cn(
 				'absolute top-1 bottom-1 overflow-hidden rounded',
 				isDark && 'border border-white/30'
 			)}
-			style={{
-				left: leftPx + gapPx,
-				width: Math.max(widthPx - gapPx * 2, 2),
-				backgroundColor: color
-			}}
+			style={{ backgroundColor: color }}
 		>
 			{segments.map((segment, index) => (
 				<WindowSegment
 					key={`${segment.startMs}-${index}`}
 					segment={segment}
+					parentBlock={block}
 					app={app}
 					cx={cx}
-					groupLeftPx={leftPx}
 					gapPx={gapPx}
 					showDivider={index < segments.length - 1}
 				/>
@@ -59,35 +53,43 @@ interface TWindowGroupBlockProps {
 // MARK: - Segment
 
 const WindowSegment: React.FC<TWindowSegmentProps> = React.memo((props) => {
-	const { segment, app, cx, groupLeftPx, gapPx, showDivider } = props;
-	const { leftPx, widthPx, visibleLeftPx, visibleWidthPx } = useBlockPosition(segment, cx);
+	const { segment, parentBlock, app, cx, gapPx, showDivider } = props;
+
+	const segmentRef = React.useRef<HTMLDivElement>(null);
+	const triggerRef = React.useRef<HTMLDivElement>(null);
 	const color = app.color ?? '#9ca3af';
-	const adjustedLeftPx = leftPx - groupLeftPx - gapPx;
 	const durationSec = (segment.endMs - segment.startMs) / 1000;
+
+	// MARK: - Actions
 
 	const handleClick = React.useCallback(() => {
 		cx.timelineCx.zoomToRange(segment.startMs, segment.endMs, 0.7);
 	}, [cx, segment.startMs, segment.endMs]);
 
+	// MARK: - Effects
+
+	useBlockStyle(segmentRef, segment, cx, { gapPx, parentBlock });
+	useVisibleRangeStyle(triggerRef, segment, cx);
+
+	// MARK: - UI
+
 	return (
 		<div
+			ref={segmentRef}
 			className="absolute inset-y-0 transition-opacity hover:opacity-80"
-			style={{ left: adjustedLeftPx, width: Math.max(widthPx, 2), backgroundColor: color }}
+			style={{ backgroundColor: color }}
 		>
 			{showDivider && (
 				<div className="absolute inset-y-0 right-0 border-r border-dashed border-white/30" />
 			)}
 
+			{/* Tooltip trigger */}
 			<Tooltip
-				content={<SegmentTooltip segment={segment} app={app} durationSec={durationSec} />}
+				content={<SegmentTooltipContent segment={segment} app={app} durationSec={durationSec} />}
 				side="top"
 				positionerClassName="z-50"
 			>
-				<div
-					className="absolute inset-y-0 cursor-pointer"
-					style={{ left: visibleLeftPx, width: Math.max(visibleWidthPx, 2) }}
-					onClick={handleClick}
-				/>
+				<div ref={triggerRef} className="absolute inset-y-0 cursor-pointer" onClick={handleClick} />
 			</Tooltip>
 		</div>
 	);
@@ -96,16 +98,16 @@ WindowSegment.displayName = 'WindowSegment';
 
 interface TWindowSegmentProps {
 	segment: TWindowSegment;
+	parentBlock: TWindowGroupBlock;
 	app: TAppInfo;
 	cx: ActivityRowCx;
-	groupLeftPx: number;
 	gapPx: number;
 	showDivider: boolean;
 }
 
-// MARK: - Tooltip
+// MARK: - Tooltip Content
 
-const SegmentTooltip: React.FC<TSegmentTooltipProps> = (props) => {
+const SegmentTooltipContent: React.FC<TSegmentTooltipContentProps> = (props) => {
 	const { segment, app, durationSec } = props;
 	const { windows } = segment;
 	const firstWindow = windows[0];
@@ -132,7 +134,7 @@ const SegmentTooltip: React.FC<TSegmentTooltipProps> = (props) => {
 	);
 };
 
-interface TSegmentTooltipProps {
+interface TSegmentTooltipContentProps {
 	segment: TWindowSegment;
 	app: TAppInfo;
 	durationSec: number;
