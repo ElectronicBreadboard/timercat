@@ -37,6 +37,7 @@ export const WindowGroupBlock: React.FC<TWindowGroupBlockProps> = React.memo((pr
 					cx={cx}
 					gapPx={gapPx}
 					showDivider={index < segments.length - 1}
+					isDark={isDark}
 				/>
 			))}
 		</div>
@@ -53,7 +54,7 @@ interface TWindowGroupBlockProps {
 // MARK: - Segment
 
 const WindowSegment: React.FC<TWindowSegmentProps> = React.memo((props) => {
-	const { segment, parentBlock, app, cx, gapPx, showDivider } = props;
+	const { segment, parentBlock, app, cx, gapPx, showDivider, isDark } = props;
 
 	const segmentRef = React.useRef<HTMLDivElement>(null);
 	const triggerRef = React.useRef<HTMLDivElement>(null);
@@ -80,7 +81,12 @@ const WindowSegment: React.FC<TWindowSegmentProps> = React.memo((props) => {
 			style={{ backgroundColor: color }}
 		>
 			{showDivider && (
-				<div className="absolute inset-y-0 right-0 border-r border-dashed border-white/30" />
+				<div
+					className={cn(
+						'absolute inset-y-0 right-0 border-r border-dashed',
+						isDark ? 'border-white/50' : 'border-black/50'
+					)}
+				/>
 			)}
 
 			{/* Tooltip trigger */}
@@ -103,6 +109,7 @@ interface TWindowSegmentProps {
 	cx: ActivityRowCx;
 	gapPx: number;
 	showDivider: boolean;
+	isDark: boolean;
 }
 
 // MARK: - Tooltip Content

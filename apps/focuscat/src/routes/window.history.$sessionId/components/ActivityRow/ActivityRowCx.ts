@@ -11,7 +11,6 @@ export class ActivityRowCx {
 	private _activities: specta.WindowActivityDto[];
 	private _lastResolution: number = -1;
 	private _unlisteners: Array<() => void> = [];
-	private _updateTimeout: ReturnType<typeof setTimeout> | null = null;
 
 	public constructor(
 		timelineCx: TimelineCx,
@@ -58,10 +57,6 @@ export class ActivityRowCx {
 			unlisten();
 		}
 		this._unlisteners = [];
-		if (this._updateTimeout != null) {
-			clearTimeout(this._updateTimeout);
-			this._updateTimeout = null;
-		}
 	}
 
 	public setActivities(activities: specta.WindowActivityDto[]): void {
@@ -80,37 +75,24 @@ export class ActivityRowCx {
 		return this.timelineCx.msToPx(ms);
 	}
 
-	/** Recompute blocks if resolution changed */
+	/**
+	 * Recompute blocks if resolution changed.
+	 */
 	private update(): void {
-		const applyUpdate = () => {
-			const resolution = this.timelineCx.getMarkerResolution();
-			if (resolution === this._lastResolution) {
-				return;
-			}
-			this._lastResolution = resolution;
-			this.$blocks.set(this.createBlocks());
-		};
-
-		// First update should be immediate
-		if (this._lastResolution === -1) {
-			applyUpdate();
+		const resolution = this.timelineCx.getMarkerResolution();
+		if (resolution === this._lastResolution) {
 			return;
 		}
-
-		// Debounce subsequent updates to avoid jumpy reorganization during zoom
-		if (this._updateTimeout != null) {
-			clearTimeout(this._updateTimeout);
-		}
-		this._updateTimeout = setTimeout(() => {
-			this._updateTimeout = null;
-			applyUpdate();
-		}, 150);
+		this._lastResolution = resolution;
+		this.$blocks.set(this.createBlocks());
 	}
 
 	/**
-	 * Creates activity blocks with two-level merging:
-	 * 1. Window-level: merge small windows within same app
-	 * 2. App-level: merge small blocks across apps
+	 * Creates activity blocks via a 4-step pipeline (like map zoom - less detail when zoomed out):
+	 * 1. mergeTinyWithinApp - Merge tiny same-app blocks (preserves app identity)
+	 * 2. mergeTinyAcrossApps - Merge tiny blocks across apps (shows dominant app)
+	 * 3. groupIntoSegments - Create dividers between consecutive same-app blocks
+	 * 4. clipToBounds - Clip edge blocks to timeline bounds
 	 */
 	private createBlocks(): TActivityBlock[] {
 		const { startMs, endMs } = this.timelineCx;
@@ -122,113 +104,104 @@ export class ActivityRowCx {
 			return [];
 		}
 
-		const windowBlocks = this.createWindowBlocks(activities);
-		const mergedBlocks = this.mergeSmallBlocks(windowBlocks);
-		const groupedBlocks = this.groupWindowBlocks(mergedBlocks);
+		const windowBlocks = activities.map((activity) => ({
+			type: 'window' as const,
+			startMs: activity.startedAt,
+			endMs: activity.endedAt,
+			app: this.extractAppInfo(activity),
+			windows: [activity]
+		}));
+		const mergedWindows = this.mergeTinyWithinApp(windowBlocks);
+		const mergedBlocks = this.mergeTinyAcrossApps(mergedWindows);
+		const groupedBlocks = this.groupIntoSegments(mergedBlocks);
 
 		return this.clipToBounds(groupedBlocks, startMs, endMs);
 	}
 
 	/**
-	 * Groups consecutive same-app activities into WindowBlocks,
-	 * merging small windows within each app segment.
+	 * Merges tiny same-app blocks while preserving app identity.
+	 * Blocks smaller than minWindowBlockPx get merged with adjacent same-app blocks.
 	 */
-	private createWindowBlocks(activities: specta.WindowActivityDto[]): TWindowBlock[] {
+	private mergeTinyWithinApp(blocks: TWindowBlock[]): TWindowBlock[] {
 		const { minWindowBlockPx } = this._config;
-		const blocks: TWindowBlock[] = [];
+		const result: TWindowBlock[] = [];
+		let pending: TWindowBlock[] = [];
 		let currentBundleId: string | null = null;
-		let currentWindows: specta.WindowActivityDto[] = [];
 
-		const flushGroup = () => {
-			if (!currentWindows.length) {
-				return;
+		const getPendingWidthPx = (): number => {
+			const first = pending[0];
+			const last = pending[pending.length - 1];
+			if (first == null || last == null) {
+				return 0;
 			}
-
-			const firstWindow = currentWindows[0];
-			if (firstWindow == null) {
-				return;
-			}
-
-			const app = this.extractAppInfo(firstWindow);
-			let pending: specta.WindowActivityDto[] = [];
-
-			const flushPending = () => {
-				const first = pending[0];
-				const last = pending[pending.length - 1];
-				if (first == null || last == null) {
-					return;
-				}
-				blocks.push({
-					type: 'window',
-					startMs: first.startedAt,
-					endMs: last.endedAt,
-					app,
-					windows: [...pending]
-				});
-				pending = [];
-			};
-
-			for (const window of currentWindows) {
-				const widthPx = this.msToPx(window.endedAt) - this.msToPx(window.startedAt);
-
-				if (widthPx >= minWindowBlockPx) {
-					if (pending.length > 0) {
-						pending.push(window);
-						flushPending();
-					} else {
-						blocks.push({
-							type: 'window',
-							startMs: window.startedAt,
-							endMs: window.endedAt,
-							app,
-							windows: [window]
-						});
-					}
-				} else {
-					pending.push(window);
-					const first = pending[0];
-					if (first != null) {
-						const groupWidthPx = this.msToPx(window.endedAt) - this.msToPx(first.startedAt);
-						if (groupWidthPx >= minWindowBlockPx) {
-							flushPending();
-						}
-					}
-				}
-			}
-
-			// Trailing: merge into last block or flush standalone
-			if (pending.length > 0) {
-				const lastBlock = blocks[blocks.length - 1];
-				const lastPending = pending[pending.length - 1];
-				if (lastBlock != null && lastPending != null && lastBlock.app.bundleId === app.bundleId) {
-					lastBlock.windows.push(...pending);
-					lastBlock.endMs = lastPending.endedAt;
-				} else {
-					flushPending();
-				}
-			}
-
-			currentWindows = [];
+			return this.msToPx(last.endMs) - this.msToPx(first.startMs);
 		};
 
-		for (const activity of activities) {
-			const bundleId = activity.appBundleId ?? 'unknown';
+		const flush = () => {
+			const first = pending[0];
+			const last = pending[pending.length - 1];
+			if (first == null || last == null) {
+				return;
+			}
+			result.push({
+				type: 'window',
+				startMs: first.startMs,
+				endMs: last.endMs,
+				app: first.app,
+				windows: pending.flatMap((b) => b.windows)
+			});
+			pending = [];
+		};
+
+		for (const block of blocks) {
+			const bundleId = block.app.bundleId;
+
+			// App changed - flush pending and start fresh
 			if (bundleId !== currentBundleId) {
-				flushGroup();
+				if (pending.length > 0) {
+					flush();
+				}
 				currentBundleId = bundleId;
 			}
-			currentWindows.push(activity);
-		}
-		flushGroup();
 
-		return blocks;
+			const widthPx = this.msToPx(block.endMs) - this.msToPx(block.startMs);
+
+			if (widthPx >= minWindowBlockPx) {
+				if (pending.length > 0) {
+					pending.push(block);
+					flush();
+				} else {
+					result.push(block);
+				}
+			} else {
+				pending.push(block);
+				if (getPendingWidthPx() >= minWindowBlockPx) {
+					flush();
+				}
+			}
+		}
+
+		// Trailing: merge into last block or flush standalone
+		if (pending.length > 0) {
+			const last = result[result.length - 1];
+			const lastPending = pending[pending.length - 1];
+			if (last != null && lastPending != null && last.app.bundleId === currentBundleId) {
+				last.windows.push(...pending.flatMap((b) => b.windows));
+				last.endMs = lastPending.endMs;
+			} else {
+				flush();
+			}
+		}
+
+		return result;
 	}
 
 	/**
-	 * Merges blocks that are too small, potentially combining different apps.
-	 * Also merges consecutive AppBlocks with same dominant app.
+	 * Merges tiny blocks across different apps (loses individual app identity).
+	 * Blocks smaller than minAppBlockPx get merged with neighbors.
+	 * Mixed apps → AppBlock (shows dominant app). Same app → WindowBlock.
 	 */
-	private mergeSmallBlocks(blocks: TWindowBlock[]): (TWindowBlock | TAppBlock)[] {
+	private mergeTinyAcrossApps(blocks: TWindowBlock[]): (TWindowBlock | TAppBlock)[] {
 		const { minAppBlockPx } = this._config;
 		const result: (TWindowBlock | TAppBlock)[] = [];
 		let pending: TWindowBlock[] = [];
@@ -310,7 +283,6 @@ export class ActivityRowCx {
 			return [block];
 		}
 
-		// Convert AppBlock activities back to individual WindowBlocks
 		return block.activities.map((activity) => ({
 			type: 'window' as const,
 			startMs: activity.startedAt,
@@ -356,8 +328,12 @@ export class ActivityRowCx {
 		};
 	}
 
-	/** Groups consecutive same-app WindowBlocks into TWindowGroupBlock */
-	private groupWindowBlocks(blocks: (TWindowBlock | TAppBlock)[]): TActivityBlock[] {
+	/**
+	 * Groups consecutive same-app WindowBlocks into WindowGroupBlocks with divider segments.
+	 * This creates the visual structure where dividers show window boundaries within an app run.
+	 * AppBlocks pass through unchanged.
+	 */
+	private groupIntoSegments(blocks: (TWindowBlock | TAppBlock)[]): TActivityBlock[] {
 		const result: TActivityBlock[] = [];
 		let windowSequence: TWindowBlock[] = [];
 		let currentBundleId: string | null = null;

@@ -6,7 +6,12 @@ Timeline visualization for window activity data with automatic aggregation.
 
 Shows activity at the "right" level of detail — like Google Maps. Zoomed out shows aggregated data, zoomed in shows individual windows.
 
-**Key insight:** Detail level is per-block based on pixel width, not global zoom. A sparse 2-hour coding session can show individual windows while a dense 10-minute app-switching period shows aggregated blocks — at the same zoom level.
+**How it works:** Block structure updates when timeline resolution changes (discrete zoom thresholds). Merging happens in two stages:
+
+1. **Within-app merge** — Tiny same-app blocks combine (preserves app identity)
+2. **Cross-app merge** — Still-tiny blocks merge across apps (shows dominant app)
+
+A sparse 2-hour coding session shows individual windows, while a dense 10-minute app-switching period shows aggregated blocks.
 
 ## What You See
 
@@ -46,19 +51,16 @@ Activity data is never discarded. Even 1-second app switches are preserved:
 - **Tooltip:** Shows full list of apps and activity counts
 - **Data:** All activities remain accessible
 
-### Small Gets Absorbed
+### Tiny Blocks Get Merged
 
-Small items merge into large neighbors, not vice versa:
+Blocks too small to display meaningfully get merged with neighbors:
 
 ```
-[1s Chrome][30min VSCode] → [Merged: Chrome absorbed into VSCode]
+[1s Chrome][30min VSCode] → [30min: Chrome merged into VSCode block]
+[3s App1][2s App2][1s App3][...] → [Merged: shows dominant app with stripes]
 ```
 
-This is intentional:
-
-1. Brief app switches are noise, not meaningful work
-2. Tiny blocks would be unclickable
-3. Data is preserved in tooltips
+This ensures all blocks are large enough to see and interact with, while preserving data in tooltips.
 
 ## Interactions
 
