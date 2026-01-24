@@ -1,15 +1,70 @@
-import { useFeatureState } from 'feature-react/state';
+import { useSubscriber } from 'feature-react/state';
 import React from 'react';
 import { Tooltip } from '@/components';
 import { formatDuration } from '@/lib';
-import type { SessionTimelineCx } from './SessionTimelineCx';
+import type { SessionTimelineCx, TEventMarker, TEventPeriod } from './SessionTimelineCx';
 
 // MARK: - Event Period Overlays
 
 export const SessionEventPeriodOverlays: React.FC<TSessionEventPeriodOverlaysProps> = (props) => {
 	const { cx } = props;
-	useFeatureState(cx.timelineCx.$zoom);
-	useFeatureState(cx.timelineCx.$containerRect);
+	const periodRefs = React.useRef<Map<number, HTMLDivElement>>(new Map());
+
+	// MARK: - Actions
+
+	const updatePosition = React.useCallback(
+		(el: HTMLDivElement, period: TEventPeriod) => {
+			const left = cx.timelineCx.msToPx(period.startMs);
+			const width = cx.timelineCx.msToPx(period.endMs) - left;
+			el.style.left = `${left}px`;
+			el.style.width = `${Math.max(width, 2)}px`;
+		},
+		[cx.timelineCx]
+	);
+
+	const updatePositions = React.useCallback(() => {
+		for (const [index, el] of periodRefs.current) {
+			const period = cx.eventPeriods[index];
+			if (period != null) {
+				updatePosition(el, period);
+			}
+		}
+	}, [cx.eventPeriods, updatePosition]);
+
+	const setRef = React.useCallback(
+		(index: number, el: HTMLDivElement | null) => {
+			if (el != null) {
+				periodRefs.current.set(index, el);
+				const period = cx.eventPeriods[index];
+				if (period != null) {
+					updatePosition(el, period);
+				}
+			} else {
+				periodRefs.current.delete(index);
+			}
+		},
+		[cx.eventPeriods, updatePosition]
+	);
+
+	const getColor = React.useCallback((type: string): string => {
+		switch (type) {
+			case 'pause':
+				return '#f59e0b33';
+			case 'overtime':
+				return '#ef444433';
+			case 'cancelled':
+				return '#9ca3af4d';
+			default:
+				return 'transparent';
+		}
+	}, []);
+
+	// MARK: - Effects
+
+	useSubscriber(cx.timelineCx.$zoom, updatePositions, [updatePositions]);
+	useSubscriber(cx.timelineCx.$containerRect, updatePositions, [updatePositions]);
+
+	// MARK: - UI
 
 	return (
 		<>
@@ -18,38 +73,14 @@ export const SessionEventPeriodOverlays: React.FC<TSessionEventPeriodOverlaysPro
 					return null;
 				}
 
-				const left = cx.timelineCx.msToPx(period.startMs);
-				const width = cx.timelineCx.msToPx(period.endMs) - left;
-
-				switch (period.type) {
-					case 'pause':
-						return (
-							<EventPeriodOverlay
-								key={`${period.type}-${index}`}
-								left={left}
-								width={width}
-								color="#f59e0b33"
-							/>
-						);
-					case 'overtime':
-						return (
-							<EventPeriodOverlay
-								key={`${period.type}-${index}`}
-								left={left}
-								width={width}
-								color="#ef444433"
-							/>
-						);
-					case 'cancelled':
-						return (
-							<EventPeriodOverlay
-								key={`${period.type}-${index}`}
-								left={left}
-								width={width}
-								color="#9ca3af4d"
-							/>
-						);
-				}
+				return (
+					<div
+						key={`${period.type}-${index}`}
+						ref={(el) => setRef(index, el)}
+						className="pointer-events-none absolute top-0 h-full"
+						style={{ backgroundColor: getColor(period.type) }}
+					/>
+				);
 			})}
 		</>
 	);
@@ -59,34 +90,55 @@ export interface TSessionEventPeriodOverlaysProps {
 	cx: SessionTimelineCx;
 }
 
-const EventPeriodOverlay: React.FC<TEventPeriodOverlayProps> = (props) => {
-	const { left, width, color } = props;
-
-	return (
-		<div
-			className="pointer-events-none absolute top-0 h-full"
-			style={{ left, width: Math.max(width, 2), backgroundColor: color }}
-		/>
-	);
-};
-
-interface TEventPeriodOverlayProps {
-	left: number;
-	width: number;
-	color: string;
-}
-
 // MARK: - Event Markers
 
 export const SessionEventMarkers: React.FC<TSessionMarkersProps> = (props) => {
 	const { cx } = props;
-	useFeatureState(cx.timelineCx.$zoom);
-	useFeatureState(cx.timelineCx.$containerRect);
+	const markerRefs = React.useRef<Map<number, HTMLDivElement>>(new Map());
+
+	// MARK: - Actions
+
+	const updatePosition = React.useCallback(
+		(el: HTMLDivElement, marker: TEventMarker) => {
+			el.style.left = `${cx.timelineCx.msToPx(marker.timestamp)}px`;
+		},
+		[cx.timelineCx]
+	);
+
+	const updatePositions = React.useCallback(() => {
+		for (const [index, el] of markerRefs.current) {
+			const marker = cx.eventMarkers[index];
+			if (marker != null) {
+				updatePosition(el, marker);
+			}
+		}
+	}, [cx.eventMarkers, updatePosition]);
+
+	const setRef = React.useCallback(
+		(index: number, el: HTMLDivElement | null) => {
+			if (el != null) {
+				markerRefs.current.set(index, el);
+				const marker = cx.eventMarkers[index];
+				if (marker != null) {
+					updatePosition(el, marker);
+				}
+			} else {
+				markerRefs.current.delete(index);
+			}
+		},
+		[cx.eventMarkers, updatePosition]
+	);
+
+	// MARK: - Effects
+
+	useSubscriber(cx.timelineCx.$zoom, updatePositions, [updatePositions]);
+	useSubscriber(cx.timelineCx.$containerRect, updatePositions, [updatePositions]);
+
+	// MARK: - UI
 
 	return (
 		<>
 			{cx.eventMarkers.map((marker, index) => {
-				const left = cx.timelineCx.msToPx(marker.timestamp);
 				const time = new Date(marker.timestamp).toLocaleTimeString('en-US', {
 					hour: 'numeric',
 					minute: '2-digit'
@@ -96,8 +148,8 @@ export const SessionEventMarkers: React.FC<TSessionMarkersProps> = (props) => {
 					case 'paused':
 						return (
 							<EventMarker
-								key={`marker-${index}`}
-								left={left}
+								key={`paused-${index}`}
+								setRef={(el) => setRef(index, el)}
 								color="#f59e0b"
 								label="Paused"
 								time={time}
@@ -107,8 +159,8 @@ export const SessionEventMarkers: React.FC<TSessionMarkersProps> = (props) => {
 					case 'resumed':
 						return (
 							<EventMarker
-								key={`marker-${index}`}
-								left={left}
+								key={`resumed-${index}`}
+								setRef={(el) => setRef(index, el)}
 								color="#22c55e"
 								label="Resumed"
 								time={time}
@@ -117,8 +169,8 @@ export const SessionEventMarkers: React.FC<TSessionMarkersProps> = (props) => {
 					case 'extended':
 						return (
 							<EventMarker
-								key={`marker-${index}`}
-								left={left}
+								key={`extended-${index}`}
+								setRef={(el) => setRef(index, el)}
 								color="#3b82f6"
 								label="Extended"
 								time={time}
@@ -128,8 +180,8 @@ export const SessionEventMarkers: React.FC<TSessionMarkersProps> = (props) => {
 					case 'cancelled':
 						return (
 							<EventMarker
-								key={`marker-${index}`}
-								left={left}
+								key={`cancelled-${index}`}
+								setRef={(el) => setRef(index, el)}
 								color="#9ca3af"
 								label="Cancelled"
 								time={time}
@@ -138,8 +190,8 @@ export const SessionEventMarkers: React.FC<TSessionMarkersProps> = (props) => {
 					case 'overtime':
 						return (
 							<EventMarker
-								key={`marker-${index}`}
-								left={left}
+								key={`overtime-${index}`}
+								setRef={(el) => setRef(index, el)}
 								color="#ef4444"
 								label="Overtime"
 								time={time}
@@ -157,7 +209,7 @@ export interface TSessionMarkersProps {
 }
 
 const EventMarker: React.FC<TEventMarkerProps> = (props) => {
-	const { left, color, label, time, subtitle } = props;
+	const { setRef, color, label, time, subtitle } = props;
 
 	return (
 		<Tooltip
@@ -172,16 +224,14 @@ const EventMarker: React.FC<TEventMarkerProps> = (props) => {
 			positionerClassName="z-50"
 		>
 			<div
-				className="pointer-events-auto absolute top-0 bottom-0 flex flex-col items-center"
-				style={{ left, transform: 'translateX(-50%)' }}
+				ref={setRef}
+				className="pointer-events-auto absolute top-0 bottom-0 flex -translate-x-1/2 flex-col items-center"
 			>
-				{/* Pin marker: rectangle + triangle */}
 				<div className="h-1.5 w-2" style={{ backgroundColor: color }} />
 				<div
 					className="size-0 border-x-4 border-t-[3px] border-x-transparent"
 					style={{ borderTopColor: color }}
 				/>
-				{/* Dashed vertical line */}
 				<div className="flex-1 border-l border-dashed" style={{ borderColor: color }} />
 			</div>
 		</Tooltip>
@@ -189,7 +239,7 @@ const EventMarker: React.FC<TEventMarkerProps> = (props) => {
 };
 
 interface TEventMarkerProps {
-	left: number;
+	setRef: (el: HTMLDivElement | null) => void;
 	color: string;
 	label: string;
 	time: string;

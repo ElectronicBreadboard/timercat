@@ -23,27 +23,32 @@ export const TimelineAxis: React.FC<TTimelineAxisProps> = (props) => {
 
 	// MARK: - Actions
 
+	const updatePosition = React.useCallback(
+		(el: HTMLDivElement, ms: number) => {
+			el.style.left = `${timelineCx.msToPx(ms)}px`;
+		},
+		[timelineCx]
+	);
+
 	const updatePositions = React.useCallback(() => {
 		for (const [ms, el] of markerRefs.current) {
-			el.style.left = `${timelineCx.msToPx(ms)}px`;
+			updatePosition(el, ms);
 		}
-	}, [timelineCx]);
+	}, [updatePosition]);
 
-	const setMarkerRef = React.useCallback((ms: number, el: HTMLDivElement | null) => {
-		if (el != null) {
-			markerRefs.current.set(ms, el);
-		} else {
-			markerRefs.current.delete(ms);
-		}
-	}, []);
+	const setMarkerRef = React.useCallback(
+		(ms: number, el: HTMLDivElement | null) => {
+			if (el != null) {
+				markerRefs.current.set(ms, el);
+				updatePosition(el, ms);
+			} else {
+				markerRefs.current.delete(ms);
+			}
+		},
+		[updatePosition]
+	);
 
 	// MARK: - Effects
-
-	// Note: useLayoutEffect needed because when markers change (resolution change),
-	// new DOM elements are created and need positions set after React renders them.
-	React.useLayoutEffect(() => {
-		updatePositions();
-	}, [updatePositions, markers]);
 
 	useSubscriber(timelineCx.$zoom, updatePositions, [updatePositions]);
 	useSubscriber(timelineCx.$containerRect, updatePositions, [updatePositions]);

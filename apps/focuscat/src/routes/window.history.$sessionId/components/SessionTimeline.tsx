@@ -28,7 +28,7 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 
 	// MARK: - UI
 
-	if (activities.length === 0) {
+	if (!activities.length) {
 		return <div className="text-base-400 text-sm">No activity recorded</div>;
 	}
 
@@ -45,12 +45,12 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 						<ActivityRow cx={cx.activityRowCx} />
 
 						{/* Event markers at top of axis with dashed line through */}
-						<div className="pointer-events-none absolute inset-0">
+						<div className="pointer-events-none absolute inset-0 overflow-hidden">
 							<SessionEventMarkers cx={cx} />
 						</div>
 
 						{/* Event period overlays (pause, overtime, cancelled) on activity row */}
-						<div className="pointer-events-none absolute inset-x-0 top-6 bottom-0">
+						<div className="pointer-events-none absolute inset-x-0 top-6 bottom-0 overflow-hidden">
 							<SessionEventPeriodOverlays cx={cx} />
 						</div>
 					</div>
