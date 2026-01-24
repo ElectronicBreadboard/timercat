@@ -1,8 +1,7 @@
 import { useCombinedCompute } from 'feature-react/state';
 import type { ActivityRowCx } from '../ActivityRowCx';
-import type { TActivityBlock } from '../types';
 
-export function useBlockPosition(block: TActivityBlock, cx: ActivityRowCx): TBlockPosition {
+export function useBlockPosition(block: TBlockWithTimeRange, cx: ActivityRowCx): TBlockPosition {
 	return useCombinedCompute(
 		[cx.$zoom, cx.$containerRect, cx.$scrollLeft] as const,
 		() => {
@@ -38,4 +37,9 @@ export interface TBlockPosition {
 	widthPx: number;
 	visibleLeftPx: number;
 	visibleWidthPx: number;
+}
+
+interface TBlockWithTimeRange {
+	startMs: number;
+	endMs: number;
 }

@@ -7,7 +7,10 @@ export const Route = createFileRoute('/window/history/')({
 		// Auto-select latest session if available
 		const [isOk, , session] = toTuple(await specta.commands.getLastWorkSession(30));
 		if (isOk && session != null) {
-			throw redirect({ to: '/window/history/$sessionId', params: { sessionId: String(session.id) } });
+			throw redirect({
+				to: '/window/history/$sessionId',
+				params: { sessionId: String(session.id) }
+			});
 		}
 		return null;
 	},

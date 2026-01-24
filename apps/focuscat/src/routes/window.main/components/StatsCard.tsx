@@ -188,7 +188,9 @@ const LastSessionView: React.FC<TLastSessionViewProps> = (props) => {
 				<div className="text-base-400 text-[10px]">
 					{stats.overtimeSeconds > 0 ? (
 						<>
-							<span className="text-warning">+{formatDuration(stats.overtimeSeconds)} overtime</span>
+							<span className="text-warning">
+								+{formatDuration(stats.overtimeSeconds)} overtime
+							</span>
 							<span> · {sessionDate}</span>
 						</>
 					) : (

@@ -6,7 +6,7 @@ import { useBlockPosition } from '../hooks';
 import type { TAppBlock } from '../types';
 
 export const AppBlock: React.FC<TAppBlockProps> = React.memo((props) => {
-	const { block, cx, fallbackColor = '#9ca3af' } = props;
+	const { block, cx, gapPx = 1, fallbackColor = '#9ca3af' } = props;
 	const { leftPx, widthPx, visibleLeftPx, visibleWidthPx } = useBlockPosition(block, cx);
 	const durationSec = (block.endMs - block.startMs) / 1000;
 	const dominantApp = block.apps[0];
@@ -28,8 +28,8 @@ export const AppBlock: React.FC<TAppBlockProps> = React.memo((props) => {
 				isDark && 'border border-white/30'
 			)}
 			style={{
-				left: leftPx,
-				width: Math.max(widthPx, 2),
+				left: leftPx + gapPx,
+				width: Math.max(widthPx - gapPx * 2, 2),
 				backgroundColor: color
 			}}
 		>
@@ -52,7 +52,7 @@ export const AppBlock: React.FC<TAppBlockProps> = React.memo((props) => {
 			>
 				<div
 					className="absolute inset-y-0 cursor-pointer"
-					style={{ left: visibleLeftPx, width: Math.max(visibleWidthPx, 2) }}
+					style={{ left: visibleLeftPx - gapPx, width: Math.max(visibleWidthPx, 2) }}
 					onClick={handleClick}
 				/>
 			</Tooltip>
@@ -61,9 +61,10 @@ export const AppBlock: React.FC<TAppBlockProps> = React.memo((props) => {
 });
 AppBlock.displayName = 'AppBlock';
 
-export interface TAppBlockProps {
+interface TAppBlockProps {
 	block: TAppBlock;
 	cx: ActivityRowCx;
+	gapPx?: number;
 	fallbackColor?: string;
 }
 

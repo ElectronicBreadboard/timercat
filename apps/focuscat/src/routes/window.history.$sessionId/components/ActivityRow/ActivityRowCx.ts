@@ -1,19 +1,19 @@
 import { createState } from 'feature-state';
 import type { TimelineCx } from '@/components';
 import type { specta } from '@/environment';
-import type { TActivityBlock, TAppBlock, TAppInfo, TWindowBlock } from './types';
+import type { TActivityBlock, TAppBlock, TAppInfo, TWindowBlock, TWindowSegment } from './types';
 
 export class ActivityRowCx {
 	public readonly timelineCx: TimelineCx;
-	public config: TActivityRowCxConfig;
 	public readonly $blocks = createState<TActivityBlock[]>([]);
 
+	private _config: TActivityRowCxConfig;
 	private _activities: specta.WindowActivityDto[];
 	private _lastResolution: number = -1;
 	private _unlisteners: Array<() => void> = [];
 	private _updateTimeout: ReturnType<typeof setTimeout> | null = null;
 
-	constructor(
+	public constructor(
 		timelineCx: TimelineCx,
 		activities: specta.WindowActivityDto[],
 		options: TActivityRowCxOptions = {}
@@ -21,7 +21,7 @@ export class ActivityRowCx {
 		const { minWindowBlockPx = 8, minAppBlockPx = 12 } = options;
 		this.timelineCx = timelineCx;
 		this._activities = activities;
-		this.config = { minWindowBlockPx, minAppBlockPx };
+		this._config = { minWindowBlockPx, minAppBlockPx };
 
 		// Listen for zoom/container changes to auto-update blocks
 		this._unlisteners.push(
@@ -31,6 +31,10 @@ export class ActivityRowCx {
 
 		// Initial block computation
 		this.update();
+	}
+
+	public get config(): TActivityRowCxConfig {
+		return this._config;
 	}
 
 	public get containerWidth(): number {
@@ -67,9 +71,13 @@ export class ActivityRowCx {
 	}
 
 	public setConfig(config: Partial<TActivityRowCxConfig>): void {
-		this.config = { ...this.config, ...config };
+		this._config = { ...this._config, ...config };
 		this._lastResolution = -1;
 		this.update();
+	}
+
+	public msToPx(ms: number): number {
+		return this.timelineCx.msToPx(ms);
 	}
 
 	/** Recompute blocks if resolution changed */
@@ -96,23 +104,17 @@ export class ActivityRowCx {
 		this._updateTimeout = setTimeout(() => {
 			this._updateTimeout = null;
 			applyUpdate();
-		}, 150);
-	}
-
-	public msToPx(ms: number): number {
-		return this.timelineCx.msToPx(ms);
+		}, 200);
 	}
 
 	/**
 	 * Creates activity blocks with two-level merging:
-	 * 1. Window-level merge within same-app segments
-	 * 2. App-level merge across segments
-	 * 3. Merge consecutive AppBlocks with same dominant app
+	 * 1. Window-level: merge small windows within same app
+	 * 2. App-level: merge small blocks across apps
 	 */
 	private createBlocks(): TActivityBlock[] {
 		const { startMs, endMs } = this.timelineCx;
 
-		// Step 1: Filter to visible and sort
 		const activities = this._activities
 			.filter((a) => a.endedAt > startMs && a.startedAt < endMs)
 			.sort((a, b) => a.startedAt - b.startedAt);
@@ -120,138 +122,118 @@ export class ActivityRowCx {
 			return [];
 		}
 
-		// Step 2: Group consecutive same-app activities
-		const appSegments = this.groupByApp(activities);
+		const windowBlocks = this.createWindowBlocks(activities);
+		const mergedBlocks = this.mergeSmallBlocks(windowBlocks);
+		const groupedBlocks = this.groupWindowBlocks(mergedBlocks);
 
-		// Step 3: Window-level merge within each segment
-		const windowLevelItems = appSegments.flatMap((segment) => this.mergeWindowsInSegment(segment));
-
-		// Step 4: App-level merge across segments
-		const appLevelBlocks = this.mergeAcrossApps(windowLevelItems);
-
-		// Step 5: Merge consecutive AppBlocks with same dominant app
-		const mergedAppBlocks = this.mergeConsecutiveAppBlocks(appLevelBlocks);
-
-		// Step 6: Assign positions to same-app WindowBlock sequences
-		const blocksWithPositions = this.assignWindowPositions(mergedAppBlocks);
-
-		// Step 7: Clip to bounds
-		return this.clipToBounds(blocksWithPositions, startMs, endMs);
-	}
-
-	private groupByApp(activities: specta.WindowActivityDto[]): TAppSegment[] {
-		const firstActivity = activities[0];
-		if (firstActivity == null) {
-			return [];
-		}
-
-		const segments: TAppSegment[] = [];
-		let current: TAppSegment = {
-			app: this.extractAppInfo(firstActivity),
-			windows: [firstActivity]
-		};
-
-		for (let i = 1; i < activities.length; i++) {
-			const activity = activities[i];
-			if (activity == null) {
-				continue;
-			}
-			const bundleId = activity.appBundleId ?? 'unknown';
-
-			if (bundleId === current.app.bundleId) {
-				current.windows.push(activity);
-			} else {
-				segments.push(current);
-				current = {
-					app: this.extractAppInfo(activity),
-					windows: [activity]
-				};
-			}
-		}
-		segments.push(current);
-
-		return segments;
+		return this.clipToBounds(groupedBlocks, startMs, endMs);
 	}
 
 	/**
-	 * Merges small windows within a same-app segment.
-	 * Pattern: accumulate small items, flush when threshold reached or large item arrives.
+	 * Groups consecutive same-app activities into WindowBlocks,
+	 * merging small windows within each app segment.
 	 */
-	private mergeWindowsInSegment(segment: TAppSegment): TWindowLevelItem[] {
-		const { app, windows } = segment;
-		const { minWindowBlockPx } = this.config;
-		const items: TWindowLevelItem[] = [];
-		let pending: specta.WindowActivityDto[] = [];
+	private createWindowBlocks(activities: specta.WindowActivityDto[]): TWindowBlock[] {
+		const { minWindowBlockPx } = this._config;
+		const blocks: TWindowBlock[] = [];
+		let currentBundleId: string | null = null;
+		let currentWindows: specta.WindowActivityDto[] = [];
 
-		const flush = () => {
-			const first = pending[0];
-			const last = pending[pending.length - 1];
-			if (first == null || last == null) {
+		const flushGroup = () => {
+			if (!currentWindows.length) {
 				return;
 			}
-			items.push({
-				startMs: first.startedAt,
-				endMs: last.endedAt,
-				app,
-				windows: [...pending]
-			});
-			pending = [];
-		};
 
-		for (const window of windows) {
-			const widthPx = this.msToPx(window.endedAt) - this.msToPx(window.startedAt);
+			const firstWindow = currentWindows[0];
+			if (firstWindow == null) {
+				return;
+			}
 
-			if (widthPx >= minWindowBlockPx) {
-				// Large window: absorb any pending small windows, then flush
-				if (pending.length > 0) {
-					pending.push(window);
-					flush();
-				} else {
-					items.push({
-						startMs: window.startedAt,
-						endMs: window.endedAt,
-						app,
-						windows: [window]
-					});
-				}
-			} else {
-				// Small window: accumulate until threshold reached
-				pending.push(window);
+			const app = this.extractAppInfo(firstWindow);
+			let pending: specta.WindowActivityDto[] = [];
+
+			const flushPending = () => {
 				const first = pending[0];
-				if (first != null) {
-					const groupWidthPx = this.msToPx(window.endedAt) - this.msToPx(first.startedAt);
-					if (groupWidthPx >= minWindowBlockPx) {
-						flush();
+				const last = pending[pending.length - 1];
+				if (first == null || last == null) {
+					return;
+				}
+				blocks.push({
+					type: 'window',
+					startMs: first.startedAt,
+					endMs: last.endedAt,
+					app,
+					windows: [...pending]
+				});
+				pending = [];
+			};
+
+			for (const window of currentWindows) {
+				const widthPx = this.msToPx(window.endedAt) - this.msToPx(window.startedAt);
+
+				if (widthPx >= minWindowBlockPx) {
+					if (pending.length > 0) {
+						pending.push(window);
+						flushPending();
+					} else {
+						blocks.push({
+							type: 'window',
+							startMs: window.startedAt,
+							endMs: window.endedAt,
+							app,
+							windows: [window]
+						});
+					}
+				} else {
+					pending.push(window);
+					const first = pending[0];
+					if (first != null) {
+						const groupWidthPx = this.msToPx(window.endedAt) - this.msToPx(first.startedAt);
+						if (groupWidthPx >= minWindowBlockPx) {
+							flushPending();
+						}
 					}
 				}
 			}
-		}
 
-		// Trailing small windows: merge into previous item or flush standalone
-		if (pending.length > 0) {
-			const lastItem = items[items.length - 1];
-			const lastPending = pending[pending.length - 1];
-			if (lastItem != null && lastPending != null) {
-				lastItem.windows.push(...pending);
-				lastItem.endMs = lastPending.endedAt;
-			} else {
-				flush();
+			// Trailing: merge into last block or flush standalone
+			if (pending.length > 0) {
+				const lastBlock = blocks[blocks.length - 1];
+				const lastPending = pending[pending.length - 1];
+				if (lastBlock != null && lastPending != null && lastBlock.app.bundleId === app.bundleId) {
+					lastBlock.windows.push(...pending);
+					lastBlock.endMs = lastPending.endedAt;
+				} else {
+					flushPending();
+				}
 			}
-		}
 
-		return items;
+			currentWindows = [];
+		};
+
+		for (const activity of activities) {
+			const bundleId = activity.appBundleId ?? 'unknown';
+			if (bundleId !== currentBundleId) {
+				flushGroup();
+				currentBundleId = bundleId;
+			}
+			currentWindows.push(activity);
+		}
+		flushGroup();
+
+		return blocks;
 	}
 
 	/**
-	 * Merges items across different apps when they're too small.
-	 * Pattern: accumulate small items, flush when threshold reached or large item arrives.
+	 * Merges blocks that are too small, potentially combining different apps.
+	 * Also merges consecutive AppBlocks with same dominant app.
 	 */
-	private mergeAcrossApps(items: TWindowLevelItem[]): TActivityBlock[] {
-		const { minAppBlockPx } = this.config;
-		const blocks: TActivityBlock[] = [];
-		let pending: TWindowLevelItem[] = [];
+	private mergeSmallBlocks(blocks: TWindowBlock[]): (TWindowBlock | TAppBlock)[] {
+		const { minAppBlockPx } = this._config;
+		const result: (TWindowBlock | TAppBlock)[] = [];
+		let pending: TWindowBlock[] = [];
 
-		const getPendingWidth = () => {
+		const getPendingWidthPx = (): number => {
 			const first = pending[0];
 			const last = pending[pending.length - 1];
 			if (first == null || last == null) {
@@ -261,155 +243,145 @@ export class ActivityRowCx {
 		};
 
 		const flush = () => {
-			if (pending.length === 0) {
+			if (!pending.length) {
 				return;
 			}
-			blocks.push(this.createBlockFromItems(pending));
+
+			const newBlock = this.createBlockFromWindowBlocks(pending);
+
+			// Merge consecutive AppBlocks with same dominant app
+			const last = result[result.length - 1];
+			if (
+				last?.type === 'app' &&
+				newBlock.type === 'app' &&
+				last.apps[0]?.bundleId === newBlock.apps[0]?.bundleId
+			) {
+				result.pop();
+				const mergedActivities = [...last.activities, ...newBlock.activities];
+				result.push({
+					type: 'app',
+					startMs: last.startMs,
+					endMs: newBlock.endMs,
+					apps: this.getAppsByDuration(mergedActivities),
+					activities: mergedActivities
+				});
+			} else {
+				result.push(newBlock);
+			}
+
 			pending = [];
 		};
 
-		for (const item of items) {
-			const widthPx = this.msToPx(item.endMs) - this.msToPx(item.startMs);
+		for (const block of blocks) {
+			const widthPx = this.msToPx(block.endMs) - this.msToPx(block.startMs);
 
 			if (widthPx >= minAppBlockPx) {
-				// Large item: absorb any pending small items, then flush
 				if (pending.length > 0) {
-					pending.push(item);
+					pending.push(block);
 					flush();
 				} else {
-					blocks.push(this.createWindowBlock([item]));
+					result.push(block);
 				}
 			} else {
-				// Small item: accumulate until threshold reached
-				pending.push(item);
-				if (getPendingWidth() >= minAppBlockPx) {
+				pending.push(block);
+				if (getPendingWidthPx() >= minAppBlockPx) {
 					flush();
 				}
 			}
 		}
 
-		// Trailing small items: merge into previous block or flush standalone
+		// Trailing: merge with last result or flush standalone
 		if (pending.length > 0) {
-			const lastBlock = blocks.pop();
-			if (lastBlock != null) {
-				const combinedItems = this.extractItemsFromBlock(lastBlock).concat(pending);
-				blocks.push(this.createBlockFromItems(combinedItems));
-			} else {
-				flush();
+			const last = result.pop();
+			if (last != null) {
+				// Prepend last block to pending (maintaining order)
+				const blocksToMerge = this.blockToWindowBlocks(last);
+				pending = [...blocksToMerge, ...pending];
 			}
+			flush();
 		}
 
-		return blocks;
-	}
-
-	/** Creates WindowBlock or AppBlock based on whether items have multiple apps */
-	private createBlockFromItems(items: TWindowLevelItem[]): TActivityBlock {
-		const uniqueBundleIds = new Set(items.map((item) => item.app.bundleId));
-		if (uniqueBundleIds.size === 1) {
-			return this.createWindowBlock(items);
-		}
-		return this.createAppBlock(items);
-	}
-
-	/** Converts a block back to items for merging with pending items */
-	private extractItemsFromBlock(block: TActivityBlock): TWindowLevelItem[] {
-		switch (block.type) {
-			case 'window':
-				return [
-					{
-						startMs: block.startMs,
-						endMs: block.endMs,
-						app: block.app,
-						windows: block.windows
-					}
-				];
-			case 'app':
-				return block.activities.map((activity) => ({
-					startMs: activity.startedAt,
-					endMs: activity.endedAt,
-					app: this.extractAppInfo(activity),
-					windows: [activity]
-				}));
-		}
-	}
-
-	/** Merges consecutive AppBlocks that share the same dominant app */
-	private mergeConsecutiveAppBlocks(blocks: TActivityBlock[]): TActivityBlock[] {
-		const result: TActivityBlock[] = [];
-		let pendingAppBlocks: TAppBlock[] = [];
-
-		const flushPendingAppBlocks = () => {
-			const first = pendingAppBlocks[0];
-			if (first == null) {
-				return;
-			}
-
-			if (pendingAppBlocks.length === 1) {
-				result.push(first);
-			} else {
-				// Merge all pending AppBlocks into one
-				const last = pendingAppBlocks[pendingAppBlocks.length - 1];
-				if (last == null) {
-					return;
-				}
-
-				const allActivities = pendingAppBlocks.flatMap((b) => b.activities);
-				result.push({
-					type: 'app',
-					startMs: first.startMs,
-					endMs: last.endMs,
-					apps: this.getAppsByDuration(allActivities),
-					activities: allActivities
-				});
-			}
-			pendingAppBlocks = [];
-		};
-
-		for (const block of blocks) {
-			if (block.type === 'app') {
-				const dominantBundleId = block.apps[0]?.bundleId;
-				const pendingDominantId = pendingAppBlocks[0]?.apps[0]?.bundleId;
-
-				if (!pendingAppBlocks.length || dominantBundleId === pendingDominantId) {
-					pendingAppBlocks.push(block);
-				} else {
-					flushPendingAppBlocks();
-					pendingAppBlocks.push(block);
-				}
-			} else {
-				flushPendingAppBlocks();
-				result.push(block);
-			}
-		}
-
-		flushPendingAppBlocks();
 		return result;
 	}
 
-	private assignWindowPositions(blocks: TActivityBlock[]): TActivityBlock[] {
+	/** Converts any block type back to WindowBlocks for re-merging */
+	private blockToWindowBlocks(block: TWindowBlock | TAppBlock): TWindowBlock[] {
+		if (block.type === 'window') {
+			return [block];
+		}
+
+		// Convert AppBlock activities back to individual WindowBlocks
+		return block.activities.map((activity) => ({
+			type: 'window' as const,
+			startMs: activity.startedAt,
+			endMs: activity.endedAt,
+			app: this.extractAppInfo(activity),
+			windows: [activity]
+		}));
+	}
+
+	/** Creates WindowBlock or AppBlock from accumulated window blocks */
+	private createBlockFromWindowBlocks(blocks: TWindowBlock[]): TWindowBlock | TAppBlock {
+		const first = blocks[0];
+		const last = blocks[blocks.length - 1];
+		if (first == null || last == null) {
+			console.warn('[ActivityRowCx] createBlockFromWindowBlocks called with empty array');
+			return {
+				type: 'window',
+				startMs: 0,
+				endMs: 0,
+				app: { bundleId: 'unknown', name: 'Unknown', icon: null, color: null },
+				windows: []
+			};
+		}
+
+		const uniqueBundleIds = new Set(blocks.map((b) => b.app.bundleId));
+		if (uniqueBundleIds.size === 1) {
+			return {
+				type: 'window',
+				startMs: first.startMs,
+				endMs: last.endMs,
+				app: first.app,
+				windows: blocks.flatMap((b) => b.windows)
+			};
+		}
+
+		const allActivities = blocks.flatMap((b) => b.windows);
+		return {
+			type: 'app',
+			startMs: first.startMs,
+			endMs: last.endMs,
+			apps: this.getAppsByDuration(allActivities),
+			activities: allActivities
+		};
+	}
+
+	/** Groups consecutive same-app WindowBlocks into TWindowGroupBlock */
+	private groupWindowBlocks(blocks: (TWindowBlock | TAppBlock)[]): TActivityBlock[] {
 		const result: TActivityBlock[] = [];
 		let windowSequence: TWindowBlock[] = [];
 		let currentBundleId: string | null = null;
 
 		const flushWindowSequence = () => {
 			const first = windowSequence[0];
-			if (first == null) {
+			const last = windowSequence[windowSequence.length - 1];
+			if (first == null || last == null) {
 				return;
 			}
 
-			if (windowSequence.length === 1) {
-				first.position = 'solo';
-			} else {
-				first.position = 'start';
-				for (let i = 1; i < windowSequence.length - 1; i++) {
-					const block = windowSequence[i];
-					if (block != null) block.position = 'center';
-				}
-				const last = windowSequence[windowSequence.length - 1];
-				if (last != null) last.position = 'end';
-			}
+			const segments: TWindowSegment[] = windowSequence.map((block) => ({
+				startMs: block.startMs,
+				endMs: block.endMs,
+				windows: block.windows
+			}));
 
-			result.push(...windowSequence);
+			result.push({
+				type: 'window-group',
+				startMs: first.startMs,
+				endMs: last.endMs,
+				app: first.app,
+				segments
+			});
 			windowSequence = [];
 			currentBundleId = null;
 		};
@@ -417,8 +389,7 @@ export class ActivityRowCx {
 		for (const block of blocks) {
 			if (block.type === 'window') {
 				const bundleId = block.app.bundleId;
-
-				if (currentBundleId === null || bundleId === currentBundleId) {
+				if (currentBundleId == null || bundleId === currentBundleId) {
 					windowSequence.push(block);
 					currentBundleId = bundleId;
 				} else {
@@ -434,41 +405,6 @@ export class ActivityRowCx {
 
 		flushWindowSequence();
 		return result;
-	}
-
-	private createWindowBlock(items: TWindowLevelItem[]): TWindowBlock {
-		const first = items[0];
-		const last = items[items.length - 1];
-		// These are guaranteed by callers, but provide fallbacks for type safety
-		const startMs = first?.startMs ?? 0;
-		const endMs = last?.endMs ?? 0;
-		const app = first?.app ?? { bundleId: 'unknown', name: 'Unknown', icon: null, color: null };
-
-		return {
-			type: 'window',
-			startMs,
-			endMs,
-			app,
-			windows: items.flatMap((item) => item.windows),
-			position: 'solo'
-		};
-	}
-
-	private createAppBlock(items: TWindowLevelItem[]): TAppBlock {
-		const first = items[0];
-		const last = items[items.length - 1];
-		// These are guaranteed by callers, but provide fallbacks for type safety
-		const startMs = first?.startMs ?? 0;
-		const endMs = last?.endMs ?? 0;
-
-		const allActivities = items.flatMap((item) => item.windows);
-		return {
-			type: 'app',
-			startMs,
-			endMs,
-			apps: this.getAppsByDuration(allActivities),
-			activities: allActivities
-		};
 	}
 
 	private extractAppInfo(activity: specta.WindowActivityDto): TAppInfo {
@@ -513,6 +449,22 @@ export class ActivityRowCx {
 				return block;
 			}
 
+			if (block.type === 'window-group') {
+				const clippedSegments = block.segments.map((segment, j) => {
+					const segmentClippedStart =
+						j === 0 ? Math.max(segment.startMs, clippedStart) : segment.startMs;
+					const segmentClippedEnd =
+						j === block.segments.length - 1 ? Math.min(segment.endMs, clippedEnd) : segment.endMs;
+
+					if (segmentClippedStart === segment.startMs && segmentClippedEnd === segment.endMs) {
+						return segment;
+					}
+					return { ...segment, startMs: segmentClippedStart, endMs: segmentClippedEnd };
+				});
+
+				return { ...block, startMs: clippedStart, endMs: clippedEnd, segments: clippedSegments };
+			}
+
 			return { ...block, startMs: clippedStart, endMs: clippedEnd };
 		});
 	}
@@ -526,15 +478,3 @@ export interface TActivityRowCxOptions {
 }
 
 export type TActivityRowCxConfig = Required<TActivityRowCxOptions>;
-
-interface TAppSegment {
-	app: TAppInfo;
-	windows: specta.WindowActivityDto[];
-}
-
-interface TWindowLevelItem {
-	startMs: number;
-	endMs: number;
-	app: TAppInfo;
-	windows: specta.WindowActivityDto[];
-}

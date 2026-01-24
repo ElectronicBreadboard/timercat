@@ -2,7 +2,7 @@ import { useFeatureState } from 'feature-react';
 import React from 'react';
 import { TooltipProvider } from '@/components';
 import { ActivityRowCx } from './ActivityRowCx';
-import { AppBlock, WindowBlock } from './components';
+import { AppBlock, WindowGroupBlock } from './components';
 
 export const ActivityRow: React.FC<TActivityRowProps> = (props) => {
 	const { cx } = props;
@@ -11,13 +11,19 @@ export const ActivityRow: React.FC<TActivityRowProps> = (props) => {
 	return (
 		<TooltipProvider delay={200} closeDelay={100}>
 			<div className="bg-base-100 relative h-10">
-				{blocks.map((block, index) =>
-					block.type === 'window' ? (
-						<WindowBlock key={`${block.startMs}-${index}`} block={block} cx={cx} />
-					) : (
-						<AppBlock key={`${block.startMs}-${index}`} block={block} cx={cx} />
-					)
-				)}
+				{blocks.map((block, index) => {
+					const key = `${block.startMs}-${index}`;
+					switch (block.type) {
+						case 'window-group':
+							return <WindowGroupBlock key={key} block={block} cx={cx} />;
+						case 'app':
+							return <AppBlock key={key} block={block} cx={cx} />;
+						case 'window':
+							// Currently grouped into window-group by aggregation algorithm
+							// TODO: Render directly at high zoom levels?
+							return null;
+					}
+				})}
 			</div>
 		</TooltipProvider>
 	);

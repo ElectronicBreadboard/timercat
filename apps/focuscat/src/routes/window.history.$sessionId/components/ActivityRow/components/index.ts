@@ -1,2 +1,2 @@
 export * from './AppBlock';
-export * from './WindowBlock';
+export * from './WindowGroupBlock';
