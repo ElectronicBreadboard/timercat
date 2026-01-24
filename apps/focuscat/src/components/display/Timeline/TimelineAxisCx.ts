@@ -28,8 +28,8 @@ export class TimelineAxisCx {
 
 	constructor(timelineCx: TimelineCx) {
 		this.timelineCx = timelineCx;
-		this.updateMarkers();
 
+		this.updateMarkers();
 		this.unlisteners.push(
 			timelineCx.$zoom.listen(() => this.updateMarkers()),
 			timelineCx.$containerRect.listen(() => this.updateMarkers())
