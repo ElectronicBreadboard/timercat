@@ -52,7 +52,7 @@ export const AppBlock: React.FC<TAppBlockProps> = React.memo((props) => {
 			>
 				<div
 					className="absolute inset-y-0 cursor-pointer"
-					style={{ left: visibleLeftPx - gapPx, width: Math.max(visibleWidthPx, 2) }}
+					style={{ left: Math.max(visibleLeftPx - gapPx, 0), width: Math.max(visibleWidthPx, 2) }}
 					onClick={handleClick}
 				/>
 			</Tooltip>

@@ -19,7 +19,7 @@ export const WindowGroupBlock: React.FC<TWindowGroupBlockProps> = React.memo((pr
 			widthPx: cx.msToPx(endMs) - cx.msToPx(startMs)
 		}),
 		[cx, startMs, endMs],
-		{ isEqual: false }
+		{ isEqual: (a, b) => a.leftPx === b.leftPx && a.widthPx === b.widthPx }
 	);
 
 	return (

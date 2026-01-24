@@ -104,7 +104,7 @@ export class ActivityRowCx {
 		this._updateTimeout = setTimeout(() => {
 			this._updateTimeout = null;
 			applyUpdate();
-		}, 200);
+		}, 150);
 	}
 
 	/**

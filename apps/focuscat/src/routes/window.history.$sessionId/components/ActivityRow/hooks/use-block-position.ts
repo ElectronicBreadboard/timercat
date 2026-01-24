@@ -28,7 +28,13 @@ export function useBlockPosition(block: TBlockWithTimeRange, cx: ActivityRowCx):
 			};
 		},
 		[cx, block.startMs, block.endMs],
-		{ isEqual: false }
+		{
+			isEqual: (a, b) =>
+				a.leftPx === b.leftPx &&
+				a.widthPx === b.widthPx &&
+				a.visibleLeftPx === b.visibleLeftPx &&
+				a.visibleWidthPx === b.visibleWidthPx
+		}
 	);
 }
 
