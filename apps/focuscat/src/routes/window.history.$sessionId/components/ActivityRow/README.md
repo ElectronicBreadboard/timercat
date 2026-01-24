@@ -6,12 +6,13 @@ Timeline visualization for window activity data with automatic aggregation.
 
 Shows activity at the "right" level of detail — like Google Maps. Zoomed out shows aggregated data, zoomed in shows individual windows.
 
-**How it works:** Block structure updates when timeline resolution changes (discrete zoom thresholds). Merging happens in two stages:
+**How it works:** Block structure updates when timeline resolution changes (discrete zoom thresholds). Merging prioritizes preserving app identity:
 
-1. **Within-app merge** — Tiny same-app blocks combine (preserves app identity)
-2. **Cross-app merge** — Still-tiny blocks merge across apps (shows dominant app)
+1. **Within-app merge** — Tiny same-app windows combine (preserves app identity)
+2. **Grouping** — Consecutive same-app blocks become WindowGroups with dividers
+3. **Cross-app merge** — Tiny groups merge with smallest neighbor → AppBlocks
 
-A sparse 2-hour coding session shows individual windows, while a dense 10-minute app-switching period shows aggregated blocks.
+A sparse 2-hour coding session shows individual windows, while a dense 10-minute app-switching period shows aggregated blocks. The "smallest neighbor" preference minimizes disruption to large blocks.
 
 ## What You See
 

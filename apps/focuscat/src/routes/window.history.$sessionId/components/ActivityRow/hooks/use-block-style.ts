@@ -35,8 +35,8 @@ export function useBlockStyle(
 		}
 	}, [ref, cx, block, parentBlock, gapPx]);
 
-	useSubscriber(cx.$zoom, update, [update]);
-	useSubscriber(cx.$containerRect, update, [update]);
+	useSubscriber(cx.timelineCx.$zoom, update, [update]);
+	useSubscriber(cx.timelineCx.$containerRect, update, [update]);
 }
 
 interface TBlockStyleOptions {

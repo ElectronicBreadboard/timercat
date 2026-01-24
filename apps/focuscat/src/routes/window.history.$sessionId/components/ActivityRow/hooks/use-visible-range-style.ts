@@ -22,8 +22,8 @@ export function useVisibleRangeStyle(
 
 		const left = cx.msToPx(block.startMs);
 		const right = cx.msToPx(block.endMs);
-		const scrollLeft = cx.$scrollLeft.get();
-		const visibleEnd = scrollLeft + cx.containerWidth;
+		const scrollLeft = cx.timelineCx.$scrollLeft.get();
+		const visibleEnd = scrollLeft + cx.timelineCx.containerWidth;
 
 		const clampedLeft = Math.max(left, scrollLeft);
 		const clampedRight = Math.min(right, visibleEnd);
@@ -33,9 +33,9 @@ export function useVisibleRangeStyle(
 		el.style.width = `${Math.max(visibleWidth, 2)}px`;
 	}, [ref, cx, block.startMs, block.endMs, offsetPx]);
 
-	useSubscriber(cx.$zoom, update, [update]);
-	useSubscriber(cx.$scrollLeft, update, [update]);
-	useSubscriber(cx.$containerRect, update, [update]);
+	useSubscriber(cx.timelineCx.$zoom, update, [update]);
+	useSubscriber(cx.timelineCx.$scrollLeft, update, [update]);
+	useSubscriber(cx.timelineCx.$containerRect, update, [update]);
 }
 
 interface TVisibleRangeStyleOptions {

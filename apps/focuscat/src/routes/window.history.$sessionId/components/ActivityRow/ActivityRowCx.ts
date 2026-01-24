@@ -1,7 +1,7 @@
 import { createState } from 'feature-state';
 import type { TimelineCx } from '@/components';
 import type { specta } from '@/environment';
-import type { TActivityBlock, TAppBlock, TAppInfo, TWindowBlock, TWindowSegment } from './types';
+import type { TActivityBlock, TAppBlock, TAppInfo, TWindowBlock, TWindowGroupBlock } from './types';
 
 export class ActivityRowCx {
 	public readonly timelineCx: TimelineCx;
@@ -22,34 +22,17 @@ export class ActivityRowCx {
 		this._activities = activities;
 		this._config = { minWindowBlockPx, minAppBlockPx };
 
-		// Listen for zoom/container changes to auto-update blocks
+		// Auto-update blocks on zoom/container changes
 		this._unlisteners.push(
 			timelineCx.$zoom.listen(() => this.update()),
 			timelineCx.$containerRect.listen(() => this.update())
 		);
 
-		// Initial block computation
 		this.update();
 	}
 
 	public get config(): TActivityRowCxConfig {
 		return this._config;
-	}
-
-	public get containerWidth(): number {
-		return this.timelineCx.containerWidth;
-	}
-
-	public get $scrollLeft() {
-		return this.timelineCx.$scrollLeft;
-	}
-
-	public get $zoom() {
-		return this.timelineCx.$zoom;
-	}
-
-	public get $containerRect() {
-		return this.timelineCx.$containerRect;
 	}
 
 	public unmount(): void {
@@ -75,9 +58,7 @@ export class ActivityRowCx {
 		return this.timelineCx.msToPx(ms);
 	}
 
-	/**
-	 * Recompute blocks if resolution changed.
-	 */
+	/** Only recomputes when resolution changes (avoids unnecessary work during smooth zoom). */
 	private update(): void {
 		const resolution = this.timelineCx.getMarkerResolution();
 		if (resolution === this._lastResolution) {
@@ -89,9 +70,9 @@ export class ActivityRowCx {
 
 	/**
 	 * Creates activity blocks via a 4-step pipeline (like map zoom - less detail when zoomed out):
-	 * 1. mergeTinyWithinApp - Merge tiny same-app blocks (preserves app identity)
-	 * 2. mergeTinyAcrossApps - Merge tiny blocks across apps (shows dominant app)
-	 * 3. groupIntoSegments - Create dividers between consecutive same-app blocks
+	 * 1. mergeTinyWithinApp - Merge tiny same-app windows (preserves app identity)
+	 * 2. groupIntoWindowGroups - Create WindowGroups with dividers
+	 * 3. mergeTinyGroups - Merge tiny groups with smallest neighbor → AppBlocks
 	 * 4. clipToBounds - Clip edge blocks to timeline bounds
 	 */
 	private createBlocks(): TActivityBlock[] {
@@ -112,10 +93,10 @@ export class ActivityRowCx {
 			windows: [activity]
 		}));
 		const mergedWindows = this.mergeTinyWithinApp(windowBlocks);
-		const mergedBlocks = this.mergeTinyAcrossApps(mergedWindows);
-		const groupedBlocks = this.groupIntoSegments(mergedBlocks);
+		const windowGroups = this.groupIntoWindowGroups(mergedWindows);
+		const mergedGroups = this.mergeTinyGroups(windowGroups);
 
-		return this.clipToBounds(groupedBlocks, startMs, endMs);
+		return this.clipToBounds(mergedGroups, startMs, endMs);
 	}
 
 	/**
@@ -156,10 +137,24 @@ export class ActivityRowCx {
 		for (const block of blocks) {
 			const bundleId = block.app.bundleId;
 
-			// App changed - flush pending and start fresh
+			// App changed - try to merge pending backward if tiny, otherwise flush
 			if (bundleId !== currentBundleId) {
 				if (pending.length > 0) {
-					flush();
+					const last = result[result.length - 1];
+					const lastPending = pending[pending.length - 1];
+					if (
+						getPendingWidthPx() < minWindowBlockPx &&
+						last != null &&
+						lastPending != null &&
+						last.app.bundleId === currentBundleId
+					) {
+						// Pending is tiny and last result is same app - merge backward
+						last.windows.push(...pending.flatMap((b) => b.windows));
+						last.endMs = lastPending.endMs;
+						pending = [];
+					} else {
+						flush();
+					}
 				}
 				currentBundleId = bundleId;
 			}
@@ -196,193 +191,184 @@ export class ActivityRowCx {
 		return result;
 	}
 
-	/**
-	 * Merges tiny blocks across different apps (loses individual app identity).
-	 * Blocks smaller than minAppBlockPx get merged with neighbors.
-	 * Mixed apps → AppBlock (shows dominant app). Same app → WindowBlock.
-	 */
-	private mergeTinyAcrossApps(blocks: TWindowBlock[]): (TWindowBlock | TAppBlock)[] {
-		const { minAppBlockPx } = this._config;
-		const result: (TWindowBlock | TAppBlock)[] = [];
-		let pending: TWindowBlock[] = [];
-
-		const getPendingWidthPx = (): number => {
-			const first = pending[0];
-			const last = pending[pending.length - 1];
-			if (first == null || last == null) {
-				return 0;
-			}
-			return this.msToPx(last.endMs) - this.msToPx(first.startMs);
-		};
-
-		const flush = () => {
-			if (!pending.length) {
-				return;
-			}
-
-			const newBlock = this.createBlockFromWindowBlocks(pending);
-
-			// Merge consecutive AppBlocks with same dominant app
-			const last = result[result.length - 1];
-			if (
-				last?.type === 'app' &&
-				newBlock.type === 'app' &&
-				last.apps[0]?.bundleId === newBlock.apps[0]?.bundleId
-			) {
-				result.pop();
-				const mergedActivities = [...last.activities, ...newBlock.activities];
-				result.push({
-					type: 'app',
-					startMs: last.startMs,
-					endMs: newBlock.endMs,
-					apps: this.getAppsByDuration(mergedActivities),
-					activities: mergedActivities
-				});
-			} else {
-				result.push(newBlock);
-			}
-
-			pending = [];
-		};
-
-		for (const block of blocks) {
-			const widthPx = this.msToPx(block.endMs) - this.msToPx(block.startMs);
-
-			if (widthPx >= minAppBlockPx) {
-				if (pending.length > 0) {
-					pending.push(block);
-					flush();
-				} else {
-					result.push(block);
-				}
-			} else {
-				pending.push(block);
-				if (getPendingWidthPx() >= minAppBlockPx) {
-					flush();
-				}
-			}
-		}
-
-		// Trailing: merge with last result or flush standalone
-		if (pending.length > 0) {
-			const last = result.pop();
-			if (last != null) {
-				// Prepend last block to pending (maintaining order)
-				const blocksToMerge = this.blockToWindowBlocks(last);
-				pending = [...blocksToMerge, ...pending];
-			}
-			flush();
-		}
-
-		return result;
-	}
-
-	/** Converts any block type back to WindowBlocks for re-merging */
-	private blockToWindowBlocks(block: TWindowBlock | TAppBlock): TWindowBlock[] {
-		if (block.type === 'window') {
-			return [block];
-		}
-
-		return block.activities.map((activity) => ({
-			type: 'window' as const,
-			startMs: activity.startedAt,
-			endMs: activity.endedAt,
-			app: this.extractAppInfo(activity),
-			windows: [activity]
-		}));
-	}
-
-	/** Creates WindowBlock or AppBlock from accumulated window blocks */
-	private createBlockFromWindowBlocks(blocks: TWindowBlock[]): TWindowBlock | TAppBlock {
-		const first = blocks[0];
-		const last = blocks[blocks.length - 1];
-		if (first == null || last == null) {
-			console.warn('[ActivityRowCx] createBlockFromWindowBlocks called with empty array');
-			return {
-				type: 'window',
-				startMs: 0,
-				endMs: 0,
-				app: { bundleId: 'unknown', name: 'Unknown', icon: null, color: null },
-				windows: []
-			};
-		}
-
-		const uniqueBundleIds = new Set(blocks.map((b) => b.app.bundleId));
-		if (uniqueBundleIds.size === 1) {
-			return {
-				type: 'window',
-				startMs: first.startMs,
-				endMs: last.endMs,
-				app: first.app,
-				windows: blocks.flatMap((b) => b.windows)
-			};
-		}
-
-		const allActivities = blocks.flatMap((b) => b.windows);
-		return {
-			type: 'app',
-			startMs: first.startMs,
-			endMs: last.endMs,
-			apps: this.getAppsByDuration(allActivities),
-			activities: allActivities
-		};
-	}
-
-	/**
-	 * Groups consecutive same-app WindowBlocks into WindowGroupBlocks with divider segments.
-	 * This creates the visual structure where dividers show window boundaries within an app run.
-	 * AppBlocks pass through unchanged.
-	 */
-	private groupIntoSegments(blocks: (TWindowBlock | TAppBlock)[]): TActivityBlock[] {
-		const result: TActivityBlock[] = [];
+	/** Groups consecutive same-app WindowBlocks into WindowGroupBlocks with divider segments. */
+	private groupIntoWindowGroups(blocks: TWindowBlock[]): TWindowGroupBlock[] {
+		const result: TWindowGroupBlock[] = [];
 		let windowSequence: TWindowBlock[] = [];
 		let currentBundleId: string | null = null;
 
-		const flushWindowSequence = () => {
+		const flush = () => {
 			const first = windowSequence[0];
 			const last = windowSequence[windowSequence.length - 1];
 			if (first == null || last == null) {
 				return;
 			}
 
-			const segments: TWindowSegment[] = windowSequence.map((block) => ({
-				startMs: block.startMs,
-				endMs: block.endMs,
-				windows: block.windows
-			}));
-
 			result.push({
 				type: 'window-group',
 				startMs: first.startMs,
 				endMs: last.endMs,
 				app: first.app,
-				segments
+				segments: windowSequence.map((block) => ({
+					startMs: block.startMs,
+					endMs: block.endMs,
+					windows: block.windows
+				}))
 			});
 			windowSequence = [];
-			currentBundleId = null;
 		};
 
 		for (const block of blocks) {
-			if (block.type === 'window') {
-				const bundleId = block.app.bundleId;
-				if (currentBundleId == null || bundleId === currentBundleId) {
-					windowSequence.push(block);
-					currentBundleId = bundleId;
+			const bundleId = block.app.bundleId;
+			if (currentBundleId == null || bundleId === currentBundleId) {
+				windowSequence.push(block);
+				currentBundleId = bundleId;
+			} else {
+				flush();
+				windowSequence.push(block);
+				currentBundleId = bundleId;
+			}
+		}
+
+		flush();
+		return result;
+	}
+
+	/**
+	 * Merges tiny WindowGroups with their smallest neighbor.
+	 * Compares left vs right neighbor and picks smaller to minimize disruption.
+	 */
+	private mergeTinyGroups(groups: TWindowGroupBlock[]): TActivityBlock[] {
+		const { minAppBlockPx } = this._config;
+		const result: TActivityBlock[] = [];
+		let pending: TActivityBlock[] = [];
+
+		const flushPending = () => {
+			const first = pending[0];
+			if (first == null) {
+				return;
+			}
+			let merged: TActivityBlock = first;
+			for (let i = 1; i < pending.length; i++) {
+				const next = pending[i];
+				if (next != null) {
+					merged = this.mergeAdjacentBlocks(merged, next);
+				}
+			}
+			result.push(merged);
+			pending = [];
+		};
+
+		for (const group of groups) {
+			const widthPx = this.msToPx(group.endMs) - this.msToPx(group.startMs);
+
+			if (widthPx >= minAppBlockPx) {
+				// Large block - decide where to merge accumulated tiny blocks
+				if (pending.length > 0) {
+					const leftNeighbor = result[result.length - 1];
+					const rightNeighbor = group;
+
+					if (leftNeighbor == null) {
+						// No left neighbor - merge with right
+						pending.push(rightNeighbor);
+						flushPending();
+					} else {
+						const leftWidth = this.msToPx(leftNeighbor.endMs) - this.msToPx(leftNeighbor.startMs);
+						const rightWidth = widthPx;
+
+						if (leftWidth <= rightWidth) {
+							// Left is smaller - merge pending with left
+							result.pop();
+							pending = [leftNeighbor, ...pending];
+							flushPending();
+							result.push(rightNeighbor);
+						} else {
+							// Right is smaller - merge pending with right
+							pending.push(rightNeighbor);
+							flushPending();
+						}
+					}
 				} else {
-					flushWindowSequence();
-					windowSequence.push(block);
-					currentBundleId = bundleId;
+					result.push(group);
 				}
 			} else {
-				flushWindowSequence();
+				// Tiny block - accumulate
+				pending.push(group);
+			}
+		}
+
+		// Trailing: merge with left neighbor if exists
+		if (pending.length > 0) {
+			const leftNeighbor = result[result.length - 1];
+			if (leftNeighbor != null) {
+				result.pop();
+				pending = [leftNeighbor, ...pending];
+			}
+			flushPending();
+		}
+
+		// Merge consecutive AppBlocks with same dominant app
+		return this.mergeConsecutiveSameDominantAppBlocks(result);
+	}
+
+	/** Merges consecutive AppBlocks that have the same dominant app. */
+	private mergeConsecutiveSameDominantAppBlocks(blocks: TActivityBlock[]): TActivityBlock[] {
+		const result: TActivityBlock[] = [];
+
+		for (const block of blocks) {
+			const last = result[result.length - 1];
+
+			if (
+				last?.type === 'app' &&
+				block.type === 'app' &&
+				last.apps[0]?.bundleId === block.apps[0]?.bundleId
+			) {
+				// Same dominant app - merge
+				result.pop();
+				const mergedActivities = [...last.activities, ...block.activities];
+				result.push({
+					type: 'app',
+					startMs: last.startMs,
+					endMs: block.endMs,
+					apps: this.getAppsByDuration(mergedActivities),
+					activities: mergedActivities
+				});
+			} else {
 				result.push(block);
 			}
 		}
 
-		flushWindowSequence();
 		return result;
 	}
 
+	/** Merges two adjacent blocks into an AppBlock (since adjacent groups are always different apps). */
+	private mergeAdjacentBlocks(a: TActivityBlock, b: TActivityBlock): TAppBlock {
+		const activitiesA = this.getActivitiesFromBlock(a);
+		const activitiesB = this.getActivitiesFromBlock(b);
+		const allActivities = [...activitiesA, ...activitiesB];
+
+		return {
+			type: 'app',
+			startMs: a.startMs,
+			endMs: b.endMs,
+			apps: this.getAppsByDuration(allActivities),
+			activities: allActivities
+		};
+	}
+
+	/** Extracts all activities from any block type. */
+	private getActivitiesFromBlock(block: TActivityBlock): specta.WindowActivityDto[] {
+		switch (block.type) {
+			case 'window-group':
+				return block.segments.flatMap((s) => s.windows);
+			case 'app':
+				return block.activities;
+			case 'window':
+				return block.windows;
+		}
+	}
+
+	/** Extracts app metadata from an activity for display. */
 	private extractAppInfo(activity: specta.WindowActivityDto): TAppInfo {
 		return {
 			bundleId: activity.appBundleId ?? 'unknown',
@@ -392,7 +378,7 @@ export class ActivityRowCx {
 		};
 	}
 
-	/** Get unique apps sorted by total duration (dominant app first) */
+	/** Gets unique apps sorted by total duration (dominant app first). */
 	private getAppsByDuration(activities: specta.WindowActivityDto[]): TAppInfo[] {
 		const appDurations = new Map<string, { app: TAppInfo; durationMs: number }>();
 
@@ -416,6 +402,7 @@ export class ActivityRowCx {
 			.map((entry) => entry.app);
 	}
 
+	/** Clips first/last blocks to timeline bounds (activities may extend beyond visible range). */
 	private clipToBounds(blocks: TActivityBlock[], startMs: number, endMs: number): TActivityBlock[] {
 		return blocks.map((block, i) => {
 			const clippedStart = i === 0 ? Math.max(block.startMs, startMs) : block.startMs;
