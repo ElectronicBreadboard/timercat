@@ -101,6 +101,28 @@ impl Window {
         return Ok(());
     }
 
+    /// Bring all visible windows to the foreground.
+    /// If no windows are visible, shows the Main window.
+    pub fn focus_all_visible(app: &AppHandle) -> tauri::Result<()> {
+        let mut any_focused = false;
+
+        for window_type in [Self::Main, Self::Cat, Self::Settings, Self::History] {
+            if let Some(window) = window_type.get(app) {
+                if window.is_visible().unwrap_or(false) {
+                    let _ = window.set_focus();
+                    any_focused = true;
+                }
+            }
+        }
+
+        // If no windows were visible, show the main window
+        if !any_focused {
+            Self::Main.show(app)?;
+        }
+
+        return Ok(());
+    }
+
     /// Show window at a specific path (for dynamic routing).
     ///
     /// Handles two cases:

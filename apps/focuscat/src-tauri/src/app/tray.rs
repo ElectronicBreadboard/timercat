@@ -127,7 +127,7 @@ impl Tray {
                     button: tauri::tray::MouseButton::Left,
                     ..
                 } => {
-                    let _ = Window::Main.show(tray.app_handle());
+                    let _ = Window::focus_all_visible(tray.app_handle());
                 }
                 _ => {}
             })
