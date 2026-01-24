@@ -52,10 +52,6 @@ export class ActivityRowCx {
 		this.updateBlocks();
 	}
 
-	/**
-	 * Recalculates blocks when resolution threshold changes.
-	 * Resolution acts as a proxy for "detail level" - avoids recalc on minor zoom changes.
-	 */
 	private updateBlocks(): void {
 		const resolution = this.timelineCx.getMarkerResolution();
 		if (resolution === this._lastResolution) {

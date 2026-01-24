@@ -1,8 +1,8 @@
-import { useFeatureState, useSubscriber } from 'feature-react/state';
+import { useCombinedCompute, useSubscriber } from 'feature-react/state';
 import React from 'react';
 import { useMemoCleanup } from '@/hooks';
 import { cn } from '@/lib';
-import { TimelineAxisCx } from './TimelineAxisCx';
+import { TimelineAxisCx, type TMarkerData } from './TimelineAxisCx';
 import type { TimelineCx } from './TimelineCx';
 
 export const TimelineAxis: React.FC<TTimelineAxisProps> = (props) => {
@@ -12,8 +12,14 @@ export const TimelineAxis: React.FC<TTimelineAxisProps> = (props) => {
 		return [instance, () => instance.unmount()];
 	}, [timelineCx]);
 
-	const markers = useFeatureState(cx.$markers);
 	const markerRefs = React.useRef<Map<number, HTMLDivElement>>(new Map());
+	const markers = useCombinedCompute(
+		[cx.$markers, timelineCx.$visibleRange] as const,
+		([{ value: allMarkers = [] }, { value: range = { startMs: 0, endMs: Infinity } }]) =>
+			allMarkers.filter((m) => m.ms >= range.startMs && m.ms <= range.endMs),
+		[cx, timelineCx],
+		{ isEqual: markersEqual }
+	);
 
 	// MARK: - Actions
 
@@ -78,4 +84,12 @@ export const TimelineAxis: React.FC<TTimelineAxisProps> = (props) => {
 interface TTimelineAxisProps {
 	cx: TimelineCx;
 	className?: string;
+}
+
+function markersEqual(a: TMarkerData[], b: TMarkerData[]): boolean {
+	if (a.length !== b.length) return false;
+	for (let i = 0; i < a.length; i++) {
+		if (a[i]?.ms !== b[i]?.ms) return false;
+	}
+	return true;
 }

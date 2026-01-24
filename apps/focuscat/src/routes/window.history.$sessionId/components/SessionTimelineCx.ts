@@ -59,6 +59,7 @@ export class SessionTimelineCx {
 			unlisten();
 		}
 		this._unlisteners = [];
+		this.timelineCx.unmount();
 		this.activityRowCx.unmount();
 	}
 

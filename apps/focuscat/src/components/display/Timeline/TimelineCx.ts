@@ -12,15 +12,21 @@ export class TimelineCx {
 	public readonly $zoom = createState(1);
 	public readonly $scrollLeft = createState(0);
 
+	public readonly $visibleRange = createState<TVisibleRange>({ startMs: 0, endMs: 0 });
+	private _lastVisibleRange: TVisibleRange = { startMs: 0, endMs: 0 };
+
 	// Flag to prevent scroll event feedback loop during programmatic scrolls
 	public isProgrammaticScroll = false;
+
+	private _unlisteners: (() => void)[] = [];
 
 	constructor(startMs: number, endMs: number, options: TTimelineOptions = {}) {
 		const {
 			markerResolutions = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400],
 			minMarkerSpacingPx = 50,
 			minZoom = 1,
-			maxZoom = 512
+			maxZoom = 512,
+			visibleRangeBufferMs = 60_000
 		} = options;
 		this.startMs = startMs;
 		this.endMs = endMs;
@@ -29,8 +35,24 @@ export class TimelineCx {
 			markerResolutions,
 			minMarkerSpacingPx,
 			minZoom,
-			maxZoom
+			maxZoom,
+			visibleRangeBufferMs
 		};
+
+		const initialRange = { startMs, endMs };
+		this._lastVisibleRange = initialRange;
+		this.$visibleRange.set(initialRange);
+		this._unlisteners.push(
+			this.$scrollLeft.listen(() => this.updateVisibleRange()),
+			this.$zoom.listen(() => this.updateVisibleRange())
+		);
+	}
+
+	public unmount(): void {
+		for (const unlisten of this._unlisteners) {
+			unlisten();
+		}
+		this._unlisteners = [];
 	}
 
 	/**
@@ -172,6 +194,20 @@ export class TimelineCx {
 			endMs: Math.min(this.endMs, endMs + bufferMs)
 		};
 	}
+
+	private updateVisibleRange(): void {
+		const bufferMs = this.config.visibleRangeBufferMs;
+		const range = this.getVisibleRangeWithBuffer(bufferMs);
+		const threshold = bufferMs / 4;
+
+		const startDiff = Math.abs(range.startMs - this._lastVisibleRange.startMs);
+		const endDiff = Math.abs(range.endMs - this._lastVisibleRange.endMs);
+
+		if (startDiff > threshold || endDiff > threshold) {
+			this._lastVisibleRange = range;
+			this.$visibleRange.set(range);
+		}
+	}
 }
 
 export interface TTimelineOptions {
@@ -183,6 +219,8 @@ export interface TTimelineOptions {
 	minZoom?: number;
 	/** Maximum zoom level (default: 512) */
 	maxZoom?: number;
+	/** Buffer in ms for visible range virtualization (default: 60s) */
+	visibleRangeBufferMs?: number;
 }
 
 type TTimelineCxConfig = Required<TTimelineOptions>;
@@ -190,4 +228,9 @@ type TTimelineCxConfig = Required<TTimelineOptions>;
 export interface TContainerRect {
 	width: number;
 	left: number;
+}
+
+export interface TVisibleRange {
+	startMs: number;
+	endMs: number;
 }

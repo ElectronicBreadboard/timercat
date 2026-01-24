@@ -24,7 +24,7 @@ export const Route = createFileRoute('/window/history/$sessionId/')({
 					startedAt,
 					endedAt: now,
 					events: [],
-					stats: { pausedSeconds: 0, extendedSeconds: 0 }
+					stats: { pausedSeconds: 0, extendedSeconds: 0, overtimeSeconds: 0 }
 				} satisfies specta.SessionDetailDto,
 				activities: unwrapOr(
 					toTuple(
