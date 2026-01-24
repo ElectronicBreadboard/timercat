@@ -195,6 +195,7 @@ export class TimelineCx {
 		};
 	}
 
+	/** Updates visible range with hysteresis to reduce re-renders during scroll/zoom */
 	private updateVisibleRange(): void {
 		const bufferMs = this.config.visibleRangeBufferMs;
 		const range = this.getVisibleRangeWithBuffer(bufferMs);

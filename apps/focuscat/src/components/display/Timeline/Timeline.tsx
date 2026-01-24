@@ -1,4 +1,4 @@
-import { useFeatureState } from 'feature-react/state';
+import { useSubscriber } from 'feature-react/state';
 import React from 'react';
 import { useBoundingRectObserver } from '@/hooks';
 import { cn } from '@/lib';
@@ -6,8 +6,7 @@ import type { TimelineCx } from './TimelineCx';
 
 export const Timeline: React.FC<TTimelineProps> = (props) => {
 	const { cx, className, children } = props;
-	const zoom = useFeatureState(cx.$zoom);
-	const scrollLeft = useFeatureState(cx.$scrollLeft);
+	const innerRef = React.useRef<HTMLDivElement>(null);
 
 	// MARK: - Actions
 
@@ -32,9 +31,56 @@ export const Timeline: React.FC<TTimelineProps> = (props) => {
 		[cx]
 	);
 
+	// Apply zoom to inner container width and toggle scrollbar visibility
+	useSubscriber(
+		cx.$zoom,
+		({ value: zoom }) => {
+			const container = cx.containerRef.current;
+			const inner = innerRef.current;
+			if (container == null || inner == null) {
+				return;
+			}
+
+			inner.style.width = `${zoom * 100}%`;
+
+			if (zoom > 1) {
+				container.classList.add('overflow-x-auto');
+				container.classList.remove('overflow-hidden');
+			} else {
+				container.classList.remove('overflow-x-auto');
+				container.classList.add('overflow-hidden');
+			}
+		},
+		[cx]
+	);
+
+	// Sync scroll position to DOM (e.g. after zoomAtPoint)
+	useSubscriber(
+		cx.$scrollLeft,
+		({ value: scrollLeft }) => {
+			const el = cx.containerRef.current;
+			if (el == null) {
+				return;
+			}
+
+			if (Math.abs(el.scrollLeft - scrollLeft) > 1) {
+				cx.isProgrammaticScroll = true;
+				el.scrollLeft = scrollLeft;
+			}
+
+			requestAnimationFrame(() => {
+				cx.isProgrammaticScroll = false;
+			});
+		},
+		[cx]
+	);
+
+	// Wheel handler for zoom and horizontal scroll
 	React.useEffect(() => {
 		const el = cx.containerRef.current;
-		if (el == null) return;
+		if (el == null) {
+			return;
+		}
 
 		const handleWheel = (e: WheelEvent) => {
 			// Ctrl/Cmd + scroll = zoom
@@ -47,7 +93,7 @@ export const Timeline: React.FC<TTimelineProps> = (props) => {
 			}
 
 			// Regular scroll when zoomed in
-			if (zoom > 1) {
+			if (cx.$zoom.get() > 1) {
 				e.preventDefault();
 				cx.isProgrammaticScroll = true;
 				const newScrollLeft = el.scrollLeft + e.deltaY;
@@ -57,37 +103,22 @@ export const Timeline: React.FC<TTimelineProps> = (props) => {
 		};
 
 		el.addEventListener('wheel', handleWheel, { passive: false });
-		return () => el.removeEventListener('wheel', handleWheel);
-	}, [cx, zoom]);
-
-	React.useEffect(() => {
-		const el = cx.containerRef.current;
-		if (el == null) return;
-
-		// Sync scroll when changed externally (e.g. from zoomAtPoint)
-		if (Math.abs(el.scrollLeft - scrollLeft) > 1) {
-			cx.isProgrammaticScroll = true;
-			el.scrollLeft = scrollLeft;
-		}
-
-		requestAnimationFrame(() => {
-			cx.isProgrammaticScroll = false;
-		});
-	}, [cx, scrollLeft]);
+		return () => {
+			el.removeEventListener('wheel', handleWheel);
+		};
+	}, [cx]);
 
 	// MARK: - UI
 
 	return (
 		<div
 			ref={cx.containerRef}
-			className={cn(
-				'border-base-200 rounded-lg border',
-				zoom > 1 ? 'cursor-grab overflow-x-auto active:cursor-grabbing' : 'overflow-hidden',
-				className
-			)}
+			className={cn('border-base-200 overflow-hidden rounded-lg border', className)}
 			onScroll={handleScroll}
 		>
-			<div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>{children}</div>
+			<div ref={innerRef} className="min-w-full">
+				{children}
+			</div>
 		</div>
 	);
 };

@@ -1,12 +1,20 @@
-import { useFeatureState } from 'feature-react';
+import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
 import { TooltipProvider } from '@/components';
 import { ActivityRowCx } from './ActivityRowCx';
 import { AppBlock, WindowGroupBlock } from './components';
+import type { TActivityBlock } from './types';
 
 export const ActivityRow: React.FC<TActivityRowProps> = (props) => {
 	const { cx } = props;
-	const blocks = useFeatureState(cx.$blocks);
+
+	const blocks = useCombinedCompute(
+		[cx.$blocks, cx.timelineCx.$visibleRange] as const,
+		([{ value: allBlocks = [] }, { value: range = { startMs: 0, endMs: Infinity } }]) =>
+			allBlocks.filter((b) => b.endMs > range.startMs && b.startMs < range.endMs),
+		[cx, cx.timelineCx],
+		{ isEqual: blocksEqual }
+	);
 
 	return (
 		<TooltipProvider delay={200} closeDelay={100}>
@@ -31,4 +39,12 @@ export const ActivityRow: React.FC<TActivityRowProps> = (props) => {
 
 export interface TActivityRowProps {
 	cx: ActivityRowCx;
+}
+
+function blocksEqual(a: TActivityBlock[], b: TActivityBlock[]): boolean {
+	if (a.length !== b.length) return false;
+	for (let i = 0; i < a.length; i++) {
+		if (a[i]?.startMs !== b[i]?.startMs || a[i]?.endMs !== b[i]?.endMs) return false;
+	}
+	return true;
 }
