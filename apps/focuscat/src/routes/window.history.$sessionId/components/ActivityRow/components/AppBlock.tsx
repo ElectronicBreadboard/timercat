@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tooltip } from '@/components';
-import { formatDuration } from '@/lib';
+import { cn, formatDuration, isColorDark } from '@/lib';
 import type { ActivityRowCx } from '../ActivityRowCx';
 import { useBlockPosition } from '../hooks';
 import type { TAppBlock } from '../types';
@@ -11,6 +11,7 @@ export const AppBlock: React.FC<TAppBlockProps> = React.memo((props) => {
 	const durationSec = (block.endMs - block.startMs) / 1000;
 	const dominantApp = block.apps[0];
 	const color = dominantApp?.color ?? fallbackColor;
+	const isDark = isColorDark(color);
 
 	const handleClick = React.useCallback(() => {
 		cx.timelineCx.zoomToRange(block.startMs, block.endMs, 0.7);
@@ -22,7 +23,10 @@ export const AppBlock: React.FC<TAppBlockProps> = React.memo((props) => {
 
 	return (
 		<div
-			className="absolute top-1 bottom-1 overflow-hidden rounded transition-opacity hover:opacity-80"
+			className={cn(
+				'absolute top-1 bottom-1 overflow-hidden rounded transition-opacity hover:opacity-80',
+				isDark && 'border border-white/30'
+			)}
 			style={{
 				left: leftPx,
 				width: Math.max(widthPx, 2),

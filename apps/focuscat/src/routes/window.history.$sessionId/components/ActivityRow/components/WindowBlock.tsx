@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tooltip } from '@/components';
-import { cn, formatDuration } from '@/lib';
+import { cn, formatDuration, isColorDark } from '@/lib';
 import type { ActivityRowCx } from '../ActivityRowCx';
 import { useBlockPosition } from '../hooks';
 import type { TWindowBlock } from '../types';
@@ -10,6 +10,7 @@ export const WindowBlock: React.FC<TWindowBlockProps> = React.memo((props) => {
 	const { leftPx, widthPx, visibleLeftPx, visibleWidthPx } = useBlockPosition(block, cx);
 	const durationSec = (block.endMs - block.startMs) / 1000;
 	const color = block.app.color ?? fallbackColor;
+	const isDark = isColorDark(color);
 
 	const handleClick = React.useCallback(() => {
 		cx.timelineCx.zoomToRange(block.startMs, block.endMs, 0.7);
@@ -21,7 +22,8 @@ export const WindowBlock: React.FC<TWindowBlockProps> = React.memo((props) => {
 				'absolute top-1 bottom-1 transition-opacity hover:opacity-80',
 				block.position === 'solo' && 'rounded',
 				block.position === 'start' && 'rounded-l',
-				block.position === 'end' && 'rounded-r'
+				block.position === 'end' && 'rounded-r',
+				isDark && 'border border-white/30'
 			)}
 			style={{
 				left: leftPx,
