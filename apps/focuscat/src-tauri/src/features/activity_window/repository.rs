@@ -82,6 +82,7 @@ pub struct InsertAppActivityInput {
 
 pub struct InsertWindowActivityInput {
     pub app_id: i64,
+    pub website_id: Option<i64>,
     // Window fields
     pub window_title: Option<String>,
     pub window_id: Option<u32>,
@@ -110,16 +111,17 @@ impl WindowActivityRepository {
         let result = sqlx::query(
             r#"
             INSERT INTO activity_window (
-                app_id,
+                app_id, website_id,
                 window_title, window_id, window_x, window_y, window_width, window_height,
                 browser_url, browser_is_private,
                 started_at, ended_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
             "#,
         )
         .bind(input.app_id)
+        .bind(input.website_id)
         .bind(&input.window_title)
         .bind(input.window_id.map(|id| id as i64))
         .bind(input.window_x)
@@ -152,12 +154,17 @@ impl WindowActivityRepository {
                 a.name as app_name,
                 a.icon as app_icon,
                 a.color as app_color,
+                w.domain as website_domain,
+                w.name as website_name,
+                w.icon as website_icon,
+                w.color as website_color,
                 aw.window_title,
                 aw.browser_url,
                 aw.started_at,
                 aw.ended_at
             FROM activity_window aw
             JOIN app a ON a.id = aw.app_id
+            LEFT JOIN website w ON w.id = aw.website_id
             WHERE aw.started_at < ? AND aw.ended_at > ?
             ORDER BY aw.started_at DESC
             LIMIT ?
@@ -176,6 +183,10 @@ impl WindowActivityRepository {
                 app_name: row.get("app_name"),
                 app_icon: row.get("app_icon"),
                 app_color: row.get("app_color"),
+                website_domain: row.get("website_domain"),
+                website_name: row.get("website_name"),
+                website_icon: row.get("website_icon"),
+                website_color: row.get("website_color"),
                 window_title: row.get("window_title"),
                 browser_url: row.get("browser_url"),
                 started_at: row.get("started_at"),
@@ -198,8 +209,34 @@ pub struct WindowActivityRow {
     pub app_name: Option<String>,
     pub app_icon: Option<String>,
     pub app_color: Option<String>,
+    pub website_domain: Option<String>,
+    pub website_name: Option<String>,
+    pub website_icon: Option<String>,
+    pub website_color: Option<String>,
     pub window_title: Option<String>,
     pub browser_url: Option<String>,
     pub started_at: i64,
     pub ended_at: i64,
+}
+
+// MARK: - Website Repository
+
+pub struct WebsiteRepository;
+
+impl WebsiteRepository {
+    /// Upsert website (insert or return existing id).
+    pub async fn upsert(pool: &SqlitePool, domain: &str) -> Result<i64, sqlx::Error> {
+        let result = sqlx::query(
+            r#"
+            INSERT INTO website (domain) VALUES (?)
+            ON CONFLICT(domain) DO UPDATE SET domain = domain
+            RETURNING id
+            "#,
+        )
+        .bind(domain)
+        .fetch_one(pool)
+        .await?;
+
+        return Ok(result.get(0));
+    }
 }

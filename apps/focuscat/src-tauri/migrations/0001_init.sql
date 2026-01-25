@@ -37,6 +37,18 @@ CREATE TABLE app (
 
 CREATE INDEX idx_app_bundle_id ON app (bundle_id);
 
+-- Deduplicated website info shared across activity tables
+CREATE TABLE website (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    domain TEXT UNIQUE NOT NULL,     -- e.g., "youtube.com"
+    name TEXT,                       -- e.g., "YouTube" (NULL = use domain)
+    icon TEXT,                       -- base64 PNG favicon
+    color TEXT,                      -- hex color like "#FF0000"
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+);
+
+CREATE INDEX idx_website_domain ON website (domain);
+
 -- App-level activity (which app was focused)
 CREATE TABLE activity_app (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,6 +66,7 @@ CREATE INDEX idx_activity_app_started_at ON activity_app (started_at);
 CREATE TABLE activity_window (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     app_id INTEGER NOT NULL REFERENCES app (id) ON DELETE CASCADE,
+    website_id INTEGER REFERENCES website (id) ON DELETE SET NULL,
     -- Window
     window_title TEXT,
     window_id INTEGER,
@@ -73,6 +86,8 @@ CREATE TABLE activity_window (
 CREATE INDEX idx_activity_window_app_id ON activity_window (app_id);
 
 CREATE INDEX idx_activity_window_started_at ON activity_window (started_at);
+
+CREATE INDEX idx_activity_window_website_id ON activity_window (website_id);
 
 CREATE INDEX idx_activity_window_browser_url ON activity_window (browser_url)
 WHERE

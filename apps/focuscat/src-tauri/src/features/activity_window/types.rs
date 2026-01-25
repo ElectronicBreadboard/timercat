@@ -8,6 +8,7 @@ pub struct ActiveApp {
 /// Tracks currently active window (in-memory, pending write to DB on change).
 pub struct ActiveWindow {
     pub app_id: i64,
+    pub website_id: Option<i64>,
     pub bundle_id: Option<String>,
     // Window fields
     pub window_title: Option<String>,

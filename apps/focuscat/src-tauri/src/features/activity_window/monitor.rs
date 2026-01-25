@@ -1,8 +1,9 @@
 use super::repository::{
     AppActivityRepository, AppRepository, InsertAppActivityInput, InsertWindowActivityInput,
-    UpsertAppInput, WindowActivityRepository,
+    UpsertAppInput, WebsiteRepository, WindowActivityRepository,
 };
 use super::types::{ActiveApp, ActiveWindow};
+use crate::common::url::extract_domain;
 use crate::environment::db::DatabaseState;
 use crate::features::settings::types::AppSettingsState;
 use chrono::Utc;
@@ -173,6 +174,7 @@ impl WindowListener for WindowMonitorHandler {
                                     &state.pool,
                                     &InsertWindowActivityInput {
                                         app_id: prev.app_id,
+                                        website_id: prev.website_id,
                                         window_title: prev.window_title,
                                         window_id: prev.window_id,
                                         window_x: prev.window_x,
@@ -226,8 +228,20 @@ impl WindowListener for WindowMonitorHandler {
                         )
                         .await
                         {
+                            // Extract website_id for browser activities
+                            let website_id = if let Some(ref url) = browser_url {
+                                if let Some(domain) = extract_domain(url) {
+                                    WebsiteRepository::upsert(&state.pool, &domain).await.ok()
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            };
+
                             *active_window_guard = Some(ActiveWindow {
                                 app_id,
+                                website_id,
                                 bundle_id: window_info.app.bundle_id,
                                 window_title: window_info.title,
                                 window_id: window_info.window_id,

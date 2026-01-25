@@ -1,7 +1,7 @@
 use super::app::populate_icons;
-use super::website::{extract_domain, is_domain_like};
 use super::matcher::fuzzy_match;
 use super::types::{AppSearchState, SearchResult, SearchableItem};
+use crate::common::url::{extract_domain, is_domain_like};
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
@@ -38,9 +38,10 @@ pub fn search(
 
         // Add custom domain if query looks like one
         if is_domain_like(query) {
-            let domain = extract_domain(query);
-            if !results.iter().any(|(item, _)| item.id == domain) {
-                results.push((SearchableItem::custom_domain(&domain), 100));
+            if let Some(domain) = extract_domain(query) {
+                if !results.iter().any(|(item, _)| item.id == domain) {
+                    results.push((SearchableItem::custom_domain(&domain), 100));
+                }
             }
         }
     }
