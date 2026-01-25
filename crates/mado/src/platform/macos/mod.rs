@@ -54,8 +54,9 @@ pub fn run(listener: Arc<dyn WindowListener>, config: MonitorConfig) -> Result<(
         mado_start_monitor(
             callback_ptr,
             config.track_window_changes,
-            config.allow_browser,
-            config.include_icon,
+            config.include_app_icon,
+            config.include_browser_info,
+            config.include_website_info,
         );
     }
 
@@ -86,7 +87,7 @@ pub fn stop() -> Result<(), Error> {
 /// Get information about the currently active application.
 pub fn get_active_app(config: QueryConfig) -> Result<AppInfo, Error> {
     let json = unsafe {
-        match mado_get_active_app(config.include_icon) {
+        match mado_get_active_app(config.include_app_icon) {
             Some(s) => s.as_str().to_string(),
             None => return Err(Error::NoActiveApp),
         }
@@ -99,7 +100,7 @@ pub fn get_active_app(config: QueryConfig) -> Result<AppInfo, Error> {
 /// Get information about the currently active window.
 pub fn get_active_window(config: QueryConfig) -> Result<WindowInfo, Error> {
     let json = unsafe {
-        match mado_get_active_window(config.allow_browser, config.include_icon) {
+        match mado_get_active_window(config.include_app_icon, config.include_browser_info, config.include_website_info) {
             Some(s) => s.as_str().to_string(),
             None => return Err(Error::NoActiveWindow),
         }

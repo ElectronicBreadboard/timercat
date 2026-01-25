@@ -19,9 +19,10 @@ pub fn start_monitoring(app: AppHandle) {
     let monitor = WindowMonitor::with_config(
         handler,
         MonitorConfig {
-            allow_browser: true,
+            include_app_icon: true,
+            include_browser_info: true,
+            include_website_info: false,
             track_window_changes: true,
-            include_icon: true,
         },
     );
 

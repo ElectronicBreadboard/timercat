@@ -64,7 +64,7 @@ pub use config::{MonitorConfig, QueryConfig};
 pub use error::Error;
 pub use listener::WindowListener;
 pub use monitor::WindowMonitor;
-pub use types::{AppInfo, BrowserInfo, WindowBounds, WindowEvent, WindowInfo};
+pub use types::{AppInfo, BrowserInfo, WebsiteInfo, WindowBounds, WindowEvent, WindowInfo};
 
 /// Get information about the currently active application
 ///
@@ -99,7 +99,7 @@ pub fn get_active_app() -> Result<AppInfo, Error> {
 /// use mado::QueryConfig;
 ///
 /// let config = QueryConfig {
-///     include_icon: true,
+///     include_app_icon: true,
 ///     ..Default::default()
 /// };
 /// let app = mado::get_active_app_with_config(config)?;
@@ -153,14 +153,21 @@ pub fn get_active_window() -> Result<WindowInfo, Error> {
 /// ```rust,no_run
 /// use mado::QueryConfig;
 ///
-/// // With browser URL extraction and app icon (slower, macOS only)
+/// // With app icon, browser info, and website info (favicon + color)
 /// let config = QueryConfig {
-///     allow_browser: true,
-///     include_icon: true,
+///     include_app_icon: true,
+///     include_browser_info: true,
+///     include_website_info: true,
 /// };
 /// let window = mado::get_active_window_with_config(config)?;
 /// if let Some(browser) = &window.browser {
 ///     println!("URL: {:?}", browser.url);
+///     if let Some(website) = &browser.website {
+///         println!("Domain: {}", website.domain);
+///         if let Some(color) = &website.color {
+///             println!("Color: {}", color);
+///         }
+///     }
 /// }
 /// if let Some(icon) = &window.app.icon {
 ///     println!("Icon: {} bytes", icon.len());

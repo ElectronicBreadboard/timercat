@@ -15,7 +15,7 @@ func getAppColor(forBundleId bundleId: String?, icon: NSImage?) -> String? {
 
 /// Extract brand color using k-means palette.
 /// Picks most vibrant color, or falls back to dominant non-white for grayscale icons.
-private func extractBrandColor(from image: NSImage) -> String? {
+func extractBrandColor(from image: NSImage) -> String? {
     let palette = extractColorPalette(from: image, numberOfColors: 5)
     guard !palette.isEmpty else { return nil }
 

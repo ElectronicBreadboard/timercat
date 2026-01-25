@@ -39,13 +39,17 @@ println!("Current app: {}", app);
 let window = mado::get_active_window()?;
 println!("Window: {}", window);
 
-// With browser URL extraction (macOS only)
+// With browser URL and website info
 let window = mado::get_active_window_with_config(mado::QueryConfig {
-    allow_browser: true,
+    include_browser_info: true,
+    include_website_info: true,
+    ..Default::default()
 })?;
 if let Some(browser) = &window.browser {
     println!("URL: {:?}", browser.url);
-    println!("Private mode: {}", browser.is_private);
+    if let Some(website) = &browser.website {
+        println!("Domain: {}", website.domain);
+    }
 }
 ```
 
@@ -73,7 +77,7 @@ let monitor = WindowMonitor::new(FocusListener);
 monitor.run()?;
 ```
 
-### Browser URL extraction (macOS only)
+### Browser and website info (macOS only)
 
 ```rust
 use mado::{WindowListener, WindowMonitor, MonitorConfig, WindowEvent};
@@ -84,11 +88,16 @@ impl WindowListener for MyListener {
     fn on_focus_change(&self, event: WindowEvent) {
         if let WindowEvent::WindowChanged { window } = event {
             if let Some(browser) = &window.browser {
+                // Browser info: URL and private mode
                 if let Some(url) = &browser.url {
                     println!("URL: {}", url);
                 }
-                if let Some(is_private) = browser.is_private {
-                    println!("Private mode: {}", is_private);
+                // Website info: domain, favicon, and color (nested in browser)
+                if let Some(website) = &browser.website {
+                    println!("Domain: {}", website.domain);
+                    if let Some(color) = &website.color {
+                        println!("Brand color: {}", color);
+                    }
                 }
             }
         }
@@ -96,14 +105,24 @@ impl WindowListener for MyListener {
 }
 
 let config = MonitorConfig {
-    allow_browser: true,
-    track_window_changes: true,
+    include_browser_info: true,  // Extract URL and private mode
+    include_website_info: true,  // Extract domain, favicon, and color
+    ..Default::default()
 };
 let monitor = WindowMonitor::with_config(MyListener, config);
 monitor.run()?;
 ```
 
 **Supported browsers:** Chrome, Safari, Brave, Edge, Arc, Opera, Firefox (and their variants).
+
+**Config options:**
+
+| Option                 | Default | Description                                                          |
+| ---------------------- | ------- | -------------------------------------------------------------------- |
+| `include_app_icon`     | `false` | Extract app icon as base64 PNG and dominant color (~5-20ms)          |
+| `include_browser_info` | `false` | Extract browser URL and private mode                                 |
+| `include_website_info` | `false` | Extract domain, fetch favicon, and extract color (~50-500ms, cached) |
+| `track_window_changes` | `true`  | Track window focus/title changes (requires Accessibility permission) |
 
 ### Stop monitoring
 

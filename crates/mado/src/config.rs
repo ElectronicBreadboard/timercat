@@ -1,15 +1,34 @@
 /// Configuration for the window monitor.
 #[derive(Debug, Clone, Copy)]
 pub struct MonitorConfig {
-    /// Whether to extract browser URLs (macOS only).
+    /// Whether to include the app icon and dominant color.
     ///
-    /// When enabled, fetches the current URL from browser windows using AppleScript.
-    /// Requires Automation permission: System Settings > Privacy & Security > Automation
+    /// When enabled, extracts the app icon as a base64 PNG data URL
+    /// and the dominant brand color as a hex string.
     ///
-    /// This is slower (~50-200ms) but provides URL and private mode info.
+    /// Local file read, fast (~5-20ms).
     ///
     /// Default: `false`
-    pub allow_browser: bool,
+    pub include_app_icon: bool,
+
+    /// Whether to extract browser info (URL and private mode).
+    ///
+    /// When enabled, extracts the current URL and private/incognito mode from browser windows.
+    /// Populates the `browser` field in `WindowInfo`.
+    ///
+    /// Default: `false`
+    pub include_browser_info: bool,
+
+    /// Whether to extract website info (domain, favicon, and color).
+    ///
+    /// When enabled, extracts the domain from the browser URL, fetches the favicon,
+    /// and extracts the dominant color. Populates `browser.website` in `WindowInfo`.
+    ///
+    /// Requires `include_browser_info` to be enabled (needs URL to fetch favicon).
+    /// Network fetch, slower (~50-500ms), cached by domain.
+    ///
+    /// Default: `false`
+    pub include_website_info: bool,
 
     /// Whether to track window changes within the same app.
     ///
@@ -22,24 +41,15 @@ pub struct MonitorConfig {
     ///
     /// Default: `true` (track all changes)
     pub track_window_changes: bool,
-
-    /// Whether to include the app icon as a base64 PNG data URL.
-    ///
-    /// When enabled, extracts the app icon and returns it as a data URL
-    /// (e.g., "data:image/png;base64,...") in the `icon` field of `AppInfo`.
-    ///
-    /// This adds some overhead (~5-20ms) for icon extraction and encoding.
-    ///
-    /// Default: `false`
-    pub include_icon: bool,
 }
 
 impl Default for MonitorConfig {
     fn default() -> Self {
         Self {
-            allow_browser: false,
+            include_app_icon: false,
+            include_browser_info: false,
+            include_website_info: false,
             track_window_changes: true,
-            include_icon: false,
         }
     }
 }
@@ -47,30 +57,42 @@ impl Default for MonitorConfig {
 /// Configuration for querying window/app information.
 #[derive(Debug, Clone, Copy)]
 pub struct QueryConfig {
-    /// Whether to extract browser URLs (macOS only).
+    /// Whether to include the app icon and dominant color.
     ///
-    /// When enabled, fetches the current URL from browser windows using the Accessibility API.
-    /// Requires Accessibility permission: System Settings > Privacy & Security > Accessibility
+    /// When enabled, extracts the app icon as a base64 PNG data URL
+    /// and the dominant brand color as a hex string.
+    ///
+    /// Local file read, fast (~5-20ms).
     ///
     /// Default: `false`
-    pub allow_browser: bool,
+    pub include_app_icon: bool,
 
-    /// Whether to include the app icon as a base64 PNG data URL.
+    /// Whether to extract browser info (URL and private mode).
     ///
-    /// When enabled, extracts the app icon and returns it as a data URL
-    /// (e.g., "data:image/png;base64,...") in the `icon` field of `AppInfo`.
-    ///
-    /// This adds some overhead (~5-20ms) for icon extraction and encoding.
+    /// When enabled, extracts the current URL and private/incognito mode from browser windows.
+    /// Populates the `browser` field in `WindowInfo`.
     ///
     /// Default: `false`
-    pub include_icon: bool,
+    pub include_browser_info: bool,
+
+    /// Whether to extract website info (domain, favicon, and color).
+    ///
+    /// When enabled, extracts the domain from the browser URL, fetches the favicon,
+    /// and extracts the dominant color. Populates `browser.website` in `WindowInfo`.
+    ///
+    /// Requires `include_browser_info` to be enabled (needs URL to fetch favicon).
+    /// Network fetch, slower (~50-500ms), cached by domain.
+    ///
+    /// Default: `false`
+    pub include_website_info: bool,
 }
 
 impl Default for QueryConfig {
     fn default() -> Self {
         Self {
-            allow_browser: false,
-            include_icon: false,
+            include_app_icon: false,
+            include_browser_info: false,
+            include_website_info: false,
         }
     }
 }

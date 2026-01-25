@@ -29,6 +29,19 @@ pub struct BrowserInfo {
     /// - `Some(true)` if private mode is active
     /// - `Some(false)` if private mode is not active
     pub is_private: Option<bool>,
+    /// Website information (only populated if `include_website_info` is enabled in config)
+    pub website: Option<WebsiteInfo>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct WebsiteInfo {
+    /// Domain extracted from the browser URL (e.g., "github.com")
+    pub domain: String,
+    /// Favicon as base64 PNG data URL (e.g., "data:image/png;base64,...")
+    pub favicon: Option<String>,
+    /// Dominant color extracted from favicon as hex string (e.g., "#FF5733")
+    pub color: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
@@ -42,7 +55,7 @@ pub struct WindowInfo {
     pub bounds: Option<WindowBounds>,
     /// Application information
     pub app: AppInfo,
-    /// Browser information (only populated if `allow_browser` is enabled in config)
+    /// Browser information (only populated if `include_browser_info` is enabled in config)
     pub browser: Option<BrowserInfo>,
 }
 
@@ -154,6 +167,20 @@ impl fmt::Display for WindowInfo {
                 None => "(not available)",
             };
             writeln!(f, "      Mode:       {}", mode_str)?;
+
+            if let Some(website) = &browser.website {
+                writeln!(f, "      Domain:     {}", website.domain)?;
+                if website.favicon.is_some() {
+                    writeln!(
+                        f,
+                        "      Favicon:    (base64 PNG, {} bytes)",
+                        website.favicon.as_ref().unwrap().len()
+                    )?;
+                }
+                if let Some(color) = &website.color {
+                    writeln!(f, "      Color:      {}", color)?;
+                }
+            }
         }
 
         Ok(())

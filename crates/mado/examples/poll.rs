@@ -22,8 +22,9 @@ fn main() -> Result<(), mado::Error> {
 
     loop {
         let config = mado::QueryConfig {
-            allow_browser: true,
-            include_icon: true,
+            include_app_icon: true,
+            include_browser_info: true,
+            include_website_info: true,
         };
 
         match mado::get_active_app_with_config(config) {

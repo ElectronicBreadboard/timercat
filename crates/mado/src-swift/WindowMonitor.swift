@@ -18,8 +18,9 @@ final class WindowMonitor: NSObject {
 
     private let callback: WindowEventCallback
     private let trackWindowChanges: Bool
-    private let allowBrowser: Bool
-    private let includeIcon: Bool
+    private let includeAppIcon: Bool
+    private let includeBrowserInfo: Bool
+    private let includeWebsiteInfo: Bool
 
     private var isRunning = false
     private var monitorRunLoop: CFRunLoop?
@@ -46,13 +47,15 @@ final class WindowMonitor: NSObject {
     init(
         callback: @escaping WindowEventCallback,
         trackWindowChanges: Bool,
-        allowBrowser: Bool,
-        includeIcon: Bool
+        includeAppIcon: Bool,
+        includeBrowserInfo: Bool,
+        includeWebsiteInfo: Bool
     ) {
         self.callback = callback
         self.trackWindowChanges = trackWindowChanges
-        self.allowBrowser = allowBrowser
-        self.includeIcon = includeIcon
+        self.includeAppIcon = includeAppIcon
+        self.includeBrowserInfo = includeBrowserInfo
+        self.includeWebsiteInfo = includeWebsiteInfo
     }
 
     // MARK: - Lifecycle
@@ -317,8 +320,9 @@ final class WindowMonitor: NSObject {
 
         let windowInfo = WindowInfo.fromPID(
             currentPID,
-            allowBrowser: allowBrowser,
-            includeIcon: includeIcon
+            includeAppIcon: includeAppIcon,
+            includeBrowserInfo: includeBrowserInfo,
+            includeWebsiteInfo: includeWebsiteInfo
         )
 
         if windowInfo.windowId != nil {
@@ -342,7 +346,7 @@ final class WindowMonitor: NSObject {
     // MARK: - Events
 
     private func sendAppActivatedEvent(app: NSRunningApplication) {
-        let appInfo = AppInfo.fromNS(app, includeIcon: includeIcon)
+        let appInfo = AppInfo.fromNS(app, includeIcon: includeAppIcon)
         let eventData: [String: Any] = ["app": appInfo.toDictionary()]
         sendEvent(type: EventType.appActivated, data: eventData)
     }
@@ -354,8 +358,9 @@ final class WindowMonitor: NSObject {
 
         let windowInfo = WindowInfo.fromPID(
             currentPID,
-            allowBrowser: allowBrowser,
-            includeIcon: includeIcon
+            includeAppIcon: includeAppIcon,
+            includeBrowserInfo: includeBrowserInfo,
+            includeWebsiteInfo: includeWebsiteInfo
         )
 
         // Skip if no valid window (no window ID means window not ready yet)

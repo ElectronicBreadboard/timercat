@@ -8,8 +8,9 @@ import SwiftRs
 public func madoStartMonitor(
     callbackPtr: UnsafeRawPointer,
     trackWindowChanges: Bool,
-    allowBrowser: Bool,
-    includeIcon: Bool
+    includeAppIcon: Bool,
+    includeBrowserInfo: Bool,
+    includeWebsiteInfo: Bool
 ) {
     // Singleton check: Rust side already prevents concurrent calls, this is defensive
     guard WindowMonitor.shared == nil else { return }
@@ -19,8 +20,9 @@ public func madoStartMonitor(
     let monitor = WindowMonitor(
         callback: callback,
         trackWindowChanges: trackWindowChanges,
-        allowBrowser: allowBrowser,
-        includeIcon: includeIcon
+        includeAppIcon: includeAppIcon,
+        includeBrowserInfo: includeBrowserInfo,
+        includeWebsiteInfo: includeWebsiteInfo
     )
     WindowMonitor.shared = monitor
     monitor.start()
@@ -42,21 +44,24 @@ public func madoIsTrusted() -> Bool {
 // MARK: - Queries
 
 @_cdecl("mado_get_active_app")
-public func madoGetActiveApp(includeIcon: Bool) -> SRString? {
-    guard let appInfo = AppInfo.getFrontmost(includeIcon: includeIcon) else {
+public func madoGetActiveApp(includeAppIcon: Bool) -> SRString? {
+    guard let appInfo = AppInfo.getFrontmost(includeIcon: includeAppIcon) else {
         return nil
     }
     return toJson(appInfo.toDictionary())
 }
 
 @_cdecl("mado_get_active_window")
-public func madoGetActiveWindow(allowBrowser: Bool, includeIcon: Bool)
-    -> SRString?
-{
+public func madoGetActiveWindow(
+    includeAppIcon: Bool,
+    includeBrowserInfo: Bool,
+    includeWebsiteInfo: Bool
+) -> SRString? {
     guard
         let windowInfo = WindowInfo.getFrontmost(
-            allowBrowser: allowBrowser,
-            includeIcon: includeIcon
+            includeAppIcon: includeAppIcon,
+            includeBrowserInfo: includeBrowserInfo,
+            includeWebsiteInfo: includeWebsiteInfo
         )
     else { return nil }
     return toJson(windowInfo.toDictionary())

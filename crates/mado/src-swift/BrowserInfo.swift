@@ -1,14 +1,19 @@
 import ApplicationServices
 import Foundation
 
-/// Browser information (URL, private mode).
+/// Browser information (URL, private mode, website).
 struct BrowserInfo {
     let url: String?
     let isPrivate: Bool?
+    let website: WebsiteInfo?
 
     /// Convert to dictionary for JSON serialization.
     func toDictionary() -> [String: Any?] {
-        return ["url": url, "isPrivate": isPrivate]
+        return [
+            "url": url,
+            "isPrivate": isPrivate,
+            "website": website?.toDictionary(),
+        ]
     }
 
     /// Extract browser info using the Accessibility API.
@@ -16,7 +21,8 @@ struct BrowserInfo {
     static func extract(
         bundleId: String,
         windowElement: AXUIElement,
-        windowTitle: String?
+        windowTitle: String?,
+        includeWebsiteInfo: Bool = false
     )
         -> BrowserInfo?
     {
@@ -31,7 +37,15 @@ struct BrowserInfo {
         // Only return if we got a URL
         guard url != nil else { return nil }
 
-        return BrowserInfo(url: url, isPrivate: isPrivate)
+        // Extract website info if enabled
+        let website: WebsiteInfo? =
+            if includeWebsiteInfo, let url = url {
+                WebsiteInfo.extract(from: url)
+            } else {
+                nil
+            }
+
+        return BrowserInfo(url: url, isPrivate: isPrivate, website: website)
     }
 
     // MARK: - URL Extraction

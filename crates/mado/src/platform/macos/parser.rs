@@ -102,7 +102,7 @@ mod tests {
             "windowId": 123,
             "bounds": null,
             "app": {"pid": 5678, "name": "Chrome", "bundleId": "com.google.Chrome", "processPath": null},
-            "browser": {"url": "https://github.com", "isPrivate": false}
+            "browser": {"url": "https://github.com", "isPrivate": false, "website": null}
         }"#;
 
         let window = parse_window_info(json).unwrap();
@@ -110,6 +110,53 @@ mod tests {
         let browser = window.browser.unwrap();
         assert_eq!(browser.url, Some("https://github.com".to_string()));
         assert_eq!(browser.is_private, Some(false));
+        assert!(browser.website.is_none());
+    }
+
+    #[test]
+    fn parse_window_info_with_website() {
+        let json = r##"{
+            "title": "GitHub",
+            "windowId": 123,
+            "bounds": null,
+            "app": {"pid": 5678, "name": "Chrome", "bundleId": "com.google.Chrome", "processPath": null},
+            "browser": {
+                "url": "https://github.com",
+                "isPrivate": false,
+                "website": {"domain": "github.com", "favicon": "data:image/png;base64,ABC123", "color": "#24292E"}
+            }
+        }"##;
+
+        let window = parse_window_info(json).unwrap();
+        assert!(window.browser.is_some());
+        let browser = window.browser.unwrap();
+        assert!(browser.website.is_some());
+        let website = browser.website.unwrap();
+        assert_eq!(website.domain, "github.com");
+        assert_eq!(website.favicon, Some("data:image/png;base64,ABC123".to_string()));
+        assert_eq!(website.color, Some("#24292E".to_string()));
+    }
+
+    #[test]
+    fn parse_window_info_with_website_no_favicon() {
+        let json = r#"{
+            "title": "GitHub",
+            "windowId": 123,
+            "bounds": null,
+            "app": {"pid": 5678, "name": "Chrome", "bundleId": "com.google.Chrome", "processPath": null},
+            "browser": {
+                "url": "https://github.com",
+                "isPrivate": false,
+                "website": {"domain": "github.com", "favicon": null, "color": null}
+            }
+        }"#;
+
+        let window = parse_window_info(json).unwrap();
+        let browser = window.browser.unwrap();
+        let website = browser.website.unwrap();
+        assert_eq!(website.domain, "github.com");
+        assert!(website.favicon.is_none());
+        assert!(website.color.is_none());
     }
 
     #[test]
@@ -149,6 +196,7 @@ mod tests {
             WindowEvent::WindowChanged { window } => {
                 assert_eq!(window.title, Some("My Window".to_string()));
                 assert_eq!(window.window_id, Some(42));
+                assert!(window.browser.is_none());
             }
             _ => panic!("Expected WindowChanged event"),
         }
