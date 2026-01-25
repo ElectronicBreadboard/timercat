@@ -173,6 +173,46 @@ impl WebsiteConfig {
             name: "Miro",
             domains: &["miro.com"],
         },
+        WebsiteEntry {
+            name: "Linear",
+            domains: &["linear.app"],
+        },
+        WebsiteEntry {
+            name: "ClickUp",
+            domains: &["clickup.com", "app.clickup.com"],
+        },
+        WebsiteEntry {
+            name: "Basecamp",
+            domains: &["basecamp.com", "3.basecamp.com"],
+        },
+        WebsiteEntry {
+            name: "Jira",
+            domains: &["atlassian.net", "jira.com"],
+        },
+        WebsiteEntry {
+            name: "Confluence",
+            domains: &["atlassian.net/wiki"],
+        },
+        WebsiteEntry {
+            name: "Todoist",
+            domains: &["todoist.com"],
+        },
+        WebsiteEntry {
+            name: "Evernote",
+            domains: &["evernote.com"],
+        },
+        WebsiteEntry {
+            name: "Calendly",
+            domains: &["calendly.com"],
+        },
+        WebsiteEntry {
+            name: "Loom",
+            domains: &["loom.com"],
+        },
+        WebsiteEntry {
+            name: "Grammarly",
+            domains: &["grammarly.com", "app.grammarly.com"],
+        },
         // Development
         WebsiteEntry {
             name: "GitHub",
@@ -206,6 +246,75 @@ impl WebsiteConfig {
             name: "AWS",
             domains: &["aws.amazon.com", "console.aws.amazon.com"],
         },
+        WebsiteEntry {
+            name: "Bitbucket",
+            domains: &["bitbucket.org"],
+        },
+        WebsiteEntry {
+            name: "Supabase",
+            domains: &["supabase.com", "app.supabase.com"],
+        },
+        WebsiteEntry {
+            name: "Railway",
+            domains: &["railway.app"],
+        },
+        WebsiteEntry {
+            name: "Render",
+            domains: &["render.com", "dashboard.render.com"],
+        },
+        WebsiteEntry {
+            name: "DigitalOcean",
+            domains: &["digitalocean.com", "cloud.digitalocean.com"],
+        },
+        WebsiteEntry {
+            name: "Heroku",
+            domains: &["heroku.com", "dashboard.heroku.com"],
+        },
+        WebsiteEntry {
+            name: "Replit",
+            domains: &["replit.com", "repl.it"],
+        },
+        WebsiteEntry {
+            name: "CodePen",
+            domains: &["codepen.io"],
+        },
+        WebsiteEntry {
+            name: "CodeSandbox",
+            domains: &["codesandbox.io"],
+        },
+        WebsiteEntry {
+            name: "npm",
+            domains: &["npmjs.com"],
+        },
+        WebsiteEntry {
+            name: "crates.io",
+            domains: &["crates.io"],
+        },
+        WebsiteEntry {
+            name: "Docs.rs",
+            domains: &["docs.rs"],
+        },
+        // Design
+        WebsiteEntry {
+            name: "Dribbble",
+            domains: &["dribbble.com"],
+        },
+        WebsiteEntry {
+            name: "Behance",
+            domains: &["behance.net"],
+        },
+        WebsiteEntry {
+            name: "Adobe Creative Cloud",
+            domains: &["adobe.com", "creativecloud.adobe.com"],
+        },
+        WebsiteEntry {
+            name: "Webflow",
+            domains: &["webflow.com", "webflow.io"],
+        },
+        WebsiteEntry {
+            name: "Framer",
+            domains: &["framer.com", "framer.app"],
+        },
         // Entertainment
         WebsiteEntry {
             name: "Netflix",
@@ -235,6 +344,43 @@ impl WebsiteConfig {
             name: "Apple TV+",
             domains: &["tv.apple.com"],
         },
+        WebsiteEntry {
+            name: "Vimeo",
+            domains: &["vimeo.com"],
+        },
+        WebsiteEntry {
+            name: "Crunchyroll",
+            domains: &["crunchyroll.com"],
+        },
+        // Gaming
+        WebsiteEntry {
+            name: "Steam",
+            domains: &["store.steampowered.com", "steampowered.com", "steamcommunity.com"],
+        },
+        WebsiteEntry {
+            name: "Epic Games",
+            domains: &["epicgames.com", "store.epicgames.com"],
+        },
+        WebsiteEntry {
+            name: "GOG",
+            domains: &["gog.com"],
+        },
+        WebsiteEntry {
+            name: "Xbox",
+            domains: &["xbox.com"],
+        },
+        WebsiteEntry {
+            name: "PlayStation",
+            domains: &["playstation.com", "store.playstation.com"],
+        },
+        WebsiteEntry {
+            name: "Nintendo",
+            domains: &["nintendo.com"],
+        },
+        WebsiteEntry {
+            name: "IGN",
+            domains: &["ign.com"],
+        },
         // Shopping
         WebsiteEntry {
             name: "Amazon",
@@ -251,6 +397,22 @@ impl WebsiteConfig {
         WebsiteEntry {
             name: "Shopify",
             domains: &["shopify.com", "myshopify.com"],
+        },
+        WebsiteEntry {
+            name: "AliExpress",
+            domains: &["aliexpress.com"],
+        },
+        WebsiteEntry {
+            name: "Walmart",
+            domains: &["walmart.com"],
+        },
+        WebsiteEntry {
+            name: "Target",
+            domains: &["target.com"],
+        },
+        WebsiteEntry {
+            name: "Best Buy",
+            domains: &["bestbuy.com"],
         },
         // News & Reading
         WebsiteEntry {
@@ -327,6 +489,43 @@ impl WebsiteConfig {
         WebsiteEntry {
             name: "Duolingo",
             domains: &["duolingo.com"],
+        },
+        WebsiteEntry {
+            name: "Skillshare",
+            domains: &["skillshare.com"],
+        },
+        WebsiteEntry {
+            name: "Codecademy",
+            domains: &["codecademy.com"],
+        },
+        WebsiteEntry {
+            name: "edX",
+            domains: &["edx.org"],
+        },
+        WebsiteEntry {
+            name: "LinkedIn Learning",
+            domains: &["linkedin.com/learning"],
+        },
+        // AI Tools
+        WebsiteEntry {
+            name: "Midjourney",
+            domains: &["midjourney.com"],
+        },
+        WebsiteEntry {
+            name: "Perplexity",
+            domains: &["perplexity.ai"],
+        },
+        WebsiteEntry {
+            name: "Gemini",
+            domains: &["gemini.google.com"],
+        },
+        WebsiteEntry {
+            name: "Copilot",
+            domains: &["copilot.microsoft.com", "github.com/features/copilot"],
+        },
+        WebsiteEntry {
+            name: "Hugging Face",
+            domains: &["huggingface.co"],
         },
         // Other
         WebsiteEntry {
