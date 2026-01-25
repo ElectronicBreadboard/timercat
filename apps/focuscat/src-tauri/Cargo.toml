@@ -37,3 +37,4 @@ sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
 rdev = { git = "https://github.com/Narsil/rdev.git", rev = "c14f2dc" }
 mado = { path = "../../../crates/mado" }
 focuscat-macos = { path = "../crates/macos" }
+nucleo-matcher = "0.3.1"

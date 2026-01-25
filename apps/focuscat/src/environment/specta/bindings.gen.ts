@@ -237,6 +237,17 @@ async isInputMonitoringGranted() : Promise<boolean> {
  */
 async openInputMonitoringSettings() : Promise<void> {
     await TAURI_INVOKE("open_input_monitoring_settings");
+},
+/**
+ * Search for apps and websites.
+ */
+async searchAppsAndWebsites(input: SearchInput) : Promise<Result<SearchResult[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("search_apps_and_websites", { input }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -293,7 +304,59 @@ export type InputDetectedEvent = InputType
  * Type of input event detected.
  */
 export type InputType = "keyboard" | "mouse"
+/**
+ * Type of search result.
+ */
+export type ItemType = "app" | "website"
 export type Phase = "work" | "shortBreak" | "longBreak"
+/**
+ * Input for app/website search.
+ */
+export type SearchInput = { 
+/**
+ * Search query (None = return all)
+ */
+query: string | null; 
+/**
+ * Include installed apps in results (default: true)
+ */
+includeApps?: boolean; 
+/**
+ * Include website suggestion from query (default: false)
+ */
+includeWebsites?: boolean; 
+/**
+ * Include icons - slower for apps (default: false)
+ */
+includeIcons?: boolean; 
+/**
+ * Maximum number of results
+ */
+limit: number | null }
+/**
+ * Result from app/website search.
+ */
+export type SearchResult = { 
+/**
+ * Unique identifier - bundleId for apps, domain for websites
+ */
+id: string; 
+/**
+ * Display name
+ */
+name: string; 
+/**
+ * Type of result
+ */
+itemType: ItemType; 
+/**
+ * Icon as base64 PNG data URL (apps) or favicon URL (websites)
+ */
+icon: string | null; 
+/**
+ * Brand color as hex string like "#5865F2" (apps only)
+ */
+color: string | null }
 /**
  * Event emitted when a session is completed.
  */

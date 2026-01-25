@@ -5,6 +5,7 @@ pub mod window;
 use crate::environment::db;
 use crate::features::{
     activity_window,
+    app_search,
     input::{self, types::InputDetectedEvent},
     permission,
     session::{self, types::SessionCompletedEvent},
@@ -56,6 +57,9 @@ pub fn run() {
             permission::commands::open_accessibility_settings,
             permission::commands::is_input_monitoring_granted,
             permission::commands::open_input_monitoring_settings,
+            // App search commands
+            app_search::commands::search,
+            app_search::commands::refresh_apps_cache,
         ])
         .events(collect_events![
             // Settings events
@@ -91,6 +95,7 @@ pub fn run() {
             timer::setup(app);
             input::setup(app);
             activity_window::setup(app);
+            app_search::setup(app);
             #[cfg(target_os = "macos")]
             tray::setup(app);
 
