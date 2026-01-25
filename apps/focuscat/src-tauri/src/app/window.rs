@@ -41,7 +41,7 @@ impl Window {
     /// Route path for the window.
     pub fn path(&self) -> &'static str {
         return match self {
-            Self::Main => "/window/main",
+            Self::Main => "/window/main/splash",
             Self::Cat => "/window/cat",
             Self::Settings => "/window/settings",
             Self::History => "/window/history",
