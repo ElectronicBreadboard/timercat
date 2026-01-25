@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import React from 'react';
+import { WindowHeader } from '@/components';
 import { Cat, catConfig, type TCatFace, type TCatHat, type TCatRef } from '@/features/cat';
 
 export const Route = createFileRoute('/window/main/splash/')({
@@ -42,8 +43,11 @@ function RouteComponent() {
 	// MARK: - UI
 
 	return (
-		<div className="flex h-screen w-[300px] items-center justify-center bg-[#267DF7]">
-			<Cat ref={catRef} size={150} face={face} hat={hat} />
+		<div className="flex h-screen w-[300px] flex-col bg-[#267DF7]">
+			<WindowHeader className="border-transparent bg-transparent" />
+			<div className="flex flex-1 items-center justify-center">
+				<Cat ref={catRef} size={150} face={face} hat={hat} />
+			</div>
 		</div>
 	);
 }
