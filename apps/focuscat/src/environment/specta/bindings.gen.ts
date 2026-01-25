@@ -241,9 +241,20 @@ async openInputMonitoringSettings() : Promise<void> {
 /**
  * Search for apps and websites.
  */
-async searchAppsAndWebsites(input: SearchInput) : Promise<Result<SearchResult[], string>> {
+async search(input: SearchInput) : Promise<Result<SearchResult[], string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("search_apps_and_websites", { input }) };
+    return { status: "ok", data: await TAURI_INVOKE("search", { input }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Refresh the cached apps list.
+ */
+async refreshAppsCache() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("refresh_apps_cache") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -309,32 +320,29 @@ export type InputType = "keyboard" | "mouse"
  */
 export type ItemType = "app" | "website"
 export type Phase = "work" | "shortBreak" | "longBreak"
-/**
- * Input for app/website search.
- */
 export type SearchInput = { 
 /**
- * Search query (None = return all)
+ * Search query
  */
-query: string | null; 
+query: string; 
 /**
- * Include installed apps in results (default: true)
+ * Include installed apps (default: true)
  */
 includeApps?: boolean; 
 /**
- * Include website suggestion from query (default: false)
+ * Include websites (default: true)
  */
 includeWebsites?: boolean; 
 /**
- * Include icons - slower for apps (default: false)
+ * Include icons - slower (default: false)
  */
 includeIcons?: boolean; 
 /**
- * Maximum number of results
+ * Maximum results (default: 20)
  */
 limit: number | null }
 /**
- * Result from app/website search.
+ * Search result item.
  */
 export type SearchResult = { 
 /**
@@ -356,7 +364,11 @@ icon: string | null;
 /**
  * Brand color as hex string like "#5865F2" (apps only)
  */
-color: string | null }
+color: string | null; 
+/**
+ * Match score (higher = better match)
+ */
+score: number }
 /**
  * Event emitted when a session is completed.
  */

@@ -1,5 +1,5 @@
-use super::apps::load_apps_from_system;
-use super::config::WebsitesConfig;
+use super::app::load_apps_from_system;
+use super::website::WebsiteConfig;
 use serde::{Deserialize, Serialize};
 use std::sync::RwLock;
 use tauri::App;
@@ -80,7 +80,7 @@ impl AppSearchState {
     pub fn init(_app: &App) -> Self {
         return Self(RwLock::new(AppSearchCache {
             apps: None,
-            websites: WebsitesConfig::websites(),
+            websites: WebsiteConfig::websites(),
         }));
     }
 

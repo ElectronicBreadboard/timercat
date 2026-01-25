@@ -1,5 +1,5 @@
-use super::domain::{extract_domain, is_domain_like};
-use super::icon::populate_icons;
+use super::app::populate_icons;
+use super::website::{extract_domain, is_domain_like};
 use super::matcher::fuzzy_match;
 use super::types::{AppSearchState, SearchResult, SearchableItem};
 use serde::{Deserialize, Serialize};

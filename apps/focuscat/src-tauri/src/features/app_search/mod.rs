@@ -1,10 +1,8 @@
-mod apps;
+mod app;
 pub mod commands;
-mod config;
-mod domain;
-mod icon;
 mod matcher;
 pub mod types;
+mod website;
 
 use tauri::{App, Manager};
 use types::AppSearchState;
