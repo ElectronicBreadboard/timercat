@@ -1,8 +1,7 @@
 import React from 'react';
+import { usePopupViewport } from './use-popup-viewport';
 
-export function useMultiSelect<T extends TMultiSelectItem>(
-	options: TUseMultiSelectOptions<T>
-): TUseMultiSelectReturn<T> {
+export function useMultiSelect<T extends TMultiSelectItem>(options: TUseMultiSelectOptions<T>) {
 	const {
 		value,
 		onChange,
@@ -13,24 +12,34 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 		minPopupHeight = 100
 	} = options;
 
-	// State
-	const [isOpen, setIsOpen] = React.useState(false);
-	const [query, setQuery] = React.useState('');
-	const [results, setResults] = React.useState<T[]>([]);
-	const [isSearching, setIsSearching] = React.useState(false);
-	const [side, setSide] = React.useState<'top' | 'bottom'>('bottom');
-	const [highlightedIndex, setHighlightedIndex] = React.useState(0);
-
 	// Refs
 	const containerRef = React.useRef<HTMLDivElement | null>(null);
 	const inputRef = React.useRef<HTMLInputElement | null>(null);
 	const popupRef = React.useRef<HTMLDivElement | null>(null);
 	const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+	const searchIdRef = React.useRef(0);
+	const blurTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	// State
+	const [isOpen, setIsOpen] = React.useState(false);
+	const [query, setQuery] = React.useState('');
+	const [results, setResults] = React.useState<T[]>([]);
+	const [isSearching, setIsSearching] = React.useState(false);
+	const [highlightedIndex, setHighlightedIndex] = React.useState(0);
 
 	// Computed
-	const showPopup = isOpen && (query.trim() !== '' || isSearching);
+	const hasQuery = query.trim() !== '';
+	const showPopup = isOpen && (hasQuery || isSearching);
 	const inputCollapsed = !isOpen && value.length > 0;
-	const showEmpty = !isSearching && results.length === 0 && query.trim() !== '';
+	const showEmpty = !isSearching && !results.length && hasQuery;
+
+	const { side } = usePopupViewport({
+		enabled: showPopup,
+		containerRef,
+		popupRef,
+		padding: viewportPadding,
+		minHeight: minPopupHeight
+	});
 
 	// MARK: - Actions
 
@@ -63,8 +72,6 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 		inputRef.current?.blur();
 	}, []);
 
-	// MARK: - Event Handlers
-
 	const handleContainerClick = React.useCallback(() => {
 		inputRef.current?.focus();
 	}, []);
@@ -79,7 +86,7 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 			return;
 		}
 		// Delay allows click events on results to register before closing
-		setTimeout(() => setIsOpen(false), 150);
+		blurTimeoutRef.current = setTimeout(() => setIsOpen(false), 150);
 	}, []);
 
 	const handleInputKeyDown = React.useCallback(
@@ -111,7 +118,7 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 				case 'Enter':
 					e.preventDefault();
 					if (results.length > 0 && highlightedIndex < results.length) {
-						select(results[highlightedIndex]!);
+						select(results[highlightedIndex] as T);
 					}
 					break;
 				case 'Escape':
@@ -132,129 +139,6 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 		setQuery(e.target.value);
 	}, []);
 
-	// MARK: - Effects
-
-	React.useEffect(() => {
-		if (!isOpen) {
-			setQuery('');
-			setResults([]);
-			setHighlightedIndex(0);
-		}
-	}, [isOpen]);
-
-	React.useEffect(() => {
-		setHighlightedIndex(0);
-	}, [results]);
-
-	// Debounced search
-	React.useEffect(() => {
-		if (debounceRef.current != null) {
-			clearTimeout(debounceRef.current);
-		}
-
-		if (query.trim() === '') {
-			setResults([]);
-			setIsSearching(false);
-			return;
-		}
-
-		setIsSearching(true);
-		debounceRef.current = setTimeout(() => {
-			onSearch(query.trim())
-				.then((searchResults) => {
-					if (filterSelected) {
-						const selectedIds = new Set(value.map((v) => v.id));
-						setResults(searchResults.filter((r) => !selectedIds.has(r.id)));
-					} else {
-						setResults(searchResults);
-					}
-				})
-				.catch(() => {
-					setResults([]);
-				})
-				.finally(() => {
-					setIsSearching(false);
-				});
-		}, debounceMs);
-
-		return () => {
-			if (debounceRef.current != null) {
-				clearTimeout(debounceRef.current);
-			}
-		};
-	}, [query, onSearch, debounceMs, filterSelected, value]);
-
-	// Constrain popup height to available viewport space
-	React.useLayoutEffect(() => {
-		if (!showPopup) {
-			setSide('bottom');
-			return;
-		}
-
-		let frameId: number | null = null;
-		let observer: MutationObserver | null = null;
-
-		const updatePopup = () => {
-			const popup = popupRef.current;
-			const container = containerRef.current;
-			if (popup == null || container == null) {
-				return;
-			}
-
-			// Sync side state with base-ui's positioning decision
-			const popupSide = popup.getAttribute('data-side') as 'top' | 'bottom' | null;
-			if (popupSide != null) {
-				setSide(popupSide);
-			}
-
-			// Use container bounds (popup anchor), not input (may wrap to second line)
-			const containerRect = container.getBoundingClientRect();
-			const availableHeight =
-				popupSide === 'top'
-					? containerRect.top - viewportPadding
-					: window.innerHeight - containerRect.bottom - viewportPadding;
-
-			popup.style.maxHeight = `${Math.max(minPopupHeight, availableHeight)}px`;
-		};
-
-		const waitForPopup = () => {
-			if (popupRef.current == null) {
-				frameId = requestAnimationFrame(waitForPopup);
-				return;
-			}
-
-			updatePopup();
-
-			// Watch for position flips (base-ui may flip when near viewport edge)
-			observer = new MutationObserver(updatePopup);
-			observer.observe(popupRef.current, { attributes: true, attributeFilter: ['data-side'] });
-		};
-
-		const handleScroll = (e: Event) => {
-			// Ignore scrolls inside popup (user scrolling through results)
-			if (popupRef.current?.contains(e.target as Node)) {
-				return;
-			}
-			updatePopup();
-		};
-
-		waitForPopup();
-		window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
-
-		return () => {
-			if (frameId != null) {
-				cancelAnimationFrame(frameId);
-			}
-			observer?.disconnect();
-			window.removeEventListener('scroll', handleScroll, { capture: true });
-			if (popupRef.current) {
-				popupRef.current.style.maxHeight = '';
-			}
-		};
-	}, [showPopup, viewportPadding, minPopupHeight]);
-
-	// MARK: - Props Getters
-
 	const getRootProps = React.useCallback(
 		() => ({
 			open: showPopup
@@ -274,20 +158,27 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 
 	const getInputProps = React.useCallback(
 		() => ({
-			ref: inputRef,
-			value: query,
-			onChange: handleQueryChange,
-			onFocus: handleInputFocus,
-			onBlur: handleInputBlur,
-			onKeyDown: handleInputKeyDown,
+			'ref': inputRef,
+			'value': query,
+			'onChange': handleQueryChange,
+			'onFocus': handleInputFocus,
+			'onBlur': handleInputBlur,
+			'onKeyDown': handleInputKeyDown,
 			'data-collapsed': (inputCollapsed ? true : undefined) as true | undefined
 		}),
-		[query, handleQueryChange, handleInputFocus, handleInputBlur, handleInputKeyDown, inputCollapsed]
+		[
+			query,
+			handleQueryChange,
+			handleInputFocus,
+			handleInputBlur,
+			handleInputKeyDown,
+			inputCollapsed
+		]
 	);
 
 	const getPopupProps = React.useCallback(
 		() => ({
-			ref: popupRef,
+			'ref': popupRef,
 			'data-popup': true as const
 		}),
 		[]
@@ -296,10 +187,86 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 	const getItemProps = React.useCallback(
 		(index: number) => ({
 			'data-highlighted': (index === highlightedIndex ? true : undefined) as true | undefined,
-			onMouseEnter: () => setHighlightedIndex(index)
+			'onMouseEnter': () => setHighlightedIndex(index)
 		}),
 		[highlightedIndex]
 	);
+
+	// MARK: - Effects
+
+	React.useEffect(() => {
+		if (!isOpen) {
+			setQuery('');
+			setResults([]);
+			setHighlightedIndex(0);
+		}
+		// Clear pending blur timeout when open state changes
+		if (blurTimeoutRef.current != null) {
+			clearTimeout(blurTimeoutRef.current);
+			blurTimeoutRef.current = null;
+		}
+	}, [isOpen]);
+
+	React.useEffect(() => {
+		setHighlightedIndex(0);
+	}, [results]);
+
+	// Debounced search
+	React.useEffect(() => {
+		if (debounceRef.current != null) {
+			clearTimeout(debounceRef.current);
+		}
+
+		const trimmedQuery = query.trim();
+		if (!trimmedQuery) {
+			setResults([]);
+			setIsSearching(false);
+			return;
+		}
+
+		setIsSearching(true);
+		const searchId = ++searchIdRef.current;
+		const isStaleResponse = () => searchId !== searchIdRef.current;
+
+		debounceRef.current = setTimeout(async () => {
+			try {
+				const searchResults = await onSearch(trimmedQuery);
+				if (isStaleResponse()) {
+					return;
+				}
+				if (filterSelected) {
+					const selectedIds = new Set(value.map((v) => v.id));
+					setResults(searchResults.filter((r) => !selectedIds.has(r.id)));
+				} else {
+					setResults(searchResults);
+				}
+			} catch {
+				if (isStaleResponse()) {
+					return;
+				}
+				setResults([]);
+			} finally {
+				if (!isStaleResponse()) {
+					setIsSearching(false);
+				}
+			}
+		}, debounceMs);
+
+		return () => {
+			if (debounceRef.current != null) {
+				clearTimeout(debounceRef.current);
+			}
+		};
+	}, [query, onSearch, debounceMs, filterSelected, value]);
+
+	// Cleanup on unmount
+	React.useEffect(() => {
+		return () => {
+			if (blurTimeoutRef.current != null) {
+				clearTimeout(blurTimeoutRef.current);
+			}
+		};
+	}, []);
 
 	return {
 		// State
@@ -321,10 +288,8 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 		getInputProps,
 		getPopupProps,
 		getItemProps
-	};
+	} as const;
 }
-
-// MARK: - Types
 
 export interface TMultiSelectItem {
 	id: string;
@@ -342,43 +307,7 @@ export interface TUseMultiSelectOptions<T extends TMultiSelectItem> {
 	minPopupHeight?: number;
 }
 
-export interface TUseMultiSelectReturn<T extends TMultiSelectItem> {
-	// State
-	showPopup: boolean;
-	query: string;
-	results: T[];
-	isSearching: boolean;
-	showEmpty: boolean;
-
-	// Actions
-	select: (item: T) => void;
-	remove: (id: string) => void;
-	clear: () => void;
-	close: () => void;
-
-	// Props getters
-	getRootProps: () => { open: boolean };
-	getContainerProps: () => {
-		ref: React.RefObject<HTMLDivElement | null>;
-		open: boolean;
-		onClick: () => void;
-		side: 'top' | 'bottom' | undefined;
-	};
-	getInputProps: () => {
-		ref: React.RefObject<HTMLInputElement | null>;
-		value: string;
-		onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-		onFocus: () => void;
-		onBlur: (e: React.FocusEvent) => void;
-		onKeyDown: (e: React.KeyboardEvent) => void;
-		'data-collapsed': true | undefined;
-	};
-	getPopupProps: () => {
-		ref: React.RefObject<HTMLDivElement | null>;
-		'data-popup': true;
-	};
-	getItemProps: (index: number) => {
-		'data-highlighted': true | undefined;
-		onMouseEnter: () => void;
-	};
-}
+/** Inferred return type of useMultiSelect */
+export type TUseMultiSelectReturn<T extends TMultiSelectItem> = ReturnType<
+	typeof useMultiSelect<T>
+>;

@@ -2,42 +2,51 @@ import { Popover } from '@base-ui/react/popover';
 import React from 'react';
 import { cn } from '@/lib';
 
-export const MultiSelectRoot: React.FC<TMultiSelectRootProps> = (props) => {
+const Root: React.FC<TMultiSelectRootProps> = (props) => {
 	const { open, children } = props;
 	return <Popover.Root open={open}>{children}</Popover.Root>;
 };
 
-export const MultiSelectContainer = React.forwardRef<HTMLDivElement, TMultiSelectContainerProps>(
-	(props, ref) => {
-		const { open, className, children, onClick, side } = props;
+export interface TMultiSelectRootProps {
+	open: boolean;
+	children: React.ReactNode;
+}
 
-		return (
-			<Popover.Trigger
-				// Note: Cast needed because Popover.Trigger types expect button, but we render div
-				ref={ref as unknown as React.RefObject<HTMLButtonElement>}
-				className={cn(open ? containerOpen : containerClosed, className)}
-				render={<div />}
-				onClick={onClick}
-				data-side={side}
-			>
-				{children}
-			</Popover.Trigger>
-		);
-	}
-);
-MultiSelectContainer.displayName = 'MultiSelectContainer';
+const Container = React.forwardRef<HTMLDivElement, TMultiSelectContainerProps>((props, ref) => {
+	const { open, className, children, onClick, side } = props;
 
-export const MultiSelectInput = React.forwardRef<HTMLInputElement, TMultiSelectInputProps>(
-	(props, ref) => {
-		const { className, ...rest } = props;
-		return <input ref={ref} type="text" className={cn(inputStyles, className)} {...rest} />;
-	}
-);
-MultiSelectInput.displayName = 'MultiSelectInput';
+	return (
+		<Popover.Trigger
+			// Cast needed: Popover.Trigger types expect HTMLButtonElement, but we render div
+			ref={ref as unknown as React.RefObject<HTMLButtonElement>}
+			className={cn(open ? containerOpen : containerClosed, className)}
+			render={<div />}
+			onClick={onClick}
+			data-side={side}
+		>
+			{children}
+		</Popover.Trigger>
+	);
+});
+Container.displayName = 'MultiSelect.Container';
 
-export const MultiSelectPortal = Popover.Portal;
+export interface TMultiSelectContainerProps {
+	open: boolean;
+	className?: string;
+	children: React.ReactNode;
+	onClick?: () => void;
+	side?: 'top' | 'bottom';
+}
 
-export const MultiSelectPositioner: React.FC<TMultiSelectPositionerProps> = (props) => {
+const Input = React.forwardRef<HTMLInputElement, TMultiSelectInputProps>((props, ref) => {
+	const { className, ...rest } = props;
+	return <input ref={ref} type="text" className={cn(inputStyles, className)} {...rest} />;
+});
+Input.displayName = 'MultiSelect.Input';
+
+export type TMultiSelectInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'>;
+
+const Positioner: React.FC<TMultiSelectPositionerProps> = (props) => {
 	const { children, sideOffset = 0, collisionPadding = 8 } = props;
 
 	return (
@@ -47,25 +56,29 @@ export const MultiSelectPositioner: React.FC<TMultiSelectPositionerProps> = (pro
 	);
 };
 
-export const MultiSelectPopup = React.forwardRef<HTMLDivElement, TMultiSelectPopupProps>(
-	(props, ref) => {
-		const { className, children } = props;
+export interface TMultiSelectPositionerProps {
+	children: React.ReactNode;
+	sideOffset?: number;
+	collisionPadding?: number;
+}
 
-		return (
-			<Popover.Popup
-				ref={ref}
-				className={cn(popupStyles, className)}
-				data-popup
-				initialFocus={false}
-			>
-				{children}
-			</Popover.Popup>
-		);
-	}
-);
-MultiSelectPopup.displayName = 'MultiSelectPopup';
+const Popup = React.forwardRef<HTMLDivElement, TMultiSelectPopupProps>((props, ref) => {
+	const { className, children } = props;
 
-export const MultiSelectHelperText: React.FC<TMultiSelectHelperTextProps> = (props) => {
+	return (
+		<Popover.Popup ref={ref} className={cn(popupStyles, className)} data-popup initialFocus={false}>
+			{children}
+		</Popover.Popup>
+	);
+});
+Popup.displayName = 'MultiSelect.Popup';
+
+export interface TMultiSelectPopupProps {
+	className?: string;
+	children: React.ReactNode;
+}
+
+const HelperText: React.FC<TMultiSelectHelperTextProps> = (props) => {
 	const { children, className } = props;
 
 	return (
@@ -81,20 +94,30 @@ export const MultiSelectHelperText: React.FC<TMultiSelectHelperTextProps> = (pro
 	);
 };
 
-export const MultiSelectEmpty: React.FC<TMultiSelectEmptyProps> = (props) => {
+export interface TMultiSelectHelperTextProps {
+	children: React.ReactNode;
+	className?: string;
+}
+
+const Empty: React.FC<TMultiSelectEmptyProps> = (props) => {
 	const { children, className } = props;
 	return <div className={cn('text-base-500 px-3 py-3 text-sm', className)}>{children}</div>;
 };
 
+export interface TMultiSelectEmptyProps {
+	children: React.ReactNode;
+	className?: string;
+}
+
 export const MultiSelect = {
-	Root: MultiSelectRoot,
-	Container: MultiSelectContainer,
-	Input: MultiSelectInput,
-	Portal: MultiSelectPortal,
-	Positioner: MultiSelectPositioner,
-	Popup: MultiSelectPopup,
-	HelperText: MultiSelectHelperText,
-	Empty: MultiSelectEmpty
+	Root,
+	Container,
+	Input,
+	Portal: Popover.Portal,
+	Positioner,
+	Popup,
+	HelperText,
+	Empty
 };
 
 // MARK: - Styles
@@ -136,41 +159,3 @@ const inputStyles = cn(
 	// Collapse when not focused and has items
 	'data-[collapsed]:min-w-0 data-[collapsed]:w-0 data-[collapsed]:p-0'
 );
-
-// MARK: - Types
-
-export interface TMultiSelectRootProps {
-	open: boolean;
-	children: React.ReactNode;
-}
-
-export interface TMultiSelectContainerProps {
-	open: boolean;
-	className?: string;
-	children: React.ReactNode;
-	onClick?: () => void;
-	side?: 'top' | 'bottom';
-}
-
-export type TMultiSelectInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'>;
-
-export interface TMultiSelectPositionerProps {
-	children: React.ReactNode;
-	sideOffset?: number;
-	collisionPadding?: number;
-}
-
-export interface TMultiSelectPopupProps {
-	className?: string;
-	children: React.ReactNode;
-}
-
-export interface TMultiSelectHelperTextProps {
-	children: React.ReactNode;
-	className?: string;
-}
-
-export interface TMultiSelectEmptyProps {
-	children: React.ReactNode;
-	className?: string;
-}
