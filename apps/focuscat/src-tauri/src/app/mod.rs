@@ -59,7 +59,7 @@ pub fn run() {
             permission::commands::open_input_monitoring_settings,
             // App search commands
             app_search::commands::search,
-            app_search::commands::refresh_apps_cache,
+            app_search::commands::refresh_search_cache,
         ])
         .events(collect_events![
             // Settings events

@@ -1,7 +1,4 @@
-use super::app::populate_icons;
-use super::matcher::fuzzy_match;
-use super::types::{AppSearchState, SearchResult, SearchableItem};
-use crate::common::url::{extract_domain, is_domain_like};
+use super::types::{AppSearchState, SearchResultDto};
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
@@ -11,7 +8,7 @@ use tauri::State;
 pub fn search(
     state: State<'_, AppSearchState>,
     input: SearchInput,
-) -> Result<Vec<SearchResult>, String> {
+) -> Result<Vec<SearchResultDto>, String> {
     let query = input.query.trim();
     let limit = input.limit.unwrap_or(20) as usize;
 
@@ -19,47 +16,20 @@ pub fn search(
         return Ok(Vec::new());
     }
 
-    let mut results: Vec<(SearchableItem, u32)> = Vec::new();
+    let mut search = state.lock().unwrap();
+    let matches = search.search(query, input.include_apps, input.include_websites, limit);
 
-    // Search apps
-    if input.include_apps {
-        let apps = state.get_apps();
-        for (item, score) in fuzzy_match(&apps, query) {
-            results.push((item.clone(), score));
-        }
-    }
-
-    // Search websites
-    if input.include_websites {
-        let websites = state.get_websites();
-        for (item, score) in fuzzy_match(&websites, query) {
-            results.push((item.clone(), score));
-        }
-
-        // Add custom domain if query looks like one
-        if is_domain_like(query) {
-            if let Some(domain) = extract_domain(query) {
-                if !results.iter().any(|(item, _)| item.id == domain) {
-                    results.push((SearchableItem::custom_domain(&domain), 100));
-                }
-            }
-        }
-    }
-
-    // Sort by score descending, take top N
-    results.sort_by(|a, b| b.1.cmp(&a.1));
-    let mut final_results: Vec<SearchResult> = results
+    // Convert to DTOs
+    let mut results: Vec<SearchResultDto> = matches
         .into_iter()
-        .take(limit)
-        .map(|(item, score)| item.into_result(score))
+        .map(|(item, score)| item.to_result(score))
         .collect();
 
-    // Add icons if requested
     if input.include_icons {
-        populate_icons(&mut final_results);
+        search.populate_icons(&mut results);
     }
 
-    return Ok(final_results);
+    return Ok(results);
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
@@ -96,10 +66,10 @@ fn default_true() -> bool {
     true
 }
 
-/// Refresh the cached apps list.
+/// Refresh the search cache (reloads apps from system).
 #[tauri::command]
 #[specta::specta]
-pub fn refresh_apps_cache(state: State<'_, AppSearchState>) -> Result<(), String> {
-    state.refresh_apps();
+pub fn refresh_search_cache(state: State<'_, AppSearchState>) -> Result<(), String> {
+    state.lock().unwrap().refresh();
     return Ok(());
 }

@@ -1,13 +1,10 @@
-use super::app::load_apps_from_system;
-use super::website::WebsiteConfig;
+use super::search::AppSearch;
 use serde::{Deserialize, Serialize};
-use std::sync::RwLock;
-use tauri::App;
+use std::{ops::Deref, sync::Mutex};
 
-/// Search result item.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
-pub struct SearchResult {
+pub struct SearchResultDto {
     /// Unique identifier - bundleId for apps, domain for websites
     pub id: String,
     /// Display name
@@ -22,7 +19,6 @@ pub struct SearchResult {
     pub score: u32,
 }
 
-/// Type of search result.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum ItemType {
@@ -30,14 +26,11 @@ pub enum ItemType {
     Website,
 }
 
-/// Searchable item (internal use).
 #[derive(Debug, Clone)]
 pub struct SearchableItem {
     pub id: String,
     pub name: String,
     pub item_type: ItemType,
-    pub icon: Option<String>,
-    pub color: Option<String>,
     pub keywords: Vec<String>,
 }
 
@@ -48,20 +41,18 @@ impl SearchableItem {
             id: domain.to_string(),
             name: domain.to_string(),
             item_type: ItemType::Website,
-            icon: None,
-            color: None,
             keywords: vec![domain.to_string()],
         };
     }
 
-    /// Convert to SearchResult with score.
-    pub fn into_result(self, score: u32) -> SearchResult {
-        return SearchResult {
-            id: self.id,
-            name: self.name,
+    /// Convert to SearchResultDto with score.
+    pub fn to_result(&self, score: u32) -> SearchResultDto {
+        return SearchResultDto {
+            id: self.id.clone(),
+            name: self.name.clone(),
             item_type: self.item_type,
-            icon: self.icon,
-            color: self.color,
+            icon: None,
+            color: None,
             score,
         };
     }
@@ -69,47 +60,18 @@ impl SearchableItem {
 
 // MARK: - State
 
-pub struct AppSearchState(RwLock<AppSearchCache>);
-
-struct AppSearchCache {
-    apps: Option<Vec<SearchableItem>>,
-    websites: Vec<SearchableItem>,
-}
+pub struct AppSearchState(Mutex<AppSearch>);
 
 impl AppSearchState {
-    pub fn init(_app: &App) -> Self {
-        return Self(RwLock::new(AppSearchCache {
-            apps: None,
-            websites: WebsiteConfig::websites(),
-        }));
+    pub fn init() -> Self {
+        return Self(Mutex::new(AppSearch::new()));
     }
+}
 
-    /// Get cached apps or load them from system.
-    pub fn get_apps(&self) -> Vec<SearchableItem> {
-        {
-            let cache = self.0.read().unwrap();
-            if let Some(ref apps) = cache.apps {
-                return apps.clone();
-            }
-        }
+impl Deref for AppSearchState {
+    type Target = Mutex<AppSearch>;
 
-        let apps = load_apps_from_system();
-        let mut cache = self.0.write().unwrap();
-        cache.apps = Some(apps.clone());
-
-        return apps;
-    }
-
-    /// Refresh the apps cache.
-    pub fn refresh_apps(&self) {
-        let apps = load_apps_from_system();
-        let mut cache = self.0.write().unwrap();
-        cache.apps = Some(apps);
-    }
-
-    /// Get websites (always cached).
-    pub fn get_websites(&self) -> Vec<SearchableItem> {
-        let cache = self.0.read().unwrap();
-        return cache.websites.clone();
+    fn deref(&self) -> &Self::Target {
+        return &self.0;
     }
 }

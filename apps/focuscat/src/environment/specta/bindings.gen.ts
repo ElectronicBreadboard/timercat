@@ -241,7 +241,7 @@ async openInputMonitoringSettings() : Promise<void> {
 /**
  * Search for apps and websites.
  */
-async search(input: SearchInput) : Promise<Result<SearchResult[], string>> {
+async search(input: SearchInput) : Promise<Result<SearchResultDto[], string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("search", { input }) };
 } catch (e) {
@@ -250,11 +250,11 @@ async search(input: SearchInput) : Promise<Result<SearchResult[], string>> {
 }
 },
 /**
- * Refresh the cached apps list.
+ * Refresh the search cache (reloads apps from system).
  */
-async refreshAppsCache() : Promise<Result<null, string>> {
+async refreshSearchCache() : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("refresh_apps_cache") };
+    return { status: "ok", data: await TAURI_INVOKE("refresh_search_cache") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -315,9 +315,6 @@ export type InputDetectedEvent = InputType
  * Type of input event detected.
  */
 export type InputType = "keyboard" | "mouse"
-/**
- * Type of search result.
- */
 export type ItemType = "app" | "website"
 export type Phase = "work" | "shortBreak" | "longBreak"
 export type SearchInput = { 
@@ -341,10 +338,7 @@ includeIcons?: boolean;
  * Maximum results (default: 20)
  */
 limit: number | null }
-/**
- * Search result item.
- */
-export type SearchResult = { 
+export type SearchResultDto = { 
 /**
  * Unique identifier - bundleId for apps, domain for websites
  */
