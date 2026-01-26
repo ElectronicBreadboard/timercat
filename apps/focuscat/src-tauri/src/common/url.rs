@@ -30,8 +30,13 @@ pub fn is_domain_like(input: &str) -> bool {
     if input.starts_with("localhost") {
         return true;
     }
+
+    // Must contain a dot, no spaces, and have a valid TLD
     if input.contains('.') && !input.contains(' ') {
-        return true;
+        if let Some(tld) = input.split('.').last() {
+            // TLD must be 2+ chars and only letters (e.g., "com", "org", "co")
+            return tld.len() >= 2 && tld.chars().all(|c| c.is_ascii_alphabetic());
+        }
     }
 
     return false;
@@ -71,13 +76,20 @@ mod tests {
 
     #[test]
     fn test_is_domain_like() {
+        // Valid domains
         assert!(is_domain_like("google.com"));
+        assert!(is_domain_like("test.co.uk"));
+        assert!(is_domain_like("sub.domain.org"));
         assert!(is_domain_like("https://google.com"));
         assert!(is_domain_like("http://google.com/path"));
         assert!(is_domain_like("localhost"));
         assert!(is_domain_like("localhost:3000"));
 
+        // Invalid - no TLD or invalid TLD
         assert!(!is_domain_like("google"));
+        assert!(!is_domain_like("test."));
+        assert!(!is_domain_like("test.1"));
+        assert!(!is_domain_like("test.a"));
         assert!(!is_domain_like("hello world.com"));
     }
 }
