@@ -80,11 +80,12 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 								<MultiSelect.Empty>No results for "{multiSelect.query}"</MultiSelect.Empty>
 							)}
 
-						{multiSelect.results.map((result) => (
+						{multiSelect.results.map((result, index) => (
 							<ResultItem
 								key={result.id}
 								result={result}
 								onSelect={() => multiSelect.select(result)}
+								{...multiSelect.getItemProps(index)}
 							/>
 						))}
 					</MultiSelect.Popup>
@@ -125,20 +126,28 @@ const Chip: React.FC<{ item: TSelectedItem; onRemove: () => void }> = ({ item, o
 	);
 };
 
-const ResultItem: React.FC<{ result: TSelectedItem; onSelect: () => void }> = ({
-	result,
-	onSelect
-}) => {
+interface TResultItemProps {
+	result: TSelectedItem;
+	onSelect: () => void;
+	'data-highlighted'?: true;
+	onMouseEnter?: () => void;
+}
+
+const ResultItem: React.FC<TResultItemProps> = (props) => {
+	const { result, onSelect, 'data-highlighted': highlighted, onMouseEnter } = props;
 	const isApp = result.itemType === 'app';
 
 	return (
 		<div
 			className={cn(
 				'flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm',
-				isApp ? 'hover:bg-blue-50' : 'hover:bg-violet-50'
+				isApp ? 'hover:bg-blue-50' : 'hover:bg-violet-50',
+				highlighted && (isApp ? 'bg-blue-50' : 'bg-violet-50')
 			)}
 			onClick={onSelect}
 			onMouseDown={(e) => e.preventDefault()}
+			onMouseEnter={onMouseEnter}
+			data-highlighted={highlighted}
 		>
 			<ItemIcon icon={result.icon} itemType={result.itemType} />
 			<span className="flex-1 truncate">{result.name}</span>

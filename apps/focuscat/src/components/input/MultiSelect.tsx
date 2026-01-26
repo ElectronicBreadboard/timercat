@@ -95,7 +95,7 @@ export const MultiSelect = {
 // MARK: - Styles
 
 const baseContainer = cn(
-	'flex flex-wrap items-center gap-1.5 min-h-10 px-2.5 py-1.5',
+	'flex flex-wrap content-start items-center gap-1.5 min-h-10 px-2.5 py-1.5',
 	'bg-base-50 cursor-text overflow-hidden outline-none',
 	'border-y border-transparent' // Consistent height across states
 );
@@ -127,7 +127,9 @@ const popupStyles = cn(
 
 const inputStyles = cn(
 	'min-w-20 flex-1 border-none bg-transparent py-0.5 text-sm',
-	'shadow-none ring-0 outline-none placeholder:text-base-400'
+	'shadow-none ring-0 outline-none placeholder:text-base-400',
+	// Collapse when not focused and has items
+	'data-[collapsed]:min-w-0 data-[collapsed]:w-0 data-[collapsed]:p-0'
 );
 
 // MARK: - Types

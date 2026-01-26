@@ -13,6 +13,7 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 	const [results, setResults] = React.useState<T[]>([]);
 	const [isSearching, setIsSearching] = React.useState(false);
 	const [side, setSide] = React.useState<'top' | 'bottom'>('bottom');
+	const [highlightedIndex, setHighlightedIndex] = React.useState(0);
 
 	// Refs
 	const inputRef = React.useRef<HTMLInputElement | null>(null);
@@ -29,6 +30,7 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 			onChange([...value, item]);
 			setQuery('');
 			setResults([]);
+			setHighlightedIndex(0);
 			inputRef.current?.focus();
 		},
 		[value, onChange]
@@ -70,15 +72,48 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 
 	const handleInputKeyDown = React.useCallback(
 		(e: React.KeyboardEvent) => {
-			if (e.key === 'Backspace' && query === '' && value.length > 0) {
-				onChange(value.slice(0, -1));
-			}
-			if (e.key === 'Escape') {
-				setIsOpen(false);
-				inputRef.current?.blur();
+			// Flip direction when popup is on top (visually reversed)
+			const isReversed = side === 'top';
+
+			switch (e.key) {
+				case 'ArrowDown':
+					e.preventDefault();
+					if (results.length > 0) {
+						setHighlightedIndex((prev) =>
+							isReversed
+								? (prev - 1 + results.length) % results.length
+								: (prev + 1) % results.length
+						);
+					}
+					break;
+				case 'ArrowUp':
+					e.preventDefault();
+					if (results.length > 0) {
+						setHighlightedIndex((prev) =>
+							isReversed
+								? (prev + 1) % results.length
+								: (prev - 1 + results.length) % results.length
+						);
+					}
+					break;
+				case 'Enter':
+					e.preventDefault();
+					if (results.length > 0 && highlightedIndex < results.length) {
+						select(results[highlightedIndex]!);
+					}
+					break;
+				case 'Escape':
+					setIsOpen(false);
+					inputRef.current?.blur();
+					break;
+				case 'Backspace':
+					if (query === '' && value.length > 0) {
+						onChange(value.slice(0, -1));
+					}
+					break;
 			}
 		},
-		[query, value, onChange]
+		[query, value, onChange, results, highlightedIndex, select, side]
 	);
 
 	const handleQueryChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,8 +127,14 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 		if (!isOpen) {
 			setQuery('');
 			setResults([]);
+			setHighlightedIndex(0);
 		}
 	}, [isOpen]);
+
+	// Reset highlight when results change
+	React.useEffect(() => {
+		setHighlightedIndex(0);
+	}, [results]);
 
 	// Debounced search
 	React.useEffect(() => {
@@ -179,6 +220,9 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 		[handleContainerClick, showPopup, side]
 	);
 
+	// Collapse input when not focused and has selected items
+	const inputCollapsed = !isOpen && value.length > 0;
+
 	const getInputProps = React.useCallback(
 		() => ({
 			ref: inputRef,
@@ -187,9 +231,10 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 			onChange: handleQueryChange,
 			onFocus: handleInputFocus,
 			onBlur: handleInputBlur,
-			onKeyDown: handleInputKeyDown
+			onKeyDown: handleInputKeyDown,
+			'data-collapsed': (inputCollapsed ? true : undefined) as true | undefined
 		}),
-		[query, handleQueryChange, handleInputFocus, handleInputBlur, handleInputKeyDown]
+		[query, handleQueryChange, handleInputFocus, handleInputBlur, handleInputKeyDown, inputCollapsed]
 	);
 
 	const getPopupProps = React.useCallback(
@@ -200,6 +245,14 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 		[]
 	);
 
+	const getItemProps = React.useCallback(
+		(index: number) => ({
+			'data-highlighted': (index === highlightedIndex ? true : undefined) as true | undefined,
+			onMouseEnter: () => setHighlightedIndex(index)
+		}),
+		[highlightedIndex]
+	);
+
 	return {
 		// State
 		isOpen,
@@ -207,6 +260,7 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 		results,
 		isSearching,
 		side,
+		highlightedIndex,
 
 		// Refs
 		inputRef,
@@ -223,6 +277,7 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 		getContainerProps,
 		getInputProps,
 		getPopupProps,
+		getItemProps,
 
 		// Computed
 		showPopup
@@ -255,6 +310,7 @@ export interface TUseMultiSelectReturn<T extends TMultiSelectItem> {
 	results: T[];
 	isSearching: boolean;
 	side: 'top' | 'bottom';
+	highlightedIndex: number;
 
 	// Refs
 	inputRef: React.RefObject<HTMLInputElement | null>;
@@ -280,10 +336,15 @@ export interface TUseMultiSelectReturn<T extends TMultiSelectItem> {
 		onFocus: () => void;
 		onBlur: (e: React.FocusEvent) => void;
 		onKeyDown: (e: React.KeyboardEvent) => void;
+		'data-collapsed': true | undefined;
 	};
 	getPopupProps: () => {
 		ref: React.RefObject<HTMLDivElement | null>;
 		'data-popup': true;
+	};
+	getItemProps: (index: number) => {
+		'data-highlighted': true | undefined;
+		onMouseEnter: () => void;
 	};
 
 	// Computed
