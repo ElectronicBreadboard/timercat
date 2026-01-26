@@ -10,5 +10,9 @@ Review my staged and unstaged changes before committing:
    - What's good
    - Any concerns or suggestions
    - Ready to commit? (yes/no with reason)
+5. Suggest a commit message:
+   - Extract issue number from branch name (e.g., `3-focuscat-poc` → `#3`)
+   - Format: `#<issue> <short description>`
+   - Keep it concise (50 chars or less)
 
 Keep the review concise and actionable.

@@ -174,10 +174,10 @@ if let Some(color) = &icon.color {
 
 **Config options:**
 
-| Option          | Default | Description                                    |
-| --------------- | ------- | ---------------------------------------------- |
-| `include_icon`  | `false` | Extract icons as base64 PNG and dominant color |
-| `icon_size`     | `32`    | Icon size in pixels                            |
+| Option         | Default | Description                                    |
+| -------------- | ------- | ---------------------------------------------- |
+| `include_icon` | `false` | Extract icons as base64 PNG and dominant color |
+| `icon_size`    | `32`    | Icon size in pixels                            |
 
 ## 📐 Architecture
 

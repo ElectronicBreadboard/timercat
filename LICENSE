@@ -10,7 +10,7 @@ Copyright (c) 2025 @bennobuilder
      * If "src/file.js" contains an explicit GPL header but "src/LICENSE" specifies MIT, then that specific file follows GPL licensing.
 
 3. THIRD-PARTY COMPONENTS
-   * All third-party components incorporated into the Saku Software remain under their original licenses as provided by their respective owners or contributors.
+   * All third-party components incorporated into the Software remain under their original licenses as provided by their respective owners or contributors.
 
 4. MODIFICATIONS AND CONTRIBUTIONS
    * Contributions to this project imply acceptance of these licensing terms.

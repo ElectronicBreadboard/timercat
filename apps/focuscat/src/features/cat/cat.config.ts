@@ -31,5 +31,5 @@ export const catConfig = {
 };
 
 function getCatPath(category: string, name: string): string {
-	return `/cat/${category}/${category}_${name}.svg`;
+	return `/illustrations/cat/${category}/${category}_${name}.svg`;
 }
