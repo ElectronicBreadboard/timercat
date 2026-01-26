@@ -30,79 +30,110 @@ export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 		}
 	);
 
-	// Left button: Cancel when paused, Finish when in overtime
-	const leftButton = React.useMemo((): TIconButton | null => {
+	const { left, center, right } = React.useMemo(() => {
+		const isBreak = phase === 'shortBreak' || phase === 'longBreak';
+		const skip = isBreak ? 'work' : 'break';
+
 		if (status === 'idle') {
-			return null;
+			return { center: 'start' };
 		}
 		if (isOvertime) {
-			return { icon: <CheckIcon size={18} />, onClick: () => cx.finish(), visible: true };
+			return { left: 'done', center: skip, right: status === 'running' ? 'pause' : 'resume' };
 		}
-		if (status === 'paused') {
-			return { icon: <XIcon size={18} />, onClick: () => cx.reset(), visible: true };
+		if (status === 'running') {
+			return { center: 'pause' };
 		}
-		return { icon: <XIcon size={18} />, onClick: () => cx.reset(), visible: false };
-	}, [status, isOvertime, cx]);
+		return { left: 'cancel', center: 'resume', right: skip };
+	}, [status, phase, isOvertime]) as TButtonConfig;
 
-	// Center button: Start or Skip
-	const centerButton = React.useMemo((): { label: React.ReactNode; onClick: () => void } => {
-		if (status === 'idle') {
-			return { label: 'START SESSION', onClick: () => cx.start() };
-		}
-		switch (phase) {
-			case 'work':
-				return { label: <CoffeeIcon size={20} />, onClick: () => cx.skip() };
-			case 'shortBreak':
-			case 'longBreak':
-				return { label: <BriefcaseIcon size={20} />, onClick: () => cx.skip() };
-		}
-	}, [status, phase, cx]);
+	const handleClick = React.useCallback(
+		(action: TAction) => {
+			switch (action) {
+				case 'start':
+					cx.start();
+					break;
+				case 'pause':
+					cx.pause();
+					break;
+				case 'resume':
+					cx.resume();
+					break;
+				case 'break':
+				case 'work':
+					cx.skip();
+					break;
+				case 'done':
+					cx.finish();
+					break;
+				case 'cancel':
+					cx.reset();
+					break;
+			}
+		},
+		[cx]
+	);
 
-	// Right button: Pause/Resume toggle
-	const rightButton = React.useMemo((): TIconButton | null => {
-		switch (status) {
-			case 'idle':
+	const icon = (action: TAction, size: number): React.ReactNode => {
+		switch (action) {
+			case 'start':
 				return null;
-			case 'running':
-				return { icon: <PauseIcon size={18} />, onClick: () => cx.pause(), visible: true };
-			case 'paused':
-				return { icon: <PlayIcon size={18} />, onClick: () => cx.resume(), visible: true };
+			case 'pause':
+				return <PauseIcon size={size} />;
+			case 'resume':
+				return <PlayIcon size={size} />;
+			case 'break':
+				return <CoffeeIcon size={size} />;
+			case 'work':
+				return <BriefcaseIcon size={size} />;
+			case 'done':
+				return <CheckIcon size={size} />;
+			case 'cancel':
+				return <XIcon size={size} />;
 		}
-	}, [status, cx]);
+	};
+
+	// MARK: - UI
 
 	return (
 		<div className={cn('relative flex items-center justify-center', className)}>
 			{/* Left button */}
-			{leftButton != null && (
+			{left != null && (
 				<IconButton
 					variant="default"
-					onClick={leftButton.onClick}
-					className={cn(
-						'absolute right-full mr-3 size-11 rounded-full',
-						!leftButton.visible && 'pointer-events-none opacity-0'
-					)}
+					onClick={() => handleClick(left)}
+					className="absolute right-full mr-3 size-11 rounded-full"
 				>
-					{leftButton.icon}
+					{icon(left, 18)}
 				</IconButton>
 			)}
 
 			{/* Center button */}
-			<Button
-				variant="primary"
-				onClick={centerButton.onClick}
-				className="h-12 rounded-full px-8 text-sm font-semibold"
-			>
-				{centerButton.label}
-			</Button>
+			{center === 'start' ? (
+				<Button
+					variant="primary"
+					onClick={() => handleClick(center)}
+					className="h-12 rounded-full px-8 text-sm font-semibold"
+				>
+					START SESSION
+				</Button>
+			) : (
+				<IconButton
+					variant="primary"
+					onClick={() => handleClick(center)}
+					className="size-14 rounded-full"
+				>
+					{icon(center, 24)}
+				</IconButton>
+			)}
 
 			{/* Right button */}
-			{rightButton != null && (
+			{right != null && (
 				<IconButton
 					variant="default"
-					onClick={rightButton.onClick}
+					onClick={() => handleClick(right)}
 					className="absolute left-full ml-3 size-11 rounded-full"
 				>
-					{rightButton.icon}
+					{icon(right, 18)}
 				</IconButton>
 			)}
 		</div>
@@ -114,8 +145,10 @@ interface TTimerActionsProps {
 	className?: string;
 }
 
-interface TIconButton {
-	icon: React.ReactNode;
-	onClick: () => void;
-	visible: boolean;
+type TAction = 'start' | 'pause' | 'resume' | 'break' | 'work' | 'done' | 'cancel';
+
+interface TButtonConfig {
+	left?: TAction;
+	center: TAction;
+	right?: TAction;
 }
