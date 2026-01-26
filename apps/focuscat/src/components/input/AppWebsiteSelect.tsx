@@ -1,40 +1,8 @@
-import { Popover } from '@base-ui/react/popover';
 import React from 'react';
 import { specta } from '@/environment';
 import { cn, toTuple } from '@/lib';
-
-// MARK: - Styles
-
-const baseContainerStyles =
-	'flex flex-wrap items-center gap-1.5 min-h-10 p-2 bg-base-100 cursor-text overflow-hidden outline-none';
-
-const containerClosedStyles = cn(
-	baseContainerStyles,
-	'rounded-md ring-2 ring-base-200 focus-within:ring-primary'
-);
-
-// clip-path: inset(top right bottom left) - negative values extend beyond element to show ring
-const containerOpenStyles = cn(
-	baseContainerStyles,
-	'ring-2 ring-primary',
-	// Bottom position (default)
-	'rounded-t-md rounded-b-none border-b border-base-200 [clip-path:inset(-2px_-2px_0_-2px)]',
-	// Top position
-	'data-[side=top]:rounded-b-md data-[side=top]:rounded-t-none',
-	'data-[side=top]:border-b-0 data-[side=top]:border-t',
-	'data-[side=top]:[clip-path:inset(0_-2px_-2px_-2px)]'
-);
-
-const popupStyles = cn(
-	'w-[var(--anchor-width)] max-h-64 overflow-y-auto bg-white ring-2 ring-primary outline-none',
-	'group flex flex-col',
-	// Bottom position (default)
-	'rounded-b-md rounded-t-none [clip-path:inset(0_-2px_-2px_-2px)]',
-	// Top position
-	'data-[side=top]:flex-col-reverse',
-	'data-[side=top]:rounded-t-md data-[side=top]:rounded-b-none',
-	'data-[side=top]:[clip-path:inset(-2px_-2px_0_-2px)]'
-);
+import { MultiSelect } from './MultiSelect';
+import { useMultiSelect } from './use-multi-select';
 
 // MARK: - Component
 
@@ -52,95 +20,11 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 		className
 	} = props;
 
-	const [open, setOpen] = React.useState(false);
-	const [query, setQuery] = React.useState('');
-	const [results, setResults] = React.useState<specta.SearchResultDto[]>([]);
-	const [isSearching, setIsSearching] = React.useState(false);
-	const [side, setSide] = React.useState<'top' | 'bottom'>('bottom');
-
-	const inputRef = React.useRef<HTMLInputElement>(null);
-	const popupRef = React.useRef<HTMLDivElement>(null);
-	const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-	const showDropdown = open && (query.trim() !== '' || isSearching);
-
-	// MARK: - Actions
-
-	const handleSelect = React.useCallback(
-		(result: specta.SearchResultDto) => {
-			onChange([
-				...value,
-				{ id: result.id, name: result.name, itemType: result.itemType, icon: result.icon }
-			]);
-			setQuery('');
-			setResults([]);
-			inputRef.current?.focus();
-		},
-		[value, onChange]
-	);
-
-	const handleRemove = React.useCallback(
-		(id: string) => {
-			onChange(value.filter((item) => item.id !== id));
-			inputRef.current?.focus();
-		},
-		[value, onChange]
-	);
-
-	const handleContainerClick = React.useCallback(() => {
-		inputRef.current?.focus();
-	}, []);
-
-	const handleInputFocus = React.useCallback(() => {
-		setOpen(true);
-	}, []);
-
-	const handleInputBlur = React.useCallback((e: React.FocusEvent) => {
-		if ((e.relatedTarget as HTMLElement | null)?.closest('[data-popup]')) {
-			return;
-		}
-		setTimeout(() => setOpen(false), 150);
-	}, []);
-
-	const handleInputKeyDown = React.useCallback(
-		(e: React.KeyboardEvent) => {
-			if (e.key === 'Backspace' && query === '' && value.length > 0) {
-				onChange(value.slice(0, -1));
-			}
-			if (e.key === 'Escape') {
-				setOpen(false);
-				inputRef.current?.blur();
-			}
-		},
-		[query, value, onChange]
-	);
-
-	// MARK: - Effects
-
-	React.useEffect(() => {
-		if (!open) {
-			setQuery('');
-			setResults([]);
-		}
-	}, [open]);
-
-	// Debounced search
-	React.useEffect(() => {
-		if (debounceRef.current != null) {
-			clearTimeout(debounceRef.current);
-		}
-
-		if (query.trim() === '') {
-			setResults([]);
-			setIsSearching(false);
-			return;
-		}
-
-		setIsSearching(true);
-		debounceRef.current = setTimeout(async () => {
+	const handleSearch = React.useCallback(
+		async (query: string): Promise<TSelectedItem[]> => {
 			const [ok, , data] = toTuple(
 				await specta.commands.search({
-					query: query.trim(),
+					query,
 					includeApps,
 					includeWebsites,
 					includeIcons: true,
@@ -149,104 +33,64 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 			);
 
 			if (ok && data != null) {
-				const selectedIds = new Set(value.map((v) => v.id));
-				setResults(data.filter((r) => !selectedIds.has(r.id)));
+				return data.map((r) => ({
+					id: r.id,
+					name: r.name,
+					itemType: r.itemType,
+					icon: r.icon
+				}));
 			}
-			setIsSearching(false);
-		}, 200);
+			return [];
+		},
+		[includeApps, includeWebsites]
+	);
 
-		return () => {
-			if (debounceRef.current != null) {
-				clearTimeout(debounceRef.current);
-			}
-		};
-	}, [query, includeApps, includeWebsites, value]);
-
-	// Sync popup position to container for seamless styling
-	React.useLayoutEffect(() => {
-		if (!showDropdown) {
-			setSide('bottom');
-			return;
-		}
-
-		let frameId: number;
-		let observer: MutationObserver | null = null;
-
-		const updateSide = () => {
-			const el = popupRef.current;
-			if (el == null) {
-				frameId = requestAnimationFrame(updateSide);
-				return;
-			}
-
-			const dataSide = el.getAttribute('data-side') as 'top' | 'bottom' | null;
-			if (dataSide != null) {
-				setSide(dataSide);
-			}
-
-			if (observer == null) {
-				observer = new MutationObserver(() => {
-					const newSide = el.getAttribute('data-side') as 'top' | 'bottom' | null;
-					if (newSide != null) {
-						setSide(newSide);
-					}
-				});
-				observer.observe(el, { attributes: true, attributeFilter: ['data-side'] });
-			}
-		};
-
-		frameId = requestAnimationFrame(updateSide);
-
-		return () => {
-			cancelAnimationFrame(frameId);
-			observer?.disconnect();
-		};
-	}, [showDropdown]);
-
-	// MARK: - UI
+	const multiSelect = useMultiSelect({
+		value,
+		onChange,
+		onSearch: handleSearch
+	});
 
 	return (
-		<Popover.Root open={showDropdown}>
-			<Popover.Trigger
-				className={cn(showDropdown ? containerOpenStyles : containerClosedStyles, className)}
-				onClick={handleContainerClick}
-				render={<div />}
-				data-side={showDropdown ? side : undefined}
+		<MultiSelect.Root open={multiSelect.showPopup}>
+			<MultiSelect.Container
+				open={multiSelect.showPopup}
+				className={className}
+				{...multiSelect.getContainerProps()}
 			>
 				{value.map((item) => (
-					<Chip key={item.id} item={item} onRemove={() => handleRemove(item.id)} />
+					<Chip key={item.id} item={item} onRemove={() => multiSelect.remove(item.id)} />
 				))}
-				<input
-					ref={inputRef}
-					type="text"
-					value={query}
-					onChange={(e) => setQuery(e.target.value)}
-					onFocus={handleInputFocus}
-					onBlur={handleInputBlur}
-					onKeyDown={handleInputKeyDown}
+				<MultiSelect.Input
+					{...multiSelect.getInputProps()}
 					placeholder={value.length === 0 ? placeholder : ''}
-					className="min-w-20 flex-1 border-none bg-transparent py-0.5 text-sm shadow-none ring-0 outline-none placeholder:text-base-400"
 				/>
-			</Popover.Trigger>
+			</MultiSelect.Container>
 
-			<Popover.Portal>
-				<Popover.Positioner side="bottom" sideOffset={0} collisionPadding={8}>
-					<Popover.Popup ref={popupRef} className={popupStyles} data-popup initialFocus={false}>
-						<div className="border-b border-base-100 px-3 py-2 text-xs text-base-500 group-data-[side=top]:border-t group-data-[side=top]:border-b-0">
-							{isSearching ? 'Searching...' : 'Select an app or website'}
-						</div>
+			<MultiSelect.Portal>
+				<MultiSelect.Positioner>
+					<MultiSelect.Popup {...multiSelect.getPopupProps()}>
+						<MultiSelect.HelperText>
+							{multiSelect.isSearching ? 'Searching...' : 'Select an app or website'}
+						</MultiSelect.HelperText>
 
-						{!isSearching && results.length === 0 && query.trim() !== '' && (
-							<div className="px-3 py-3 text-sm text-base-500">No results for "{query}"</div>
-						)}
+						{!multiSelect.isSearching &&
+							multiSelect.results.length === 0 &&
+							multiSelect.query.trim() !== '' && (
+								<MultiSelect.Empty>No results for "{multiSelect.query}"</MultiSelect.Empty>
+							)}
 
-						{results.map((result) => (
-							<ResultItem key={result.id} result={result} onSelect={() => handleSelect(result)} />
+						{multiSelect.results.map((result) => (
+							<ResultItem
+								key={result.id}
+								result={result}
+								onSelect={() => multiSelect.select(result)}
+							/>
 						))}
-					</Popover.Popup>
-				</Popover.Positioner>
-			</Popover.Portal>
-		</Popover.Root>
+					</MultiSelect.Popup>
+				</MultiSelect.Positioner>
+			</MultiSelect.Portal>
+		</MultiSelect.Root>
 	);
 };
 
@@ -281,7 +125,7 @@ const Chip: React.FC<{ item: TSelectedItem; onRemove: () => void }> = ({ item, o
 	);
 };
 
-const ResultItem: React.FC<{ result: specta.SearchResultDto; onSelect: () => void }> = ({
+const ResultItem: React.FC<{ result: TSelectedItem; onSelect: () => void }> = ({
 	result,
 	onSelect
 }) => {
