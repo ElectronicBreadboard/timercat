@@ -118,7 +118,7 @@ const containerOpen = cn(
 );
 
 const popupStyles = cn(
-	'w-[var(--anchor-width)] max-h-64 overflow-y-auto bg-white ring-2 ring-primary outline-none',
+	'w-[var(--anchor-width)] overflow-y-auto bg-white ring-2 ring-primary outline-none',
 	'group flex flex-col rounded-b-md [clip-path:inset(0_-2px_-2px_-2px)]',
 	// Top
 	'data-[side=top]:flex-col-reverse data-[side=top]:rounded-t-md data-[side=top]:rounded-b-none',

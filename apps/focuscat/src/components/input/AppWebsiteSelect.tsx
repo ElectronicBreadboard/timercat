@@ -52,12 +52,8 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 	});
 
 	return (
-		<MultiSelect.Root open={multiSelect.showPopup}>
-			<MultiSelect.Container
-				open={multiSelect.showPopup}
-				className={className}
-				{...multiSelect.getContainerProps()}
-			>
+		<MultiSelect.Root {...multiSelect.getRootProps()}>
+			<MultiSelect.Container className={className} {...multiSelect.getContainerProps()}>
 				{value.map((item) => (
 					<Chip key={item.id} item={item} onRemove={() => multiSelect.remove(item.id)} />
 				))}
@@ -74,11 +70,9 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 							{multiSelect.isSearching ? 'Searching...' : 'Select an app or website'}
 						</MultiSelect.HelperText>
 
-						{!multiSelect.isSearching &&
-							multiSelect.results.length === 0 &&
-							multiSelect.query.trim() !== '' && (
-								<MultiSelect.Empty>No results for "{multiSelect.query}"</MultiSelect.Empty>
-							)}
+						{multiSelect.showEmpty && (
+							<MultiSelect.Empty>No results for "{multiSelect.query}"</MultiSelect.Empty>
+						)}
 
 						{multiSelect.results.map((result, index) => (
 							<ResultItem
