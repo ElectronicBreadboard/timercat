@@ -1,8 +1,7 @@
 import React from 'react';
 import { specta } from '@/environment';
 import { cn, toTuple } from '@/lib';
-import { MultiSelect } from './MultiSelect';
-import { useMultiSelect } from './use-multi-select';
+import { MultiSelect, useMultiSelect } from './MultiSelect';
 
 // MARK: - Component
 
@@ -97,8 +96,10 @@ const Chip: React.FC<{ item: TSelectedItem; onRemove: () => void }> = ({ item, o
 	return (
 		<span
 			className={cn(
-				'inline-flex items-center gap-1.5 rounded-md py-0.5 pl-1.5 pr-1 text-sm',
-				isApp ? 'bg-blue-100 text-blue-800' : 'bg-violet-100 text-violet-800'
+				'inline-flex items-center gap-1.5 rounded-md py-0.5 pr-1 pl-1.5 text-sm',
+				isApp
+					? 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
+					: 'bg-violet-500/20 text-violet-700 dark:text-violet-300'
 			)}
 		>
 			<ItemIcon icon={item.icon} itemType={item.itemType} size={16} />
@@ -113,7 +114,12 @@ const Chip: React.FC<{ item: TSelectedItem; onRemove: () => void }> = ({ item, o
 				onMouseDown={(e) => e.preventDefault()}
 			>
 				<svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-					<path d="M2 2L8 8M8 2L2 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+					<path
+						d="M2 2L8 8M8 2L2 8"
+						stroke="currentColor"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+					/>
 				</svg>
 			</button>
 		</span>
@@ -121,10 +127,10 @@ const Chip: React.FC<{ item: TSelectedItem; onRemove: () => void }> = ({ item, o
 };
 
 interface TResultItemProps {
-	result: TSelectedItem;
-	onSelect: () => void;
+	'result': TSelectedItem;
+	'onSelect': () => void;
 	'data-highlighted'?: true;
-	onMouseEnter?: () => void;
+	'onMouseEnter'?: () => void;
 }
 
 const ResultItem: React.FC<TResultItemProps> = (props) => {
@@ -134,9 +140,9 @@ const ResultItem: React.FC<TResultItemProps> = (props) => {
 	return (
 		<div
 			className={cn(
-				'flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm',
-				isApp ? 'hover:bg-blue-50' : 'hover:bg-violet-50',
-				highlighted && (isApp ? 'bg-blue-50' : 'bg-violet-50')
+				'flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-(--color-base-900)',
+				isApp ? 'hover:bg-blue-500/10' : 'hover:bg-violet-500/10',
+				highlighted && (isApp ? 'bg-blue-500/10' : 'bg-violet-500/10')
 			)}
 			onClick={onSelect}
 			onMouseDown={(e) => e.preventDefault()}
@@ -148,7 +154,9 @@ const ResultItem: React.FC<TResultItemProps> = (props) => {
 			<span
 				className={cn(
 					'rounded px-1.5 py-0.5 text-xs',
-					isApp ? 'bg-blue-100 text-blue-700' : 'bg-violet-100 text-violet-700'
+					isApp
+						? 'bg-blue-500/20 text-blue-600 dark:text-blue-400'
+						: 'bg-violet-500/20 text-violet-600 dark:text-violet-400'
 				)}
 			>
 				{result.itemType}
@@ -164,7 +172,13 @@ const ItemIcon: React.FC<{ icon?: string | null; itemType: specta.ItemType; size
 }) => {
 	if (icon != null) {
 		return (
-			<img src={icon} alt="" width={size} height={size} className="shrink-0 rounded-sm object-contain" />
+			<img
+				src={icon}
+				alt=""
+				width={size}
+				height={size}
+				className="shrink-0 rounded-sm object-contain"
+			/>
 		);
 	}
 

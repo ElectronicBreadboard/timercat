@@ -22,6 +22,7 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 	const [highlightedIndex, setHighlightedIndex] = React.useState(0);
 
 	// Refs
+	const containerRef = React.useRef<HTMLDivElement | null>(null);
 	const inputRef = React.useRef<HTMLInputElement | null>(null);
 	const popupRef = React.useRef<HTMLDivElement | null>(null);
 	const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -29,8 +30,7 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 	// Computed
 	const showPopup = isOpen && (query.trim() !== '' || isSearching);
 	const inputCollapsed = !isOpen && value.length > 0;
-	const hasResults = results.length > 0;
-	const showEmpty = !isSearching && !hasResults && query.trim() !== '';
+	const showEmpty = !isSearching && results.length === 0 && query.trim() !== '';
 
 	// MARK: - Actions
 
@@ -78,6 +78,7 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 		if (clickedInsidePopup) {
 			return;
 		}
+		// Delay allows click events on results to register before closing
 		setTimeout(() => setIsOpen(false), 150);
 	}, []);
 
@@ -183,7 +184,7 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 		};
 	}, [query, onSearch, debounceMs, filterSelected, value]);
 
-	// Sync popup position and constrain height to available viewport space
+	// Constrain popup height to available viewport space
 	React.useLayoutEffect(() => {
 		if (!showPopup) {
 			setSide('bottom');
@@ -193,59 +194,51 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 		let frameId: number | null = null;
 		let observer: MutationObserver | null = null;
 
-		const calcHeight = (input: HTMLInputElement, popupSide: 'top' | 'bottom' | null): number => {
-			const inputRect = input.getBoundingClientRect();
+		const updatePopup = () => {
+			const popup = popupRef.current;
+			const container = containerRef.current;
+			if (popup == null || container == null) {
+				return;
+			}
+
+			// Sync side state with base-ui's positioning decision
+			const popupSide = popup.getAttribute('data-side') as 'top' | 'bottom' | null;
+			if (popupSide != null) {
+				setSide(popupSide);
+			}
+
+			// Use container bounds (popup anchor), not input (may wrap to second line)
+			const containerRect = container.getBoundingClientRect();
 			const availableHeight =
 				popupSide === 'top'
-					? inputRect.top - viewportPadding
-					: window.innerHeight - inputRect.bottom - viewportPadding;
-			return Math.max(minPopupHeight, availableHeight);
+					? containerRect.top - viewportPadding
+					: window.innerHeight - containerRect.bottom - viewportPadding;
+
+			popup.style.maxHeight = `${Math.max(minPopupHeight, availableHeight)}px`;
 		};
 
-		const applyMaxHeight = () => {
-			const popup = popupRef.current;
-			const input = inputRef.current;
-			if (popup == null || input == null) {
-				return false;
-			}
-
-			const dataSide = popup.getAttribute('data-side') as 'top' | 'bottom' | null;
-			if (dataSide != null) {
-				setSide(dataSide);
-			}
-
-			popup.style.maxHeight = `${calcHeight(input, dataSide)}px`;
-			return true;
-		};
-
-		const setupObserver = () => {
-			const popup = popupRef.current;
-			const input = inputRef.current;
-			if (popup == null || input == null) {
-				frameId = requestAnimationFrame(setupObserver);
+		const waitForPopup = () => {
+			if (popupRef.current == null) {
+				frameId = requestAnimationFrame(waitForPopup);
 				return;
 			}
 
-			applyMaxHeight();
+			updatePopup();
 
-			// Watch for position changes (base-ui may flip popup when near viewport edge)
-			observer = new MutationObserver(() => {
-				applyMaxHeight();
-			});
-			observer.observe(popup, { attributes: true, attributeFilter: ['data-side'] });
+			// Watch for position flips (base-ui may flip when near viewport edge)
+			observer = new MutationObserver(updatePopup);
+			observer.observe(popupRef.current, { attributes: true, attributeFilter: ['data-side'] });
 		};
 
-		// Recalculate height on external scroll (ignore scrolls inside popup)
 		const handleScroll = (e: Event) => {
-			const popup = popupRef.current;
-			if (popup?.contains(e.target as Node)) {
+			// Ignore scrolls inside popup (user scrolling through results)
+			if (popupRef.current?.contains(e.target as Node)) {
 				return;
 			}
-			applyMaxHeight();
+			updatePopup();
 		};
 
-		// Try to apply immediately, setup observer for future changes
-		setupObserver();
+		waitForPopup();
 		window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
 
 		return () => {
@@ -271,6 +264,7 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 
 	const getContainerProps = React.useCallback(
 		() => ({
+			ref: containerRef,
 			open: showPopup,
 			onClick: handleContainerClick,
 			side: showPopup ? side : undefined
@@ -313,7 +307,6 @@ export function useMultiSelect<T extends TMultiSelectItem>(
 		query,
 		results,
 		isSearching,
-		hasResults,
 		showEmpty,
 
 		// Actions
@@ -355,7 +348,6 @@ export interface TUseMultiSelectReturn<T extends TMultiSelectItem> {
 	query: string;
 	results: T[];
 	isSearching: boolean;
-	hasResults: boolean;
 	showEmpty: boolean;
 
 	// Actions
@@ -367,6 +359,7 @@ export interface TUseMultiSelectReturn<T extends TMultiSelectItem> {
 	// Props getters
 	getRootProps: () => { open: boolean };
 	getContainerProps: () => {
+		ref: React.RefObject<HTMLDivElement | null>;
 		open: boolean;
 		onClick: () => void;
 		side: 'top' | 'bottom' | undefined;

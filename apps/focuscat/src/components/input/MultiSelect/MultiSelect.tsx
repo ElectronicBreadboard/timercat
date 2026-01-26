@@ -7,20 +7,25 @@ export const MultiSelectRoot: React.FC<TMultiSelectRootProps> = (props) => {
 	return <Popover.Root open={open}>{children}</Popover.Root>;
 };
 
-export const MultiSelectContainer: React.FC<TMultiSelectContainerProps> = (props) => {
-	const { open, className, children, onClick, side } = props;
+export const MultiSelectContainer = React.forwardRef<HTMLDivElement, TMultiSelectContainerProps>(
+	(props, ref) => {
+		const { open, className, children, onClick, side } = props;
 
-	return (
-		<Popover.Trigger
-			className={cn(open ? containerOpen : containerClosed, className)}
-			render={<div />}
-			onClick={onClick}
-			data-side={side}
-		>
-			{children}
-		</Popover.Trigger>
-	);
-};
+		return (
+			<Popover.Trigger
+				// Note: Cast needed because Popover.Trigger types expect button, but we render div
+				ref={ref as unknown as React.RefObject<HTMLButtonElement>}
+				className={cn(open ? containerOpen : containerClosed, className)}
+				render={<div />}
+				onClick={onClick}
+				data-side={side}
+			>
+				{children}
+			</Popover.Trigger>
+		);
+	}
+);
+MultiSelectContainer.displayName = 'MultiSelectContainer';
 
 export const MultiSelectInput = React.forwardRef<HTMLInputElement, TMultiSelectInputProps>(
 	(props, ref) => {
@@ -118,7 +123,7 @@ const containerOpen = cn(
 );
 
 const popupStyles = cn(
-	'w-[var(--anchor-width)] overflow-y-auto bg-white ring-2 ring-primary outline-none',
+	'w-[var(--anchor-width)] overflow-y-auto bg-base-50 ring-2 ring-primary outline-none',
 	'group flex flex-col rounded-b-md [clip-path:inset(0_-2px_-2px_-2px)]',
 	// Top
 	'data-[side=top]:flex-col-reverse data-[side=top]:rounded-t-md data-[side=top]:rounded-b-none',
@@ -126,7 +131,7 @@ const popupStyles = cn(
 );
 
 const inputStyles = cn(
-	'min-w-20 flex-1 border-none bg-transparent py-0.5 text-sm',
+	'min-w-20 flex-1 border-none bg-transparent py-0.5 text-sm text-base-900',
 	'shadow-none ring-0 outline-none placeholder:text-base-400',
 	// Collapse when not focused and has items
 	'data-[collapsed]:min-w-0 data-[collapsed]:w-0 data-[collapsed]:p-0'
@@ -147,10 +152,7 @@ export interface TMultiSelectContainerProps {
 	side?: 'top' | 'bottom';
 }
 
-export interface TMultiSelectInputProps extends Omit<
-	React.InputHTMLAttributes<HTMLInputElement>,
-	'type'
-> {}
+export type TMultiSelectInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'>;
 
 export interface TMultiSelectPositionerProps {
 	children: React.ReactNode;
