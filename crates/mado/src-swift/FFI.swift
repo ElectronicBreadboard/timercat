@@ -67,6 +67,34 @@ public func madoGetActiveWindow(
     return toJson(windowInfo.toDictionary())
 }
 
+// MARK: - Installed Apps
+
+@_cdecl("mado_get_installed_apps")
+public func madoGetInstalledApps(includeIcons: Bool, iconSize: Int32)
+    -> SRString?
+{
+    let apps = scanInstalledApps(
+        includeIcons: includeIcons,
+        iconSize: Int(iconSize)
+    )
+    let dicts = apps.map { $0.toDictionary() }
+
+    guard
+        let jsonData = try? JSONSerialization.data(withJSONObject: dicts),
+        let jsonString = String(data: jsonData, encoding: .utf8)
+    else {
+        return nil
+    }
+
+    return SRString(jsonString)
+}
+
+@_cdecl("mado_get_app_icon")
+public func madoGetAppIcon(bundleId: SRString, iconSize: Int32) -> SRString? {
+    let icon = getAppIconByBundleId(bundleId.toString(), size: Int(iconSize))
+    return toJson(icon.toDictionary())
+}
+
 // MARK: - Helpers
 
 private func toJson(_ dict: [String: Any?]) -> SRString? {

@@ -32,7 +32,7 @@ struct AppInfo {
         let appIcon =
             includeIcon
             ? getAppIcon(forPath: bundlePath, bundleId: bundleId)
-            : AppIconResult(dataUrl: nil, color: nil)
+            : AppIcon(dataUrl: nil, color: nil)
 
         return AppInfo(
             pid: app.processIdentifier,

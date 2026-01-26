@@ -1,10 +1,10 @@
 use super::types::{ItemType, SearchableItem, SearchResult};
 use super::website::WebsiteConfig;
-use focuscat_macos::{get_app_icon, get_installed_apps, ScanConfig};
+use mado::{get_app_icon, get_installed_apps, InstalledAppsConfig};
 
 /// Load apps from macOS (without icons for speed).
 pub fn load_apps_from_system() -> Vec<SearchableItem> {
-	let config = ScanConfig {
+	let config = InstalledAppsConfig {
 		include_icons: false,
 		icon_size: 0,
 	};

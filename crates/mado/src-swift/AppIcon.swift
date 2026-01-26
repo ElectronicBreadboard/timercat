@@ -5,9 +5,9 @@ func getAppIcon(
     forPath appPath: String?,
     bundleId: String?,
     size: Int = 32
-) -> AppIconResult {
+) -> AppIcon {
     guard let appPath = appPath else {
-        return AppIconResult(dataUrl: nil, color: nil)
+        return AppIcon(dataUrl: nil, color: nil)
     }
 
     let icon = NSWorkspace.shared.icon(forFile: appPath)
@@ -16,13 +16,33 @@ func getAppIcon(
     }
     let color = getAppColor(forBundleId: bundleId, icon: icon)
 
-    return AppIconResult(dataUrl: dataUrl, color: color)
+    return AppIcon(dataUrl: dataUrl, color: color)
 }
 
-/// Result containing icon data URL and extracted brand color.
-struct AppIconResult {
+/// Get app icon by bundle identifier only (finds path via NSWorkspace).
+func getAppIconByBundleId(_ bundleId: String, size: Int = 32) -> AppIcon {
+    guard
+        let appUrl = NSWorkspace.shared.urlForApplication(
+            withBundleIdentifier: bundleId
+        )
+    else {
+        return AppIcon(dataUrl: nil, color: nil)
+    }
+
+    return getAppIcon(forPath: appUrl.path, bundleId: bundleId, size: size)
+}
+
+/// App icon with brand color.
+struct AppIcon {
     let dataUrl: String?
     let color: String?
+
+    func toDictionary() -> [String: Any?] {
+        return [
+            "dataUrl": dataUrl,
+            "color": color,
+        ]
+    }
 }
 
 extension NSImage {

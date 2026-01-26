@@ -1,6 +1,6 @@
 # mado (窓)
 
-> A simple, clean window monitoring library for Rust
+> A simple, clean window monitoring and app information library for Rust
 
 ## 🌐 Platform Support
 
@@ -148,6 +148,33 @@ if !mado::is_accessibility_trusted() {
     eprintln!("Please grant accessibility permissions in System Settings");
 }
 ```
+
+### Installed apps (macOS)
+
+Query installed applications and their icons. No special permissions required.
+
+```rust
+use mado::InstalledAppsConfig;
+
+// Fast scan without icons
+let apps = mado::get_installed_apps(InstalledAppsConfig::default());
+for app in &apps {
+    println!("{}: {}", app.name, app.bundle_id);
+}
+
+// Get icon for a specific app
+let icon = mado::get_app_icon("com.apple.finder", 64);
+if let Some(color) = &icon.color {
+    println!("Brand color: {}", color);
+}
+```
+
+**Config options:**
+
+| Option          | Default | Description                                    |
+| --------------- | ------- | ---------------------------------------------- |
+| `include_icons` | `false` | Extract icons as base64 PNG and dominant color |
+| `icon_size`     | `32`    | Icon size in pixels                            |
 
 ## 📐 Architecture
 

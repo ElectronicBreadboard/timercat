@@ -96,3 +96,31 @@ impl Default for QueryConfig {
         }
     }
 }
+
+/// Configuration for scanning installed applications.
+#[derive(Debug, Clone, Copy)]
+pub struct InstalledAppsConfig {
+    /// Include icons in the results.
+    ///
+    /// When enabled, extracts each app's icon as a base64 PNG data URL
+    /// and the dominant brand color as a hex string.
+    ///
+    /// Default: `false` (faster without icons)
+    pub include_icons: bool,
+
+    /// Icon size in pixels.
+    ///
+    /// Only used when `include_icons` is true.
+    ///
+    /// Default: `32`
+    pub icon_size: u32,
+}
+
+impl Default for InstalledAppsConfig {
+    fn default() -> Self {
+        Self {
+            include_icons: false,
+            icon_size: 32,
+        }
+    }
+}

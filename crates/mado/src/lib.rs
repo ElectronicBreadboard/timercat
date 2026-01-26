@@ -60,11 +60,14 @@ pub mod monitor;
 pub mod platform;
 pub mod types;
 
-pub use config::{MonitorConfig, QueryConfig};
+pub use config::{InstalledAppsConfig, MonitorConfig, QueryConfig};
 pub use error::Error;
 pub use listener::WindowListener;
 pub use monitor::WindowMonitor;
-pub use types::{AppInfo, BrowserInfo, WebsiteInfo, WindowBounds, WindowEvent, WindowInfo};
+pub use types::{
+    AppIcon, AppInfo, BrowserInfo, InstalledApp, WebsiteInfo, WindowBounds, WindowEvent,
+    WindowInfo,
+};
 
 /// Get information about the currently active application
 ///
@@ -194,4 +197,59 @@ pub fn get_active_window_with_config(config: QueryConfig) -> Result<WindowInfo, 
 /// ```
 pub fn is_accessibility_trusted() -> bool {
     platform::is_accessibility_trusted()
+}
+
+/// Get all installed applications on the system.
+///
+/// Scans /Applications and ~/Applications directories for installed apps.
+/// Returns apps sorted alphabetically by name.
+///
+/// On non-macOS platforms, returns an empty vector.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// use mado::InstalledAppsConfig;
+///
+/// // Fast scan without icons
+/// let apps = mado::get_installed_apps(InstalledAppsConfig::default());
+/// for app in &apps {
+///     println!("{}: {}", app.name, app.bundle_id);
+/// }
+///
+/// // With icons (slower)
+/// let config = InstalledAppsConfig {
+///     include_icons: true,
+///     icon_size: 64,
+/// };
+/// let apps = mado::get_installed_apps(config);
+/// ```
+pub fn get_installed_apps(config: InstalledAppsConfig) -> Vec<InstalledApp> {
+    platform::get_installed_apps(config)
+}
+
+/// Get icon for a specific app by bundle identifier.
+///
+/// Returns the app icon as a base64 PNG data URL and the dominant brand color.
+///
+/// On non-macOS platforms, returns default (empty) result.
+///
+/// # Arguments
+///
+/// * `bundle_id` - The app's bundle identifier (e.g., "com.apple.Safari")
+/// * `size` - Icon size in pixels (default: 32 if 0)
+///
+/// # Example
+///
+/// ```rust,no_run
+/// let result = mado::get_app_icon("com.apple.finder", 64);
+/// if let Some(icon) = result.data_url {
+///     println!("Icon: {} bytes", icon.len());
+/// }
+/// if let Some(color) = result.color {
+///     println!("Brand color: {}", color);
+/// }
+/// ```
+pub fn get_app_icon(bundle_id: &str, size: u32) -> AppIcon {
+    platform::get_app_icon(bundle_id, size)
 }
