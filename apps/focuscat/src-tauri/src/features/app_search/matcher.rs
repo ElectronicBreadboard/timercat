@@ -1,21 +1,22 @@
 use super::types::SearchableItem;
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
 use nucleo_matcher::{Config, Matcher, Utf32Str};
+use std::borrow::Borrow;
 
 /// Fuzzy match items against a query.
 /// Returns items with their match scores, sorted by score (descending).
-pub fn fuzzy_match<'a>(
-    items: impl IntoIterator<Item = &'a SearchableItem>,
-    query: &str,
-) -> Vec<(&'a SearchableItem, u32)> {
+pub fn fuzzy_match<R>(items: impl IntoIterator<Item = R>, query: &str) -> Vec<(R, u32)>
+where
+    R: Borrow<SearchableItem>,
+{
     let mut matcher = Matcher::new(Config::DEFAULT);
     let pattern = Pattern::parse(query, CaseMatching::Ignore, Normalization::Smart);
     let query_lower = query.to_lowercase();
 
-    let mut results: Vec<(&'a SearchableItem, u32)> = Vec::new();
+    let mut results: Vec<(R, u32)> = Vec::new();
 
     for item in items {
-        let best_score = get_best_score(&mut matcher, &pattern, &query_lower, item);
+        let best_score = get_best_score(&mut matcher, &pattern, &query_lower, item.borrow());
         if best_score > 0 {
             results.push((item, best_score));
         }
@@ -78,6 +79,8 @@ mod tests {
             name: name.to_string(),
             item_type: ItemType::App,
             keywords: keywords.into_iter().map(String::from).collect(),
+            icon: None,
+            color: None,
         }
     }
 
@@ -152,5 +155,18 @@ mod tests {
         assert!(results.len() >= 2);
         // Exact match should rank higher
         assert_eq!(results[0].0.name, "Chrome");
+    }
+
+    #[test]
+    fn test_works_with_mutable_refs() {
+        let mut items = vec![make_item("Chrome", vec!["com.google.Chrome"])];
+
+        // Verify fuzzy_match works with mutable refs too
+        let mut results = fuzzy_match(items.iter_mut(), "chrome");
+        assert!(!results.is_empty());
+
+        // Can mutate through the returned ref
+        results[0].0.icon = Some("test".to_string());
+        assert_eq!(items[0].icon, Some("test".to_string()));
     }
 }

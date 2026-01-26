@@ -17,19 +17,18 @@ pub fn search(
     }
 
     let mut search = state.lock().unwrap();
-    let matches = search.search(query, input.include_apps, input.include_websites, limit);
+    let matches = search.search(
+        query,
+        input.include_apps,
+        input.include_websites,
+        input.include_icons,
+        limit,
+    );
 
-    // Convert to DTOs
-    let mut results: Vec<SearchResultDto> = matches
+    return Ok(matches
         .into_iter()
         .map(|(item, score)| item.to_result(score))
-        .collect();
-
-    if input.include_icons {
-        search.populate_icons(&mut results);
-    }
-
-    return Ok(results);
+        .collect());
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]

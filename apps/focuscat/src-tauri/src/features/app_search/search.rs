@@ -1,20 +1,12 @@
 use super::matcher::fuzzy_match;
-use super::types::{ItemType, SearchResultDto, SearchableItem};
+use super::types::{ItemType, SearchableItem};
 use crate::common::url::{extract_domain, is_domain_like};
 use mado::{get_app_icon, get_installed_apps, InstalledAppsConfig};
-use std::collections::HashMap;
+use std::collections::HashSet;
 
 pub struct AppSearch {
     apps: Vec<SearchableItem>,
     websites: Vec<SearchableItem>,
-    /// Icon cache for O(1) lookups. Without this, caching fetched icons back would require
-    /// O(n) search through ~400 SearchableItems
-    icon_cache: HashMap<String, CachedIcon>,
-}
-
-struct CachedIcon {
-    icon: Option<String>,
-    color: Option<String>,
 }
 
 impl AppSearch {
@@ -22,7 +14,6 @@ impl AppSearch {
         return Self {
             apps: Self::load_apps(),
             websites: Self::load_websites(),
-            icon_cache: HashMap::new(),
         };
     }
 
@@ -33,82 +24,67 @@ impl AppSearch {
 
     /// Search apps and websites by query.
     pub fn search(
-        &self,
+        &mut self,
         query: &str,
         include_apps: bool,
         include_websites: bool,
+        include_icons: bool,
         limit: usize,
     ) -> Vec<(SearchableItem, u32)> {
-        // Create custom domain item if query looks like a domain
-        let custom_domain: Option<SearchableItem> = if include_websites && is_domain_like(query) {
-            extract_domain(query)
-                .filter(|d| !self.websites.iter().any(|w| w.id == *d))
-                .map(|d| SearchableItem::custom_domain(&d))
-        } else {
-            None
-        };
+        // Create custom domain if query looks like a domain
+        let mut custom_domain: Option<SearchableItem> =
+            if include_websites && is_domain_like(query) {
+                extract_domain(query).map(|d| SearchableItem::custom_domain(&d))
+            } else {
+                None
+            };
 
         // Build search iterator
         let apps = if include_apps {
-            self.apps.iter()
+            self.apps.iter_mut()
         } else {
-            [].iter()
+            [].iter_mut()
         };
         let websites = if include_websites {
-            self.websites.iter()
+            self.websites.iter_mut()
         } else {
-            [].iter()
+            [].iter_mut()
         };
-        let to_search = apps.chain(websites).chain(custom_domain.iter());
+        let to_search = apps.chain(websites).chain(custom_domain.iter_mut());
 
-        // Search and take limit
+        // Search, dedupe by id (highest score wins), populate icons, and take limit
         let matches = fuzzy_match(to_search, query);
+        let mut seen: HashSet<String> = HashSet::new();
         return matches
             .into_iter()
+            .filter(|(item, _)| seen.insert(item.id.clone()))
             .take(limit)
-            .map(|(item, score)| (item.clone(), score))
+            .map(|(item, score)| {
+                if include_icons {
+                    Self::populate_icon(item);
+                }
+                (item.clone(), score)
+            })
             .collect();
     }
 
-    /// Populate icons for search results using cache.
-    pub fn populate_icons(&mut self, results: &mut [SearchResultDto]) {
-        for result in results.iter_mut() {
-            if result.icon.is_some() {
-                continue;
+    fn populate_icon(item: &mut SearchableItem) {
+        if item.icon.is_some() {
+            return;
+        }
+
+        match item.item_type {
+            ItemType::App => {
+                let data = get_app_icon(&item.id, 64);
+                item.icon = data.data_url;
+                item.color = data.color;
             }
-
-            // Check cache first
-            if let Some(cached) = self.icon_cache.get(&result.id) {
-                result.icon = cached.icon.clone();
-                result.color = cached.color.clone();
-                continue;
+            ItemType::Website => {
+                item.icon = Some(format!(
+                    "https://www.google.com/s2/favicons?domain={}&sz=64",
+                    item.id
+                ));
             }
-
-            // Fetch icon
-            let (icon, color) = match result.item_type {
-                ItemType::App => {
-                    let data = get_app_icon(&result.id, 64);
-                    (data.data_url, data.color)
-                }
-                ItemType::Website => {
-                    let url = format!(
-                        "https://www.google.com/s2/favicons?domain={}&sz=64",
-                        result.id
-                    );
-                    (Some(url), None)
-                }
-            };
-
-            // Cache and apply
-            self.icon_cache.insert(
-                result.id.clone(),
-                CachedIcon {
-                    icon: icon.clone(),
-                    color: color.clone(),
-                },
-            );
-            result.icon = icon;
-            result.color = color;
         }
     }
 
@@ -125,6 +101,8 @@ impl AppSearch {
                 name: app.name,
                 item_type: ItemType::App,
                 keywords: vec![app.bundle_id],
+                icon: None,
+                color: None,
             })
             .collect();
     }
@@ -137,6 +115,8 @@ impl AppSearch {
                 name: entry.name.to_string(),
                 item_type: ItemType::Website,
                 keywords: entry.domains.iter().map(|d| d.to_string()).collect(),
+                icon: None,
+                color: None,
             })
             .collect();
     }

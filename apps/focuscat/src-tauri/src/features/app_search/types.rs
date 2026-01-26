@@ -32,6 +32,8 @@ pub struct SearchableItem {
     pub name: String,
     pub item_type: ItemType,
     pub keywords: Vec<String>,
+    pub icon: Option<String>,
+    pub color: Option<String>,
 }
 
 impl SearchableItem {
@@ -42,17 +44,19 @@ impl SearchableItem {
             name: domain.to_string(),
             item_type: ItemType::Website,
             keywords: vec![domain.to_string()],
+            icon: None,
+            color: None,
         };
     }
 
     /// Convert to SearchResultDto with score.
-    pub fn to_result(&self, score: u32) -> SearchResultDto {
+    pub fn to_result(self, score: u32) -> SearchResultDto {
         return SearchResultDto {
-            id: self.id.clone(),
-            name: self.name.clone(),
+            id: self.id,
+            name: self.name,
             item_type: self.item_type,
-            icon: None,
-            color: None,
+            icon: self.icon,
+            color: self.color,
             score,
         };
     }
