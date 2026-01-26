@@ -129,8 +129,8 @@ impl WindowListener for WindowMonitorHandler {
                                 bundle_id: app_info.bundle_id.clone(),
                                 name: app_info.name,
                                 process_path: app_info.process_path,
-                                icon: app_info.icon,
-                                color: app_info.color,
+                                icon: app_info.icon.as_ref().and_then(|i| i.data_url.clone()),
+                                color: app_info.icon.as_ref().and_then(|i| i.color.clone()),
                             },
                         )
                         .await
@@ -223,8 +223,8 @@ impl WindowListener for WindowMonitorHandler {
                                 bundle_id: window_info.app.bundle_id.clone(),
                                 name: window_info.app.name,
                                 process_path: window_info.app.process_path,
-                                icon: window_info.app.icon,
-                                color: window_info.app.color,
+                                icon: window_info.app.icon.as_ref().and_then(|i| i.data_url.clone()),
+                                color: window_info.app.icon.as_ref().and_then(|i| i.color.clone()),
                             },
                         )
                         .await

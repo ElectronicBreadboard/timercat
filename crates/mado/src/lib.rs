@@ -69,6 +69,8 @@ pub use types::{
     WindowInfo,
 };
 
+// MARK: - Window Monitoring
+
 /// Get information about the currently active application
 ///
 /// This is a synchronous query that returns the current state immediately.
@@ -107,7 +109,12 @@ pub fn get_active_app() -> Result<AppInfo, Error> {
 /// };
 /// let app = mado::get_active_app_with_config(config)?;
 /// if let Some(icon) = &app.icon {
-///     println!("Icon data URL: {} bytes", icon.len());
+///     if let Some(data_url) = &icon.data_url {
+///         println!("Icon: {} bytes", data_url.len());
+///     }
+///     if let Some(color) = &icon.color {
+///         println!("Color: {}", color);
+///     }
 /// }
 /// # Ok::<(), mado::Error>(())
 /// ```
@@ -173,7 +180,9 @@ pub fn get_active_window() -> Result<WindowInfo, Error> {
 ///     }
 /// }
 /// if let Some(icon) = &window.app.icon {
-///     println!("Icon: {} bytes", icon.len());
+///     if let Some(data_url) = &icon.data_url {
+///         println!("Icon: {} bytes", data_url.len());
+///     }
 /// }
 /// # Ok::<(), mado::Error>(())
 /// ```
@@ -199,6 +208,8 @@ pub fn is_accessibility_trusted() -> bool {
     platform::is_accessibility_trusted()
 }
 
+// MARK: - App Information
+
 /// Get all installed applications on the system.
 ///
 /// Scans /Applications and ~/Applications directories for installed apps.
@@ -219,7 +230,7 @@ pub fn is_accessibility_trusted() -> bool {
 ///
 /// // With icons (slower)
 /// let config = InstalledAppsConfig {
-///     include_icons: true,
+///     include_icon: true,
 ///     icon_size: 64,
 /// };
 /// let apps = mado::get_installed_apps(config);

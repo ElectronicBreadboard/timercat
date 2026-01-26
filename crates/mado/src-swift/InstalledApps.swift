@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-func scanInstalledApps(includeIcons: Bool, iconSize: Int) -> [InstalledApp] {
+func scanInstalledApps(includeIcon: Bool, iconSize: Int) -> [InstalledApp] {
     var apps: [InstalledApp] = []
     var seenBundleIds = Set<String>()
 
@@ -41,23 +41,21 @@ func scanInstalledApps(includeIcons: Bool, iconSize: Int) -> [InstalledApp] {
                 ?? bundle.infoDictionary?["CFBundleDisplayName"] as? String
                 ?? String(item.dropLast(4))
 
-            var app = InstalledApp(
-                bundleId: bundleId,
-                name: appName,
-                path: appPath,
-                icon: nil,
-                color: nil
-            )
-
-            if includeIcons {
-                let iconResult = getAppIcon(
+            let icon: AppIcon? =
+                includeIcon
+                ? getAppIcon(
                     forPath: appPath,
                     bundleId: bundleId,
                     size: iconSize
                 )
-                app.icon = iconResult.dataUrl
-                app.color = iconResult.color
-            }
+                : nil
+
+            let app = InstalledApp(
+                bundleId: bundleId,
+                name: appName,
+                path: appPath,
+                icon: icon
+            )
 
             apps.append(app)
         }
@@ -74,16 +72,14 @@ struct InstalledApp {
     let bundleId: String
     let name: String
     let path: String
-    var icon: String?
-    var color: String?
+    let icon: AppIcon?
 
     func toDictionary() -> [String: Any?] {
         return [
             "bundleId": bundleId,
             "name": name,
             "path": path,
-            "icon": icon,
-            "color": color,
+            "icon": icon?.toDictionary(),
         ]
     }
 }

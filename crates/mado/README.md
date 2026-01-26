@@ -164,6 +164,9 @@ for app in &apps {
 
 // Get icon for a specific app
 let icon = mado::get_app_icon("com.apple.finder", 64);
+if let Some(data_url) = &icon.data_url {
+    println!("Icon: {} bytes", data_url.len());
+}
 if let Some(color) = &icon.color {
     println!("Brand color: {}", color);
 }
@@ -173,7 +176,7 @@ if let Some(color) = &icon.color {
 
 | Option          | Default | Description                                    |
 | --------------- | ------- | ---------------------------------------------- |
-| `include_icons` | `false` | Extract icons as base64 PNG and dominant color |
+| `include_icon`  | `false` | Extract icons as base64 PNG and dominant color |
 | `icon_size`     | `32`    | Icon size in pixels                            |
 
 ## 📐 Architecture

@@ -1,3 +1,5 @@
+// MARK: - Window Monitoring
+
 /// Configuration for the window monitor.
 #[derive(Debug, Clone, Copy)]
 pub struct MonitorConfig {
@@ -97,20 +99,22 @@ impl Default for QueryConfig {
     }
 }
 
+// MARK: - App Information
+
 /// Configuration for scanning installed applications.
 #[derive(Debug, Clone, Copy)]
 pub struct InstalledAppsConfig {
-    /// Include icons in the results.
+    /// Include icon in the results.
     ///
     /// When enabled, extracts each app's icon as a base64 PNG data URL
     /// and the dominant brand color as a hex string.
     ///
-    /// Default: `false` (faster without icons)
-    pub include_icons: bool,
+    /// Default: `false` (faster without icon)
+    pub include_icon: bool,
 
     /// Icon size in pixels.
     ///
-    /// Only used when `include_icons` is true.
+    /// Only used when `include_icon` is true.
     ///
     /// Default: `32`
     pub icon_size: u32,
@@ -119,7 +123,7 @@ pub struct InstalledAppsConfig {
 impl Default for InstalledAppsConfig {
     fn default() -> Self {
         Self {
-            include_icons: false,
+            include_icon: false,
             icon_size: 32,
         }
     }

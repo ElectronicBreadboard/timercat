@@ -145,7 +145,7 @@ pub fn get_installed_apps(config: InstalledAppsConfig) -> Vec<InstalledApp> {
         config.icon_size as i32
     };
 
-    let json_opt = unsafe { mado_get_installed_apps(config.include_icons, icon_size) };
+    let json_opt = unsafe { mado_get_installed_apps(config.include_icon, icon_size) };
 
     match json_opt {
         Some(json) => {

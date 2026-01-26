@@ -70,11 +70,11 @@ public func madoGetActiveWindow(
 // MARK: - Installed Apps
 
 @_cdecl("mado_get_installed_apps")
-public func madoGetInstalledApps(includeIcons: Bool, iconSize: Int32)
+public func madoGetInstalledApps(includeIcon: Bool, iconSize: Int32)
     -> SRString?
 {
     let apps = scanInstalledApps(
-        includeIcons: includeIcons,
+        includeIcon: includeIcon,
         iconSize: Int(iconSize)
     )
     let dicts = apps.map { $0.toDictionary() }

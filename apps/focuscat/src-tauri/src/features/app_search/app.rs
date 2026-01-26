@@ -5,7 +5,7 @@ use mado::{get_app_icon, get_installed_apps, InstalledAppsConfig};
 /// Load apps from macOS (without icons for speed).
 pub fn load_apps_from_system() -> Vec<SearchableItem> {
 	let config = InstalledAppsConfig {
-		include_icons: false,
+		include_icon: false,
 		icon_size: 0,
 	};
 
