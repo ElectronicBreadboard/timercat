@@ -74,7 +74,7 @@ export type TMultiSelectInputProps = Omit<React.InputHTMLAttributes<HTMLInputEle
 
 /** Positions the popup relative to the container */
 const Positioner: React.FC<TMultiSelectPositionerProps> = (props) => {
-	const { children, sideOffset = 0, collisionPadding = 8 } = props;
+	const { children, sideOffset = 0, collisionPadding = 32 } = props;
 
 	return (
 		<Popover.Positioner side="bottom" sideOffset={sideOffset} collisionPadding={collisionPadding}>
