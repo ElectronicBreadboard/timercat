@@ -80,7 +80,6 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 							<ResultItem
 								key={result.id}
 								result={result}
-								selected={multiSelect.isSelected(result.id)}
 								onToggle={() => multiSelect.toggle(result)}
 								{...multiSelect.getItemProps(index)}
 							/>

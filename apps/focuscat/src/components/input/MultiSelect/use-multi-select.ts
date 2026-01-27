@@ -126,11 +126,6 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 		[value, onChange, clearSearch]
 	);
 
-	const isSelected = React.useCallback(
-		(id: string) => value.some((v) => v.id === id),
-		[value]
-	);
-
 	const clear = React.useCallback(() => {
 		onChange([]);
 		inputRef.current?.focus();
@@ -278,19 +273,23 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 	);
 
 	const getItemProps = React.useCallback(
-		(index: number) => ({
-			'id': getItemId(index),
-			'role': 'option' as const,
-			'aria-selected': index === highlightedIndex,
-			'data-highlighted': index === highlightedIndex || undefined,
-			// onPointerMove (not onMouseEnter) to only fire on actual movement, not hidden cursor
-			'onPointerMove': () => {
-				if (highlightedIndex !== index) {
-					setHighlightedIndex(index);
+		(index: number) => {
+			const item = results[index];
+			return {
+				'id': getItemId(index),
+				'role': 'option' as const,
+				'aria-selected': index === highlightedIndex,
+				'data-highlighted': index === highlightedIndex || undefined,
+				'selected': item != null && value.some((v) => v.id === item.id),
+				// onPointerMove (not onMouseEnter) - only fires on actual movement, not hidden cursor
+				'onPointerMove': () => {
+					if (highlightedIndex !== index) {
+						setHighlightedIndex(index);
+					}
 				}
-			}
-		}),
-		[highlightedIndex, getItemId]
+			};
+		},
+		[highlightedIndex, getItemId, results, value]
 	);
 
 	// MARK: - Effects
@@ -333,9 +332,6 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 		toggle,
 		clear,
 		close,
-
-		// Helpers
-		isSelected,
 
 		// Props getters
 		getRootProps,
