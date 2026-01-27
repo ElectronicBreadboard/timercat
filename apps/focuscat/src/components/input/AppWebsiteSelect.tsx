@@ -130,23 +130,22 @@ interface TResultItemProps {
 	'result': TSelectedItem;
 	'onSelect': () => void;
 	'data-highlighted'?: true;
-	'onMouseEnter'?: () => void;
+	'onPointerMove'?: () => void;
 }
 
 const ResultItem: React.FC<TResultItemProps> = (props) => {
-	const { result, onSelect, 'data-highlighted': highlighted, onMouseEnter } = props;
+	const { result, onSelect, 'data-highlighted': highlighted, onPointerMove } = props;
 	const isApp = result.itemType === 'app';
 
 	return (
 		<div
 			className={cn(
 				'flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-(--color-base-900)',
-				isApp ? 'hover:bg-blue-500/10' : 'hover:bg-violet-500/10',
 				highlighted && (isApp ? 'bg-blue-500/10' : 'bg-violet-500/10')
 			)}
 			onClick={onSelect}
 			onMouseDown={(e) => e.preventDefault()}
-			onMouseEnter={onMouseEnter}
+			onPointerMove={onPointerMove}
 			data-highlighted={highlighted}
 		>
 			<ItemIcon icon={result.icon} itemType={result.itemType} />

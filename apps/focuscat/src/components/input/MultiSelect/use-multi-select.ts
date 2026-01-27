@@ -262,7 +262,12 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 			'role': 'option' as const,
 			'aria-selected': index === highlightedIndex,
 			'data-highlighted': index === highlightedIndex || undefined,
-			'onMouseEnter': () => setHighlightedIndex(index)
+			// onPointerMove (not onMouseEnter) to only fire on actual movement, not hidden cursor
+			'onPointerMove': () => {
+				if (highlightedIndex !== index) {
+					setHighlightedIndex(index);
+				}
+			}
 		}),
 		[highlightedIndex, getItemId]
 	);
