@@ -308,11 +308,36 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 		setHighlightedIndex(0);
 	}, [results]);
 
-	// Scroll highlighted item into view during keyboard navigation
+	// Scroll highlighted item into view during keyboard navigation.
+	// Browser quirk: scrollIntoView can trigger pointermove events even when the user's cursor hasn't
+	// physically moved (the DOM shifts under the cursor). This hijacks keyboard navigation by jumping
+	// the highlight back to where the cursor is. We prevent this by disabling pointer-events during
+	// scroll and re-enabling only when the user actually moves their mouse.
 	React.useEffect(() => {
-		if (!showPopup) return;
-		const highlighted = popupRef.current?.querySelector('[data-highlighted]');
+		if (!showPopup) {
+			return;
+		}
+
+		const popup = popupRef.current;
+		if (popup == null) {
+			return;
+		}
+
+		popup.style.pointerEvents = 'none';
+
+		const highlighted = popup.querySelector('[data-highlighted]');
 		highlighted?.scrollIntoView({ block: 'nearest' });
+
+		const handleMouseMove = (): void => {
+			popup.style.pointerEvents = '';
+			document.removeEventListener('mousemove', handleMouseMove);
+		};
+		document.addEventListener('mousemove', handleMouseMove);
+
+		return () => {
+			document.removeEventListener('mousemove', handleMouseMove);
+			popup.style.pointerEvents = '';
+		};
 	}, [highlightedIndex, showPopup]);
 
 	// Track popup side for connected visual (base-ui sets data-side on Popup)

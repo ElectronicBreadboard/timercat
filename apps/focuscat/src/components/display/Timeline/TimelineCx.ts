@@ -111,7 +111,9 @@ export class TimelineCx {
 			this.config.minZoom,
 			Math.min(this.config.maxZoom, currentZoom * factor)
 		);
-		if (newZoom === currentZoom) return;
+		if (newZoom === currentZoom) {
+			return;
+		}
 
 		// Calculate new scroll position to keep same time under mouse
 		const newTotalWidth = this.containerWidth * newZoom;
