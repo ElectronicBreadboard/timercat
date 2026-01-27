@@ -32,6 +32,7 @@ export {
 	Play as PlayIcon,
 	Plus as PlusIcon,
 	Settings as SettingsIcon,
+	ShieldBan as BlockIcon,
 	SkipForward as SkipIcon,
 	Sun as SunIcon,
 	Target as TargetIcon,

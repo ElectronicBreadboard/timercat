@@ -1,6 +1,14 @@
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { ActivityIcon, AppWindowIcon, Button, CodeIcon, TargetIcon, TimerIcon } from '@/components';
+import {
+	ActivityIcon,
+	AppWindowIcon,
+	BlockIcon,
+	Button,
+	CodeIcon,
+	TargetIcon,
+	TimerIcon
+} from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
 import { useAppInfo } from '@/hooks';
@@ -23,6 +31,7 @@ export const Sidebar: React.FC = () => {
 						icon={<ActivityIcon size={16} />}
 						label="Activity"
 					/>
+					<SidebarItem to="/window/settings/block" icon={<BlockIcon size={16} />} label="Block" />
 					{settings.debug.enabled && (
 						<SidebarItem
 							to="/window/settings/developer"

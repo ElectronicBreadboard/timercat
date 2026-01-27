@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { AppWebsiteSelect, FolderOpenIcon, Switch, type TSelectedItem } from '@/components';
+import { FolderOpenIcon, Switch } from '@/components';
 import { specta } from '@/environment';
 import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
 
@@ -12,7 +12,6 @@ export const Route = createFileRoute('/window/settings/developer/')({
 function RouteComponent() {
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
-	const [selectedItems, setSelectedItems] = React.useState<TSelectedItem[]>([]);
 
 	// MARK: - Actions
 
@@ -59,21 +58,6 @@ function RouteComponent() {
 				>
 					<FolderOpenIcon size={16} className="text-base-400" />
 				</SettingItem>
-			</SettingGroup>
-
-			<SettingGroup title="Multi-Select Demo">
-				<div className="space-y-3 p-3">
-					<AppWebsiteSelect
-						value={selectedItems}
-						onChange={setSelectedItems}
-						placeholder="Select apps or websites to block..."
-					/>
-					{selectedItems.length > 0 && (
-						<pre className="bg-base-100 text-base-700 max-h-32 overflow-auto rounded-md p-2 text-xs">
-							{JSON.stringify(selectedItems, null, 2)}
-						</pre>
-					)}
-				</div>
 			</SettingGroup>
 		</div>
 	);
