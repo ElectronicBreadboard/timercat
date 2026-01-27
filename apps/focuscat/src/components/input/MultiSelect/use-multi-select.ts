@@ -46,7 +46,8 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 		onSearch,
 		debounceMs = 200,
 		filterSelected = true,
-		disabled = false
+		disabled = false,
+		emptyResults = []
 	} = options;
 
 	// Refs
@@ -73,7 +74,7 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 		[filterSelected, selectedIds]
 	);
 	const {
-		results,
+		results: searchResults,
 		isSearching,
 		clear: clearSearch
 	} = useDebouncedSearch<GItem>({
@@ -86,9 +87,10 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 
 	// Computed
 	const hasQuery = query.trim() !== '';
-	const showPopup = isOpen && (hasQuery || isSearching);
+	const results = hasQuery || isSearching ? searchResults : emptyResults;
+	const showPopup = isOpen && (hasQuery || isSearching || emptyResults.length > 0);
 	const inputCollapsed = !isOpen && value.length > 0;
-	const showEmpty = !isSearching && results.length === 0 && hasQuery;
+	const showEmpty = !isSearching && searchResults.length === 0 && hasQuery;
 
 	// MARK: - Actions
 
@@ -375,4 +377,6 @@ export interface TUseMultiSelectOptions<GItem extends TMultiSelectItem> {
 	filterSelected?: boolean;
 	/** Whether the input is disabled (default: false) */
 	disabled?: boolean;
+	/** Items to display when query is empty (default: []) */
+	emptyResults?: GItem[];
 }

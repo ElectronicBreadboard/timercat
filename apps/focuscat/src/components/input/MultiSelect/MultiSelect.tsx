@@ -130,7 +130,7 @@ const HelperText: React.FC<TMultiSelectHelperTextProps> = (props) => {
 	return (
 		<div
 			className={cn(
-				'border-base-100 text-base-500 border-b px-3 py-2 text-xs',
+				'border-base-200 text-base-500 border-b px-3 py-2 text-xs',
 				'group-data-[side=top]:border-t group-data-[side=top]:border-b-0',
 				className
 			)}
@@ -232,6 +232,7 @@ const popupStyles = cn(
 const inputStyles = cn(
 	'min-w-20 flex-1 border-none bg-transparent py-0.5 text-sm text-base-900',
 	'shadow-none ring-0 outline-none placeholder:text-base-400',
-	// Collapse to zero width when unfocused with selections (shows only chips)
-	'data-[collapsed]:min-w-0 data-[collapsed]:w-0 data-[collapsed]:p-0'
+	// Collapse when unfocused with selections: invisible but still focusable via JS
+	'data-[collapsed]:w-0 data-[collapsed]:min-w-0 data-[collapsed]:p-0',
+	'data-[collapsed]:opacity-0 data-[collapsed]:pointer-events-none'
 );

@@ -47,8 +47,11 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 		value,
 		onChange,
 		onSearch: handleSearch,
-		filterSelected: false
+		filterSelected: false,
+		emptyResults: value
 	});
+
+	const isShowingSelected = !multiSelect.query && !multiSelect.isSearching && value.length > 0;
 
 	return (
 		<MultiSelect.Root {...multiSelect.getRootProps()}>
@@ -69,7 +72,11 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 				<MultiSelect.Positioner>
 					<MultiSelect.Popup {...multiSelect.getPopupProps()}>
 						<MultiSelect.HelperText>
-							{multiSelect.isSearching ? 'Searching...' : 'Select an app or website'}
+							{multiSelect.isSearching
+								? 'Searching...'
+								: isShowingSelected
+									? 'Selected'
+									: 'Select an app or website'}
 						</MultiSelect.HelperText>
 
 						{multiSelect.showEmpty && (
@@ -110,6 +117,7 @@ export interface TSelectedItem {
 const Chip: React.FC<TChipProps> = (props) => {
 	const { item, onRemove } = props;
 	const isApp = item.itemType === 'app';
+	const displayName = isApp ? item.name : item.id;
 
 	return (
 		<span
@@ -121,7 +129,7 @@ const Chip: React.FC<TChipProps> = (props) => {
 			)}
 		>
 			<ItemIcon icon={item.icon} itemType={item.itemType} size={16} />
-			<span className="max-w-32 truncate">{item.name}</span>
+			<span className="max-w-32 truncate">{displayName}</span>
 			<button
 				type="button"
 				className="inline-flex h-4 w-4 cursor-pointer items-center justify-center rounded opacity-60 hover:opacity-100"
@@ -145,6 +153,7 @@ interface TChipProps {
 const ResultItem: React.FC<TResultItemProps> = (props) => {
 	const { result, selected, onToggle, 'data-highlighted': highlighted, onPointerMove } = props;
 	const isApp = result.itemType === 'app';
+	const displayName = isApp ? result.name : result.id;
 
 	return (
 		<div
@@ -158,7 +167,7 @@ const ResultItem: React.FC<TResultItemProps> = (props) => {
 			data-highlighted={highlighted}
 		>
 			<ItemIcon icon={result.icon} itemType={result.itemType} />
-			<span className="flex-1 truncate">{result.name}</span>
+			<span className="flex-1 truncate">{displayName}</span>
 			<span className="flex items-center gap-1">
 				{selected && (
 					<span className="flex h-5 w-5 items-center justify-center rounded bg-green-500/20 text-green-600">

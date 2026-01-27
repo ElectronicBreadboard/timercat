@@ -54,7 +54,10 @@ function RouteComponent() {
 
 			<SettingGroup title="Blocking">
 				<SettingItem label="Enable Blocking" description="Block distracting apps and websites">
-					<Switch checked={settings.enabled} onCheckedChange={(enabled) => updateSettings({ enabled })} />
+					<Switch
+						checked={settings.enabled}
+						onCheckedChange={(enabled) => updateSettings({ enabled })}
+					/>
 				</SettingItem>
 			</SettingGroup>
 
