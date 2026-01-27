@@ -110,6 +110,27 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 		[value, onChange]
 	);
 
+	const toggle = React.useCallback(
+		(item: GItem) => {
+			const exists = value.some((v) => v.id === item.id);
+			if (exists) {
+				onChange(value.filter((v) => v.id !== item.id));
+			} else {
+				onChange([...value, item]);
+			}
+			setQuery('');
+			clearSearch();
+			setHighlightedIndex(0);
+			inputRef.current?.focus();
+		},
+		[value, onChange, clearSearch]
+	);
+
+	const isSelected = React.useCallback(
+		(id: string) => value.some((v) => v.id === id),
+		[value]
+	);
+
 	const clear = React.useCallback(() => {
 		onChange([]);
 		inputRef.current?.focus();
@@ -177,7 +198,7 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 					e.preventDefault();
 					const item = results[highlightedIndex];
 					if (item != null) {
-						select(item);
+						toggle(item);
 					}
 					break;
 				}
@@ -192,7 +213,7 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 					break;
 			}
 		},
-		[query, value, onChange, results, highlightedIndex, select, side]
+		[query, value, onChange, results, highlightedIndex, toggle, side]
 	);
 
 	// MARK: - Props Getters
@@ -309,8 +330,12 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 		// Actions
 		select,
 		remove,
+		toggle,
 		clear,
 		close,
+
+		// Helpers
+		isSelected,
 
 		// Props getters
 		getRootProps,

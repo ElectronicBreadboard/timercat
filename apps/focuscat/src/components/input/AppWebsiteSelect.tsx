@@ -1,9 +1,8 @@
 import React from 'react';
+import { CheckIcon, XIcon } from '@/components';
 import { specta } from '@/environment';
 import { cn, toTuple } from '@/lib';
 import { MultiSelect, useMultiSelect } from './MultiSelect';
-
-// MARK: - Component
 
 /**
  * Multi-select input for apps and websites, similar to Notion's tag selector.
@@ -47,12 +46,16 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 	const multiSelect = useMultiSelect({
 		value,
 		onChange,
-		onSearch: handleSearch
+		onSearch: handleSearch,
+		filterSelected: false
 	});
 
 	return (
 		<MultiSelect.Root {...multiSelect.getRootProps()}>
-			<MultiSelect.Container className={className} {...multiSelect.getContainerProps()}>
+			<MultiSelect.Container
+				className={cn('max-h-24 overflow-y-auto', className)}
+				{...multiSelect.getContainerProps()}
+			>
 				{value.map((item) => (
 					<Chip key={item.id} item={item} onRemove={() => multiSelect.remove(item.id)} />
 				))}
@@ -70,14 +73,15 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 						</MultiSelect.HelperText>
 
 						{multiSelect.showEmpty && (
-							<MultiSelect.Empty>No results for "{multiSelect.query}"</MultiSelect.Empty>
+							<MultiSelect.Empty>No results for &quot;{multiSelect.query}&quot;</MultiSelect.Empty>
 						)}
 
 						{multiSelect.results.map((result, index) => (
 							<ResultItem
 								key={result.id}
 								result={result}
-								onSelect={() => multiSelect.select(result)}
+								selected={multiSelect.isSelected(result.id)}
+								onToggle={() => multiSelect.toggle(result)}
 								{...multiSelect.getItemProps(index)}
 							/>
 						))}
@@ -88,9 +92,24 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 	);
 };
 
-// MARK: - Subcomponents
+export interface TAppWebsiteSelectProps {
+	value: TSelectedItem[];
+	onChange: (items: TSelectedItem[]) => void;
+	placeholder?: string;
+	includeApps?: boolean;
+	includeWebsites?: boolean;
+	className?: string;
+}
 
-const Chip: React.FC<{ item: TSelectedItem; onRemove: () => void }> = ({ item, onRemove }) => {
+export interface TSelectedItem {
+	id: string;
+	name: string;
+	itemType: specta.ItemType;
+	icon?: string | null;
+}
+
+const Chip: React.FC<TChipProps> = (props) => {
+	const { item, onRemove } = props;
 	const isApp = item.itemType === 'app';
 
 	return (
@@ -113,28 +132,19 @@ const Chip: React.FC<{ item: TSelectedItem; onRemove: () => void }> = ({ item, o
 				}}
 				onMouseDown={(e) => e.preventDefault()}
 			>
-				<svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-					<path
-						d="M2 2L8 8M8 2L2 8"
-						stroke="currentColor"
-						strokeWidth="1.5"
-						strokeLinecap="round"
-					/>
-				</svg>
+				<XIcon size={10} />
 			</button>
 		</span>
 	);
 };
 
-interface TResultItemProps {
-	'result': TSelectedItem;
-	'onSelect': () => void;
-	'data-highlighted'?: true;
-	'onPointerMove'?: () => void;
+interface TChipProps {
+	item: TSelectedItem;
+	onRemove: () => void;
 }
 
 const ResultItem: React.FC<TResultItemProps> = (props) => {
-	const { result, onSelect, 'data-highlighted': highlighted, onPointerMove } = props;
+	const { result, selected, onToggle, 'data-highlighted': highlighted, onPointerMove } = props;
 	const isApp = result.itemType === 'app';
 
 	return (
@@ -143,32 +153,45 @@ const ResultItem: React.FC<TResultItemProps> = (props) => {
 				'flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-(--color-base-900)',
 				highlighted && (isApp ? 'bg-blue-500/10' : 'bg-violet-500/10')
 			)}
-			onClick={onSelect}
+			onClick={onToggle}
 			onMouseDown={(e) => e.preventDefault()}
 			onPointerMove={onPointerMove}
 			data-highlighted={highlighted}
 		>
 			<ItemIcon icon={result.icon} itemType={result.itemType} />
 			<span className="flex-1 truncate">{result.name}</span>
-			<span
-				className={cn(
-					'rounded px-1.5 py-0.5 text-xs',
-					isApp
-						? 'bg-blue-500/20 text-blue-600 dark:text-blue-400'
-						: 'bg-violet-500/20 text-violet-600 dark:text-violet-400'
+			<span className="flex items-center gap-1">
+				{selected && (
+					<span className="flex h-5 w-5 items-center justify-center rounded bg-green-500/20 text-green-600">
+						<CheckIcon size={12} />
+					</span>
 				)}
-			>
-				{result.itemType}
+				<span
+					className={cn(
+						'rounded px-1.5 py-0.5 text-xs',
+						isApp
+							? 'bg-blue-500/20 text-blue-600 dark:text-blue-400'
+							: 'bg-violet-500/20 text-violet-600 dark:text-violet-400'
+					)}
+				>
+					{result.itemType}
+				</span>
 			</span>
 		</div>
 	);
 };
 
-const ItemIcon: React.FC<{ icon?: string | null; itemType: specta.ItemType; size?: number }> = ({
-	icon,
-	itemType,
-	size = 20
-}) => {
+interface TResultItemProps {
+	'result': TSelectedItem;
+	'selected': boolean;
+	'onToggle': () => void;
+	'data-highlighted'?: true;
+	'onPointerMove'?: () => void;
+}
+
+const ItemIcon: React.FC<TItemIconProps> = (props) => {
+	const { icon, itemType, size = 20 } = props;
+
 	if (icon != null) {
 		return (
 			<img
@@ -196,20 +219,8 @@ const ItemIcon: React.FC<{ icon?: string | null; itemType: specta.ItemType; size
 	);
 };
 
-// MARK: - Types
-
-export interface TSelectedItem {
-	id: string;
-	name: string;
-	itemType: specta.ItemType;
+interface TItemIconProps {
 	icon?: string | null;
-}
-
-export interface TAppWebsiteSelectProps {
-	value: TSelectedItem[];
-	onChange: (items: TSelectedItem[]) => void;
-	placeholder?: string;
-	includeApps?: boolean;
-	includeWebsites?: boolean;
-	className?: string;
+	itemType: specta.ItemType;
+	size?: number;
 }
