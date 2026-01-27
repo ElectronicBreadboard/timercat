@@ -77,7 +77,15 @@ const Positioner: React.FC<TMultiSelectPositionerProps> = (props) => {
 	const { children, sideOffset = 0, collisionPadding = 32 } = props;
 
 	return (
-		<Popover.Positioner side="bottom" sideOffset={sideOffset} collisionPadding={collisionPadding}>
+		<Popover.Positioner
+			side="bottom"
+			sideOffset={sideOffset}
+			collisionPadding={collisionPadding}
+			// Fixed positioning is preferred for floating overlays. Unlike absolute, fixed
+			// elements don't participate in document layout, preventing feedback loops where
+			// popup resize (from --available-height) affects scroll/layout calculations.
+			positionMethod="fixed"
+		>
 			{children}
 		</Popover.Positioner>
 	);

@@ -41,6 +41,12 @@ export function usePopupSideObserver(
 			observer = new MutationObserver(() => {
 				const newSide = popup.getAttribute('data-side') as 'top' | 'bottom' | null;
 				if (newSide != null) {
+					// Force repaint when side flips. Without this, flex-col-reverse doesn't
+					// render correctly after switching from bottom to top (WebView bug).
+					// Alternative: reverse items in JS, but this 3-line hack is simpler.
+					popup.style.display = 'none';
+					void popup.offsetHeight;
+					popup.style.display = '';
 					onSideChange(newSide);
 				}
 			});
