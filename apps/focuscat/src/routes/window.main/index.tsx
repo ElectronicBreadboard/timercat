@@ -1,9 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useFeatureState } from 'feature-react/state';
+import { useFeatureState, useListener } from 'feature-react/state';
 import React from 'react';
 import { specta } from '@/environment';
 import { Cat, catConfig, TCatRef } from '@/features/cat';
 import { useSettingsCx } from '@/features/settings';
+import { useTimerCx } from '@/features/timer';
+import { playSound } from '@/lib';
 import { Navbar, StatsCard, TimerView } from './components';
 
 export const Route = createFileRoute('/window/main/')({
@@ -16,6 +18,7 @@ function RouteComponent() {
 
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
+	const timerCx = useTimerCx();
 
 	// Top section (Stats + Cat): width is half of 300px window, height lets cat overflow into timer wheel
 	const topSection = React.useMemo(() => {
@@ -40,13 +43,36 @@ function RouteComponent() {
 		await specta.commands.showHistoryWindow();
 	}, []);
 
-	const handleTick = React.useCallback(() => {
+	const handleTick = React.useCallback((isPreviewing: boolean) => {
 		const now = Date.now();
 		if (now - lastTapTime.current >= catConfig.tapThrottleMs) {
 			lastTapTime.current = now;
 			catRef.current?.tap();
 		}
+		if (!isPreviewing) {
+			playSound('tick');
+		}
 	}, []);
+
+	const handleCatTap = React.useCallback(() => {
+		playSound('meow');
+	}, []);
+
+	// MARK: - Effects
+
+	// Play completion sound when entering overtime (timer naturally completes)
+	const wasInOvertime = React.useRef(false);
+	useListener(
+		timerCx.$overtimeSeconds,
+		({ value: overtimeSeconds = 0 }) => {
+			const isInOvertime = overtimeSeconds > 0;
+			if (isInOvertime && !wasInOvertime.current) {
+				playSound('complete');
+			}
+			wasInOvertime.current = isInOvertime;
+		},
+		[]
+	);
 
 	// MARK: - UI
 
@@ -60,7 +86,12 @@ function RouteComponent() {
 					<StatsCard className="size-full" debug={settings.debug.enabled} />
 				</div>
 				<div className="relative z-30 w-1/2 overflow-visible">
-					<Cat ref={catRef} size={topSection.width} className="absolute right-0 bottom-0" />
+					<Cat
+						ref={catRef}
+						size={topSection.width}
+						className="absolute right-0 bottom-0"
+						onTap={handleCatTap}
+					/>
 				</div>
 			</div>
 

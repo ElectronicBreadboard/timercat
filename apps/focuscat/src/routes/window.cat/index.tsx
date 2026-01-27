@@ -17,7 +17,7 @@ import { Cat, type TCatRef } from '@/features/cat';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
 import { useOnInputDetected } from '@/hooks';
-import { cn, formatTime } from '@/lib';
+import { cn, formatTime, playSound } from '@/lib';
 
 export const Route = createFileRoute('/window/cat/')({
 	component: RouteComponent
@@ -79,6 +79,10 @@ function RouteComponent() {
 		await timerCx.skip();
 	}, [timerCx]);
 
+	const handleCatTap = React.useCallback(() => {
+		playSound('meow');
+	}, []);
+
 	// MARK: - Effects
 
 	useOnInputDetected(React.useCallback(() => catRef.current?.tap(), []));
@@ -93,6 +97,7 @@ function RouteComponent() {
 				ref={catRef}
 				size={170}
 				className={cn('z-10', settings.debug.cat && 'border border-green-500')}
+				onTap={handleCatTap}
 			/>
 
 			<div
