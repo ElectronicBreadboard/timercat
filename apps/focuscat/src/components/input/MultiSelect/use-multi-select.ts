@@ -52,6 +52,7 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 	// Refs
 	const inputRef = React.useRef<HTMLInputElement | null>(null);
 	const popupRef = React.useRef<HTMLDivElement | null>(null);
+	const lastMousePosRef = React.useRef<{ x: number; y: number } | null>(null);
 
 	// Stable IDs for ARIA
 	const id = React.useId();
@@ -281,8 +282,19 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 				'aria-selected': index === highlightedIndex,
 				'data-highlighted': index === highlightedIndex || undefined,
 				'selected': item != null && value.some((v) => v.id === item.id),
-				// onPointerMove (not onMouseEnter) - only fires on actual movement, not hidden cursor
-				'onPointerMove': () => {
+				// Only update highlight when cursor physically moves, not when DOM scrolls beneath it.
+				// We track clientX/clientY (viewport-relative) which stay constant during scroll.
+				'onPointerMove': (e: React.PointerEvent) => {
+					const lastPos = lastMousePosRef.current;
+					const currentPos = { x: e.clientX, y: e.clientY };
+
+					// If position hasn't changed, this is scroll-induced - ignore
+					if (lastPos != null && lastPos.x === currentPos.x && lastPos.y === currentPos.y) {
+						return;
+					}
+
+					lastMousePosRef.current = currentPos;
+
 					if (highlightedIndex !== index) {
 						setHighlightedIndex(index);
 					}
@@ -300,6 +312,7 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 			setQuery('');
 			clearSearch();
 			setHighlightedIndex(0);
+			lastMousePosRef.current = null;
 		}
 	}, [isOpen, clearSearch]);
 
@@ -308,36 +321,13 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 		setHighlightedIndex(0);
 	}, [results]);
 
-	// Scroll highlighted item into view during keyboard navigation.
-	// Browser quirk: scrollIntoView can trigger pointermove events even when the user's cursor hasn't
-	// physically moved (the DOM shifts under the cursor). This hijacks keyboard navigation by jumping
-	// the highlight back to where the cursor is. We prevent this by disabling pointer-events during
-	// scroll and re-enabling only when the user actually moves their mouse.
+	// Scroll highlighted item into view during keyboard navigation
 	React.useEffect(() => {
 		if (!showPopup) {
 			return;
 		}
-
-		const popup = popupRef.current;
-		if (popup == null) {
-			return;
-		}
-
-		popup.style.pointerEvents = 'none';
-
-		const highlighted = popup.querySelector('[data-highlighted]');
+		const highlighted = popupRef.current?.querySelector('[data-highlighted]');
 		highlighted?.scrollIntoView({ block: 'nearest' });
-
-		const handleMouseMove = (): void => {
-			popup.style.pointerEvents = '';
-			document.removeEventListener('mousemove', handleMouseMove);
-		};
-		document.addEventListener('mousemove', handleMouseMove);
-
-		return () => {
-			document.removeEventListener('mousemove', handleMouseMove);
-			popup.style.pointerEvents = '';
-		};
 	}, [highlightedIndex, showPopup]);
 
 	// Track popup side for connected visual (base-ui sets data-side on Popup)

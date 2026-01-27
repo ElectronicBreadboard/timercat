@@ -185,7 +185,7 @@ interface TResultItemProps {
 	'selected': boolean;
 	'onToggle': () => void;
 	'data-highlighted'?: true;
-	'onPointerMove'?: () => void;
+	'onPointerMove'?: (e: React.PointerEvent) => void;
 }
 
 const ItemIcon: React.FC<TItemIconProps> = (props) => {
