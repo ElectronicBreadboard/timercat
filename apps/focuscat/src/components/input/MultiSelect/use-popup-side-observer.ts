@@ -47,6 +47,7 @@ export function usePopupSideObserver(
 					popup.style.display = 'none';
 					void popup.offsetHeight;
 					popup.style.display = '';
+
 					onSideChange(newSide);
 				}
 			});
