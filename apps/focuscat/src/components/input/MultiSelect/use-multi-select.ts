@@ -1,57 +1,105 @@
 import React from 'react';
-import { usePopupViewport } from './use-popup-viewport';
+import { useDebouncedSearch } from './use-debounced-search';
+import { usePopupSideObserver } from './use-popup-side-observer';
 
-export function useMultiSelect<T extends TMultiSelectItem>(options: TUseMultiSelectOptions<T>) {
+/**
+ * Headless hook for building multi-select components with async search.
+ *
+ * Features:
+ * - Debounced async search with stale response handling
+ * - Keyboard navigation (arrows, enter, escape, backspace)
+ * - Visual navigation that adapts to popup position
+ * - Focus management
+ * - Connected input/popup visual coordination
+ *
+ * @example
+ * ```tsx
+ * const multiSelect = useMultiSelect({
+ *   value: selectedItems,
+ *   onChange: setSelectedItems,
+ *   onSearch: async (query) => api.search(query)
+ * });
+ *
+ * return (
+ *   <MultiSelect.Root {...multiSelect.getRootProps()}>
+ *     <MultiSelect.Container {...multiSelect.getContainerProps()}>
+ *       {value.map(item => <Chip key={item.id} />)}
+ *       <MultiSelect.Input {...multiSelect.getInputProps()} />
+ *     </MultiSelect.Container>
+ *     <MultiSelect.Portal>
+ *       <MultiSelect.Popup {...multiSelect.getPopupProps()}>
+ *         {multiSelect.results.map((item, i) => (
+ *           <Item {...multiSelect.getItemProps(i)} />
+ *         ))}
+ *       </MultiSelect.Popup>
+ *     </MultiSelect.Portal>
+ *   </MultiSelect.Root>
+ * );
+ * ```
+ */
+export function useMultiSelect<GItem extends TMultiSelectItem>(
+	options: TUseMultiSelectOptions<GItem>
+) {
 	const {
 		value,
 		onChange,
 		onSearch,
 		debounceMs = 200,
 		filterSelected = true,
-		viewportPadding = 16,
-		minPopupHeight = 100
+		disabled = false
 	} = options;
 
 	// Refs
-	const containerRef = React.useRef<HTMLDivElement | null>(null);
 	const inputRef = React.useRef<HTMLInputElement | null>(null);
 	const popupRef = React.useRef<HTMLDivElement | null>(null);
-	const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-	const searchIdRef = React.useRef(0);
-	const blurTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	// Stable IDs for ARIA
+	const id = React.useId();
+	const popupId = `multiselect-popup-${id}`;
+	const getItemId = React.useCallback((index: number) => `multiselect-item-${id}-${index}`, [id]);
 
 	// State
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [query, setQuery] = React.useState('');
-	const [results, setResults] = React.useState<T[]>([]);
-	const [isSearching, setIsSearching] = React.useState(false);
 	const [highlightedIndex, setHighlightedIndex] = React.useState(0);
+	// Tracks popup position for: 1) visual keyboard nav, 2) container border styling
+	const [side, setSide] = React.useState<'top' | 'bottom'>('bottom');
+
+	// Debounced search
+	const selectedIds = React.useMemo(() => new Set(value.map((v) => v.id)), [value]);
+	const searchFilter = React.useCallback(
+		(item: GItem) => !filterSelected || !selectedIds.has(item.id),
+		[filterSelected, selectedIds]
+	);
+	const {
+		results,
+		isSearching,
+		clear: clearSearch
+	} = useDebouncedSearch<GItem>({
+		query,
+		onSearch,
+		debounceMs,
+		filter: searchFilter,
+		enabled: isOpen && !disabled
+	});
 
 	// Computed
 	const hasQuery = query.trim() !== '';
 	const showPopup = isOpen && (hasQuery || isSearching);
 	const inputCollapsed = !isOpen && value.length > 0;
-	const showEmpty = !isSearching && !results.length && hasQuery;
-
-	const { side } = usePopupViewport({
-		enabled: showPopup,
-		containerRef,
-		popupRef,
-		padding: viewportPadding,
-		minHeight: minPopupHeight
-	});
+	const showEmpty = !isSearching && results.length === 0 && hasQuery;
 
 	// MARK: - Actions
 
 	const select = React.useCallback(
-		(item: T) => {
+		(item: GItem) => {
 			onChange([...value, item]);
 			setQuery('');
-			setResults([]);
+			clearSearch();
 			setHighlightedIndex(0);
 			inputRef.current?.focus();
 		},
-		[value, onChange]
+		[value, onChange, clearSearch]
 	);
 
 	const remove = React.useCallback(
@@ -72,26 +120,40 @@ export function useMultiSelect<T extends TMultiSelectItem>(options: TUseMultiSel
 		inputRef.current?.blur();
 	}, []);
 
+	// MARK: - Event Handlers
+
 	const handleContainerClick = React.useCallback(() => {
 		inputRef.current?.focus();
 	}, []);
 
 	const handleInputFocus = React.useCallback(() => {
-		setIsOpen(true);
-	}, []);
+		if (!disabled) {
+			setIsOpen(true);
+		}
+	}, [disabled]);
 
 	const handleInputBlur = React.useCallback((e: React.FocusEvent) => {
-		const clickedInsidePopup = (e.relatedTarget as HTMLElement | null)?.closest('[data-popup]');
-		if (clickedInsidePopup) {
-			return;
+		// relatedTarget tells us where focus went - if it's inside popup, keep open
+		// (popup is in Portal so can't use DOM containment check)
+		const focusedInsidePopup = (e.relatedTarget as HTMLElement | null)?.closest('[data-popup]');
+		if (focusedInsidePopup == null) {
+			setIsOpen(false);
 		}
-		// Delay allows click events on results to register before closing
-		blurTimeoutRef.current = setTimeout(() => setIsOpen(false), 150);
+	}, []);
+
+	const handleOpenChange = React.useCallback((open: boolean) => {
+		setIsOpen(open);
+	}, []);
+
+	const handleQueryChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+		setQuery(e.target.value);
 	}, []);
 
 	const handleInputKeyDown = React.useCallback(
 		(e: React.KeyboardEvent) => {
-			// Flip direction when popup is on top (visually reversed due to flex-col-reverse)
+			// ArrowDown should always move highlight visually downward on screen.
+			// When popup is above input (side=top), CSS reverses list order via flex-col-reverse,
+			// so we invert the index direction to maintain visual consistency.
 			const isReversed = side === 'top';
 
 			switch (e.key) {
@@ -99,9 +161,7 @@ export function useMultiSelect<T extends TMultiSelectItem>(options: TUseMultiSel
 					e.preventDefault();
 					if (results.length > 0) {
 						setHighlightedIndex((prev) =>
-							isReversed
-								? (prev - 1 + results.length) % results.length
-								: (prev + 1) % results.length
+							isReversed ? Math.max(0, prev - 1) : Math.min(results.length - 1, prev + 1)
 						);
 					}
 					break;
@@ -109,18 +169,18 @@ export function useMultiSelect<T extends TMultiSelectItem>(options: TUseMultiSel
 					e.preventDefault();
 					if (results.length > 0) {
 						setHighlightedIndex((prev) =>
-							isReversed
-								? (prev + 1) % results.length
-								: (prev - 1 + results.length) % results.length
+							isReversed ? Math.min(results.length - 1, prev + 1) : Math.max(0, prev - 1)
 						);
 					}
 					break;
-				case 'Enter':
+				case 'Enter': {
 					e.preventDefault();
-					if (results.length > 0 && highlightedIndex < results.length) {
-						select(results[highlightedIndex] as T);
+					const item = results[highlightedIndex];
+					if (item != null) {
+						select(item);
 					}
 					break;
+				}
 				case 'Escape':
 					setIsOpen(false);
 					inputRef.current?.blur();
@@ -135,26 +195,26 @@ export function useMultiSelect<T extends TMultiSelectItem>(options: TUseMultiSel
 		[query, value, onChange, results, highlightedIndex, select, side]
 	);
 
-	const handleQueryChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-		setQuery(e.target.value);
-	}, []);
+	// MARK: - Props Getters
 
 	const getRootProps = React.useCallback(
 		() => ({
-			open: showPopup
+			open: showPopup,
+			onOpenChange: handleOpenChange
 		}),
-		[showPopup]
+		[showPopup, handleOpenChange]
 	);
 
 	const getContainerProps = React.useCallback(
 		() => ({
-			ref: containerRef,
 			open: showPopup,
-			onClick: handleContainerClick,
-			side: showPopup ? side : undefined
+			side: showPopup ? side : undefined,
+			onClick: handleContainerClick
 		}),
-		[showPopup, handleContainerClick, side]
+		[showPopup, side, handleContainerClick]
 	);
+
+	const highlightedItemId = results.length > 0 ? getItemId(highlightedIndex) : undefined;
 
 	const getInputProps = React.useCallback(
 		() => ({
@@ -164,7 +224,14 @@ export function useMultiSelect<T extends TMultiSelectItem>(options: TUseMultiSel
 			'onFocus': handleInputFocus,
 			'onBlur': handleInputBlur,
 			'onKeyDown': handleInputKeyDown,
-			'data-collapsed': (inputCollapsed ? true : undefined) as true | undefined
+			'data-collapsed': inputCollapsed || undefined,
+			'disabled': disabled || undefined,
+			// ARIA: combobox pattern
+			'role': 'combobox',
+			'aria-expanded': showPopup,
+			'aria-controls': showPopup ? popupId : undefined,
+			'aria-activedescendant': showPopup ? highlightedItemId : undefined,
+			'aria-autocomplete': 'list' as const
 		}),
 		[
 			query,
@@ -172,101 +239,59 @@ export function useMultiSelect<T extends TMultiSelectItem>(options: TUseMultiSel
 			handleInputFocus,
 			handleInputBlur,
 			handleInputKeyDown,
-			inputCollapsed
+			inputCollapsed,
+			disabled,
+			showPopup,
+			popupId,
+			highlightedItemId
 		]
 	);
 
 	const getPopupProps = React.useCallback(
 		() => ({
-			'ref': popupRef,
-			'data-popup': true as const
+			ref: popupRef,
+			id: popupId,
+			role: 'listbox' as const
 		}),
-		[]
+		[popupId]
 	);
 
 	const getItemProps = React.useCallback(
 		(index: number) => ({
-			'data-highlighted': (index === highlightedIndex ? true : undefined) as true | undefined,
+			'id': getItemId(index),
+			'role': 'option' as const,
+			'aria-selected': index === highlightedIndex,
+			'data-highlighted': index === highlightedIndex || undefined,
 			'onMouseEnter': () => setHighlightedIndex(index)
 		}),
-		[highlightedIndex]
+		[highlightedIndex, getItemId]
 	);
 
 	// MARK: - Effects
 
+	// Reset state when closed
 	React.useEffect(() => {
 		if (!isOpen) {
 			setQuery('');
-			setResults([]);
+			clearSearch();
 			setHighlightedIndex(0);
 		}
-		// Clear pending blur timeout when open state changes
-		if (blurTimeoutRef.current != null) {
-			clearTimeout(blurTimeoutRef.current);
-			blurTimeoutRef.current = null;
-		}
-	}, [isOpen]);
+	}, [isOpen, clearSearch]);
 
+	// Reset highlight when results change
 	React.useEffect(() => {
 		setHighlightedIndex(0);
 	}, [results]);
 
-	// Debounced search
+	// Scroll highlighted item into view during keyboard navigation
 	React.useEffect(() => {
-		if (debounceRef.current != null) {
-			clearTimeout(debounceRef.current);
-		}
+		if (!showPopup) return;
+		const highlighted = popupRef.current?.querySelector('[data-highlighted]');
+		highlighted?.scrollIntoView({ block: 'nearest' });
+	}, [highlightedIndex, showPopup]);
 
-		const trimmedQuery = query.trim();
-		if (!trimmedQuery) {
-			setResults([]);
-			setIsSearching(false);
-			return;
-		}
-
-		setIsSearching(true);
-		const searchId = ++searchIdRef.current;
-		const isStaleResponse = () => searchId !== searchIdRef.current;
-
-		debounceRef.current = setTimeout(async () => {
-			try {
-				const searchResults = await onSearch(trimmedQuery);
-				if (isStaleResponse()) {
-					return;
-				}
-				if (filterSelected) {
-					const selectedIds = new Set(value.map((v) => v.id));
-					setResults(searchResults.filter((r) => !selectedIds.has(r.id)));
-				} else {
-					setResults(searchResults);
-				}
-			} catch {
-				if (isStaleResponse()) {
-					return;
-				}
-				setResults([]);
-			} finally {
-				if (!isStaleResponse()) {
-					setIsSearching(false);
-				}
-			}
-		}, debounceMs);
-
-		return () => {
-			if (debounceRef.current != null) {
-				clearTimeout(debounceRef.current);
-			}
-		};
-	}, [query, onSearch, debounceMs, filterSelected, value]);
-
-	// Cleanup on unmount
-	React.useEffect(() => {
-		return () => {
-			if (blurTimeoutRef.current != null) {
-				clearTimeout(blurTimeoutRef.current);
-			}
-		};
-	}, []);
+	// Track popup side for connected visual (base-ui sets data-side on Popup)
+	usePopupSideObserver(popupRef, showPopup, setSide);
 
 	return {
 		// State
@@ -291,23 +316,22 @@ export function useMultiSelect<T extends TMultiSelectItem>(options: TUseMultiSel
 	} as const;
 }
 
+/** Minimum shape for selectable items (extend with your own fields) */
 export interface TMultiSelectItem {
 	id: string;
 }
 
-export interface TUseMultiSelectOptions<T extends TMultiSelectItem> {
-	value: T[];
-	onChange: (items: T[]) => void;
-	onSearch: (query: string) => Promise<T[]>;
+export interface TUseMultiSelectOptions<GItem extends TMultiSelectItem> {
+	/** Currently selected items */
+	value: GItem[];
+	/** Called when selection changes */
+	onChange: (items: GItem[]) => void;
+	/** Async function to search for items (should be memoized with useCallback) */
+	onSearch: (query: string) => Promise<GItem[]>;
+	/** Debounce delay in milliseconds (default: 200) */
 	debounceMs?: number;
+	/** Whether to filter out already-selected items from results (default: true) */
 	filterSelected?: boolean;
-	/** Minimum gap (px) between popup edge and viewport edge */
-	viewportPadding?: number;
-	/** Minimum popup height (px) even when viewport space is limited */
-	minPopupHeight?: number;
+	/** Whether the input is disabled (default: false) */
+	disabled?: boolean;
 }
-
-/** Inferred return type of useMultiSelect */
-export type TUseMultiSelectReturn<T extends TMultiSelectItem> = ReturnType<
-	typeof useMultiSelect<T>
->;

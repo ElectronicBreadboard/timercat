@@ -34,7 +34,11 @@ export const Input = React.forwardRef<HTMLInputElement, TInputProps>((props, ref
 	const { variant, inputSize, className, ...rest } = props;
 
 	return (
-		<BaseInput ref={ref} className={cn(inputVariants({ variant, size: inputSize }), className)} {...rest} />
+		<BaseInput
+			ref={ref}
+			className={cn(inputVariants({ variant, size: inputSize }), className)}
+			{...rest}
+		/>
 	);
 });
 
