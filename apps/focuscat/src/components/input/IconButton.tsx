@@ -14,18 +14,22 @@ const iconButtonVariants = cva(
 		variants: {
 			variant: {
 				default: [
-					'bg-base-100 text-base-600',
-					'hover:bg-base-200 hover:text-base-900',
-					'active:bg-base-300'
+					'border border-base-200 bg-base-50 text-base-600',
+					'hover:bg-base-100 hover:text-base-900',
+					'active:bg-base-200'
 				],
-				ghost: ['text-base-400', 'hover:text-base-600 hover:bg-base-100', 'active:bg-base-200'],
+				ghost: ['text-base-600', 'hover:bg-base-100 hover:text-base-900', 'active:bg-base-200'],
 				bare: ['text-base-400', 'hover:text-base-600', 'active:text-base-900'],
-				primary: ['bg-primary text-primary-content', 'hover:brightness-110', 'active:brightness-90']
+				primary: [
+					'border border-primary bg-primary text-primary-content',
+					'hover:brightness-110',
+					'active:brightness-90'
+				]
 			},
 			size: {
 				sm: 'size-8',
 				md: 'size-10',
-				lg: 'size-11'
+				lg: 'size-12'
 			}
 		},
 		defaultVariants: {

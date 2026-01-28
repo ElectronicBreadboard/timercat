@@ -38,8 +38,9 @@ const ToggleGroupItem: React.FC<TToggleGroupItemProps> = (props) => {
 			className={cn(
 				'text-base-500 flex size-8 items-center justify-center rounded transition-colors select-none',
 				'hover:text-base-700',
-				'focus-visible:outline-primary focus-visible:outline-2 focus-visible:-outline-offset-1',
+				'focus-visible:ring-primary outline-none focus-visible:ring-2',
 				'data-pressed:bg-base-0 data-pressed:text-base-900 data-pressed:shadow-sm',
+				'disabled:cursor-not-allowed disabled:opacity-50',
 				className
 			)}
 			{...rest}

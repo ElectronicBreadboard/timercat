@@ -37,6 +37,7 @@
 		"@tauri-apps/plugin-os": "^2",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
+		"feature-form": "^0.0.56",
 		"feature-react": "^0.0.67",
 		"feature-state": "^0.0.65",
 		"lucide-react": "^0.562.0",
@@ -44,7 +45,8 @@
 		"react": "^19.2.3",
 		"react-dom": "^19.2.3",
 		"tailwind-merge": "^3.4.0",
-		"tuple-result": "^0.0.11"
+		"tuple-result": "^0.0.11",
+		"validation-adapter": "^0.0.27"
 	},
 	"devDependencies": {
 		"@blgc/config": "^0.0.40",

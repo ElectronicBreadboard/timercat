@@ -18,13 +18,15 @@ import { Route as WindowMainIndexRouteImport } from './routes/window.main/index'
 import { Route as WindowHistoryIndexRouteImport } from './routes/window.history/index'
 import { Route as WindowCatIndexRouteImport } from './routes/window.cat/index'
 import { Route as WindowSettingsTimerIndexRouteImport } from './routes/window.settings.timer/index'
+import { Route as WindowSettingsTagsIndexRouteImport } from './routes/window.settings.tags/index'
 import { Route as WindowSettingsGoalsIndexRouteImport } from './routes/window.settings.goals/index'
 import { Route as WindowSettingsDeveloperIndexRouteImport } from './routes/window.settings.developer/index'
-import { Route as WindowSettingsBlockIndexRouteImport } from './routes/window.settings.block/index'
 import { Route as WindowSettingsAppIndexRouteImport } from './routes/window.settings.app/index'
 import { Route as WindowSettingsActivityIndexRouteImport } from './routes/window.settings.activity/index'
 import { Route as WindowMainSplashIndexRouteImport } from './routes/window.main.splash/index'
 import { Route as WindowHistorySessionIdIndexRouteImport } from './routes/window.history.$sessionId/index'
+import { Route as WindowSettingsTagsNewIndexRouteImport } from './routes/window.settings.tags.new/index'
+import { Route as WindowSettingsTagsTagIdIndexRouteImport } from './routes/window.settings.tags.$tagId/index'
 
 const WindowSettingsRouteRoute = WindowSettingsRouteRouteImport.update({
   id: '/window/settings',
@@ -72,6 +74,11 @@ const WindowSettingsTimerIndexRoute =
     path: '/timer/',
     getParentRoute: () => WindowSettingsRouteRoute,
   } as any)
+const WindowSettingsTagsIndexRoute = WindowSettingsTagsIndexRouteImport.update({
+  id: '/tags/',
+  path: '/tags/',
+  getParentRoute: () => WindowSettingsRouteRoute,
+} as any)
 const WindowSettingsGoalsIndexRoute =
   WindowSettingsGoalsIndexRouteImport.update({
     id: '/goals/',
@@ -82,12 +89,6 @@ const WindowSettingsDeveloperIndexRoute =
   WindowSettingsDeveloperIndexRouteImport.update({
     id: '/developer/',
     path: '/developer/',
-    getParentRoute: () => WindowSettingsRouteRoute,
-  } as any)
-const WindowSettingsBlockIndexRoute =
-  WindowSettingsBlockIndexRouteImport.update({
-    id: '/block/',
-    path: '/block/',
     getParentRoute: () => WindowSettingsRouteRoute,
   } as any)
 const WindowSettingsAppIndexRoute = WindowSettingsAppIndexRouteImport.update({
@@ -112,6 +113,18 @@ const WindowHistorySessionIdIndexRoute =
     path: '/$sessionId/',
     getParentRoute: () => WindowHistoryRouteRoute,
   } as any)
+const WindowSettingsTagsNewIndexRoute =
+  WindowSettingsTagsNewIndexRouteImport.update({
+    id: '/tags/new/',
+    path: '/tags/new/',
+    getParentRoute: () => WindowSettingsRouteRoute,
+  } as any)
+const WindowSettingsTagsTagIdIndexRoute =
+  WindowSettingsTagsTagIdIndexRouteImport.update({
+    id: '/tags/$tagId/',
+    path: '/tags/$tagId/',
+    getParentRoute: () => WindowSettingsRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/window/cat': typeof WindowCatRouteRouteWithChildren
@@ -126,10 +139,12 @@ export interface FileRoutesByFullPath {
   '/window/main/splash': typeof WindowMainSplashIndexRoute
   '/window/settings/activity': typeof WindowSettingsActivityIndexRoute
   '/window/settings/app': typeof WindowSettingsAppIndexRoute
-  '/window/settings/block': typeof WindowSettingsBlockIndexRoute
   '/window/settings/developer': typeof WindowSettingsDeveloperIndexRoute
   '/window/settings/goals': typeof WindowSettingsGoalsIndexRoute
+  '/window/settings/tags': typeof WindowSettingsTagsIndexRoute
   '/window/settings/timer': typeof WindowSettingsTimerIndexRoute
+  '/window/settings/tags/$tagId': typeof WindowSettingsTagsTagIdIndexRoute
+  '/window/settings/tags/new': typeof WindowSettingsTagsNewIndexRoute
 }
 export interface FileRoutesByTo {
   '/window/cat': typeof WindowCatIndexRoute
@@ -140,10 +155,12 @@ export interface FileRoutesByTo {
   '/window/main/splash': typeof WindowMainSplashIndexRoute
   '/window/settings/activity': typeof WindowSettingsActivityIndexRoute
   '/window/settings/app': typeof WindowSettingsAppIndexRoute
-  '/window/settings/block': typeof WindowSettingsBlockIndexRoute
   '/window/settings/developer': typeof WindowSettingsDeveloperIndexRoute
   '/window/settings/goals': typeof WindowSettingsGoalsIndexRoute
+  '/window/settings/tags': typeof WindowSettingsTagsIndexRoute
   '/window/settings/timer': typeof WindowSettingsTimerIndexRoute
+  '/window/settings/tags/$tagId': typeof WindowSettingsTagsTagIdIndexRoute
+  '/window/settings/tags/new': typeof WindowSettingsTagsNewIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -159,10 +176,12 @@ export interface FileRoutesById {
   '/window/main/splash/': typeof WindowMainSplashIndexRoute
   '/window/settings/activity/': typeof WindowSettingsActivityIndexRoute
   '/window/settings/app/': typeof WindowSettingsAppIndexRoute
-  '/window/settings/block/': typeof WindowSettingsBlockIndexRoute
   '/window/settings/developer/': typeof WindowSettingsDeveloperIndexRoute
   '/window/settings/goals/': typeof WindowSettingsGoalsIndexRoute
+  '/window/settings/tags/': typeof WindowSettingsTagsIndexRoute
   '/window/settings/timer/': typeof WindowSettingsTimerIndexRoute
+  '/window/settings/tags/$tagId/': typeof WindowSettingsTagsTagIdIndexRoute
+  '/window/settings/tags/new/': typeof WindowSettingsTagsNewIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -179,10 +198,12 @@ export interface FileRouteTypes {
     | '/window/main/splash'
     | '/window/settings/activity'
     | '/window/settings/app'
-    | '/window/settings/block'
     | '/window/settings/developer'
     | '/window/settings/goals'
+    | '/window/settings/tags'
     | '/window/settings/timer'
+    | '/window/settings/tags/$tagId'
+    | '/window/settings/tags/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/window/cat'
@@ -193,10 +214,12 @@ export interface FileRouteTypes {
     | '/window/main/splash'
     | '/window/settings/activity'
     | '/window/settings/app'
-    | '/window/settings/block'
     | '/window/settings/developer'
     | '/window/settings/goals'
+    | '/window/settings/tags'
     | '/window/settings/timer'
+    | '/window/settings/tags/$tagId'
+    | '/window/settings/tags/new'
   id:
     | '__root__'
     | '/window/cat'
@@ -211,10 +234,12 @@ export interface FileRouteTypes {
     | '/window/main/splash/'
     | '/window/settings/activity/'
     | '/window/settings/app/'
-    | '/window/settings/block/'
     | '/window/settings/developer/'
     | '/window/settings/goals/'
+    | '/window/settings/tags/'
     | '/window/settings/timer/'
+    | '/window/settings/tags/$tagId/'
+    | '/window/settings/tags/new/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -289,6 +314,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WindowSettingsTimerIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
+    '/window/settings/tags/': {
+      id: '/window/settings/tags/'
+      path: '/tags'
+      fullPath: '/window/settings/tags'
+      preLoaderRoute: typeof WindowSettingsTagsIndexRouteImport
+      parentRoute: typeof WindowSettingsRouteRoute
+    }
     '/window/settings/goals/': {
       id: '/window/settings/goals/'
       path: '/goals'
@@ -301,13 +333,6 @@ declare module '@tanstack/react-router' {
       path: '/developer'
       fullPath: '/window/settings/developer'
       preLoaderRoute: typeof WindowSettingsDeveloperIndexRouteImport
-      parentRoute: typeof WindowSettingsRouteRoute
-    }
-    '/window/settings/block/': {
-      id: '/window/settings/block/'
-      path: '/block'
-      fullPath: '/window/settings/block'
-      preLoaderRoute: typeof WindowSettingsBlockIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
     '/window/settings/app/': {
@@ -337,6 +362,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/window/history/$sessionId'
       preLoaderRoute: typeof WindowHistorySessionIdIndexRouteImport
       parentRoute: typeof WindowHistoryRouteRoute
+    }
+    '/window/settings/tags/new/': {
+      id: '/window/settings/tags/new/'
+      path: '/tags/new'
+      fullPath: '/window/settings/tags/new'
+      preLoaderRoute: typeof WindowSettingsTagsNewIndexRouteImport
+      parentRoute: typeof WindowSettingsRouteRoute
+    }
+    '/window/settings/tags/$tagId/': {
+      id: '/window/settings/tags/$tagId/'
+      path: '/tags/$tagId'
+      fullPath: '/window/settings/tags/$tagId'
+      preLoaderRoute: typeof WindowSettingsTagsTagIdIndexRouteImport
+      parentRoute: typeof WindowSettingsRouteRoute
     }
   }
 }
@@ -384,20 +423,24 @@ interface WindowSettingsRouteRouteChildren {
   WindowSettingsIndexRoute: typeof WindowSettingsIndexRoute
   WindowSettingsActivityIndexRoute: typeof WindowSettingsActivityIndexRoute
   WindowSettingsAppIndexRoute: typeof WindowSettingsAppIndexRoute
-  WindowSettingsBlockIndexRoute: typeof WindowSettingsBlockIndexRoute
   WindowSettingsDeveloperIndexRoute: typeof WindowSettingsDeveloperIndexRoute
   WindowSettingsGoalsIndexRoute: typeof WindowSettingsGoalsIndexRoute
+  WindowSettingsTagsIndexRoute: typeof WindowSettingsTagsIndexRoute
   WindowSettingsTimerIndexRoute: typeof WindowSettingsTimerIndexRoute
+  WindowSettingsTagsTagIdIndexRoute: typeof WindowSettingsTagsTagIdIndexRoute
+  WindowSettingsTagsNewIndexRoute: typeof WindowSettingsTagsNewIndexRoute
 }
 
 const WindowSettingsRouteRouteChildren: WindowSettingsRouteRouteChildren = {
   WindowSettingsIndexRoute: WindowSettingsIndexRoute,
   WindowSettingsActivityIndexRoute: WindowSettingsActivityIndexRoute,
   WindowSettingsAppIndexRoute: WindowSettingsAppIndexRoute,
-  WindowSettingsBlockIndexRoute: WindowSettingsBlockIndexRoute,
   WindowSettingsDeveloperIndexRoute: WindowSettingsDeveloperIndexRoute,
   WindowSettingsGoalsIndexRoute: WindowSettingsGoalsIndexRoute,
+  WindowSettingsTagsIndexRoute: WindowSettingsTagsIndexRoute,
   WindowSettingsTimerIndexRoute: WindowSettingsTimerIndexRoute,
+  WindowSettingsTagsTagIdIndexRoute: WindowSettingsTagsTagIdIndexRoute,
+  WindowSettingsTagsNewIndexRoute: WindowSettingsTagsNewIndexRoute,
 }
 
 const WindowSettingsRouteRouteWithChildren =

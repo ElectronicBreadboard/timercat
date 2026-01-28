@@ -120,6 +120,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      feature-form:
+        specifier: ^0.0.56
+        version: 0.0.56
       feature-react:
         specifier: ^0.0.67
         version: 0.0.67(react@19.2.3)
@@ -144,6 +147,9 @@ importers:
       tuple-result:
         specifier: ^0.0.11
         version: 0.0.11
+      validation-adapter:
+        specifier: ^0.0.27
+        version: 0.0.27
     devDependencies:
       '@blgc/config':
         specifier: ^0.0.40
@@ -1827,6 +1833,9 @@ packages:
       picomatch:
         optional: true
 
+  feature-form@0.0.56:
+    resolution: {integrity: sha512-HwMdZ7PYAm+TDzDtdzxjb6kiN9vYlRjbypvlhgs5aUxEg/hLEIBuHviiFdE6lI0h+c8k3+eIh2VLabbcmgZlWA==}
+
   feature-react@0.0.67:
     resolution: {integrity: sha512-fePAFpDGDG9JRSZGoT6ivz+pn3WZqb0KVgCpX5JllxS7BfZORffAvymyWSwJ9i5SEIdKYIld1UK4Cmpb5V1pTg==}
     peerDependencies:
@@ -3045,6 +3054,9 @@ packages:
     resolution: {integrity: sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  validation-adapter@0.0.27:
+    resolution: {integrity: sha512-SLpuicOfjmkY6rrqmytnynPfOmK7iVa8INA8a6JZqwNsvTjgmAw+/2ixia/+NPIEY7E1mX4am6wK6m+OoO6thA==}
 
   vite-tsconfig-paths@6.0.4:
     resolution: {integrity: sha512-iIsEJ+ek5KqRTK17pmxtgIxXtqr3qDdE6OxrP9mVeGhVDNXRJTKN/l9oMbujTQNzMLe6XZ8qmpztfbkPu2TiFQ==}
@@ -4998,6 +5010,13 @@ snapshots:
     optionalDependencies:
       picomatch: 4.0.3
 
+  feature-form@0.0.56:
+    dependencies:
+      '@blgc/types': 0.0.21
+      '@blgc/utils': 0.0.61
+      feature-state: 0.0.65
+      validation-adapter: 0.0.27
+
   feature-react@0.0.67(react@19.2.3):
     dependencies:
       '@blgc/types': 0.0.21
@@ -6170,6 +6189,10 @@ snapshots:
   use-sync-external-store@1.6.0(react@19.2.3):
     dependencies:
       react: 19.2.3
+
+  validation-adapter@0.0.27:
+    dependencies:
+      '@blgc/utils': 0.0.61
 
   vite-tsconfig-paths@6.0.4(typescript@5.9.3)(vite@7.3.1(@types/node@25.0.9)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)):
     dependencies:

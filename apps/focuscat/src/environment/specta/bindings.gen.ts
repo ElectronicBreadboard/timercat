@@ -279,17 +279,25 @@ async getTags() : Promise<Result<TagDto[], string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async createTag(name: string) : Promise<Result<TagDto, string>> {
+async getTag(id: number) : Promise<Result<TagDto | null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("create_tag", { name }) };
+    return { status: "ok", data: await TAURI_INVOKE("get_tag", { id }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-async updateTag(id: number, name: string) : Promise<Result<null, string>> {
+async createTag(name: string, color: string | null) : Promise<Result<TagDto, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("update_tag", { id, name }) };
+    return { status: "ok", data: await TAURI_INVOKE("create_tag", { name, color }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async updateTag(id: number, name: string, color: string | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_tag", { id, name, color }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -537,7 +545,7 @@ export type SessionStatus = "active" | "completed" | "cancelled"
 export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; startedAt: number; endedAt: number | null }
 export type SoundId = "tick" | "complete" | "meow"
 export type Stage = "dev" | "prod"
-export type TagDto = { id: number; name: string; createdAt: number }
+export type TagDto = { id: number; name: string; color: string | null; createdAt: number }
 export type Theme = "light" | "dark" | "auto"
 export type TimerDto = { status: TimerStatus; phase: Phase; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; speed: number }
 export type TimerSettings = { 

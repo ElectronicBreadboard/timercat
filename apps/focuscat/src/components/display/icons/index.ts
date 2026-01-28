@@ -35,7 +35,9 @@ export {
 	ShieldBan as BlockIcon,
 	SkipForward as SkipIcon,
 	Sun as SunIcon,
+	Tag as TagIcon,
 	Target as TargetIcon,
 	Timer as TimerIcon,
+	Trash2 as TrashIcon,
 	X as XIcon
 } from 'lucide-react';

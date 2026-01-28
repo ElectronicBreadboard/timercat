@@ -7,9 +7,9 @@ import { cn } from '@/lib';
 const numberFieldButtonVariants = cva(
 	[
 		'flex items-center justify-center border border-base-200 select-none',
-		'bg-base-100 text-base-600 transition-colors duration-100',
-		'hover:bg-base-200 hover:text-base-900',
-		'active:bg-base-300',
+		'bg-base-50 text-base-600 transition-colors duration-100',
+		'hover:bg-base-100 hover:text-base-900',
+		'active:bg-base-200',
 		'outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-primary',
 		'disabled:cursor-not-allowed disabled:opacity-50'
 	],
