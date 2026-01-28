@@ -51,39 +51,67 @@ CREATE TABLE website (
 
 CREATE INDEX idx_website_domain ON website (domain);
 
--- Tags (for organizing block rules, can have schedules for auto-activation)
+-- Tags (blocking contexts, e.g. "Work", "Study", "Social Media")
 CREATE TABLE tag (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    schedule TEXT, -- JSON: {"days": [1,2,3,4,5], "start": "08:00", "end": "18:00"}
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
 );
 
--- Block rules (link tags to apps/websites)
-CREATE TABLE block_rule (
+-- Tag restrictions (what a tag blocks/allows)
+CREATE TABLE tag_restriction (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     tag_id INTEGER NOT NULL REFERENCES tag (id) ON DELETE CASCADE,
-    rule_type TEXT NOT NULL, -- 'block' | 'allow'
+    action TEXT NOT NULL, -- 'block' | 'allow'
     app_id INTEGER REFERENCES app (id) ON DELETE CASCADE,
     website_id INTEGER REFERENCES website (id) ON DELETE CASCADE,
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
     CHECK (
-        (app_id IS NOT NULL AND website_id IS NULL)
-        OR (app_id IS NULL AND website_id IS NOT NULL)
+        (
+            app_id IS NOT NULL
+            AND website_id IS NULL
+        )
+        OR (
+            app_id IS NULL
+            AND website_id IS NOT NULL
+        )
     )
 );
 
-CREATE INDEX idx_block_rule_tag_id ON block_rule (tag_id);
+CREATE INDEX idx_tag_restriction_tag_id ON tag_restriction (tag_id);
 
-CREATE INDEX idx_block_rule_app_id ON block_rule (app_id);
+CREATE INDEX idx_tag_restriction_app_id ON tag_restriction (app_id);
 
-CREATE INDEX idx_block_rule_website_id ON block_rule (website_id);
+CREATE INDEX idx_tag_restriction_website_id ON tag_restriction (website_id);
 
-CREATE UNIQUE INDEX idx_block_rule_unique_app ON block_rule (tag_id, app_id)
-WHERE app_id IS NOT NULL;
+CREATE UNIQUE INDEX idx_tag_restriction_unique_app ON tag_restriction (tag_id, app_id)
+WHERE
+    app_id IS NOT NULL;
 
-CREATE UNIQUE INDEX idx_block_rule_unique_website ON block_rule (tag_id, website_id)
-WHERE website_id IS NOT NULL;
+CREATE UNIQUE INDEX idx_tag_restriction_unique_website ON tag_restriction (tag_id, website_id)
+WHERE
+    website_id IS NOT NULL;
+
+-- Schedules (time-based auto-activation)
+CREATE TABLE schedule (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    days TEXT NOT NULL, -- JSON array: [1,2,3,4,5] (1=Mon, 7=Sun)
+    start_time TEXT NOT NULL, -- "HH:MM" format
+    end_time TEXT NOT NULL, -- "HH:MM" format
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+);
+
+-- Schedule tags (which tags are active for a schedule)
+CREATE TABLE schedule_tag (
+    schedule_id INTEGER NOT NULL REFERENCES schedule (id) ON DELETE CASCADE,
+    tag_id INTEGER NOT NULL REFERENCES tag (id) ON DELETE CASCADE,
+    PRIMARY KEY (schedule_id, tag_id)
+);
+
+CREATE INDEX idx_schedule_tag_schedule_id ON schedule_tag (schedule_id);
+
+CREATE INDEX idx_schedule_tag_tag_id ON schedule_tag (tag_id);
 
 -- Session tags (which tags are active for a session)
 CREATE TABLE session_tag (
@@ -134,4 +162,5 @@ CREATE INDEX idx_activity_window_started_at ON activity_window (started_at);
 CREATE INDEX idx_activity_window_website_id ON activity_window (website_id);
 
 CREATE INDEX idx_activity_window_browser_url ON activity_window (browser_url)
-WHERE browser_url IS NOT NULL;
+WHERE
+    browser_url IS NOT NULL;

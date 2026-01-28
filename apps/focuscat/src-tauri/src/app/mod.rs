@@ -4,11 +4,12 @@ pub mod window;
 
 use crate::environment::db;
 use crate::features::{
-    activity_window, app_search, audio, blocking,
+    activity_window, app_search, audio,
     input::{self, types::InputDetectedEvent},
     permission,
     session::{self, types::SessionCompletedEvent},
     settings::{self, types::AppSettingsChangedEvent},
+    tag,
     timer::{self, types::TimerUpdatedEvent},
 };
 use specta_typescript::Typescript;
@@ -61,15 +62,24 @@ pub fn run() {
             app_search::commands::refresh_search_cache,
             // Audio commands
             audio::commands::play_sound,
-            // Blocking commands
-            blocking::commands::get_tags,
-            blocking::commands::create_tag,
-            blocking::commands::update_tag,
-            blocking::commands::delete_tag,
-            blocking::commands::get_tag_block_rules,
-            blocking::commands::add_app_block_rule,
-            blocking::commands::add_website_block_rule,
-            blocking::commands::remove_block_rule,
+            // Tag commands
+            tag::commands::get_tags,
+            tag::commands::create_tag,
+            tag::commands::update_tag,
+            tag::commands::delete_tag,
+            // Restriction commands
+            tag::commands::get_tag_restrictions,
+            tag::commands::add_app_restriction,
+            tag::commands::add_website_restriction,
+            tag::commands::remove_restriction,
+            // Schedule commands
+            tag::commands::get_schedules,
+            tag::commands::create_schedule,
+            tag::commands::update_schedule,
+            tag::commands::delete_schedule,
+            tag::commands::add_schedule_tag,
+            tag::commands::remove_schedule_tag,
+            tag::commands::get_schedule_tags,
         ])
         .events(collect_events![
             // Settings events
