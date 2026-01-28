@@ -8,6 +8,7 @@ export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
 	const [leftHand, setLeftHand] = React.useState<TCatHand>('up');
 	const [rightHand, setRightHand] = React.useState<TCatHand>('up');
 	const [lastHand, setLastHand] = React.useState<'left' | 'right'>('right');
+	const cooldownUntil = React.useRef(0);
 
 	const { basePath, leftHandPath, rightHandPath, facePath, hatPath } = React.useMemo(() => {
 		return {
@@ -29,21 +30,35 @@ export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
 
 	// MARK: - Actions
 
-	const tap = React.useCallback(() => {
-		if (lastHand === 'right') {
-			setLeftHand('down');
-			setTimeout(() => setLeftHand('up'), 100);
-			setLastHand('left');
-		} else {
-			setRightHand('down');
-			setTimeout(() => setRightHand('up'), 100);
-			setLastHand('right');
-		}
-	}, [lastHand]);
+	const tap = React.useCallback(
+		(options: TTapOptions = {}) => {
+			if (Date.now() < cooldownUntil.current) {
+				return;
+			}
+
+			const { mode = lastHand === 'right' ? 'left' : 'right', cooldown = catConfig.tapThrottleMs } =
+				options;
+
+			if (mode === 'left' || mode === 'both') {
+				setLeftHand('down');
+				setTimeout(() => setLeftHand('up'), 100);
+			}
+			if (mode === 'right' || mode === 'both') {
+				setRightHand('down');
+				setTimeout(() => setRightHand('up'), 100);
+			}
+			if (mode !== 'both') {
+				setLastHand(mode);
+			}
+
+			cooldownUntil.current = Date.now() + cooldown;
+		},
+		[lastHand]
+	);
 
 	const handleTap = React.useCallback(() => {
-		tap();
-		onTap?.();
+		cooldownUntil.current = 0; // UI taps always go through
+		tap(onTap?.());
 	}, [tap, onTap]);
 
 	// MARK: - Effects
@@ -115,9 +130,16 @@ interface TCatProps {
 	hat?: TCatHat;
 	size?: number;
 	className?: string;
-	onTap?: () => void;
+	onTap?: () => TTapOptions | undefined;
 }
 
 export interface TCatRef {
-	tap: () => void;
+	tap: (options?: TTapOptions) => void;
+}
+
+export type TCatTapMode = 'left' | 'right' | 'both';
+
+export interface TTapOptions {
+	mode?: TCatTapMode;
+	cooldown?: number;
 }

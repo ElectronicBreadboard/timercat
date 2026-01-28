@@ -1,11 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useFeatureState, useListener } from 'feature-react/state';
+import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { specta } from '@/environment';
 import { Cat, catConfig, TCatRef } from '@/features/cat';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
-import { playSound } from '@/lib';
 import { Navbar, StatsCard, TimerView } from './components';
 
 export const Route = createFileRoute('/window/main/')({
@@ -14,11 +13,11 @@ export const Route = createFileRoute('/window/main/')({
 
 function RouteComponent() {
 	const catRef = React.useRef<TCatRef>(null);
-	const lastTapTime = React.useRef(0);
 
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 	const timerCx = useTimerCx();
+	const timerStatus = useFeatureState(timerCx.$status);
 
 	// Top section (Stats + Cat): width is half of 300px window, height lets cat overflow into timer wheel
 	const topSection = React.useMemo(() => {
@@ -43,36 +42,14 @@ function RouteComponent() {
 		await specta.commands.showHistoryWindow();
 	}, []);
 
-	const handleTick = React.useCallback((isPreviewing: boolean) => {
-		const now = Date.now();
-		if (now - lastTapTime.current >= catConfig.tapThrottleMs) {
-			lastTapTime.current = now;
-			catRef.current?.tap();
-		}
-		if (!isPreviewing) {
-			playSound('tick');
-		}
+	const handleTick = React.useCallback(() => {
+		catRef.current?.tap();
 	}, []);
 
 	const handleCatTap = React.useCallback(() => {
-		playSound('meow');
-	}, []);
-
-	// MARK: - Effects
-
-	// Play completion sound when entering overtime (timer naturally completes)
-	const wasInOvertime = React.useRef(false);
-	useListener(
-		timerCx.$overtimeSeconds,
-		({ value: overtimeSeconds = 0 }) => {
-			const isInOvertime = overtimeSeconds > 0;
-			if (isInOvertime && !wasInOvertime.current) {
-				playSound('complete');
-			}
-			wasInOvertime.current = isInOvertime;
-		},
-		[]
-	);
+		specta.commands.playSound('meow');
+		return timerStatus === 'running' ? { mode: 'both' as const } : undefined;
+	}, [timerStatus]);
 
 	// MARK: - UI
 
