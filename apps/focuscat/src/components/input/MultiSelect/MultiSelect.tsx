@@ -1,4 +1,5 @@
 import { Popover } from '@base-ui/react/popover';
+import { cva, type VariantProps } from 'class-variance-authority';
 import React from 'react';
 import { cn } from '@/lib';
 
@@ -25,13 +26,27 @@ export interface TMultiSelectRootProps {
  * Renders as a div but acts as the Popover trigger.
  */
 const Container = React.forwardRef<HTMLDivElement, TMultiSelectContainerProps>((props, ref) => {
-	const { open, side, className, children, onClick } = props;
+	const { open, side, size, className, children, onClick } = props;
 
 	return (
 		<Popover.Trigger
 			// Cast needed: Popover.Trigger types expect HTMLButtonElement, but we render div
 			ref={ref as unknown as React.RefObject<HTMLButtonElement>}
-			className={cn(open ? containerOpen : containerClosed, className)}
+			className={cn(
+				containerVariants({ size }),
+				open
+					? cn(
+							'ring-primary ring-2',
+							// Popup below: round top, clip bottom ring, show bottom border
+							'border-b-base-200 rounded-t-md [clip-path:inset(-2px_-2px_0_-2px)]',
+							// Popup above: round bottom, clip top ring, show top border
+							'data-[side=top]:rounded-t-none data-[side=top]:rounded-b-md',
+							'data-[side=top]:border-t-base-200 data-[side=top]:border-b-transparent',
+							'data-[side=top]:[clip-path:inset(0_-2px_-2px_-2px)]'
+						)
+					: 'ring-base-200 focus-within:ring-primary rounded-md ring-1 focus-within:ring-2',
+				className
+			)}
 			render={<div />}
 			onClick={onClick}
 			data-side={side}
@@ -42,7 +57,29 @@ const Container = React.forwardRef<HTMLDivElement, TMultiSelectContainerProps>((
 });
 Container.displayName = 'MultiSelect.Container';
 
-export interface TMultiSelectContainerProps {
+const containerVariants = cva(
+	[
+		'flex flex-wrap content-start items-center gap-1.5',
+		'bg-base-50 cursor-text overflow-hidden outline-none',
+		// Placeholder border for consistent height
+		'border-y border-transparent',
+		'transition-colors duration-100'
+	],
+	{
+		variants: {
+			size: {
+				sm: 'min-h-8 px-2 py-1',
+				md: 'min-h-10 px-2.5 py-1.5',
+				lg: 'min-h-12 px-3 py-2'
+			}
+		},
+		defaultVariants: {
+			size: 'md'
+		}
+	}
+);
+
+export interface TMultiSelectContainerProps extends VariantProps<typeof containerVariants> {
 	/** Whether the popup is open (affects styling) */
 	open?: boolean;
 	/** Popup position relative to container (affects connected visual) */
@@ -54,7 +91,7 @@ export interface TMultiSelectContainerProps {
 
 /** Search input for filtering results */
 const Input = React.forwardRef<HTMLInputElement, TMultiSelectInputProps>((props, ref) => {
-	const { className, ...rest } = props;
+	const { size, className, ...rest } = props;
 	return (
 		<input
 			ref={ref}
@@ -63,14 +100,39 @@ const Input = React.forwardRef<HTMLInputElement, TMultiSelectInputProps>((props,
 			autoComplete="off"
 			autoCorrect="off"
 			autoCapitalize="off"
-			className={cn(inputStyles, className)}
+			className={cn(inputVariants({ size }), className)}
 			{...rest}
 		/>
 	);
 });
 Input.displayName = 'MultiSelect.Input';
 
-export type TMultiSelectInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'>;
+const inputVariants = cva(
+	[
+		'min-w-20 flex-1 border-none bg-transparent py-0.5 text-base-900',
+		// Collapse when unfocused with selections: invisible but still focusable via JS
+		'shadow-none ring-0 outline-none placeholder:text-base-400',
+		'data-collapsed:w-0 data-collapsed:min-w-0 data-collapsed:p-0',
+		'data-collapsed:opacity-0 data-collapsed:pointer-events-none'
+	],
+	{
+		variants: {
+			size: {
+				sm: 'text-sm',
+				md: 'text-sm',
+				lg: 'text-base'
+			}
+		},
+		defaultVariants: {
+			size: 'md'
+		}
+	}
+);
+
+export interface TMultiSelectInputProps
+	extends
+		Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'>,
+		VariantProps<typeof inputVariants> {}
 
 /** Positions the popup relative to the container */
 const Positioner: React.FC<TMultiSelectPositionerProps> = (props) => {
@@ -106,7 +168,17 @@ const Popup = React.forwardRef<HTMLDivElement, TMultiSelectPopupProps>((props, r
 	return (
 		<Popover.Popup
 			ref={ref}
-			className={cn(popupStyles, className)}
+			className={cn(
+				// --anchor-width and --available-height are CSS vars set by base-ui
+				'max-h-[min(300px,var(--available-height,300px))] w-(--anchor-width)',
+				'bg-base-50 ring-primary overflow-y-auto ring-2 outline-none',
+				// group: enables group-data-[side=top] selectors for children (e.g., HelperText)
+				'group flex flex-col rounded-b-md [clip-path:inset(0_-2px_-2px_-2px)]',
+				// Popup above: reverse flex order so first item is visually at bottom (near input)
+				'data-[side=top]:flex-col-reverse data-[side=top]:rounded-t-md data-[side=top]:rounded-b-none',
+				'data-[side=top]:[clip-path:inset(-2px_-2px_0_-2px)]',
+				className
+			)}
 			// data-popup: marker for blur handling (check if focus moved to popup)
 			data-popup
 			// initialFocus={false}: keep focus on input for continuous typing
@@ -187,52 +259,3 @@ export const MultiSelect = {
 	HelperText,
 	Empty
 };
-
-// MARK: - Styles
-//
-// Connected Visual: Container and popup share a continuous ring border, appearing as
-// one unified element. This requires:
-// 1. clip-path to hide the ring on the connecting edge
-// 2. data-side to style container based on popup position (top vs bottom)
-// 3. Matching border-radius on connecting edges
-
-const baseContainer = cn(
-	'flex flex-wrap content-start items-center gap-1.5 min-h-10 px-2.5 py-1.5',
-	'bg-base-50 cursor-text overflow-hidden outline-none',
-	'border-y border-transparent' // Placeholder border for consistent height
-);
-
-const containerClosed = cn(
-	baseContainer,
-	'rounded-md ring-1 ring-base-200 focus-within:ring-2 focus-within:ring-primary'
-);
-
-const containerOpen = cn(
-	baseContainer,
-	'ring-2 ring-primary',
-	// Popup below: round top, clip bottom ring, show bottom border
-	'rounded-t-md border-b-base-200 [clip-path:inset(-2px_-2px_0_-2px)]',
-	// Popup above: round bottom, clip top ring, show top border
-	'data-[side=top]:rounded-t-none data-[side=top]:rounded-b-md',
-	'data-[side=top]:border-t-base-200 data-[side=top]:border-b-transparent',
-	'data-[side=top]:[clip-path:inset(0_-2px_-2px_-2px)]'
-);
-
-const popupStyles = cn(
-	// --anchor-width and --available-height are CSS vars set by base-ui
-	'w-[var(--anchor-width)] max-h-[min(300px,var(--available-height,300px))]',
-	'overflow-y-auto bg-base-50 ring-2 ring-primary outline-none',
-	// group: enables group-data-[side=top] selectors for children (e.g., HelperText)
-	'group flex flex-col rounded-b-md [clip-path:inset(0_-2px_-2px_-2px)]',
-	// Popup above: reverse flex order so first item is visually at bottom (near input)
-	'data-[side=top]:flex-col-reverse data-[side=top]:rounded-t-md data-[side=top]:rounded-b-none',
-	'data-[side=top]:[clip-path:inset(-2px_-2px_0_-2px)]'
-);
-
-const inputStyles = cn(
-	'min-w-20 flex-1 border-none bg-transparent py-0.5 text-sm text-base-900',
-	'shadow-none ring-0 outline-none placeholder:text-base-400',
-	// Collapse when unfocused with selections: invisible but still focusable via JS
-	'data-[collapsed]:w-0 data-[collapsed]:min-w-0 data-[collapsed]:p-0',
-	'data-[collapsed]:opacity-0 data-[collapsed]:pointer-events-none'
-);

@@ -52,7 +52,11 @@ function RouteComponent() {
 
 			<SettingGroup title="Tracking">
 				<SettingItem label="Enable Tracking" description="Track app usage during focus sessions">
-					<Switch checked={settings.activity.enabled} onCheckedChange={handleTrackingToggle} />
+					<Switch
+						checked={settings.activity.enabled}
+						onCheckedChange={handleTrackingToggle}
+						size="sm"
+					/>
 				</SettingItem>
 				{settings.activity.enabled && (
 					<>
@@ -63,12 +67,14 @@ function RouteComponent() {
 							<Switch
 								checked={settings.activity.trackWindows}
 								onCheckedChange={(checked) => updateActivity({ trackWindows: checked })}
+								size="sm"
 							/>
 						</SettingItem>
 						<SettingItem label="Track Browser" description="Record visited URLs in browsers">
 							<Switch
 								checked={settings.activity.trackBrowser}
 								onCheckedChange={(checked) => updateActivity({ trackBrowser: checked })}
+								size="sm"
 							/>
 						</SettingItem>
 					</>

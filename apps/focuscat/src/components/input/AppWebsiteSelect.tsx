@@ -56,6 +56,7 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 	return (
 		<MultiSelect.Root {...multiSelect.getRootProps()}>
 			<MultiSelect.Container
+				size="sm"
 				className={cn('max-h-24 overflow-y-auto', className)}
 				{...multiSelect.getContainerProps()}
 			>
@@ -64,6 +65,7 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 				))}
 				<MultiSelect.Input
 					{...multiSelect.getInputProps()}
+					size="sm"
 					placeholder={value.length === 0 ? placeholder : ''}
 				/>
 			</MultiSelect.Container>

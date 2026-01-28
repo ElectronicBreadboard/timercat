@@ -35,6 +35,7 @@ function RouteComponent() {
 						min={0.5}
 						max={12}
 						step={0.5}
+						size="sm"
 						onChange={(v) => updateFocusGoal({ dailyGoalMinutes: v * 60 })}
 					/>
 				</SettingItem>

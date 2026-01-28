@@ -3,6 +3,16 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import React from 'react';
 import { cn } from '@/lib';
 
+export const Button: React.FC<TButtonProps> = (props) => {
+	const { variant, size, className, children, ...rest } = props;
+
+	return (
+		<BaseButton className={cn(buttonVariants({ variant, size }), className)} {...rest}>
+			{children}
+		</BaseButton>
+	);
+};
+
 const buttonVariants = cva(
 	[
 		'inline-flex items-center justify-center rounded-md font-medium select-none',
@@ -31,9 +41,9 @@ const buttonVariants = cva(
 				ghost: ['text-base-600', 'hover:bg-base-100 hover:text-base-900', 'active:bg-base-200']
 			},
 			size: {
-				sm: 'h-8 px-2.5 text-sm',
-				md: 'h-10 px-3.5 text-base',
-				lg: 'h-12 px-5 text-lg'
+				sm: 'h-8 gap-1.5 px-2.5 text-sm',
+				md: 'h-10 gap-2 px-3.5 text-sm',
+				lg: 'h-12 gap-2 px-5 text-base'
 			}
 		},
 		defaultVariants: {
@@ -42,16 +52,6 @@ const buttonVariants = cva(
 		}
 	}
 );
-
-export const Button: React.FC<TButtonProps> = (props) => {
-	const { variant, size, className, children, ...rest } = props;
-
-	return (
-		<BaseButton className={cn(buttonVariants({ variant, size }), className)} {...rest}>
-			{children}
-		</BaseButton>
-	);
-};
 
 export interface TButtonProps
 	extends React.ComponentProps<typeof BaseButton>, VariantProps<typeof buttonVariants> {}

@@ -135,16 +135,16 @@ export interface FileRoutesByFullPath {
   '/window/history/': typeof WindowHistoryIndexRoute
   '/window/main/': typeof WindowMainIndexRoute
   '/window/settings/': typeof WindowSettingsIndexRoute
-  '/window/history/$sessionId': typeof WindowHistorySessionIdIndexRoute
-  '/window/main/splash': typeof WindowMainSplashIndexRoute
-  '/window/settings/activity': typeof WindowSettingsActivityIndexRoute
-  '/window/settings/app': typeof WindowSettingsAppIndexRoute
-  '/window/settings/developer': typeof WindowSettingsDeveloperIndexRoute
-  '/window/settings/goals': typeof WindowSettingsGoalsIndexRoute
-  '/window/settings/tags': typeof WindowSettingsTagsIndexRoute
-  '/window/settings/timer': typeof WindowSettingsTimerIndexRoute
-  '/window/settings/tags/$tagId': typeof WindowSettingsTagsTagIdIndexRoute
-  '/window/settings/tags/new': typeof WindowSettingsTagsNewIndexRoute
+  '/window/history/$sessionId/': typeof WindowHistorySessionIdIndexRoute
+  '/window/main/splash/': typeof WindowMainSplashIndexRoute
+  '/window/settings/activity/': typeof WindowSettingsActivityIndexRoute
+  '/window/settings/app/': typeof WindowSettingsAppIndexRoute
+  '/window/settings/developer/': typeof WindowSettingsDeveloperIndexRoute
+  '/window/settings/goals/': typeof WindowSettingsGoalsIndexRoute
+  '/window/settings/tags/': typeof WindowSettingsTagsIndexRoute
+  '/window/settings/timer/': typeof WindowSettingsTimerIndexRoute
+  '/window/settings/tags/$tagId/': typeof WindowSettingsTagsTagIdIndexRoute
+  '/window/settings/tags/new/': typeof WindowSettingsTagsNewIndexRoute
 }
 export interface FileRoutesByTo {
   '/window/cat': typeof WindowCatIndexRoute
@@ -194,16 +194,16 @@ export interface FileRouteTypes {
     | '/window/history/'
     | '/window/main/'
     | '/window/settings/'
-    | '/window/history/$sessionId'
-    | '/window/main/splash'
-    | '/window/settings/activity'
-    | '/window/settings/app'
-    | '/window/settings/developer'
-    | '/window/settings/goals'
-    | '/window/settings/tags'
-    | '/window/settings/timer'
-    | '/window/settings/tags/$tagId'
-    | '/window/settings/tags/new'
+    | '/window/history/$sessionId/'
+    | '/window/main/splash/'
+    | '/window/settings/activity/'
+    | '/window/settings/app/'
+    | '/window/settings/developer/'
+    | '/window/settings/goals/'
+    | '/window/settings/tags/'
+    | '/window/settings/timer/'
+    | '/window/settings/tags/$tagId/'
+    | '/window/settings/tags/new/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/window/cat'
@@ -310,70 +310,70 @@ declare module '@tanstack/react-router' {
     '/window/settings/timer/': {
       id: '/window/settings/timer/'
       path: '/timer'
-      fullPath: '/window/settings/timer'
+      fullPath: '/window/settings/timer/'
       preLoaderRoute: typeof WindowSettingsTimerIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
     '/window/settings/tags/': {
       id: '/window/settings/tags/'
       path: '/tags'
-      fullPath: '/window/settings/tags'
+      fullPath: '/window/settings/tags/'
       preLoaderRoute: typeof WindowSettingsTagsIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
     '/window/settings/goals/': {
       id: '/window/settings/goals/'
       path: '/goals'
-      fullPath: '/window/settings/goals'
+      fullPath: '/window/settings/goals/'
       preLoaderRoute: typeof WindowSettingsGoalsIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
     '/window/settings/developer/': {
       id: '/window/settings/developer/'
       path: '/developer'
-      fullPath: '/window/settings/developer'
+      fullPath: '/window/settings/developer/'
       preLoaderRoute: typeof WindowSettingsDeveloperIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
     '/window/settings/app/': {
       id: '/window/settings/app/'
       path: '/app'
-      fullPath: '/window/settings/app'
+      fullPath: '/window/settings/app/'
       preLoaderRoute: typeof WindowSettingsAppIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
     '/window/settings/activity/': {
       id: '/window/settings/activity/'
       path: '/activity'
-      fullPath: '/window/settings/activity'
+      fullPath: '/window/settings/activity/'
       preLoaderRoute: typeof WindowSettingsActivityIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
     '/window/main/splash/': {
       id: '/window/main/splash/'
       path: '/splash'
-      fullPath: '/window/main/splash'
+      fullPath: '/window/main/splash/'
       preLoaderRoute: typeof WindowMainSplashIndexRouteImport
       parentRoute: typeof WindowMainRouteRoute
     }
     '/window/history/$sessionId/': {
       id: '/window/history/$sessionId/'
       path: '/$sessionId'
-      fullPath: '/window/history/$sessionId'
+      fullPath: '/window/history/$sessionId/'
       preLoaderRoute: typeof WindowHistorySessionIdIndexRouteImport
       parentRoute: typeof WindowHistoryRouteRoute
     }
     '/window/settings/tags/new/': {
       id: '/window/settings/tags/new/'
       path: '/tags/new'
-      fullPath: '/window/settings/tags/new'
+      fullPath: '/window/settings/tags/new/'
       preLoaderRoute: typeof WindowSettingsTagsNewIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
     '/window/settings/tags/$tagId/': {
       id: '/window/settings/tags/$tagId/'
       path: '/tags/$tagId'
-      fullPath: '/window/settings/tags/$tagId'
+      fullPath: '/window/settings/tags/$tagId/'
       preLoaderRoute: typeof WindowSettingsTagsTagIdIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }

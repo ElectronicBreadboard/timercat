@@ -3,6 +3,15 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import React from 'react';
 import { cn } from '@/lib';
 
+export const Input = React.forwardRef<HTMLInputElement, TInputProps>((props, ref) => {
+	const { variant, size, className, ...rest } = props;
+
+	return (
+		<BaseInput ref={ref} className={cn(inputVariants({ variant, size }), className)} {...rest} />
+	);
+});
+Input.displayName = 'Input';
+
 const inputVariants = cva(
 	[
 		'w-full rounded-md border bg-base-50 text-base-900',
@@ -30,24 +39,6 @@ const inputVariants = cva(
 	}
 );
 
-export const Input = React.forwardRef<HTMLInputElement, TInputProps>((props, ref) => {
-	const { variant, inputSize, className, ...rest } = props;
-
-	return (
-		<BaseInput
-			ref={ref}
-			className={cn(inputVariants({ variant, size: inputSize }), className)}
-			{...rest}
-		/>
-	);
-});
-
-Input.displayName = 'Input';
-
-type TInputVariants = VariantProps<typeof inputVariants>;
-
-export interface TInputProps extends React.ComponentProps<typeof BaseInput> {
-	variant?: TInputVariants['variant'];
-	/** Size variant (renamed to avoid conflict with HTML size attribute) */
-	inputSize?: TInputVariants['size'];
-}
+export interface TInputProps
+	extends Omit<React.ComponentProps<typeof BaseInput>, 'size'>,
+		VariantProps<typeof inputVariants> {}

@@ -35,6 +35,7 @@ function RouteComponent() {
 						min={5}
 						max={120}
 						step={5}
+						size="sm"
 						onChange={(v) => updateTimer({ workDurationMinutes: v })}
 					/>
 				</SettingItem>
@@ -44,6 +45,7 @@ function RouteComponent() {
 						min={5}
 						max={60}
 						step={5}
+						size="sm"
 						onChange={(v) => updateTimer({ shortBreakMinutes: v })}
 					/>
 				</SettingItem>
@@ -53,6 +55,7 @@ function RouteComponent() {
 						min={5}
 						max={60}
 						step={5}
+						size="sm"
 						onChange={(v) => updateTimer({ longBreakMinutes: v })}
 					/>
 				</SettingItem>
@@ -67,6 +70,7 @@ function RouteComponent() {
 						value={settings.timer.sessionsBeforeLongBreak}
 						min={1}
 						max={10}
+						size="sm"
 						onChange={(v) => updateTimer({ sessionsBeforeLongBreak: v })}
 					/>
 				</SettingItem>

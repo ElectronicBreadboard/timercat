@@ -48,6 +48,7 @@ function RouteComponent() {
 					<Switch
 						checked={settings.debug.cat}
 						onCheckedChange={(checked) => updateDebug({ cat: checked })}
+						size="sm"
 					/>
 				</SettingItem>
 				<SettingItem

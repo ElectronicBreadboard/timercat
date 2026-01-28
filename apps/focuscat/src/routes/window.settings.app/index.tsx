@@ -47,15 +47,16 @@ function RouteComponent() {
 					<ToggleGroup
 						value={settings.appearance.theme}
 						onValueChange={(theme) => updateAppearance({ theme: theme as specta.Theme })}
+						size="sm"
 					>
 						<ToggleGroup.Item value="light" aria-label="Light theme">
-							<SunIcon size={16} />
+							<SunIcon size={14} />
 						</ToggleGroup.Item>
 						<ToggleGroup.Item value="auto" aria-label="Auto theme">
-							<MonitorIcon size={16} />
+							<MonitorIcon size={14} />
 						</ToggleGroup.Item>
 						<ToggleGroup.Item value="dark" aria-label="Dark theme">
-							<MoonIcon size={16} />
+							<MoonIcon size={14} />
 						</ToggleGroup.Item>
 					</ToggleGroup>
 				</SettingItem>
@@ -85,6 +86,7 @@ function RouteComponent() {
 					<Switch
 						checked={settings.debug.enabled}
 						onCheckedChange={(checked) => updateDebug({ enabled: checked })}
+						size="sm"
 					/>
 				</SettingItem>
 			</SettingGroup>
