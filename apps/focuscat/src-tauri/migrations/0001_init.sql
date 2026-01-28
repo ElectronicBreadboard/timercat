@@ -55,6 +55,7 @@ CREATE INDEX idx_website_domain ON website (domain);
 CREATE TABLE tag (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
+    color TEXT, -- hex color like "#FF5733"
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
 );
 

@@ -64,6 +64,7 @@ pub fn run() {
             audio::commands::play_sound,
             // Tag commands
             tag::commands::get_tags,
+            tag::commands::get_tag,
             tag::commands::create_tag,
             tag::commands::update_tag,
             tag::commands::delete_tag,

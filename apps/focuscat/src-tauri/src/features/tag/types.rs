@@ -32,6 +32,7 @@ impl RestrictionAction {
 pub struct TagDto {
     pub id: i32,
     pub name: String,
+    pub color: Option<String>,
     pub created_at: f64,
 }
 

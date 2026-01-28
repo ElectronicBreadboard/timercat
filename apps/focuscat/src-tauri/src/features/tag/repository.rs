@@ -5,28 +5,40 @@ use sqlx::{Row, SqlitePool};
 pub struct TagRepository;
 
 impl TagRepository {
-    pub async fn create(pool: &SqlitePool, name: &str) -> Result<TagRow, sqlx::Error> {
+    pub async fn create(
+        pool: &SqlitePool,
+        name: &str,
+        color: Option<&str>,
+    ) -> Result<TagRow, sqlx::Error> {
         let row = sqlx::query(
             r#"
-            INSERT INTO tag (name)
-            VALUES (?)
-            RETURNING id, name, created_at
+            INSERT INTO tag (name, color)
+            VALUES (?, ?)
+            RETURNING id, name, color, created_at
             "#,
         )
         .bind(name)
+        .bind(color)
         .fetch_one(pool)
         .await?;
 
         return Ok(TagRow {
             id: row.get("id"),
             name: row.get("name"),
+            color: row.get("color"),
             created_at: row.get("created_at"),
         });
     }
 
-    pub async fn update(pool: &SqlitePool, id: i64, name: &str) -> Result<(), sqlx::Error> {
-        sqlx::query("UPDATE tag SET name = ? WHERE id = ?")
+    pub async fn update(
+        pool: &SqlitePool,
+        id: i64,
+        name: &str,
+        color: Option<&str>,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE tag SET name = ?, color = ? WHERE id = ?")
             .bind(name)
+            .bind(color)
             .bind(id)
             .execute(pool)
             .await?;
@@ -43,10 +55,30 @@ impl TagRepository {
         return Ok(());
     }
 
+    pub async fn get_by_id(pool: &SqlitePool, id: i64) -> Result<Option<TagRow>, sqlx::Error> {
+        let row = sqlx::query(
+            r#"
+            SELECT id, name, color, created_at
+            FROM tag
+            WHERE id = ?
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(pool)
+        .await?;
+
+        return Ok(row.map(|r| TagRow {
+            id: r.get("id"),
+            name: r.get("name"),
+            color: r.get("color"),
+            created_at: r.get("created_at"),
+        }));
+    }
+
     pub async fn get_all(pool: &SqlitePool) -> Result<Vec<TagRow>, sqlx::Error> {
         let rows = sqlx::query(
             r#"
-            SELECT id, name, created_at
+            SELECT id, name, color, created_at
             FROM tag
             ORDER BY name ASC
             "#,
@@ -59,6 +91,7 @@ impl TagRepository {
             .map(|row| TagRow {
                 id: row.get("id"),
                 name: row.get("name"),
+                color: row.get("color"),
                 created_at: row.get("created_at"),
             })
             .collect();
@@ -70,6 +103,7 @@ impl TagRepository {
 pub struct TagRow {
     pub id: i64,
     pub name: String,
+    pub color: Option<String>,
     pub created_at: i64,
 }
 

@@ -23,6 +23,7 @@ pub async fn get_tags(db: State<'_, DatabaseState>) -> Result<Vec<TagDto>, Strin
         .map(|row| TagDto {
             id: row.id as i32,
             name: row.name,
+            color: row.color,
             created_at: row.created_at as f64,
         })
         .collect();
@@ -32,14 +33,19 @@ pub async fn get_tags(db: State<'_, DatabaseState>) -> Result<Vec<TagDto>, Strin
 
 #[tauri::command]
 #[specta::specta]
-pub async fn create_tag(db: State<'_, DatabaseState>, name: String) -> Result<TagDto, String> {
-    let row = TagRepository::create(&db.pool, &name)
+pub async fn create_tag(
+    db: State<'_, DatabaseState>,
+    name: String,
+    color: Option<String>,
+) -> Result<TagDto, String> {
+    let row = TagRepository::create(&db.pool, &name, color.as_deref())
         .await
         .map_err(|e| e.to_string())?;
 
     return Ok(TagDto {
         id: row.id as i32,
         name: row.name,
+        color: row.color,
         created_at: row.created_at as f64,
     });
 }
@@ -50,12 +56,28 @@ pub async fn update_tag(
     db: State<'_, DatabaseState>,
     id: i32,
     name: String,
+    color: Option<String>,
 ) -> Result<(), String> {
-    TagRepository::update(&db.pool, id as i64, &name)
+    TagRepository::update(&db.pool, id as i64, &name, color.as_deref())
         .await
         .map_err(|e| e.to_string())?;
 
     return Ok(());
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn get_tag(db: State<'_, DatabaseState>, id: i32) -> Result<Option<TagDto>, String> {
+    let row = TagRepository::get_by_id(&db.pool, id as i64)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    return Ok(row.map(|r| TagDto {
+        id: r.id as i32,
+        name: r.name,
+        color: r.color,
+        created_at: r.created_at as f64,
+    }));
 }
 
 #[tauri::command]
