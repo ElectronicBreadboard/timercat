@@ -91,6 +91,7 @@ pub fn run() {
 
             // Setup modules
             db::setup(app);
+            audio::setup(app);
             session::setup(app);
             settings::setup(app);
             timer::setup(app);

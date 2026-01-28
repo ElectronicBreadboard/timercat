@@ -1,10 +1,10 @@
-use super::{player, player::SoundId};
-use tauri::AppHandle;
+use super::types::{AudioState, SoundId};
+use tauri::State;
 
 /// Play a sound effect.
 #[tauri::command]
 #[specta::specta]
-pub fn play_sound(app: AppHandle, id: SoundId) -> Result<(), String> {
-    player::play(&app, id);
-    Ok(())
+pub fn play_sound(audio: State<'_, AudioState>, id: SoundId) -> Result<(), String> {
+    audio.play(id);
+    return Ok(());
 }

@@ -2,7 +2,7 @@ use super::{
     timer::TimerStatus,
     types::{TimerDto, TimerState, TimerUpdatedEvent},
 };
-use crate::features::audio::{player, player::SoundId};
+use crate::features::audio::{audio, types::SoundId};
 use std::{
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -100,11 +100,11 @@ fn run_timer_loop(app: AppHandle, stop_flag: Arc<AtomicBool>) {
         }
 
         // Play tick sound each second
-        player::play(&app, SoundId::Tick);
+        audio::play(&app, SoundId::Tick);
 
         // Play complete sound when entering overtime
         if !was_in_overtime && timer.overtime_seconds > 0 {
-            player::play(&app, SoundId::Complete);
+            audio::play(&app, SoundId::Complete);
         }
 
         let _ = TimerUpdatedEvent(TimerDto::from(&*timer)).emit(&app);
