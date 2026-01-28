@@ -17,7 +17,7 @@ import { Cat, type TCatRef } from '@/features/cat';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
 import { useOnInputDetected } from '@/hooks';
-import { cn, formatTime, playSound } from '@/lib';
+import { cn, formatTime } from '@/lib';
 
 export const Route = createFileRoute('/window/cat/')({
 	component: RouteComponent
@@ -80,7 +80,7 @@ function RouteComponent() {
 	}, [timerCx]);
 
 	const handleCatTap = React.useCallback(() => {
-		playSound('meow');
+		specta.commands.playSound('meow');
 	}, []);
 
 	// MARK: - Effects

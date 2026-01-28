@@ -1,9 +1,16 @@
-use super::timer::TimerStatus;
-use super::types::{TimerDto, TimerState, TimerUpdatedEvent};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
-use std::thread;
-use std::time::Duration;
+use super::{
+    timer::TimerStatus,
+    types::{TimerDto, TimerState, TimerUpdatedEvent},
+};
+use crate::features::audio::{player, player::SoundId};
+use std::{
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    thread,
+    time::Duration,
+};
 use tauri::{AppHandle, Manager};
 use tauri_specta::Event;
 
@@ -83,11 +90,21 @@ fn run_timer_loop(app: AppHandle, stop_flag: Arc<AtomicBool>) {
             continue;
         }
 
+        let was_in_overtime = timer.overtime_seconds > 0;
+
         // Count down or count overtime
         if timer.remaining_seconds > 0 {
             timer.remaining_seconds -= 1;
         } else {
             timer.overtime_seconds += 1;
+        }
+
+        // Play tick sound each second
+        player::play(&app, SoundId::Tick);
+
+        // Play complete sound when entering overtime
+        if !was_in_overtime && timer.overtime_seconds > 0 {
+            player::play(&app, SoundId::Complete);
         }
 
         let _ = TimerUpdatedEvent(TimerDto::from(&*timer)).emit(&app);

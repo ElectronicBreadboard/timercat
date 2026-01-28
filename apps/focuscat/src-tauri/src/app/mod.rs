@@ -4,8 +4,7 @@ pub mod window;
 
 use crate::environment::db;
 use crate::features::{
-    activity_window,
-    app_search,
+    activity_window, app_search, audio,
     input::{self, types::InputDetectedEvent},
     permission,
     session::{self, types::SessionCompletedEvent},
@@ -60,6 +59,8 @@ pub fn run() {
             // App search commands
             app_search::commands::search,
             app_search::commands::refresh_search_cache,
+            // Audio commands
+            audio::commands::play_sound,
         ])
         .events(collect_events![
             // Settings events
