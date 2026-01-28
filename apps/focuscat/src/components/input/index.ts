@@ -3,7 +3,7 @@ export * from './Button';
 export * from './IconButton';
 export * from './Input';
 export * from './MultiSelect';
-export * from './NumberStepper';
+export * from './NumberField';
 export * from './Slider';
 export * from './Switch';
 export * from './ToggleGroup';

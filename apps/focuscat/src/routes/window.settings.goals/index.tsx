@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { NumberStepper } from '@/components';
+import { NumberField } from '@/components';
 import { specta } from '@/environment';
 import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
 
@@ -30,12 +30,11 @@ function RouteComponent() {
 
 			<SettingGroup title="Daily">
 				<SettingItem label="Focus Goal" description="Target focus hours per day">
-					<NumberStepper
+					<NumberField
 						value={settings.focusGoal.dailyGoalMinutes / 60}
 						min={0.5}
 						max={12}
 						step={0.5}
-						formatValue={(v) => `${v}h`}
 						onChange={(v) => updateFocusGoal({ dailyGoalMinutes: v * 60 })}
 					/>
 				</SettingItem>

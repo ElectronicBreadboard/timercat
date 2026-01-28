@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { NumberStepper } from '@/components';
+import { NumberField } from '@/components';
 import { specta } from '@/environment';
 import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
 
@@ -30,7 +30,7 @@ function RouteComponent() {
 
 			<SettingGroup title="Durations">
 				<SettingItem label="Work Duration" description="Minutes per work session">
-					<NumberStepper
+					<NumberField
 						value={settings.timer.workDurationMinutes}
 						min={5}
 						max={120}
@@ -39,7 +39,7 @@ function RouteComponent() {
 					/>
 				</SettingItem>
 				<SettingItem label="Short Break" description="Minutes for short breaks">
-					<NumberStepper
+					<NumberField
 						value={settings.timer.shortBreakMinutes}
 						min={5}
 						max={60}
@@ -48,7 +48,7 @@ function RouteComponent() {
 					/>
 				</SettingItem>
 				<SettingItem label="Long Break" description="Minutes for long breaks">
-					<NumberStepper
+					<NumberField
 						value={settings.timer.longBreakMinutes}
 						min={5}
 						max={60}
@@ -63,7 +63,7 @@ function RouteComponent() {
 					label="Sessions Before Long Break"
 					description="Work sessions before a long break"
 				>
-					<NumberStepper
+					<NumberField
 						value={settings.timer.sessionsBeforeLongBreak}
 						min={1}
 						max={10}
