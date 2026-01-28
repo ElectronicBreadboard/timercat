@@ -1,4 +1,4 @@
-import { useSubscriber } from 'feature-react/state';
+import { useListener } from 'feature-react/state';
 import React from 'react';
 import { Tooltip } from '@/components';
 import { formatDuration } from '@/lib';
@@ -61,8 +61,9 @@ export const SessionEventPeriodOverlays: React.FC<TSessionEventPeriodOverlaysPro
 
 	// MARK: - Effects
 
-	useSubscriber(cx.timelineCx.$zoom, updatePositions, [updatePositions]);
-	useSubscriber(cx.timelineCx.$containerRect, updatePositions, [updatePositions]);
+	// Reposition on zoom/resize (ref callback handles initial positioning)
+	useListener(cx.timelineCx.$zoom, updatePositions, [updatePositions]);
+	useListener(cx.timelineCx.$containerRect, updatePositions, [updatePositions]);
 
 	// MARK: - UI
 
@@ -131,8 +132,9 @@ export const SessionEventMarkers: React.FC<TSessionMarkersProps> = (props) => {
 
 	// MARK: - Effects
 
-	useSubscriber(cx.timelineCx.$zoom, updatePositions, [updatePositions]);
-	useSubscriber(cx.timelineCx.$containerRect, updatePositions, [updatePositions]);
+	// Reposition on zoom/resize (ref callback handles initial positioning)
+	useListener(cx.timelineCx.$zoom, updatePositions, [updatePositions]);
+	useListener(cx.timelineCx.$containerRect, updatePositions, [updatePositions]);
 
 	// MARK: - UI
 

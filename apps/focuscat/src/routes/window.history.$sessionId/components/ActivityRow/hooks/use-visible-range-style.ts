@@ -1,4 +1,4 @@
-import { useSubscriber } from 'feature-react/state';
+import { useListener } from 'feature-react/state';
 import React from 'react';
 import type { ActivityRowCx } from '../ActivityRowCx';
 
@@ -33,9 +33,15 @@ export function useVisibleRangeStyle(
 		el.style.width = `${Math.max(visibleWidth, 2)}px`;
 	}, [ref, cx, block.startMs, block.endMs, offsetPx]);
 
-	useSubscriber(cx.timelineCx.$zoom, update, [update]);
-	useSubscriber(cx.timelineCx.$scrollLeft, update, [update]);
-	useSubscriber(cx.timelineCx.$containerRect, update, [update]);
+	// MARK: - Effects
+
+	// Position before paint to prevent flash
+	React.useLayoutEffect(update, [update]);
+
+	// Reposition on zoom/scroll/resize (useLayoutEffect handles initial positioning)
+	useListener(cx.timelineCx.$zoom, update, [update]);
+	useListener(cx.timelineCx.$scrollLeft, update, [update]);
+	useListener(cx.timelineCx.$containerRect, update, [update]);
 }
 
 interface TVisibleRangeStyleOptions {

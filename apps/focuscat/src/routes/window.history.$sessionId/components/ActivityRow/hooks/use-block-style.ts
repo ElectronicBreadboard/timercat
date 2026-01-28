@@ -1,4 +1,4 @@
-import { useSubscriber } from 'feature-react/state';
+import { useListener } from 'feature-react/state';
 import React from 'react';
 import type { ActivityRowCx } from '../ActivityRowCx';
 
@@ -35,8 +35,14 @@ export function useBlockStyle(
 		}
 	}, [ref, cx, block, parentBlock, gapPx]);
 
-	useSubscriber(cx.timelineCx.$zoom, update, [update]);
-	useSubscriber(cx.timelineCx.$containerRect, update, [update]);
+	// MARK: - Effects
+
+	// Position before paint to prevent flash
+	React.useLayoutEffect(update, [update]);
+
+	// Reposition on zoom/resize (useLayoutEffect handles initial positioning)
+	useListener(cx.timelineCx.$zoom, update, [update]);
+	useListener(cx.timelineCx.$containerRect, update, [update]);
 }
 
 interface TBlockStyleOptions {

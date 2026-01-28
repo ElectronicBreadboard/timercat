@@ -1,4 +1,4 @@
-import { useCombinedCompute, useSubscriber } from 'feature-react/state';
+import { useCombinedCompute, useListener } from 'feature-react/state';
 import React from 'react';
 import { useMemoCleanup } from '@/hooks';
 import { cn } from '@/lib';
@@ -50,8 +50,9 @@ export const TimelineAxis: React.FC<TTimelineAxisProps> = (props) => {
 
 	// MARK: - Effects
 
-	useSubscriber(timelineCx.$zoom, updatePositions, [updatePositions]);
-	useSubscriber(timelineCx.$containerRect, updatePositions, [updatePositions]);
+	// Reposition on zoom/resize (ref callback handles initial positioning)
+	useListener(timelineCx.$zoom, updatePositions, [updatePositions]);
+	useListener(timelineCx.$containerRect, updatePositions, [updatePositions]);
 
 	// MARK: - UI
 
