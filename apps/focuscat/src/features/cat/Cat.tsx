@@ -4,7 +4,15 @@ import { catConfig } from './cat.config';
 import { TCatFace, TCatFur, TCatHand, TCatHat } from './types';
 
 export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
-	const { fur = 'white', face = 'cute', hat, size = 150, className, onTap } = props;
+	const {
+		fur = 'white',
+		face = 'cute',
+		hat,
+		size = 150,
+		position = 'edge',
+		className,
+		onTap
+	} = props;
 	const [leftHand, setLeftHand] = React.useState<TCatHand>('up');
 	const [rightHand, setRightHand] = React.useState<TCatHand>('up');
 	const [lastHand, setLastHand] = React.useState<'left' | 'right'>('right');
@@ -20,13 +28,13 @@ export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
 		};
 	}, [fur, leftHand, rightHand, face, hat]);
 
-	const { bottomOffset, visibleHeight } = React.useMemo(() => {
+	const { bottomOffset, containerHeight } = React.useMemo(() => {
 		const offset = catConfig.baseBodyBottomOffset * (size / catConfig.baseSize);
 		return {
-			bottomOffset: offset,
-			visibleHeight: size - offset
+			bottomOffset: position === 'edge' ? offset : 0,
+			containerHeight: position === 'edge' ? size - offset : size
 		};
-	}, [size]);
+	}, [size, position]);
 
 	// MARK: - Actions
 
@@ -70,7 +78,7 @@ export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
 	return (
 		<div
 			className={cn('pointer-events-none relative', className)}
-			style={{ width: size, height: visibleHeight }}
+			style={{ width: size, height: containerHeight }}
 		>
 			{/* Tap target */}
 			<div
@@ -129,6 +137,7 @@ interface TCatProps {
 	face?: TCatFace;
 	hat?: TCatHat;
 	size?: number;
+	position?: 'edge' | 'centered';
 	className?: string;
 	onTap?: () => TTapOptions | undefined;
 }

@@ -43,11 +43,9 @@ function RouteComponent() {
 	// MARK: - UI
 
 	return (
-		<div className="flex h-screen w-[300px] flex-col bg-[#267DF7]">
-			<WindowHeader className="border-transparent bg-transparent" />
-			<div className="flex flex-1 items-center justify-center">
-				<Cat ref={catRef} size={150} face={face} hat={hat} />
-			</div>
+		<div className="relative flex h-screen w-[300px] items-center justify-center bg-[#267DF7]">
+			<WindowHeader className="absolute top-0 right-0 left-0 border-transparent bg-transparent" />
+			<Cat ref={catRef} size={150} position="centered" face={face} hat={hat} />
 		</div>
 	);
 }
