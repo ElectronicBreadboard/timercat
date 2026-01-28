@@ -4,7 +4,7 @@ pub mod window;
 
 use crate::environment::db;
 use crate::features::{
-    activity_window, app_search, audio,
+    activity_window, app_search, audio, blocking,
     input::{self, types::InputDetectedEvent},
     permission,
     session::{self, types::SessionCompletedEvent},
@@ -61,6 +61,15 @@ pub fn run() {
             app_search::commands::refresh_search_cache,
             // Audio commands
             audio::commands::play_sound,
+            // Blocking commands
+            blocking::commands::get_tags,
+            blocking::commands::create_tag,
+            blocking::commands::update_tag,
+            blocking::commands::delete_tag,
+            blocking::commands::get_tag_block_rules,
+            blocking::commands::add_app_block_rule,
+            blocking::commands::add_website_block_rule,
+            blocking::commands::remove_block_rule,
         ])
         .events(collect_events![
             // Settings events
