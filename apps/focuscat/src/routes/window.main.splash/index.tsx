@@ -32,7 +32,7 @@ function RouteComponent() {
 
 		const splashTimer = setTimeout(() => {
 			void navigate({ to: '/window/main' });
-		}, 2000);
+		}, 2250); // 9 taps (9 lives)
 
 		return () => {
 			clearInterval(tapInterval);
