@@ -23,7 +23,7 @@ pub async fn get_tags(db: State<'_, DatabaseState>) -> Result<Vec<TagDto>, Strin
         .map(|row| TagDto {
             id: row.id as i32,
             name: row.name,
-            created_at: row.created_at,
+            created_at: row.created_at as f64,
         })
         .collect();
 
@@ -40,7 +40,7 @@ pub async fn create_tag(db: State<'_, DatabaseState>, name: String) -> Result<Ta
     return Ok(TagDto {
         id: row.id as i32,
         name: row.name,
-        created_at: row.created_at,
+        created_at: row.created_at as f64,
     });
 }
 
@@ -223,7 +223,7 @@ pub async fn get_schedules(db: State<'_, DatabaseState>) -> Result<Vec<ScheduleD
                 days,
                 start_time: row.start_time,
                 end_time: row.end_time,
-                created_at: row.created_at,
+                created_at: row.created_at as f64,
             }
         })
         .collect();
@@ -252,7 +252,7 @@ pub async fn create_schedule(
         days,
         start_time: row.start_time,
         end_time: row.end_time,
-        created_at: row.created_at,
+        created_at: row.created_at as f64,
     });
 }
 

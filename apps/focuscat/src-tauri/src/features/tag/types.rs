@@ -32,7 +32,7 @@ impl RestrictionAction {
 pub struct TagDto {
     pub id: i32,
     pub name: String,
-    pub created_at: i64,
+    pub created_at: f64,
 }
 
 // MARK: - Restriction
@@ -68,5 +68,5 @@ pub struct ScheduleDto {
     pub start_time: String,
     /// End time in HH:MM format
     pub end_time: String,
-    pub created_at: i64,
+    pub created_at: f64,
 }

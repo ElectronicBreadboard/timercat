@@ -279,17 +279,17 @@ async getTags() : Promise<Result<TagDto[], string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async createTag(name: string, schedule: TagSchedule | null) : Promise<Result<TagDto, string>> {
+async createTag(name: string) : Promise<Result<TagDto, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("create_tag", { name, schedule }) };
+    return { status: "ok", data: await TAURI_INVOKE("create_tag", { name }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-async updateTag(id: number, name: string, schedule: TagSchedule | null) : Promise<Result<null, string>> {
+async updateTag(id: number, name: string) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("update_tag", { id, name, schedule }) };
+    return { status: "ok", data: await TAURI_INVOKE("update_tag", { id, name }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -303,9 +303,9 @@ async deleteTag(id: number) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async getTagBlockRules(tagId: number) : Promise<Result<BlockRuleDto[], string>> {
+async getTagRestrictions(tagId: number) : Promise<Result<RestrictionDto[], string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_tag_block_rules", { tagId }) };
+    return { status: "ok", data: await TAURI_INVOKE("get_tag_restrictions", { tagId }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -314,9 +314,9 @@ async getTagBlockRules(tagId: number) : Promise<Result<BlockRuleDto[], string>> 
 /**
  * Upserts the app (created if new, found by bundle_id if exists).
  */
-async addAppBlockRule(tagId: number, ruleType: BlockRuleType, bundleId: string, name: string | null, icon: string | null, color: string | null) : Promise<Result<BlockRuleDto, string>> {
+async addAppRestriction(tagId: number, action: RestrictionAction, bundleId: string, name: string | null, icon: string | null, color: string | null) : Promise<Result<RestrictionDto, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("add_app_block_rule", { tagId, ruleType, bundleId, name, icon, color }) };
+    return { status: "ok", data: await TAURI_INVOKE("add_app_restriction", { tagId, action, bundleId, name, icon, color }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -325,17 +325,73 @@ async addAppBlockRule(tagId: number, ruleType: BlockRuleType, bundleId: string, 
 /**
  * Upserts the website (created if new, found by domain if exists).
  */
-async addWebsiteBlockRule(tagId: number, ruleType: BlockRuleType, domain: string) : Promise<Result<BlockRuleDto, string>> {
+async addWebsiteRestriction(tagId: number, action: RestrictionAction, domain: string) : Promise<Result<RestrictionDto, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("add_website_block_rule", { tagId, ruleType, domain }) };
+    return { status: "ok", data: await TAURI_INVOKE("add_website_restriction", { tagId, action, domain }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-async removeBlockRule(id: number) : Promise<Result<null, string>> {
+async removeRestriction(id: number) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("remove_block_rule", { id }) };
+    return { status: "ok", data: await TAURI_INVOKE("remove_restriction", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getSchedules() : Promise<Result<ScheduleDto[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_schedules") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async createSchedule(name: string, days: number[], startTime: string, endTime: string) : Promise<Result<ScheduleDto, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("create_schedule", { name, days, startTime, endTime }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async updateSchedule(id: number, name: string, days: number[], startTime: string, endTime: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_schedule", { id, name, days, startTime, endTime }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async deleteSchedule(id: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_schedule", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async addScheduleTag(scheduleId: number, tagId: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("add_schedule_tag", { scheduleId, tagId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async removeScheduleTag(scheduleId: number, tagId: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("remove_schedule_tag", { scheduleId, tagId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getScheduleTags(scheduleId: number) : Promise<Result<number[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_schedule_tags", { scheduleId }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -381,8 +437,6 @@ export type AppInfo = { version: string; stage: Stage }
 export type AppSettings = { appearance: AppearanceSettings; debug: DebugSettings; timer: TimerSettings; focusGoal: FocusGoalSettings; activity: ActivitySettings }
 export type AppSettingsChangedEvent = AppSettings
 export type AppearanceSettings = { theme: Theme }
-export type BlockRuleDto = { id: number; tagId: number; ruleType: BlockRuleType; appId: number | null; appBundleId: string | null; appName: string | null; appIcon: string | null; websiteId: number | null; websiteDomain: string | null; websiteName: string | null; websiteIcon: string | null }
-export type BlockRuleType = "block" | "allow"
 export type DebugSettings = { enabled: boolean; cat: boolean; timerSpeed: number }
 export type FocusGoalSettings = { 
 /**
@@ -400,6 +454,24 @@ export type InputDetectedEvent = InputType
 export type InputType = "keyboard" | "mouse"
 export type ItemType = "app" | "website"
 export type Phase = "work" | "shortBreak" | "longBreak"
+/**
+ * Action for a restriction.
+ */
+export type RestrictionAction = "block" | "allow"
+export type RestrictionDto = { id: number; tagId: number; action: RestrictionAction; appId: number | null; appBundleId: string | null; appName: string | null; appIcon: string | null; websiteId: number | null; websiteDomain: string | null; websiteName: string | null; websiteIcon: string | null }
+export type ScheduleDto = { id: number; name: string; 
+/**
+ * Days of week (1 = Monday, 7 = Sunday)
+ */
+days: number[]; 
+/**
+ * Start time in HH:MM format
+ */
+startTime: string; 
+/**
+ * End time in HH:MM format
+ */
+endTime: string; createdAt: number }
 export type SearchInput = { 
 /**
  * Search query
@@ -465,23 +537,7 @@ export type SessionStatus = "active" | "completed" | "cancelled"
 export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; startedAt: number; endedAt: number | null }
 export type SoundId = "tick" | "complete" | "meow"
 export type Stage = "dev" | "prod"
-export type TagDto = { id: number; name: string; schedule: TagSchedule | null; createdAt: number }
-/**
- * Schedule for automatic tag activation.
- */
-export type TagSchedule = { 
-/**
- * Days of week (1 = Monday, 7 = Sunday)
- */
-days: number[]; 
-/**
- * Start time in HH:MM format
- */
-start: string; 
-/**
- * End time in HH:MM format
- */
-end: string }
+export type TagDto = { id: number; name: string; createdAt: number }
 export type Theme = "light" | "dark" | "auto"
 export type TimerDto = { status: TimerStatus; phase: Phase; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; speed: number }
 export type TimerSettings = { 
