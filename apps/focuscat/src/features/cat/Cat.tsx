@@ -66,7 +66,7 @@ export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
 
 	const handleTap = React.useCallback(() => {
 		cooldownUntil.current = 0; // UI taps always go through
-		tap(onTap?.());
+		tap(onTap?.() as TTapOptions | undefined);
 	}, [tap, onTap]);
 
 	// MARK: - Effects
@@ -139,7 +139,7 @@ interface TCatProps {
 	size?: number;
 	position?: 'edge' | 'centered';
 	className?: string;
-	onTap?: () => TTapOptions | undefined;
+	onTap?: (() => TTapOptions) | (() => void);
 }
 
 export interface TCatRef {
