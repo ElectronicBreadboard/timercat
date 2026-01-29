@@ -14,8 +14,6 @@ use tauri_specta::Event;
 #[cfg(target_os = "macos")]
 use crate::app::tray::TrayState;
 
-// MARK: - Commands
-
 #[tauri::command]
 #[specta::specta]
 pub fn get_timer(state: State<'_, TimerState>) -> TimerDto {
@@ -293,10 +291,14 @@ pub async fn skip_timer(
         let settings = app_settings.lock().unwrap();
         let config = TimerConfig::from(&*settings);
         let phase = timer.phase;
-        let session_data = timer
-            .session
-            .as_ref()
-            .map(|s| (s.id, s.planned_seconds, s.compute_actual_seconds(now), s.started_at));
+        let session_data = timer.session.as_ref().map(|s| {
+            (
+                s.id,
+                s.planned_seconds,
+                s.compute_actual_seconds(now),
+                s.started_at,
+            )
+        });
         (config, phase, session_data, timer.sessions_completed)
     };
     let is_work_phase = phase == Phase::Work;
@@ -389,7 +391,11 @@ pub async fn set_timer_duration(
     // Extract data
     let (is_idle, session_id, old_seconds) = {
         let timer = state.lock().unwrap();
-        (timer.status == TimerStatus::Idle, timer.session_id(), timer.total_seconds)
+        (
+            timer.status == TimerStatus::Idle,
+            timer.session_id(),
+            timer.total_seconds,
+        )
     };
 
     // Calculate delta (how much time was added/removed)
@@ -460,4 +466,20 @@ fn restart_runner(app: &AppHandle, runner: &State<'_, Mutex<Option<TimerRunner>>
         r.stop();
     }
     *guard = Some(TimerRunner::start(app.clone()));
+}
+
+// MARK: - Conversions
+
+impl From<&Timer> for TimerDto {
+    fn from(timer: &Timer) -> Self {
+        return Self {
+            status: timer.status,
+            phase: timer.phase,
+            total_seconds: timer.total_seconds,
+            remaining_seconds: timer.remaining_seconds,
+            overtime_seconds: timer.overtime_seconds,
+            sessions_completed: timer.sessions_completed,
+            speed: timer.speed,
+        };
+    }
 }

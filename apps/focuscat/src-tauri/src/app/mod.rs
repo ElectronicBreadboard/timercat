@@ -7,11 +7,11 @@ use crate::features::{
     activity_window,
     app as app_feature,
     audio,
+    focus_profile,
     input::{self, types::InputDetectedEvent},
     permission,
     session::{self, types::SessionCompletedEvent},
     settings::{self, types::AppSettingsChangedEvent},
-    tag,
     timer::{self, types::TimerUpdatedEvent},
 };
 use specta_typescript::Typescript;
@@ -64,13 +64,12 @@ pub fn run() {
             app_feature::commands::refresh_search_cache,
             // Audio commands
             audio::commands::play_sound,
-            // Tag commands
-            tag::commands::get_tags,
-            tag::commands::get_tag,
-            tag::commands::create_tag,
-            tag::commands::update_tag,
-            tag::commands::delete_tag,
-            tag::commands::get_tag_restrictions,
+            // Focus profile commands
+            focus_profile::commands::get_focus_profiles,
+            focus_profile::commands::get_focus_profile,
+            focus_profile::commands::create_focus_profile,
+            focus_profile::commands::update_focus_profile,
+            focus_profile::commands::delete_focus_profile,
         ])
         .events(collect_events![
             // Settings events

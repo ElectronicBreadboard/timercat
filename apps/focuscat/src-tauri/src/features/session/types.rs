@@ -53,7 +53,7 @@ pub struct SessionStatsDto {
     pub overtime_seconds: u32,
 }
 
-// MARK: - Events
+// MARK: - Event
 
 /// Event emitted when a session is completed.
 #[derive(Debug, Clone, Serialize, specta::Type, tauri_specta::Event)]

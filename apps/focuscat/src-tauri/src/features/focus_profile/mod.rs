@@ -1,4 +1,3 @@
-// See README.md for feature documentation
-
+pub mod commands;
 pub mod repository;
 pub mod types;

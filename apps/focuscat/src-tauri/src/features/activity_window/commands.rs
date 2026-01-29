@@ -1,4 +1,4 @@
-use super::repository::{GetWindowActivitiesInput, WindowActivityRepository};
+use super::repository::{GetWindowActivitiesInput, WindowActivityRepository, WindowActivityRow};
 use super::types::WindowActivityDto;
 use crate::environment::db::DatabaseState;
 use serde::Deserialize;
@@ -22,9 +22,22 @@ pub async fn get_window_activities(
     .await
     .map_err(|e| e.to_string())?;
 
-    let activities = rows
-        .into_iter()
-        .map(|row| WindowActivityDto {
+    return Ok(rows.into_iter().map(WindowActivityDto::from).collect());
+}
+
+#[derive(Debug, Clone, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct GetWindowActivitiesParams {
+    pub started_after: f64,
+    pub started_before: f64,
+    pub limit: Option<i32>,
+}
+
+// MARK: - Conversions
+
+impl From<WindowActivityRow> for WindowActivityDto {
+    fn from(row: WindowActivityRow) -> Self {
+        return Self {
             app_bundle_id: row.app_bundle_id,
             app_name: row.app_name,
             app_icon: row.app_icon,
@@ -37,16 +50,6 @@ pub async fn get_window_activities(
             browser_url: row.browser_url,
             started_at: row.started_at as f64,
             ended_at: row.ended_at as f64,
-        })
-        .collect();
-
-    return Ok(activities);
-}
-
-#[derive(Debug, Clone, Deserialize, specta::Type)]
-#[serde(rename_all = "camelCase")]
-pub struct GetWindowActivitiesParams {
-    pub started_after: f64,
-    pub started_before: f64,
-    pub limit: Option<i32>,
+        };
+    }
 }

@@ -1,4 +1,4 @@
-use super::types::{AppSearchState, SearchResultDto};
+use super::types::{AppSearchState, SearchResultDto, SearchableItem};
 use serde::Deserialize;
 use tauri::State;
 
@@ -25,10 +25,7 @@ pub fn search(
         limit,
     );
 
-    return Ok(matches
-        .into_iter()
-        .map(|(item, score)| SearchResultDto::from_item(item, score))
-        .collect());
+    return Ok(matches.into_iter().map(SearchResultDto::from).collect());
 }
 
 #[derive(Debug, Clone, Deserialize, specta::Type)]
@@ -59,4 +56,15 @@ fn default_true() -> bool {
 pub fn refresh_search_cache(state: State<'_, AppSearchState>) -> Result<(), String> {
     state.lock().unwrap().refresh();
     return Ok(());
+}
+
+// MARK: - Conversions
+
+impl From<(SearchableItem, u32)> for SearchResultDto {
+    fn from((item, score): (SearchableItem, u32)) -> Self {
+        match item {
+            SearchableItem::App { app, .. } => Self::App { app, score },
+            SearchableItem::Website { website, .. } => Self::Website { website, score },
+        }
+    }
 }

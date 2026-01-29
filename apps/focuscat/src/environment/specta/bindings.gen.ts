@@ -271,58 +271,41 @@ async playSound(id: SoundId) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async getTags() : Promise<Result<TagDto[], string>> {
+async getFocusProfiles() : Promise<Result<FocusProfileDto[], string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_tags") };
+    return { status: "ok", data: await TAURI_INVOKE("get_focus_profiles") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-async getTag(id: number) : Promise<Result<TagDto | null, string>> {
+async getFocusProfile(id: number) : Promise<Result<FocusProfileDto | null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_tag", { id }) };
+    return { status: "ok", data: await TAURI_INVOKE("get_focus_profile", { id }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Create new tag with optional restrictions.
- */
-async createTag(name: string, color: string | null, restrictions: RestrictionSet | null) : Promise<Result<TagDto, string>> {
+async createFocusProfile(name: string, color: string | null, rules: FocusProfileRuleInput[]) : Promise<Result<FocusProfileDto, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("create_tag", { name, color, restrictions }) };
+    return { status: "ok", data: await TAURI_INVOKE("create_focus_profile", { name, color, rules }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Update existing tag with optional restrictions.
- */
-async updateTag(id: number, name: string, color: string | null, restrictions: RestrictionSet | null) : Promise<Result<TagDto, string>> {
+async updateFocusProfile(id: number, name: string, color: string | null, rules: FocusProfileRuleInput[]) : Promise<Result<FocusProfileDto, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("update_tag", { id, name, color, restrictions }) };
+    return { status: "ok", data: await TAURI_INVOKE("update_focus_profile", { id, name, color, rules }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-async deleteTag(id: number) : Promise<Result<null, string>> {
+async deleteFocusProfile(id: number) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("delete_tag", { id }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
- * Get restrictions for a tag.
- */
-async getTagRestrictions(tagId: number) : Promise<Result<RestrictionSet | null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("get_tag_restrictions", { tagId }) };
+    return { status: "ok", data: await TAURI_INVOKE("delete_focus_profile", { id }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -382,6 +365,18 @@ export type FocusGoalSettings = {
  * Daily focus goal in minutes (default: 120 = 2h)
  */
 dailyGoalMinutes: number }
+/**
+ * Focus profile with its rules.
+ */
+export type FocusProfileDto = { id: number; name: string; color: string | null; rules: FocusProfileRuleDto[]; createdAt: number }
+/**
+ * A rule within a focus profile.
+ */
+export type FocusProfileRuleDto = { id: number; action: RuleAction; target: RuleTargetDto }
+/**
+ * Input for creating/updating rules (from frontend).
+ */
+export type FocusProfileRuleInput = { action: RuleAction; target: RuleTargetDto }
 export type GetWindowActivitiesParams = { startedAfter: number; startedBefore: number; limit: number | null }
 /**
  * Event emitted when user input is detected (throttled).
@@ -393,17 +388,25 @@ export type InputDetectedEvent = InputType
 export type InputType = "keyboard" | "mouse"
 export type Phase = "work" | "shortBreak" | "longBreak"
 /**
- * Action for a restriction set.
+ * Action for a focus profile rule.
  */
-export type RestrictionAction = "block" | "allow"
+export type RuleAction = "block" | "allow"
 /**
- * A restriction item (app or website).
+ * Target for a focus profile rule.
  */
-export type RestrictionItem = { type: "app"; bundle_id: string; name: string | null; icon: string | null; color: string | null } | { type: "website"; domain: string; name: string | null; icon: string | null; color: string | null }
+export type RuleTargetDto = 
 /**
- * A set of restrictions with an action.
+ * Applies to all apps/websites.
  */
-export type RestrictionSet = { action: RestrictionAction; items: RestrictionItem[] }
+{ type: "all" } | 
+/**
+ * Target a specific app.
+ */
+{ type: "app"; bundle_id: string; name: string | null; icon: string | null; color: string | null } | 
+/**
+ * Target a specific website.
+ */
+{ type: "website"; domain: string; name: string | null; icon: string | null; color: string | null }
 export type SearchParams = { 
 /**
  * Search query
@@ -445,7 +448,6 @@ export type SessionStatus = "active" | "completed" | "cancelled"
 export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; startedAt: number; endedAt: number | null }
 export type SoundId = "tick" | "complete" | "meow"
 export type Stage = "dev" | "prod"
-export type TagDto = { id: number; name: string; color: string | null; createdAt: number }
 export type Theme = "light" | "dark" | "auto"
 export type TimerDto = { status: TimerStatus; phase: Phase; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; speed: number }
 export type TimerSettings = { 

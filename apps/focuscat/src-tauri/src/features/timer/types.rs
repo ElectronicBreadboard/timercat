@@ -20,20 +20,6 @@ pub struct TimerDto {
     pub speed: u32,
 }
 
-impl From<&Timer> for TimerDto {
-    fn from(timer: &Timer) -> Self {
-        Self {
-            status: timer.status,
-            phase: timer.phase,
-            total_seconds: timer.total_seconds,
-            remaining_seconds: timer.remaining_seconds,
-            overtime_seconds: timer.overtime_seconds,
-            sessions_completed: timer.sessions_completed,
-            speed: timer.speed,
-        }
-    }
-}
-
 // MARK: - State
 
 pub struct TimerState(Mutex<Timer>);

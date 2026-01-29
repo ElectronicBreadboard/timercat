@@ -149,15 +149,6 @@ pub enum SearchResultDto {
     },
 }
 
-impl SearchResultDto {
-    pub fn from_item(item: SearchableItem, score: u32) -> Self {
-        match item {
-            SearchableItem::App { app, .. } => Self::App { app, score },
-            SearchableItem::Website { website, .. } => Self::Website { website, score },
-        }
-    }
-}
-
 // MARK: - State
 
 pub struct AppSearchState(Mutex<AppSearch>);
