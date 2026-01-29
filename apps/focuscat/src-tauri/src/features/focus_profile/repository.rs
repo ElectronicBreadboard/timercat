@@ -1,6 +1,6 @@
 use super::types::{FocusProfileRuleInput, RuleTargetDto};
 use crate::features::app::repository::{AppRepository, UpsertAppInput, WebsiteRepository};
-use sqlx::{FromRow, Row, SqlitePool};
+use sqlx::{FromRow, Row, SqliteConnection, SqlitePool};
 
 pub struct FocusProfileRepository;
 
@@ -10,6 +10,8 @@ impl FocusProfileRepository {
         pool: &SqlitePool,
         input: &CreateFocusProfileInput,
     ) -> Result<FocusProfileWithRules, sqlx::Error> {
+        let mut tx = pool.begin().await?;
+
         let result = sqlx::query(
             r#"
             INSERT INTO focus_profile (name, color)
@@ -19,7 +21,7 @@ impl FocusProfileRepository {
         )
         .bind(&input.name)
         .bind(&input.color)
-        .fetch_one(pool)
+        .fetch_one(&mut *tx)
         .await?;
 
         let profile = FocusProfileRow {
@@ -29,7 +31,10 @@ impl FocusProfileRepository {
             created_at: result.get(3),
         };
 
-        Self::insert_rules(pool, profile.id, &input.rules).await?;
+        Self::insert_rules(&mut *tx, profile.id, &input.rules).await?;
+
+        tx.commit().await?;
+
         let rules = Self::get_rules(pool, profile.id).await?;
 
         return Ok(FocusProfileWithRules { profile, rules });
@@ -78,20 +83,24 @@ impl FocusProfileRepository {
         id: i64,
         input: &UpdateFocusProfileInput,
     ) -> Result<FocusProfileWithRules, sqlx::Error> {
+        let mut tx = pool.begin().await?;
+
         sqlx::query("UPDATE focus_profile SET name = ?, color = ? WHERE id = ?")
             .bind(&input.name)
             .bind(&input.color)
             .bind(id)
-            .execute(pool)
+            .execute(&mut *tx)
             .await?;
 
         // Delete existing rules and insert new ones
         sqlx::query("DELETE FROM focus_profile_rule WHERE focus_profile_id = ?")
             .bind(id)
-            .execute(pool)
+            .execute(&mut *tx)
             .await?;
 
-        Self::insert_rules(pool, id, &input.rules).await?;
+        Self::insert_rules(&mut *tx, id, &input.rules).await?;
+
+        tx.commit().await?;
 
         // Fetch updated profile
         let profile: FocusProfileRow =
@@ -149,7 +158,7 @@ impl FocusProfileRepository {
 
     /// Insert rules for a profile.
     async fn insert_rules(
-        pool: &SqlitePool,
+        conn: &mut SqliteConnection,
         profile_id: i64,
         rules: &[FocusProfileRuleInput],
     ) -> Result<(), sqlx::Error> {
@@ -161,7 +170,7 @@ impl FocusProfileRepository {
                     )
                     .bind(profile_id)
                     .bind(rule.action.as_str())
-                    .execute(pool)
+                    .execute(&mut *conn)
                     .await?;
                 }
                 RuleTargetDto::App {
@@ -171,7 +180,7 @@ impl FocusProfileRepository {
                     color,
                 } => {
                     let app_id = AppRepository::upsert(
-                        pool,
+                        &mut *conn,
                         &UpsertAppInput {
                             bundle_id: Some(bundle_id.clone()),
                             name: name.clone(),
@@ -188,11 +197,11 @@ impl FocusProfileRepository {
                     .bind(profile_id)
                     .bind(rule.action.as_str())
                     .bind(app_id)
-                    .execute(pool)
+                    .execute(&mut *conn)
                     .await?;
                 }
                 RuleTargetDto::Website { domain, .. } => {
-                    let website_id = WebsiteRepository::upsert(pool, domain).await?;
+                    let website_id = WebsiteRepository::upsert(&mut *conn, domain).await?;
 
                     sqlx::query(
                         "INSERT INTO focus_profile_rule (focus_profile_id, action, website_id) VALUES (?, ?, ?)",
@@ -200,7 +209,7 @@ impl FocusProfileRepository {
                     .bind(profile_id)
                     .bind(rule.action.as_str())
                     .bind(website_id)
-                    .execute(pool)
+                    .execute(&mut *conn)
                     .await?;
                 }
             }

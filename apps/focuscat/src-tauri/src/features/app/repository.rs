@@ -1,4 +1,4 @@
-use sqlx::{Row, SqlitePool};
+use sqlx::Row;
 
 // MARK: - App Repository
 
@@ -6,24 +6,15 @@ pub struct AppRepository;
 
 impl AppRepository {
     /// Upsert app (insert or return existing id).
-    pub async fn upsert(pool: &SqlitePool, input: &UpsertAppInput) -> Result<i64, sqlx::Error> {
-        // Try to find existing app by bundle_id
-        if let Some(bundle_id) = &input.bundle_id {
-            let existing: Option<(i64,)> = sqlx::query_as("SELECT id FROM app WHERE bundle_id = ?")
-                .bind(bundle_id)
-                .fetch_optional(pool)
-                .await?;
-
-            if let Some((id,)) = existing {
-                return Ok(id);
-            }
-        }
-
-        // Insert new app
+    pub async fn upsert<'e, E>(executor: E, input: &UpsertAppInput) -> Result<i64, sqlx::Error>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+    {
         let result = sqlx::query(
             r#"
             INSERT INTO app (bundle_id, name, process_path, icon, color)
             VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(bundle_id) DO UPDATE SET bundle_id = bundle_id
             RETURNING id
             "#,
         )
@@ -32,10 +23,10 @@ impl AppRepository {
         .bind(&input.process_path)
         .bind(&input.icon)
         .bind(&input.color)
-        .fetch_one(pool)
+        .fetch_one(executor)
         .await?;
 
-        return Ok(sqlx::Row::get(&result, 0));
+        return Ok(result.get(0));
     }
 }
 
@@ -53,7 +44,10 @@ pub struct WebsiteRepository;
 
 impl WebsiteRepository {
     /// Upsert website (insert or return existing id).
-    pub async fn upsert(pool: &SqlitePool, domain: &str) -> Result<i64, sqlx::Error> {
+    pub async fn upsert<'e, E>(executor: E, domain: &str) -> Result<i64, sqlx::Error>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+    {
         let result = sqlx::query(
             r#"
             INSERT INTO website (domain) VALUES (?)
@@ -62,7 +56,7 @@ impl WebsiteRepository {
             "#,
         )
         .bind(domain)
-        .fetch_one(pool)
+        .fetch_one(executor)
         .await?;
 
         return Ok(result.get(0));

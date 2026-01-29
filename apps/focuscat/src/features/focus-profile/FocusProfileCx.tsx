@@ -157,7 +157,7 @@ export class FocusProfileCx {
 				console.error('Failed to create focus profile:', profileErr);
 				return false;
 			}
-			this.$profiles.set([...this.$profiles.get(), profile]);
+			this.$profiles.set((prev) => [...prev, profile]);
 		} else {
 			// Update existing profile
 			const [isProfileOk, profileErr, profile] = toTuple(
@@ -167,7 +167,7 @@ export class FocusProfileCx {
 				console.error('Failed to update focus profile:', profileErr);
 				return false;
 			}
-			this.$profiles.set(this.$profiles.get().map((p) => (p.id === editingId ? profile : p)));
+			this.$profiles.set((prev) => prev.map((p) => (p.id === editingId ? profile : p)));
 		}
 
 		return true;
@@ -176,7 +176,7 @@ export class FocusProfileCx {
 	public async delete(id: number): Promise<boolean> {
 		const [ok, err] = toTuple(await specta.commands.deleteFocusProfile(id));
 		if (ok) {
-			this.$profiles.set(this.$profiles.get().filter((p) => p.id !== id));
+			this.$profiles.set((prev) => prev.filter((p) => p.id !== id));
 			return true;
 		}
 		console.error('Failed to delete focus profile:', err);
