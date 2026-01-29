@@ -7,7 +7,7 @@ CREATE TABLE sessions (
     actual_seconds INTEGER, -- NULL until session ends, excludes pauses
     started_at INTEGER NOT NULL,
     ended_at INTEGER, -- NULL until session ends
-    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
 );
 
 CREATE INDEX idx_sessions_started_at ON sessions (started_at);
@@ -21,7 +21,7 @@ CREATE TABLE session_events (
     event_type TEXT NOT NULL, -- 'started' | 'paused' | 'resumed' | 'extended' | 'overtime_started' | 'completed' | 'cancelled'
     timestamp INTEGER NOT NULL,
     content TEXT, -- JSON, e.g. {"seconds": 300}
-    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
 );
 
 CREATE INDEX idx_session_events_session_id ON session_events (session_id);
@@ -34,7 +34,7 @@ CREATE TABLE app (
     process_path TEXT,
     icon TEXT, -- base64 PNG data URL
     color TEXT, -- hex color like "#5865F2"
-    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
 );
 
 CREATE INDEX idx_app_bundle_id ON app (bundle_id);
@@ -46,73 +46,67 @@ CREATE TABLE website (
     name TEXT, -- e.g. "YouTube" (NULL = use domain)
     icon TEXT, -- base64 PNG favicon
     color TEXT, -- hex color like "#FF0000"
-    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
 );
 
 CREATE INDEX idx_website_domain ON website (domain);
 
--- Restriction sets (standalone, reusable collections of rules)
-CREATE TABLE restriction_set (
+-- Focus profiles (reusable focus configurations)
+CREATE TABLE focus_profile (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT, -- optional name like "Social Media Block"
-    action TEXT NOT NULL, -- 'block' | 'allow'
-    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    name TEXT NOT NULL,
+    color TEXT, -- hex color like "#5865F2"
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
 );
 
--- Individual restrictions in a set
-CREATE TABLE restriction (
+-- Focus profile rules (block/allow apps/websites)
+-- Both app_id and website_id NULL = applies to ALL (for "block all" rule)
+CREATE TABLE focus_profile_rule (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    restriction_set_id INTEGER NOT NULL REFERENCES restriction_set (id) ON DELETE CASCADE,
+    focus_profile_id INTEGER NOT NULL REFERENCES focus_profile (id) ON DELETE CASCADE,
+    action TEXT NOT NULL, -- 'block' | 'allow'
     app_id INTEGER REFERENCES app (id) ON DELETE CASCADE,
     website_id INTEGER REFERENCES website (id) ON DELETE CASCADE,
-    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+    CHECK (action IN ('block', 'allow')),
     CHECK (
-        (
+        NOT (
             app_id IS NOT NULL
-            AND website_id IS NULL
-        )
-        OR (
-            app_id IS NULL
             AND website_id IS NOT NULL
         )
     )
 );
 
-CREATE INDEX idx_restriction_set_id ON restriction (restriction_set_id);
+CREATE INDEX idx_focus_profile_rule_profile_id ON focus_profile_rule (focus_profile_id);
 
-CREATE INDEX idx_restriction_app_id ON restriction (app_id);
+CREATE INDEX idx_focus_profile_rule_app_id ON focus_profile_rule (app_id);
 
-CREATE INDEX idx_restriction_website_id ON restriction (website_id);
+CREATE INDEX idx_focus_profile_rule_website_id ON focus_profile_rule (website_id);
 
-CREATE UNIQUE INDEX idx_restriction_unique_app ON restriction (restriction_set_id, app_id)
+CREATE UNIQUE INDEX idx_focus_profile_rule_unique_app ON focus_profile_rule (focus_profile_id, app_id)
 WHERE
     app_id IS NOT NULL;
 
-CREATE UNIQUE INDEX idx_restriction_unique_website ON restriction (restriction_set_id, website_id)
+CREATE UNIQUE INDEX idx_focus_profile_rule_unique_website ON focus_profile_rule (focus_profile_id, website_id)
 WHERE
     website_id IS NOT NULL;
 
--- Tags (blocking contexts, e.g. "Work", "Study", "Social Media")
-CREATE TABLE tag (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    color TEXT, -- hex color like "#FF5733"
-    restriction_set_id INTEGER REFERENCES restriction_set (id) ON DELETE SET NULL,
-    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
-);
+CREATE UNIQUE INDEX idx_focus_profile_rule_unique_all ON focus_profile_rule (focus_profile_id)
+WHERE
+    app_id IS NULL
+    AND website_id IS NULL;
 
-CREATE INDEX idx_tag_restriction_set_id ON tag (restriction_set_id);
-
--- Session tags (which tags are active for a session)
-CREATE TABLE session_tag (
+-- Session focus profiles (which profiles are active, with priority for override)
+CREATE TABLE session_focus_profile (
     session_id INTEGER NOT NULL REFERENCES sessions (id) ON DELETE CASCADE,
-    tag_id INTEGER NOT NULL REFERENCES tag (id) ON DELETE CASCADE,
-    PRIMARY KEY (session_id, tag_id)
+    focus_profile_id INTEGER NOT NULL REFERENCES focus_profile (id) ON DELETE CASCADE,
+    priority INTEGER NOT NULL DEFAULT 0, -- higher = overrides lower
+    PRIMARY KEY (session_id, focus_profile_id)
 );
 
-CREATE INDEX idx_session_tag_session_id ON session_tag (session_id);
+CREATE INDEX idx_session_focus_profile_session_id ON session_focus_profile (session_id);
 
-CREATE INDEX idx_session_tag_tag_id ON session_tag (tag_id);
+CREATE INDEX idx_session_focus_profile_profile_id ON session_focus_profile (focus_profile_id);
 
 -- App activity (which app was focused)
 CREATE TABLE activity_app (
@@ -120,7 +114,7 @@ CREATE TABLE activity_app (
     app_id INTEGER NOT NULL REFERENCES app (id) ON DELETE CASCADE,
     started_at INTEGER NOT NULL,
     ended_at INTEGER NOT NULL,
-    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
 );
 
 CREATE INDEX idx_activity_app_app_id ON activity_app (app_id);
@@ -142,7 +136,7 @@ CREATE TABLE activity_window (
     browser_is_private INTEGER, -- NULL for non-browsers
     started_at INTEGER NOT NULL,
     ended_at INTEGER NOT NULL,
-    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
 );
 
 CREATE INDEX idx_activity_window_app_id ON activity_window (app_id);
