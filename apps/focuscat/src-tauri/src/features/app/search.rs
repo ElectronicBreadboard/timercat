@@ -1,5 +1,5 @@
 use super::matcher::fuzzy_match;
-use super::types::{ItemType, SearchableItem};
+use super::types::SearchableItem;
 use crate::common::url::{extract_domain, is_domain_like};
 use mado::{get_app_icon, get_installed_apps, InstalledAppsConfig};
 use std::collections::HashSet;
@@ -32,12 +32,12 @@ impl AppSearch {
         limit: usize,
     ) -> Vec<(SearchableItem, u32)> {
         // Create custom domain if query looks like a domain
-        let mut custom_domain: Option<SearchableItem> =
-            if include_websites && is_domain_like(query) {
-                extract_domain(query).map(|d| SearchableItem::custom_domain(&d))
-            } else {
-                None
-            };
+        let mut custom_domain: Option<SearchableItem> = if include_websites && is_domain_like(query)
+        {
+            extract_domain(query).map(|d| SearchableItem::custom_domain(&d))
+        } else {
+            None
+        };
 
         // Build search iterator
         let apps = if include_apps {
@@ -57,7 +57,7 @@ impl AppSearch {
         let mut seen: HashSet<String> = HashSet::new();
         return matches
             .into_iter()
-            .filter(|(item, _)| seen.insert(item.id.clone()))
+            .filter(|(item, _)| seen.insert(item.id().to_string()))
             .take(limit)
             .map(|(item, score)| {
                 if include_icons {
@@ -69,20 +69,22 @@ impl AppSearch {
     }
 
     fn populate_icon(item: &mut SearchableItem) {
-        if item.icon.is_some() {
-            return;
-        }
-
-        match item.item_type {
-            ItemType::App => {
-                let data = get_app_icon(&item.id, 64);
-                item.icon = data.data_url;
-                item.color = data.color;
+        match item {
+            SearchableItem::App { app, .. } => {
+                if app.icon.is_some() {
+                    return;
+                }
+                let data = get_app_icon(&app.bundle_id, 64);
+                app.icon = data.data_url;
+                app.color = data.color;
             }
-            ItemType::Website => {
-                item.icon = Some(format!(
+            SearchableItem::Website { website, .. } => {
+                if website.icon.is_some() {
+                    return;
+                }
+                website.icon = Some(format!(
                     "https://www.google.com/s2/favicons?domain={}&sz=64",
-                    item.id
+                    website.domain
                 ));
             }
         }
@@ -96,27 +98,19 @@ impl AppSearch {
 
         return get_installed_apps(config)
             .into_iter()
-            .map(|app| SearchableItem {
-                id: app.bundle_id.clone(),
-                name: app.name,
-                item_type: ItemType::App,
-                keywords: vec![app.bundle_id],
-                icon: None,
-                color: None,
-            })
+            .map(|app| SearchableItem::app(app.bundle_id, Some(app.name)))
             .collect();
     }
 
     fn load_websites() -> Vec<SearchableItem> {
         return POPULAR_WEBSITES
             .iter()
-            .map(|entry| SearchableItem {
-                id: entry.domains[0].to_string(),
-                name: entry.name.to_string(),
-                item_type: ItemType::Website,
-                keywords: entry.domains.iter().map(|d| d.to_string()).collect(),
-                icon: None,
-                color: None,
+            .map(|entry| {
+                SearchableItem::website(
+                    entry.domains[0].to_string(),
+                    Some(entry.name.to_string()),
+                    entry.domains.iter().map(|d| d.to_string()).collect(),
+                )
             })
             .collect();
     }

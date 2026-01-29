@@ -6,6 +6,8 @@ use std::ops::Deref;
 use std::sync::Mutex;
 use tauri::{App, Manager};
 
+// MARK: - DTO
+
 #[derive(Debug, Clone, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct TimerDto {
@@ -32,12 +34,6 @@ impl From<&Timer> for TimerDto {
     }
 }
 
-// MARK: - Events
-
-#[derive(Debug, Clone, Serialize, specta::Type, tauri_specta::Event)]
-#[serde(rename_all = "camelCase")]
-pub struct TimerUpdatedEvent(pub TimerDto);
-
 // MARK: - State
 
 pub struct TimerState(Mutex<Timer>);
@@ -58,3 +54,9 @@ impl Deref for TimerState {
         return &self.0;
     }
 }
+
+// MARK: - Events
+
+#[derive(Debug, Clone, Serialize, specta::Type, tauri_specta::Event)]
+#[serde(rename_all = "camelCase")]
+pub struct TimerUpdatedEvent(pub TimerDto);

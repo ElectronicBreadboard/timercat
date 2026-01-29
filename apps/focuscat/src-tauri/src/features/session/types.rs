@@ -1,6 +1,8 @@
 use super::session::{Phase, SessionStatus};
 use serde::{Deserialize, Serialize};
 
+// MARK: - DTO
+
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionSummaryDto {

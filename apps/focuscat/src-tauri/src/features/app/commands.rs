@@ -1,5 +1,5 @@
 use super::types::{AppSearchState, SearchResultDto};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use tauri::State;
 
 /// Search for apps and websites.
@@ -7,10 +7,10 @@ use tauri::State;
 #[specta::specta]
 pub fn search(
     state: State<'_, AppSearchState>,
-    input: SearchInput,
+    params: SearchParams,
 ) -> Result<Vec<SearchResultDto>, String> {
-    let query = input.query.trim();
-    let limit = input.limit.unwrap_or(20) as usize;
+    let query = params.query.trim();
+    let limit = params.limit.unwrap_or(20) as usize;
 
     if query.is_empty() {
         return Ok(Vec::new());
@@ -19,21 +19,21 @@ pub fn search(
     let mut search = state.lock().unwrap();
     let matches = search.search(
         query,
-        input.include_apps,
-        input.include_websites,
-        input.include_icons,
+        params.include_apps,
+        params.include_websites,
+        params.include_icons,
         limit,
     );
 
     return Ok(matches
         .into_iter()
-        .map(|(item, score)| item.to_result(score))
+        .map(|(item, score)| SearchResultDto::from_item(item, score))
         .collect());
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[derive(Debug, Clone, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
-pub struct SearchInput {
+pub struct SearchParams {
     /// Search query
     pub query: String,
     /// Include installed apps (default: true)
@@ -47,18 +47,6 @@ pub struct SearchInput {
     pub include_icons: bool,
     /// Maximum results (default: 20)
     pub limit: Option<u32>,
-}
-
-impl Default for SearchInput {
-    fn default() -> Self {
-        Self {
-            query: String::new(),
-            include_apps: true,
-            include_websites: true,
-            include_icons: false,
-            limit: None,
-        }
-    }
 }
 
 fn default_true() -> bool {

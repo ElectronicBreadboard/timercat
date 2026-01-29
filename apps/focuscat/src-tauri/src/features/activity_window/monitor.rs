@@ -1,10 +1,10 @@
 use super::repository::{
-    AppActivityRepository, AppRepository, InsertAppActivityInput, InsertWindowActivityInput,
-    UpsertAppInput, WebsiteRepository, WindowActivityRepository,
+    AppActivityRepository, InsertAppActivityInput, InsertWindowActivityInput,
+    WindowActivityRepository,
 };
-use super::types::{ActiveApp, ActiveWindow};
 use crate::common::url::extract_domain;
 use crate::environment::db::DatabaseState;
+use crate::features::app::repository::{AppRepository, UpsertAppInput, WebsiteRepository};
 use crate::features::settings::types::AppSettingsState;
 use chrono::Utc;
 use mado::{MonitorConfig, WindowEvent, WindowListener, WindowMonitor};
@@ -223,7 +223,11 @@ impl WindowListener for WindowMonitorHandler {
                                 bundle_id: window_info.app.bundle_id.clone(),
                                 name: window_info.app.name,
                                 process_path: window_info.app.process_path,
-                                icon: window_info.app.icon.as_ref().and_then(|i| i.data_url.clone()),
+                                icon: window_info
+                                    .app
+                                    .icon
+                                    .as_ref()
+                                    .and_then(|i| i.data_url.clone()),
                                 color: window_info.app.icon.as_ref().and_then(|i| i.color.clone()),
                             },
                         )
@@ -260,4 +264,30 @@ impl WindowListener for WindowMonitorHandler {
             }
         }
     }
+}
+
+/// Tracks currently active app (in-memory, pending write to DB on change).
+pub struct ActiveApp {
+    pub app_id: i64,
+    pub bundle_id: Option<String>,
+    pub started_at: i64,
+}
+
+/// Tracks currently active window (in-memory, pending write to DB on change).
+pub struct ActiveWindow {
+    pub app_id: i64,
+    pub website_id: Option<i64>,
+    pub bundle_id: Option<String>,
+    // Window fields
+    pub window_title: Option<String>,
+    pub window_id: Option<u32>,
+    pub window_x: Option<f64>,
+    pub window_y: Option<f64>,
+    pub window_width: Option<f64>,
+    pub window_height: Option<f64>,
+    // Browser fields
+    pub browser_url: Option<String>,
+    pub browser_is_private: Option<bool>,
+    // Timestamps
+    pub started_at: i64,
 }

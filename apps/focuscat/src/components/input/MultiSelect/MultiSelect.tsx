@@ -136,11 +136,11 @@ export interface TMultiSelectInputProps
 
 /** Positions the popup relative to the container */
 const Positioner: React.FC<TMultiSelectPositionerProps> = (props) => {
-	const { children, sideOffset = 0, collisionPadding = 32 } = props;
+	const { children, side = 'bottom', sideOffset = 0, collisionPadding = 32 } = props;
 
 	return (
 		<Popover.Positioner
-			side="bottom"
+			side={side}
 			sideOffset={sideOffset}
 			collisionPadding={collisionPadding}
 			// Fixed positioning is preferred for floating overlays. Unlike absolute, fixed
@@ -155,6 +155,7 @@ const Positioner: React.FC<TMultiSelectPositionerProps> = (props) => {
 
 export interface TMultiSelectPositionerProps {
 	children: React.ReactNode;
+	side?: 'top' | 'bottom';
 	/** Gap between container and popup (default: 0 for connected visual) */
 	sideOffset?: number;
 	/** Padding from viewport edges (default: 8) */

@@ -51,19 +51,18 @@ CREATE TABLE website (
 
 CREATE INDEX idx_website_domain ON website (domain);
 
--- Tags (blocking contexts, e.g. "Work", "Study", "Social Media")
-CREATE TABLE tag (
+-- Restriction sets (standalone, reusable collections of rules)
+CREATE TABLE restriction_set (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    color TEXT, -- hex color like "#FF5733"
+    name TEXT, -- optional name like "Social Media Block"
+    action TEXT NOT NULL, -- 'block' | 'allow'
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
 );
 
--- Tag restrictions (what a tag blocks/allows)
-CREATE TABLE tag_restriction (
+-- Individual restrictions in a set
+CREATE TABLE restriction (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    tag_id INTEGER NOT NULL REFERENCES tag (id) ON DELETE CASCADE,
-    action TEXT NOT NULL, -- 'block' | 'allow'
+    restriction_set_id INTEGER NOT NULL REFERENCES restriction_set (id) ON DELETE CASCADE,
     app_id INTEGER REFERENCES app (id) ON DELETE CASCADE,
     website_id INTEGER REFERENCES website (id) ON DELETE CASCADE,
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
@@ -79,40 +78,30 @@ CREATE TABLE tag_restriction (
     )
 );
 
-CREATE INDEX idx_tag_restriction_tag_id ON tag_restriction (tag_id);
+CREATE INDEX idx_restriction_set_id ON restriction (restriction_set_id);
 
-CREATE INDEX idx_tag_restriction_app_id ON tag_restriction (app_id);
+CREATE INDEX idx_restriction_app_id ON restriction (app_id);
 
-CREATE INDEX idx_tag_restriction_website_id ON tag_restriction (website_id);
+CREATE INDEX idx_restriction_website_id ON restriction (website_id);
 
-CREATE UNIQUE INDEX idx_tag_restriction_unique_app ON tag_restriction (tag_id, app_id)
+CREATE UNIQUE INDEX idx_restriction_unique_app ON restriction (restriction_set_id, app_id)
 WHERE
     app_id IS NOT NULL;
 
-CREATE UNIQUE INDEX idx_tag_restriction_unique_website ON tag_restriction (tag_id, website_id)
+CREATE UNIQUE INDEX idx_restriction_unique_website ON restriction (restriction_set_id, website_id)
 WHERE
     website_id IS NOT NULL;
 
--- Schedules (time-based auto-activation)
-CREATE TABLE schedule (
+-- Tags (blocking contexts, e.g. "Work", "Study", "Social Media")
+CREATE TABLE tag (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    days TEXT NOT NULL, -- JSON array: [1,2,3,4,5] (1=Mon, 7=Sun)
-    start_time TEXT NOT NULL, -- "HH:MM" format
-    end_time TEXT NOT NULL, -- "HH:MM" format
+    color TEXT, -- hex color like "#FF5733"
+    restriction_set_id INTEGER REFERENCES restriction_set (id) ON DELETE SET NULL,
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
 );
 
--- Schedule tags (which tags are active for a schedule)
-CREATE TABLE schedule_tag (
-    schedule_id INTEGER NOT NULL REFERENCES schedule (id) ON DELETE CASCADE,
-    tag_id INTEGER NOT NULL REFERENCES tag (id) ON DELETE CASCADE,
-    PRIMARY KEY (schedule_id, tag_id)
-);
-
-CREATE INDEX idx_schedule_tag_schedule_id ON schedule_tag (schedule_id);
-
-CREATE INDEX idx_schedule_tag_tag_id ON schedule_tag (tag_id);
+CREATE INDEX idx_tag_restriction_set_id ON tag (restriction_set_id);
 
 -- Session tags (which tags are active for a session)
 CREATE TABLE session_tag (
