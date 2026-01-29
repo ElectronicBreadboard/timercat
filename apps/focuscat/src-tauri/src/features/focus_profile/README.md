@@ -7,12 +7,14 @@ Reusable blocking/allowing configurations for focus sessions.
 **Profile** = named collection of rules (e.g., "No Social Media", "Coding Only")
 
 **Rule** = action + target
+
 - Action: `block` or `allow`
 - Target: specific app, specific website, or "all"
 
 **Session** = has one or more profiles assigned, each with a priority number
 
 **Resolution**: When checking if an app/website is blocked:
+
 1. Collect all matching rules from assigned profiles
 2. Rule from highest priority profile wins
 3. Same priority? `block` wins (fail-safe)
@@ -22,10 +24,10 @@ Reusable blocking/allowing configurations for focus sessions.
 
 Two independent layers:
 
-| Rule Type | Controls | Example |
-|-----------|----------|---------|
-| App | Can you open this app? | Block Brave → can't open Brave |
-| Website | Can you access this URL? | Block youtube.com → blocked in ALL browsers |
+| Rule Type | Controls                 | Example                                     |
+| --------- | ------------------------ | ------------------------------------------- |
+| App       | Can you open this app?   | Block Brave → can't open Brave              |
+| Website   | Can you access this URL? | Block youtube.com → blocked in ALL browsers |
 
 **Key insight**: Blocking an app blocks everything inside it. Blocking a website blocks it everywhere.
 
@@ -43,6 +45,7 @@ Rules compose cleanly. Every rule is just "block X" or "allow X". Priority decid
 ### Why "all" as a target?
 
 Enables whitelist pattern without special mode:
+
 - "Block All" profile (one rule: block all) at priority 0
 - "Allowed Apps" profile (allow rules) at priority 1
 - Result: only allowed apps work

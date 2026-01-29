@@ -15,13 +15,13 @@ feature/
 
 ## When to Create Each File
 
-| File | Create when... |
-|------|----------------|
-| `mod.rs` | Always |
-| `commands.rs` | Feature has Tauri commands |
-| `types.rs` | Feature has DTOs, Events, State, or shared types |
-| `repository.rs` | Feature has database operations |
-| `[domain].rs` | Feature has complex business logic |
+| File            | Create when...                                   |
+| --------------- | ------------------------------------------------ |
+| `mod.rs`        | Always                                           |
+| `commands.rs`   | Feature has Tauri commands                       |
+| `types.rs`      | Feature has DTOs, Events, State, or shared types |
+| `repository.rs` | Feature has database operations                  |
+| `[domain].rs`   | Feature has complex business logic               |
 
 ### When to Create a Domain File
 
@@ -46,6 +46,7 @@ pub fn exit(app: &AppHandle) { ... }
 Shared/external types only. No repository imports, no conversion impls.
 
 Contains:
+
 - **DTOs** - returned to frontend
 - **Events** - pushed to frontend
 - **State** - app-wide runtime state
@@ -111,6 +112,7 @@ impl From<ItemRow> for ItemDto {
 ```
 
 **Local types placement:**
+
 - Function params/returns → right under the function
 - Impl helper types → below the impl block
 - Shared types → types.rs
@@ -150,6 +152,7 @@ pub struct UpdateItemInput { ... }
 For complex business logic that goes beyond structural conversions.
 
 Create when you have:
+
 - Computed properties (`compute_overtime_seconds()`)
 - State machines or lifecycle management
 - Business rules, validation logic
@@ -176,19 +179,20 @@ mod tests { ... }
 ```
 
 **Structural vs Business Logic:**
+
 - `impl From` (field mapping) → commands.rs
 - `compute_overtime_seconds()` (business logic) → [domain].rs
 
 ## Type Naming
 
-| Type | Suffix | Location | Purpose |
-|------|--------|----------|---------|
-| DTO | `*Dto` | types.rs | Returned to frontend |
-| Event | `*Event` | types.rs | Pushed to frontend |
-| State | `*State` | types.rs | Runtime state |
-| Params | `*Params` | under function (or types.rs if shared) | Received from frontend |
-| Row | `*Row` | repository.rs | Database row mapping |
-| Input | `*Input` | repository.rs | Internal repository input |
+| Type   | Suffix    | Location                               | Purpose                   |
+| ------ | --------- | -------------------------------------- | ------------------------- |
+| DTO    | `*Dto`    | types.rs                               | Returned to frontend      |
+| Event  | `*Event`  | types.rs                               | Pushed to frontend        |
+| State  | `*State`  | types.rs                               | Runtime state             |
+| Params | `*Params` | under function (or types.rs if shared) | Received from frontend    |
+| Row    | `*Row`    | repository.rs                          | Database row mapping      |
+| Input  | `*Input`  | repository.rs                          | Internal repository input |
 
 ## Dependencies
 
@@ -199,6 +203,7 @@ repository.rs ──imports──> types.rs (for shared types only)
 ```
 
 **Never:**
+
 - `types.rs` imports from `repository.rs`
 - `types.rs` imports from `commands.rs`
 - `repository.rs` imports from `commands.rs`
@@ -224,6 +229,7 @@ impl TryFrom<BarRow> for BarDto {
 **Prefer `impl From`** (idiomatic Rust) over `from_row()` methods.
 
 This keeps:
+
 - `types.rs` pure (no repo dependency)
 - `commands.rs` as the glue layer between types and repository
 

@@ -132,18 +132,20 @@ impl SearchableItem {
 
 // MARK: - DTO
 
+// TODO: Re-add #[serde(flatten)] once specta supports it
+// See: https://github.com/specta-rs/specta/issues/393
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum SearchResultDto {
     #[serde(rename = "app")]
     App {
-        #[serde(flatten)]
+        // #[serde(flatten)]
         app: App,
         score: u32,
     },
     #[serde(rename = "website")]
     Website {
-        #[serde(flatten)]
+        // #[serde(flatten)]
         website: Website,
         score: u32,
     },

@@ -71,9 +71,10 @@ It runs fully locally and works independently of the full Isshin system.
 
 **Concept:**
 
-You start a detox mission for a set number of days. You're not locked out of anything — but every deviation is tracked. Open YouTube during a detox? A popup appears: *"This is not part of your Detox. Watching will degrade your rank."* You can continue, but the cost is visible and immediate.
+You start a detox mission for a set number of days. You're not locked out of anything — but every deviation is tracked. Open YouTube during a detox? A popup appears: _"This is not part of your Detox. Watching will degrade your rank."_ You can continue, but the cost is visible and immediate.
 
 Two outcomes exist:
+
 - **Complete** — Finish the mission with a rank (Platinum → Bronze) based on adherence
 - **Cancel** — End the mission early and it's gone forever, no record
 
