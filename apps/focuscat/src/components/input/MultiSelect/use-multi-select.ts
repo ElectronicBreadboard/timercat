@@ -37,7 +37,7 @@ import { usePopupSideObserver } from './use-popup-side-observer';
  * );
  * ```
  */
-export function useMultiSelect<GItem extends TMultiSelectItem>(
+export function useMultiSelect<GItem extends { id: string }>(
 	options: TUseMultiSelectOptions<GItem>
 ) {
 	const {
@@ -58,7 +58,10 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 	// Stable IDs for ARIA
 	const id = React.useId();
 	const popupId = `multiselect-popup-${id}`;
-	const getItemId = React.useCallback((index: number) => `multiselect-item-${id}-${index}`, [id]);
+	const getAriaItemId = React.useCallback(
+		(index: number) => `multiselect-item-${id}-${index}`,
+		[id]
+	);
 
 	// State
 	const [isOpen, setIsOpen] = React.useState(false);
@@ -233,7 +236,7 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 		[showPopup, side, handleContainerClick]
 	);
 
-	const highlightedItemId = results.length > 0 ? getItemId(highlightedIndex) : undefined;
+	const highlightedItemId = results.length > 0 ? getAriaItemId(highlightedIndex) : undefined;
 
 	const getInputProps = React.useCallback(
 		() => ({
@@ -279,7 +282,7 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 		(index: number) => {
 			const item = results[index];
 			return {
-				'id': getItemId(index),
+				'id': getAriaItemId(index),
 				'role': 'option' as const,
 				'aria-selected': index === highlightedIndex,
 				'data-highlighted': index === highlightedIndex || undefined,
@@ -303,7 +306,7 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 				}
 			};
 		},
-		[highlightedIndex, getItemId, results, value]
+		[highlightedIndex, getAriaItemId, results, value]
 	);
 
 	// MARK: - Effects
@@ -359,12 +362,7 @@ export function useMultiSelect<GItem extends TMultiSelectItem>(
 	} as const;
 }
 
-/** Minimum shape for selectable items (extend with your own fields) */
-export interface TMultiSelectItem {
-	id: string;
-}
-
-export interface TUseMultiSelectOptions<GItem extends TMultiSelectItem> {
+export interface TUseMultiSelectOptions<GItem extends { id: string }> {
 	/** Currently selected items */
 	value: GItem[];
 	/** Called when selection changes */

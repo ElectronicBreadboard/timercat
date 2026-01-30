@@ -1,4 +1,4 @@
-use super::repository::{GetSessionsInput, SessionRepository};
+use super::repository::{GetSessionsInput, SessionRepository, SessionRow};
 use super::session::{Phase, Session, SessionEvent, SessionStatus};
 use super::types::{
     SessionDetailDto, SessionEventDataDto, SessionEventDto, SessionStatsDto, SessionSummaryDto,
@@ -6,8 +6,6 @@ use super::types::{
 use crate::environment::db::DatabaseState;
 use chrono::Utc;
 use tauri::State;
-
-// MARK: - Commands
 
 #[tauri::command]
 #[specta::specta]
@@ -39,19 +37,7 @@ pub async fn get_sessions(
 
     let sessions = rows
         .into_iter()
-        .filter_map(|row| {
-            let phase = Phase::from_str(&row.phase)?;
-            let status = SessionStatus::from_str(&row.status)?;
-            Some(SessionSummaryDto {
-                id: row.id as i32,
-                phase,
-                status,
-                planned_seconds: row.planned_seconds as u32,
-                actual_seconds: row.actual_seconds.map(|s| s as u32),
-                started_at: row.started_at as f64,
-                ended_at: row.ended_at.map(|t| t as f64),
-            })
-        })
+        .filter_map(|row| SessionSummaryDto::try_from(row).ok())
         .collect();
 
     return Ok(sessions);
@@ -98,24 +84,8 @@ pub async fn get_session(
     .ok_or("Invalid session data")?;
 
     // Map events to DTOs
-    let event_dtos: Vec<SessionEventDto> = session
-        .events
-        .iter()
-        .map(|e| {
-            let data = if let SessionEvent::Extended { seconds, .. } = e {
-                Some(SessionEventDataDto {
-                    seconds: Some(*seconds),
-                })
-            } else {
-                None
-            };
-            SessionEventDto {
-                event_type: e.event_type().to_string(),
-                timestamp: e.timestamp() as f64,
-                data,
-            }
-        })
-        .collect();
+    let event_dtos: Vec<SessionEventDto> =
+        session.events.iter().map(SessionEventDto::from).collect();
 
     return Ok(Some(SessionDetailDto {
         id: session.id as i32,
@@ -150,4 +120,43 @@ pub async fn get_last_work_session(
     };
 
     return get_session(db, id as i32).await;
+}
+
+// MARK: - Conversions
+
+impl TryFrom<SessionRow> for SessionSummaryDto {
+    type Error = ();
+
+    fn try_from(row: SessionRow) -> Result<Self, Self::Error> {
+        let phase = Phase::from_str(&row.phase).ok_or(())?;
+        let status = SessionStatus::from_str(&row.status).ok_or(())?;
+
+        return Ok(Self {
+            id: row.id as i32,
+            phase,
+            status,
+            planned_seconds: row.planned_seconds as u32,
+            actual_seconds: row.actual_seconds.map(|s| s as u32),
+            started_at: row.started_at as f64,
+            ended_at: row.ended_at.map(|t| t as f64),
+        });
+    }
+}
+
+impl From<&SessionEvent> for SessionEventDto {
+    fn from(event: &SessionEvent) -> Self {
+        let data = if let SessionEvent::Extended { seconds, .. } = event {
+            Some(SessionEventDataDto {
+                seconds: Some(*seconds),
+            })
+        } else {
+            None
+        };
+
+        return Self {
+            event_type: event.event_type().to_string(),
+            timestamp: event.timestamp() as f64,
+            data,
+        };
+    }
 }

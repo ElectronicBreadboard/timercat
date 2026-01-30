@@ -34,10 +34,11 @@ fn get_best_score(
     item: &SearchableItem,
 ) -> u32 {
     let mut best_score: u32 = 0;
-    let name_lower = item.name.to_lowercase();
+    let name = item.name();
+    let name_lower = name.to_lowercase();
 
     // Match against name (1.5x boost, +1.3x for prefix)
-    if let Some(score) = match_str(matcher, pattern, &item.name) {
+    if let Some(score) = match_str(matcher, pattern, name) {
         let mut name_score = (score as f32 * 1.5) as u32;
 
         // Prefix boost: "disc" -> "Discord" ranks higher than "Podcast"
@@ -49,7 +50,7 @@ fn get_best_score(
     }
 
     // Match against keywords (e.g., domains, bundle IDs)
-    for keyword in &item.keywords {
+    for keyword in item.keywords() {
         if let Some(score) = match_str(matcher, pattern, keyword) {
             best_score = best_score.max(score);
         }
@@ -71,72 +72,64 @@ fn match_str(matcher: &mut Matcher, pattern: &Pattern, haystack: &str) -> Option
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::features::app_search::types::ItemType;
 
-    fn make_item(name: &str, keywords: Vec<&str>) -> SearchableItem {
-        SearchableItem {
-            id: name.to_lowercase(),
-            name: name.to_string(),
-            item_type: ItemType::App,
-            keywords: keywords.into_iter().map(String::from).collect(),
-            icon: None,
-            color: None,
-        }
+    fn make_app(name: &str, bundle_id: &str) -> SearchableItem {
+        SearchableItem::app(bundle_id.to_string(), Some(name.to_string()))
     }
 
     #[test]
     fn test_exact_match() {
         let items = vec![
-            make_item("Chrome", vec!["com.google.Chrome"]),
-            make_item("Safari", vec!["com.apple.Safari"]),
+            make_app("Chrome", "com.google.Chrome"),
+            make_app("Safari", "com.apple.Safari"),
         ];
 
         let results = fuzzy_match(items.iter(), "chrome");
         assert!(!results.is_empty());
-        assert_eq!(results[0].0.name, "Chrome");
+        assert_eq!(results[0].0.name(), "Chrome");
     }
 
     #[test]
     fn test_partial_match() {
         let items = vec![
-            make_item("Chrome", vec!["com.google.Chrome"]),
-            make_item("Safari", vec!["com.apple.Safari"]),
+            make_app("Chrome", "com.google.Chrome"),
+            make_app("Safari", "com.apple.Safari"),
         ];
 
         // Partial match: "chr" should match "Chrome"
         let results = fuzzy_match(items.iter(), "chr");
         assert!(!results.is_empty());
-        assert_eq!(results[0].0.name, "Chrome");
+        assert_eq!(results[0].0.name(), "Chrome");
     }
 
     #[test]
     fn test_subsequence_match() {
         let items = vec![
-            make_item("Visual Studio Code", vec!["com.microsoft.VSCode"]),
-            make_item("Xcode", vec!["com.apple.dt.Xcode"]),
+            make_app("Visual Studio Code", "com.microsoft.VSCode"),
+            make_app("Xcode", "com.apple.dt.Xcode"),
         ];
 
         // Subsequence: "vsc" matches "Visual Studio Code"
         let results = fuzzy_match(items.iter(), "vsc");
         assert!(!results.is_empty());
-        assert_eq!(results[0].0.name, "Visual Studio Code");
+        assert_eq!(results[0].0.name(), "Visual Studio Code");
     }
 
     #[test]
     fn test_keyword_match() {
-        let items = vec![make_item("Safari", vec!["com.apple.Safari"])];
+        let items = vec![make_app("Safari", "com.apple.Safari")];
 
         // Match by bundle ID keyword
         let results = fuzzy_match(items.iter(), "apple.safari");
         assert!(!results.is_empty());
-        assert_eq!(results[0].0.name, "Safari");
+        assert_eq!(results[0].0.name(), "Safari");
     }
 
     #[test]
     fn test_no_match() {
         let items = vec![
-            make_item("Chrome", vec!["com.google.Chrome"]),
-            make_item("Safari", vec!["com.apple.Safari"]),
+            make_app("Chrome", "com.google.Chrome"),
+            make_app("Safari", "com.apple.Safari"),
         ];
 
         let results = fuzzy_match(items.iter(), "zzzzz");
@@ -146,27 +139,37 @@ mod tests {
     #[test]
     fn test_ranking() {
         let items = vec![
-            make_item("Chrome", vec!["com.google.Chrome"]),
-            make_item("Chrome Canary", vec!["com.google.Chrome.canary"]),
-            make_item("Chromium", vec!["org.chromium.Chromium"]),
+            make_app("Chrome", "com.google.Chrome"),
+            make_app("Chrome Canary", "com.google.Chrome.canary"),
+            make_app("Chromium", "org.chromium.Chromium"),
         ];
 
         let results = fuzzy_match(items.iter(), "chrome");
         assert!(results.len() >= 2);
         // Exact match should rank higher
-        assert_eq!(results[0].0.name, "Chrome");
+        assert_eq!(results[0].0.name(), "Chrome");
     }
 
     #[test]
     fn test_works_with_mutable_refs() {
-        let mut items = vec![make_item("Chrome", vec!["com.google.Chrome"])];
+        let mut items = vec![make_app("Chrome", "com.google.Chrome")];
 
         // Verify fuzzy_match works with mutable refs too
         let mut results = fuzzy_match(items.iter_mut(), "chrome");
         assert!(!results.is_empty());
 
         // Can mutate through the returned ref
-        results[0].0.icon = Some("test".to_string());
-        assert_eq!(items[0].icon, Some("test".to_string()));
+        match &mut results[0] {
+            (SearchableItem::App { app, .. }, _) => {
+                app.icon = Some("test".to_string());
+            }
+            _ => {}
+        }
+        match &items[0] {
+            SearchableItem::App { app, .. } => {
+                assert_eq!(app.icon, Some("test".to_string()));
+            }
+            _ => panic!("Expected App"),
+        }
     }
 }

@@ -40,5 +40,6 @@ const inputVariants = cva(
 );
 
 export interface TInputProps
-	extends Omit<React.ComponentProps<typeof BaseInput>, 'size'>,
+	extends
+		Omit<React.ComponentProps<typeof BaseInput>, 'size'>,
 		VariantProps<typeof inputVariants> {}

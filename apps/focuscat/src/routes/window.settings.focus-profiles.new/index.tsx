@@ -4,30 +4,30 @@ import { useForm } from 'feature-react/form';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { Button } from '@/components';
-import { TagForm, useTagsCx } from '@/features/tags';
+import { FocusProfileForm, useFocusProfileCx } from '@/features/focus-profile';
 
-export const Route = createFileRoute('/window/settings/tags/new/')({
+export const Route = createFileRoute('/window/settings/focus-profiles/new/')({
 	component: RouteComponent
 });
 
 function RouteComponent() {
 	const navigate = useNavigate();
-	const tagsCx = useTagsCx();
-	const { form, handleSubmit } = useForm(tagsCx.form);
-	const isSubmitting = useFeatureState(tagsCx.form.isSubmitting);
+	const profileCx = useFocusProfileCx();
+	const { form, handleSubmit } = useForm(profileCx.form);
+	const isSubmitting = useFeatureState(profileCx.form.isSubmitting);
 	const isDirty = hasFormChanged(form);
 
 	// MARK: - Actions
 
 	const handleCancel = React.useCallback(() => {
-		navigate({ to: '/window/settings/tags' });
+		navigate({ to: '/window/settings/focus-profiles' });
 	}, [navigate]);
 
 	const onSubmit = handleSubmit({
 		onValidSubmit: async () => {
-			const success = await tagsCx.save();
+			const success = await profileCx.save();
 			if (success) {
-				navigate({ to: '/window/settings/tags' });
+				navigate({ to: '/window/settings/focus-profiles' });
 			}
 		}
 	});
@@ -35,8 +35,8 @@ function RouteComponent() {
 	// MARK: - Effects
 
 	React.useEffect(() => {
-		tagsCx.startCreate();
-	}, [tagsCx]);
+		profileCx.startCreate();
+	}, [profileCx]);
 
 	// MARK: - UI
 
@@ -44,8 +44,8 @@ function RouteComponent() {
 		<form onSubmit={onSubmit} className="-m-6 flex h-[calc(100%+48px)] flex-col">
 			<div className="flex-1 overflow-y-auto p-6">
 				<div className="space-y-6">
-					<h1 className="text-base-900 text-xl font-semibold">New Tag</h1>
-					<TagForm />
+					<h1 className="text-base-900 text-xl font-semibold">New Profile</h1>
+					<FocusProfileForm />
 				</div>
 			</div>
 

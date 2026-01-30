@@ -1,5 +1,6 @@
 pub mod commands;
 mod matcher;
+pub mod repository;
 mod search;
 pub mod types;
 

@@ -1,25 +1,23 @@
-/// Tracks currently active app (in-memory, pending write to DB on change).
-pub struct ActiveApp {
-    pub app_id: i64,
-    pub bundle_id: Option<String>,
-    pub started_at: i64,
-}
+use serde::Serialize;
 
-/// Tracks currently active window (in-memory, pending write to DB on change).
-pub struct ActiveWindow {
-    pub app_id: i64,
-    pub website_id: Option<i64>,
-    pub bundle_id: Option<String>,
+// MARK: - DTO
+
+#[derive(Debug, Clone, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct WindowActivityDto {
+    // App fields
+    pub app_bundle_id: Option<String>,
+    pub app_name: Option<String>,
+    pub app_icon: Option<String>,
+    pub app_color: Option<String>,
+    // Website fields (NULL for non-browser)
+    pub website_domain: Option<String>,
+    pub website_name: Option<String>,
+    pub website_icon: Option<String>,
+    pub website_color: Option<String>,
     // Window fields
     pub window_title: Option<String>,
-    pub window_id: Option<u32>,
-    pub window_x: Option<f64>,
-    pub window_y: Option<f64>,
-    pub window_width: Option<f64>,
-    pub window_height: Option<f64>,
-    // Browser fields
     pub browser_url: Option<String>,
-    pub browser_is_private: Option<bool>,
-    // Timestamps
-    pub started_at: i64,
+    pub started_at: f64,
+    pub ended_at: f64,
 }

@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { ThemeProvider, WindowHeader } from '@/components';
+import { FocusProfileCxProvider } from '@/features/focus-profile';
 import { SettingsCxProvider } from '@/features/settings';
-import { TagsCxProvider } from '@/features/tags';
 import { TimerCxProvider } from '@/features/timer';
 import { Sidebar } from './components';
 
@@ -13,7 +13,7 @@ function LayoutComponent() {
 	return (
 		<SettingsCxProvider>
 			<TimerCxProvider>
-				<TagsCxProvider>
+				<FocusProfileCxProvider>
 					<ThemeProvider>
 						<div className="bg-base-0 flex h-screen flex-col">
 							<WindowHeader title="Settings" />
@@ -29,7 +29,7 @@ function LayoutComponent() {
 							</div>
 						</div>
 					</ThemeProvider>
-				</TagsCxProvider>
+				</FocusProfileCxProvider>
 			</TimerCxProvider>
 		</SettingsCxProvider>
 	);

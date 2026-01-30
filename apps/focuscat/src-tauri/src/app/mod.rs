@@ -4,12 +4,14 @@ pub mod window;
 
 use crate::environment::db;
 use crate::features::{
-    activity_window, app_search, audio,
+    activity_window,
+    app as app_feature,
+    audio,
+    focus_profile,
     input::{self, types::InputDetectedEvent},
     permission,
     session::{self, types::SessionCompletedEvent},
     settings::{self, types::AppSettingsChangedEvent},
-    tag,
     timer::{self, types::TimerUpdatedEvent},
 };
 use specta_typescript::Typescript;
@@ -58,29 +60,16 @@ pub fn run() {
             permission::commands::is_input_monitoring_granted,
             permission::commands::open_input_monitoring_settings,
             // App search commands
-            app_search::commands::search,
-            app_search::commands::refresh_search_cache,
+            app_feature::commands::search,
+            app_feature::commands::refresh_search_cache,
             // Audio commands
             audio::commands::play_sound,
-            // Tag commands
-            tag::commands::get_tags,
-            tag::commands::get_tag,
-            tag::commands::create_tag,
-            tag::commands::update_tag,
-            tag::commands::delete_tag,
-            // Restriction commands
-            tag::commands::get_tag_restrictions,
-            tag::commands::add_app_restriction,
-            tag::commands::add_website_restriction,
-            tag::commands::remove_restriction,
-            // Schedule commands
-            tag::commands::get_schedules,
-            tag::commands::create_schedule,
-            tag::commands::update_schedule,
-            tag::commands::delete_schedule,
-            tag::commands::add_schedule_tag,
-            tag::commands::remove_schedule_tag,
-            tag::commands::get_schedule_tags,
+            // Focus profile commands
+            focus_profile::commands::get_focus_profiles,
+            focus_profile::commands::get_focus_profile,
+            focus_profile::commands::create_focus_profile,
+            focus_profile::commands::update_focus_profile,
+            focus_profile::commands::delete_focus_profile,
         ])
         .events(collect_events![
             // Settings events
@@ -117,7 +106,7 @@ pub fn run() {
             timer::setup(app);
             input::setup(app);
             activity_window::setup(app);
-            app_search::setup(app);
+            app_feature::setup(app);
             #[cfg(target_os = "macos")]
             tray::setup(app);
 

@@ -1,9 +1,7 @@
-use super::repository::WindowActivityRepository;
-use crate::{
-    environment::db::DatabaseState, features::activity_window::repository::GetWindowActivitiesInput,
-};
-use serde::{Deserialize, Serialize};
-use specta::Type;
+use super::repository::{GetWindowActivitiesInput, WindowActivityRepository, WindowActivityRow};
+use super::types::WindowActivityDto;
+use crate::environment::db::DatabaseState;
+use serde::Deserialize;
 use tauri::State;
 
 /// Get window activities within a time range.
@@ -24,9 +22,22 @@ pub async fn get_window_activities(
     .await
     .map_err(|e| e.to_string())?;
 
-    let activities = rows
-        .into_iter()
-        .map(|row| WindowActivityDto {
+    return Ok(rows.into_iter().map(WindowActivityDto::from).collect());
+}
+
+#[derive(Debug, Clone, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct GetWindowActivitiesParams {
+    pub started_after: f64,
+    pub started_before: f64,
+    pub limit: Option<i32>,
+}
+
+// MARK: - Conversions
+
+impl From<WindowActivityRow> for WindowActivityDto {
+    fn from(row: WindowActivityRow) -> Self {
+        return Self {
             app_bundle_id: row.app_bundle_id,
             app_name: row.app_name,
             app_icon: row.app_icon,
@@ -39,36 +50,6 @@ pub async fn get_window_activities(
             browser_url: row.browser_url,
             started_at: row.started_at as f64,
             ended_at: row.ended_at as f64,
-        })
-        .collect();
-
-    return Ok(activities);
-}
-
-#[derive(Debug, Clone, Serialize, Type)]
-#[serde(rename_all = "camelCase")]
-pub struct WindowActivityDto {
-    // App fields
-    pub app_bundle_id: Option<String>,
-    pub app_name: Option<String>,
-    pub app_icon: Option<String>,
-    pub app_color: Option<String>,
-    // Website fields (NULL for non-browser)
-    pub website_domain: Option<String>,
-    pub website_name: Option<String>,
-    pub website_icon: Option<String>,
-    pub website_color: Option<String>,
-    // Window fields
-    pub window_title: Option<String>,
-    pub browser_url: Option<String>,
-    pub started_at: f64,
-    pub ended_at: f64,
-}
-
-#[derive(Debug, Clone, Deserialize, Type)]
-#[serde(rename_all = "camelCase")]
-pub struct GetWindowActivitiesParams {
-    pub started_after: f64,
-    pub started_before: f64,
-    pub limit: Option<i32>,
+        };
+    }
 }

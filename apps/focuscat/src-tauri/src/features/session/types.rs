@@ -1,6 +1,8 @@
 use super::session::{Phase, SessionStatus};
 use serde::{Deserialize, Serialize};
 
+// MARK: - DTO
+
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionSummaryDto {
@@ -51,7 +53,7 @@ pub struct SessionStatsDto {
     pub overtime_seconds: u32,
 }
 
-// MARK: - Events
+// MARK: - Event
 
 /// Event emitted when a session is completed.
 #[derive(Debug, Clone, Serialize, specta::Type, tauri_specta::Event)]

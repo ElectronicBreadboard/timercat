@@ -4,38 +4,38 @@ import { useForm } from 'feature-react/form';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { Button, IconButton, TrashIcon } from '@/components';
-import { TagForm, useTagsCx } from '@/features/tags';
+import { FocusProfileForm, useFocusProfileCx } from '@/features/focus-profile';
 
-export const Route = createFileRoute('/window/settings/tags/$tagId/')({
+export const Route = createFileRoute('/window/settings/focus-profiles/$profileId/')({
 	component: RouteComponent
 });
 
 function RouteComponent() {
-	const { tagId } = Route.useParams();
+	const { profileId } = Route.useParams();
 	const navigate = useNavigate();
-	const tagsCx = useTagsCx();
-	const { form, handleSubmit } = useForm(tagsCx.form);
-	const isSubmitting = useFeatureState(tagsCx.form.isSubmitting);
+	const profileCx = useFocusProfileCx();
+	const { form, handleSubmit } = useForm(profileCx.form);
+	const isSubmitting = useFeatureState(profileCx.form.isSubmitting);
 	const isDirty = hasFormChanged(form);
 
 	// MARK: - Actions
 
 	const handleCancel = React.useCallback(() => {
-		navigate({ to: '/window/settings/tags' });
+		navigate({ to: '/window/settings/focus-profiles' });
 	}, [navigate]);
 
 	const handleDelete = React.useCallback(async () => {
-		const success = await tagsCx.delete(Number(tagId));
+		const success = await profileCx.delete(Number(profileId));
 		if (success) {
-			navigate({ to: '/window/settings/tags' });
+			navigate({ to: '/window/settings/focus-profiles' });
 		}
-	}, [tagsCx, tagId, navigate]);
+	}, [profileCx, profileId, navigate]);
 
 	const onSubmit = handleSubmit({
 		onValidSubmit: async () => {
-			const success = await tagsCx.save();
+			const success = await profileCx.save();
 			if (success) {
-				navigate({ to: '/window/settings/tags' });
+				navigate({ to: '/window/settings/focus-profiles' });
 			}
 		}
 	});
@@ -43,8 +43,8 @@ function RouteComponent() {
 	// MARK: - Effects
 
 	React.useEffect(() => {
-		tagsCx.startEdit(Number(tagId));
-	}, [tagsCx, tagId]);
+		profileCx.startEdit(Number(profileId));
+	}, [profileCx, profileId]);
 
 	// MARK: - UI
 
@@ -53,19 +53,19 @@ function RouteComponent() {
 			<div className="flex-1 overflow-y-auto p-6">
 				<div className="space-y-6">
 					<div className="flex items-center justify-between">
-						<h1 className="text-base-900 text-xl font-semibold">Edit Tag</h1>
+						<h1 className="text-base-900 text-xl font-semibold">Edit Profile</h1>
 						<IconButton
 							type="button"
 							variant="default"
 							size="sm"
 							onClick={handleDelete}
-							className="hover:bg-error/10 hover:text-error"
-							title="Delete tag"
+							className="hover:border-error/30 hover:bg-error/10 hover:text-error"
+							title="Delete profile"
 						>
 							<TrashIcon size={16} />
 						</IconButton>
 					</div>
-					<TagForm />
+					<FocusProfileForm />
 				</div>
 			</div>
 

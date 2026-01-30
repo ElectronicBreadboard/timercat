@@ -26,7 +26,11 @@ export const Sidebar: React.FC = () => {
 					<SidebarItem to="/window/settings/app" icon={<AppWindowIcon size={16} />} label="App" />
 					<SidebarItem to="/window/settings/timer" icon={<TimerIcon size={16} />} label="Timer" />
 					<SidebarItem to="/window/settings/goals" icon={<TargetIcon size={16} />} label="Goals" />
-					<SidebarItem to="/window/settings/tags" icon={<TagIcon size={16} />} label="Tags" />
+					<SidebarItem
+						to="/window/settings/focus-profiles"
+						icon={<TagIcon size={16} />}
+						label="Profiles"
+					/>
 					<SidebarItem
 						to="/window/settings/activity"
 						icon={<ActivityIcon size={16} />}

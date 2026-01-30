@@ -15,12 +15,13 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 		placeholder = 'Add apps or websites...',
 		includeApps = true,
 		includeWebsites = true,
+		popupSide = 'bottom',
 		className
 	} = props;
 
 	const handleSearch = React.useCallback(
 		async (query: string): Promise<TSelectedItem[]> => {
-			const [ok, , data] = toTuple(
+			const [areSearchResultsOk, , searchResults] = toTuple(
 				await specta.commands.search({
 					query,
 					includeApps,
@@ -30,13 +31,29 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 				})
 			);
 
-			if (ok && data != null) {
-				return data.map((r) => ({
-					id: r.id,
-					name: r.name,
-					itemType: r.itemType,
-					icon: r.icon
-				}));
+			if (areSearchResultsOk) {
+				return searchResults.map((result): TSelectedItem => {
+					switch (result.type) {
+						case 'app':
+							return {
+								id: result.app.id,
+								type: 'app',
+								bundleId: result.app.bundleId,
+								name: result.app.name,
+								icon: result.app.icon,
+								color: result.app.color
+							};
+						case 'website':
+							return {
+								id: result.website.id,
+								type: 'website',
+								domain: result.website.domain,
+								name: result.website.name,
+								icon: result.website.icon,
+								color: result.website.color
+							};
+					}
+				});
 			}
 			return [];
 		},
@@ -71,7 +88,7 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 			</MultiSelect.Container>
 
 			<MultiSelect.Portal>
-				<MultiSelect.Positioner>
+				<MultiSelect.Positioner side={popupSide}>
 					<MultiSelect.Popup {...multiSelect.getPopupProps()}>
 						<MultiSelect.HelperText>
 							{multiSelect.isSearching
@@ -106,31 +123,52 @@ export interface TAppWebsiteSelectProps {
 	placeholder?: string;
 	includeApps?: boolean;
 	includeWebsites?: boolean;
+	popupSide?: 'top' | 'bottom';
 	className?: string;
 }
 
-export interface TSelectedItem {
+export type TSelectedApp = {
 	id: string;
-	name: string;
-	itemType: specta.ItemType;
+	type: 'app';
+	bundleId: string;
+	name?: string | null;
 	icon?: string | null;
-}
+	color?: string | null;
+};
+
+export type TSelectedWebsite = {
+	id: string;
+	type: 'website';
+	domain: string;
+	name?: string | null;
+	icon?: string | null;
+	color?: string | null;
+};
+
+export type TSelectedItem = TSelectedApp | TSelectedWebsite;
 
 const Chip: React.FC<TChipProps> = (props) => {
 	const { item, onRemove } = props;
-	const isApp = item.itemType === 'app';
-	const displayName = isApp ? item.name : item.id;
+
+	const displayName = React.useMemo(() => {
+		switch (item.type) {
+			case 'app':
+				return item.name ?? item.bundleId;
+			case 'website':
+				return item.name ?? item.domain;
+		}
+	}, [item]);
 
 	return (
 		<span
 			className={cn(
 				'inline-flex items-center gap-1.5 rounded-md py-0.5 pr-1 pl-1.5 text-sm',
-				isApp
+				item.type === 'app'
 					? 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
 					: 'bg-violet-500/20 text-violet-700 dark:text-violet-300'
 			)}
 		>
-			<ItemIcon icon={item.icon} itemType={item.itemType} size={16} />
+			<ItemIcon item={item} size={16} />
 			<span className="max-w-32 truncate">{displayName}</span>
 			<button
 				type="button"
@@ -154,21 +192,28 @@ interface TChipProps {
 
 const ResultItem: React.FC<TResultItemProps> = (props) => {
 	const { result, selected, onToggle, 'data-highlighted': highlighted, onPointerMove } = props;
-	const isApp = result.itemType === 'app';
-	const displayName = isApp ? result.name : result.id;
+
+	const displayName = React.useMemo(() => {
+		switch (result.type) {
+			case 'app':
+				return result.name ?? result.bundleId;
+			case 'website':
+				return result.name ?? result.domain;
+		}
+	}, [result]);
 
 	return (
 		<div
 			className={cn(
 				'flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-(--color-base-900)',
-				highlighted && (isApp ? 'bg-blue-500/10' : 'bg-violet-500/10')
+				highlighted && (result.type === 'app' ? 'bg-blue-500/10' : 'bg-violet-500/10')
 			)}
 			onClick={onToggle}
 			onMouseDown={(e) => e.preventDefault()}
 			onPointerMove={onPointerMove}
 			data-highlighted={highlighted}
 		>
-			<ItemIcon icon={result.icon} itemType={result.itemType} />
+			<ItemIcon item={result} />
 			<span className="flex-1 truncate">{displayName}</span>
 			<span className="flex items-center gap-1">
 				{selected && (
@@ -179,12 +224,12 @@ const ResultItem: React.FC<TResultItemProps> = (props) => {
 				<span
 					className={cn(
 						'rounded px-1.5 py-0.5 text-xs',
-						isApp
+						result.type === 'app'
 							? 'bg-blue-500/20 text-blue-600 dark:text-blue-400'
 							: 'bg-violet-500/20 text-violet-600 dark:text-violet-400'
 					)}
 				>
-					{result.itemType}
+					{result.type}
 				</span>
 			</span>
 		</div>
@@ -200,12 +245,12 @@ interface TResultItemProps {
 }
 
 const ItemIcon: React.FC<TItemIconProps> = (props) => {
-	const { icon, itemType, size = 20 } = props;
+	const { item, size = 20 } = props;
 
-	if (icon != null) {
+	if (item.icon != null) {
 		return (
 			<img
-				src={icon}
+				src={item.icon}
 				alt=""
 				width={size}
 				height={size}
@@ -214,23 +259,20 @@ const ItemIcon: React.FC<TItemIconProps> = (props) => {
 		);
 	}
 
-	const isApp = itemType === 'app';
-
 	return (
 		<div
 			className={cn(
 				'flex shrink-0 items-center justify-center rounded-sm',
-				isApp ? 'bg-blue-200 text-blue-600' : 'bg-violet-200 text-violet-600'
+				item.type === 'app' ? 'bg-blue-200 text-blue-600' : 'bg-violet-200 text-violet-600'
 			)}
 			style={{ width: size, height: size }}
 		>
-			<span className="text-[10px] font-medium">{isApp ? 'A' : 'W'}</span>
+			<span className="text-[10px] font-medium">{item.type === 'app' ? 'A' : 'W'}</span>
 		</div>
 	);
 };
 
 interface TItemIconProps {
-	icon?: string | null;
-	itemType: specta.ItemType;
+	item: TSelectedItem;
 	size?: number;
 }

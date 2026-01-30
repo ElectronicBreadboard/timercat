@@ -18,15 +18,15 @@ import { Route as WindowMainIndexRouteImport } from './routes/window.main/index'
 import { Route as WindowHistoryIndexRouteImport } from './routes/window.history/index'
 import { Route as WindowCatIndexRouteImport } from './routes/window.cat/index'
 import { Route as WindowSettingsTimerIndexRouteImport } from './routes/window.settings.timer/index'
-import { Route as WindowSettingsTagsIndexRouteImport } from './routes/window.settings.tags/index'
 import { Route as WindowSettingsGoalsIndexRouteImport } from './routes/window.settings.goals/index'
+import { Route as WindowSettingsFocusProfilesIndexRouteImport } from './routes/window.settings.focus-profiles/index'
 import { Route as WindowSettingsDeveloperIndexRouteImport } from './routes/window.settings.developer/index'
 import { Route as WindowSettingsAppIndexRouteImport } from './routes/window.settings.app/index'
 import { Route as WindowSettingsActivityIndexRouteImport } from './routes/window.settings.activity/index'
 import { Route as WindowMainSplashIndexRouteImport } from './routes/window.main.splash/index'
 import { Route as WindowHistorySessionIdIndexRouteImport } from './routes/window.history.$sessionId/index'
-import { Route as WindowSettingsTagsNewIndexRouteImport } from './routes/window.settings.tags.new/index'
-import { Route as WindowSettingsTagsTagIdIndexRouteImport } from './routes/window.settings.tags.$tagId/index'
+import { Route as WindowSettingsFocusProfilesNewIndexRouteImport } from './routes/window.settings.focus-profiles.new/index'
+import { Route as WindowSettingsFocusProfilesProfileIdIndexRouteImport } from './routes/window.settings.focus-profiles.$profileId/index'
 
 const WindowSettingsRouteRoute = WindowSettingsRouteRouteImport.update({
   id: '/window/settings',
@@ -74,15 +74,16 @@ const WindowSettingsTimerIndexRoute =
     path: '/timer/',
     getParentRoute: () => WindowSettingsRouteRoute,
   } as any)
-const WindowSettingsTagsIndexRoute = WindowSettingsTagsIndexRouteImport.update({
-  id: '/tags/',
-  path: '/tags/',
-  getParentRoute: () => WindowSettingsRouteRoute,
-} as any)
 const WindowSettingsGoalsIndexRoute =
   WindowSettingsGoalsIndexRouteImport.update({
     id: '/goals/',
     path: '/goals/',
+    getParentRoute: () => WindowSettingsRouteRoute,
+  } as any)
+const WindowSettingsFocusProfilesIndexRoute =
+  WindowSettingsFocusProfilesIndexRouteImport.update({
+    id: '/focus-profiles/',
+    path: '/focus-profiles/',
     getParentRoute: () => WindowSettingsRouteRoute,
   } as any)
 const WindowSettingsDeveloperIndexRoute =
@@ -113,16 +114,16 @@ const WindowHistorySessionIdIndexRoute =
     path: '/$sessionId/',
     getParentRoute: () => WindowHistoryRouteRoute,
   } as any)
-const WindowSettingsTagsNewIndexRoute =
-  WindowSettingsTagsNewIndexRouteImport.update({
-    id: '/tags/new/',
-    path: '/tags/new/',
+const WindowSettingsFocusProfilesNewIndexRoute =
+  WindowSettingsFocusProfilesNewIndexRouteImport.update({
+    id: '/focus-profiles/new/',
+    path: '/focus-profiles/new/',
     getParentRoute: () => WindowSettingsRouteRoute,
   } as any)
-const WindowSettingsTagsTagIdIndexRoute =
-  WindowSettingsTagsTagIdIndexRouteImport.update({
-    id: '/tags/$tagId/',
-    path: '/tags/$tagId/',
+const WindowSettingsFocusProfilesProfileIdIndexRoute =
+  WindowSettingsFocusProfilesProfileIdIndexRouteImport.update({
+    id: '/focus-profiles/$profileId/',
+    path: '/focus-profiles/$profileId/',
     getParentRoute: () => WindowSettingsRouteRoute,
   } as any)
 
@@ -140,11 +141,11 @@ export interface FileRoutesByFullPath {
   '/window/settings/activity/': typeof WindowSettingsActivityIndexRoute
   '/window/settings/app/': typeof WindowSettingsAppIndexRoute
   '/window/settings/developer/': typeof WindowSettingsDeveloperIndexRoute
+  '/window/settings/focus-profiles/': typeof WindowSettingsFocusProfilesIndexRoute
   '/window/settings/goals/': typeof WindowSettingsGoalsIndexRoute
-  '/window/settings/tags/': typeof WindowSettingsTagsIndexRoute
   '/window/settings/timer/': typeof WindowSettingsTimerIndexRoute
-  '/window/settings/tags/$tagId/': typeof WindowSettingsTagsTagIdIndexRoute
-  '/window/settings/tags/new/': typeof WindowSettingsTagsNewIndexRoute
+  '/window/settings/focus-profiles/$profileId/': typeof WindowSettingsFocusProfilesProfileIdIndexRoute
+  '/window/settings/focus-profiles/new/': typeof WindowSettingsFocusProfilesNewIndexRoute
 }
 export interface FileRoutesByTo {
   '/window/cat': typeof WindowCatIndexRoute
@@ -156,11 +157,11 @@ export interface FileRoutesByTo {
   '/window/settings/activity': typeof WindowSettingsActivityIndexRoute
   '/window/settings/app': typeof WindowSettingsAppIndexRoute
   '/window/settings/developer': typeof WindowSettingsDeveloperIndexRoute
+  '/window/settings/focus-profiles': typeof WindowSettingsFocusProfilesIndexRoute
   '/window/settings/goals': typeof WindowSettingsGoalsIndexRoute
-  '/window/settings/tags': typeof WindowSettingsTagsIndexRoute
   '/window/settings/timer': typeof WindowSettingsTimerIndexRoute
-  '/window/settings/tags/$tagId': typeof WindowSettingsTagsTagIdIndexRoute
-  '/window/settings/tags/new': typeof WindowSettingsTagsNewIndexRoute
+  '/window/settings/focus-profiles/$profileId': typeof WindowSettingsFocusProfilesProfileIdIndexRoute
+  '/window/settings/focus-profiles/new': typeof WindowSettingsFocusProfilesNewIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -177,11 +178,11 @@ export interface FileRoutesById {
   '/window/settings/activity/': typeof WindowSettingsActivityIndexRoute
   '/window/settings/app/': typeof WindowSettingsAppIndexRoute
   '/window/settings/developer/': typeof WindowSettingsDeveloperIndexRoute
+  '/window/settings/focus-profiles/': typeof WindowSettingsFocusProfilesIndexRoute
   '/window/settings/goals/': typeof WindowSettingsGoalsIndexRoute
-  '/window/settings/tags/': typeof WindowSettingsTagsIndexRoute
   '/window/settings/timer/': typeof WindowSettingsTimerIndexRoute
-  '/window/settings/tags/$tagId/': typeof WindowSettingsTagsTagIdIndexRoute
-  '/window/settings/tags/new/': typeof WindowSettingsTagsNewIndexRoute
+  '/window/settings/focus-profiles/$profileId/': typeof WindowSettingsFocusProfilesProfileIdIndexRoute
+  '/window/settings/focus-profiles/new/': typeof WindowSettingsFocusProfilesNewIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -199,11 +200,11 @@ export interface FileRouteTypes {
     | '/window/settings/activity/'
     | '/window/settings/app/'
     | '/window/settings/developer/'
+    | '/window/settings/focus-profiles/'
     | '/window/settings/goals/'
-    | '/window/settings/tags/'
     | '/window/settings/timer/'
-    | '/window/settings/tags/$tagId/'
-    | '/window/settings/tags/new/'
+    | '/window/settings/focus-profiles/$profileId/'
+    | '/window/settings/focus-profiles/new/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/window/cat'
@@ -215,11 +216,11 @@ export interface FileRouteTypes {
     | '/window/settings/activity'
     | '/window/settings/app'
     | '/window/settings/developer'
+    | '/window/settings/focus-profiles'
     | '/window/settings/goals'
-    | '/window/settings/tags'
     | '/window/settings/timer'
-    | '/window/settings/tags/$tagId'
-    | '/window/settings/tags/new'
+    | '/window/settings/focus-profiles/$profileId'
+    | '/window/settings/focus-profiles/new'
   id:
     | '__root__'
     | '/window/cat'
@@ -235,11 +236,11 @@ export interface FileRouteTypes {
     | '/window/settings/activity/'
     | '/window/settings/app/'
     | '/window/settings/developer/'
+    | '/window/settings/focus-profiles/'
     | '/window/settings/goals/'
-    | '/window/settings/tags/'
     | '/window/settings/timer/'
-    | '/window/settings/tags/$tagId/'
-    | '/window/settings/tags/new/'
+    | '/window/settings/focus-profiles/$profileId/'
+    | '/window/settings/focus-profiles/new/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -314,18 +315,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WindowSettingsTimerIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
-    '/window/settings/tags/': {
-      id: '/window/settings/tags/'
-      path: '/tags'
-      fullPath: '/window/settings/tags/'
-      preLoaderRoute: typeof WindowSettingsTagsIndexRouteImport
-      parentRoute: typeof WindowSettingsRouteRoute
-    }
     '/window/settings/goals/': {
       id: '/window/settings/goals/'
       path: '/goals'
       fullPath: '/window/settings/goals/'
       preLoaderRoute: typeof WindowSettingsGoalsIndexRouteImport
+      parentRoute: typeof WindowSettingsRouteRoute
+    }
+    '/window/settings/focus-profiles/': {
+      id: '/window/settings/focus-profiles/'
+      path: '/focus-profiles'
+      fullPath: '/window/settings/focus-profiles/'
+      preLoaderRoute: typeof WindowSettingsFocusProfilesIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
     '/window/settings/developer/': {
@@ -363,18 +364,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WindowHistorySessionIdIndexRouteImport
       parentRoute: typeof WindowHistoryRouteRoute
     }
-    '/window/settings/tags/new/': {
-      id: '/window/settings/tags/new/'
-      path: '/tags/new'
-      fullPath: '/window/settings/tags/new/'
-      preLoaderRoute: typeof WindowSettingsTagsNewIndexRouteImport
+    '/window/settings/focus-profiles/new/': {
+      id: '/window/settings/focus-profiles/new/'
+      path: '/focus-profiles/new'
+      fullPath: '/window/settings/focus-profiles/new/'
+      preLoaderRoute: typeof WindowSettingsFocusProfilesNewIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
-    '/window/settings/tags/$tagId/': {
-      id: '/window/settings/tags/$tagId/'
-      path: '/tags/$tagId'
-      fullPath: '/window/settings/tags/$tagId/'
-      preLoaderRoute: typeof WindowSettingsTagsTagIdIndexRouteImport
+    '/window/settings/focus-profiles/$profileId/': {
+      id: '/window/settings/focus-profiles/$profileId/'
+      path: '/focus-profiles/$profileId'
+      fullPath: '/window/settings/focus-profiles/$profileId/'
+      preLoaderRoute: typeof WindowSettingsFocusProfilesProfileIdIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
   }
@@ -424,11 +425,11 @@ interface WindowSettingsRouteRouteChildren {
   WindowSettingsActivityIndexRoute: typeof WindowSettingsActivityIndexRoute
   WindowSettingsAppIndexRoute: typeof WindowSettingsAppIndexRoute
   WindowSettingsDeveloperIndexRoute: typeof WindowSettingsDeveloperIndexRoute
+  WindowSettingsFocusProfilesIndexRoute: typeof WindowSettingsFocusProfilesIndexRoute
   WindowSettingsGoalsIndexRoute: typeof WindowSettingsGoalsIndexRoute
-  WindowSettingsTagsIndexRoute: typeof WindowSettingsTagsIndexRoute
   WindowSettingsTimerIndexRoute: typeof WindowSettingsTimerIndexRoute
-  WindowSettingsTagsTagIdIndexRoute: typeof WindowSettingsTagsTagIdIndexRoute
-  WindowSettingsTagsNewIndexRoute: typeof WindowSettingsTagsNewIndexRoute
+  WindowSettingsFocusProfilesProfileIdIndexRoute: typeof WindowSettingsFocusProfilesProfileIdIndexRoute
+  WindowSettingsFocusProfilesNewIndexRoute: typeof WindowSettingsFocusProfilesNewIndexRoute
 }
 
 const WindowSettingsRouteRouteChildren: WindowSettingsRouteRouteChildren = {
@@ -436,11 +437,13 @@ const WindowSettingsRouteRouteChildren: WindowSettingsRouteRouteChildren = {
   WindowSettingsActivityIndexRoute: WindowSettingsActivityIndexRoute,
   WindowSettingsAppIndexRoute: WindowSettingsAppIndexRoute,
   WindowSettingsDeveloperIndexRoute: WindowSettingsDeveloperIndexRoute,
+  WindowSettingsFocusProfilesIndexRoute: WindowSettingsFocusProfilesIndexRoute,
   WindowSettingsGoalsIndexRoute: WindowSettingsGoalsIndexRoute,
-  WindowSettingsTagsIndexRoute: WindowSettingsTagsIndexRoute,
   WindowSettingsTimerIndexRoute: WindowSettingsTimerIndexRoute,
-  WindowSettingsTagsTagIdIndexRoute: WindowSettingsTagsTagIdIndexRoute,
-  WindowSettingsTagsNewIndexRoute: WindowSettingsTagsNewIndexRoute,
+  WindowSettingsFocusProfilesProfileIdIndexRoute:
+    WindowSettingsFocusProfilesProfileIdIndexRoute,
+  WindowSettingsFocusProfilesNewIndexRoute:
+    WindowSettingsFocusProfilesNewIndexRoute,
 }
 
 const WindowSettingsRouteRouteWithChildren =

@@ -241,9 +241,9 @@ async openInputMonitoringSettings() : Promise<void> {
 /**
  * Search for apps and websites.
  */
-async search(input: SearchInput) : Promise<Result<SearchResultDto[], string>> {
+async search(params: SearchParams) : Promise<Result<SearchResultDto[], string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("search", { input }) };
+    return { status: "ok", data: await TAURI_INVOKE("search", { params }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -271,135 +271,41 @@ async playSound(id: SoundId) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async getTags() : Promise<Result<TagDto[], string>> {
+async getFocusProfiles() : Promise<Result<FocusProfileDto[], string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_tags") };
+    return { status: "ok", data: await TAURI_INVOKE("get_focus_profiles") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-async getTag(id: number) : Promise<Result<TagDto | null, string>> {
+async getFocusProfile(id: number) : Promise<Result<FocusProfileDto | null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_tag", { id }) };
+    return { status: "ok", data: await TAURI_INVOKE("get_focus_profile", { id }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-async createTag(name: string, color: string | null) : Promise<Result<TagDto, string>> {
+async createFocusProfile(name: string, color: string | null, rules: FocusProfileRuleParams[]) : Promise<Result<FocusProfileDto, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("create_tag", { name, color }) };
+    return { status: "ok", data: await TAURI_INVOKE("create_focus_profile", { name, color, rules }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-async updateTag(id: number, name: string, color: string | null) : Promise<Result<null, string>> {
+async updateFocusProfile(id: number, name: string, color: string | null, rules: FocusProfileRuleParams[]) : Promise<Result<FocusProfileDto, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("update_tag", { id, name, color }) };
+    return { status: "ok", data: await TAURI_INVOKE("update_focus_profile", { id, name, color, rules }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-async deleteTag(id: number) : Promise<Result<null, string>> {
+async deleteFocusProfile(id: number) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("delete_tag", { id }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getTagRestrictions(tagId: number) : Promise<Result<RestrictionDto[], string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("get_tag_restrictions", { tagId }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
- * Upserts the app (created if new, found by bundle_id if exists).
- */
-async addAppRestriction(tagId: number, action: RestrictionAction, bundleId: string, name: string | null, icon: string | null, color: string | null) : Promise<Result<RestrictionDto, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("add_app_restriction", { tagId, action, bundleId, name, icon, color }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
- * Upserts the website (created if new, found by domain if exists).
- */
-async addWebsiteRestriction(tagId: number, action: RestrictionAction, domain: string) : Promise<Result<RestrictionDto, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("add_website_restriction", { tagId, action, domain }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async removeRestriction(id: number) : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("remove_restriction", { id }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getSchedules() : Promise<Result<ScheduleDto[], string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("get_schedules") };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async createSchedule(name: string, days: number[], startTime: string, endTime: string) : Promise<Result<ScheduleDto, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("create_schedule", { name, days, startTime, endTime }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async updateSchedule(id: number, name: string, days: number[], startTime: string, endTime: string) : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("update_schedule", { id, name, days, startTime, endTime }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async deleteSchedule(id: number) : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("delete_schedule", { id }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async addScheduleTag(scheduleId: number, tagId: number) : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("add_schedule_tag", { scheduleId, tagId }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async removeScheduleTag(scheduleId: number, tagId: number) : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("remove_schedule_tag", { scheduleId, tagId }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getScheduleTags(scheduleId: number) : Promise<Result<number[], string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("get_schedule_tags", { scheduleId }) };
+    return { status: "ok", data: await TAURI_INVOKE("delete_focus_profile", { id }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -441,6 +347,14 @@ trackWindows: boolean;
  * Whether to track browser URLs
  */
 trackBrowser: boolean }
+/**
+ * An installed application.
+ */
+export type App = { 
+/**
+ * Unique identifier (same as bundle_id).
+ */
+id: string; bundleId: string; name: string | null; icon: string | null; color: string | null }
 export type AppInfo = { version: string; stage: Stage }
 export type AppSettings = { appearance: AppearanceSettings; debug: DebugSettings; timer: TimerSettings; focusGoal: FocusGoalSettings; activity: ActivitySettings }
 export type AppSettingsChangedEvent = AppSettings
@@ -451,6 +365,15 @@ export type FocusGoalSettings = {
  * Daily focus goal in minutes (default: 120 = 2h)
  */
 dailyGoalMinutes: number }
+/**
+ * Focus profile with its rules.
+ */
+export type FocusProfileDto = { id: number; name: string; color: string | null; rules: FocusProfileRuleDto[]; createdAt: number }
+/**
+ * A rule within a focus profile.
+ */
+export type FocusProfileRuleDto = { id: number; action: RuleAction; target: RuleTargetDto }
+export type FocusProfileRuleParams = { action: RuleAction; target: RuleTargetDto }
 export type GetWindowActivitiesParams = { startedAfter: number; startedBefore: number; limit: number | null }
 /**
  * Event emitted when user input is detected (throttled).
@@ -460,27 +383,28 @@ export type InputDetectedEvent = InputType
  * Type of input event detected.
  */
 export type InputType = "keyboard" | "mouse"
-export type ItemType = "app" | "website"
 export type Phase = "work" | "shortBreak" | "longBreak"
 /**
- * Action for a restriction.
+ * Action for a focus profile rule.
  */
-export type RestrictionAction = "block" | "allow"
-export type RestrictionDto = { id: number; tagId: number; action: RestrictionAction; appId: number | null; appBundleId: string | null; appName: string | null; appIcon: string | null; websiteId: number | null; websiteDomain: string | null; websiteName: string | null; websiteIcon: string | null }
-export type ScheduleDto = { id: number; name: string; 
+export type RuleAction = "block" | "allow"
 /**
- * Days of week (1 = Monday, 7 = Sunday)
+ * Target for a focus profile rule.
  */
-days: number[]; 
+export type RuleTargetDto = 
 /**
- * Start time in HH:MM format
+ * Applies to all apps/websites.
  */
-startTime: string; 
+{ type: "all" } | 
 /**
- * End time in HH:MM format
+ * Target a specific app.
  */
-endTime: string; createdAt: number }
-export type SearchInput = { 
+{ type: "app"; bundle_id: string; name: string | null; icon: string | null; color: string | null } | 
+/**
+ * Target a specific website.
+ */
+{ type: "website"; domain: string; name: string | null; icon: string | null; color: string | null }
+export type SearchParams = { 
 /**
  * Search query
  */
@@ -501,31 +425,7 @@ includeIcons?: boolean;
  * Maximum results (default: 20)
  */
 limit: number | null }
-export type SearchResultDto = { 
-/**
- * Unique identifier - bundleId for apps, domain for websites
- */
-id: string; 
-/**
- * Display name
- */
-name: string; 
-/**
- * Type of result
- */
-itemType: ItemType; 
-/**
- * Icon as base64 PNG data URL (apps) or favicon URL (websites)
- */
-icon: string | null; 
-/**
- * Brand color as hex string like "#5865F2" (apps only)
- */
-color: string | null; 
-/**
- * Match score (higher = better match)
- */
-score: number }
+export type SearchResultDto = { type: "app"; app: App; score: number } | { type: "website"; website: Website; score: number }
 /**
  * Event emitted when a session is completed.
  */
@@ -545,7 +445,6 @@ export type SessionStatus = "active" | "completed" | "cancelled"
 export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; startedAt: number; endedAt: number | null }
 export type SoundId = "tick" | "complete" | "meow"
 export type Stage = "dev" | "prod"
-export type TagDto = { id: number; name: string; color: string | null; createdAt: number }
 export type Theme = "light" | "dark" | "auto"
 export type TimerDto = { status: TimerStatus; phase: Phase; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; speed: number }
 export type TimerSettings = { 
@@ -567,6 +466,14 @@ longBreakMinutes: number;
 sessionsBeforeLongBreak: number }
 export type TimerStatus = "idle" | "running" | "paused"
 export type TimerUpdatedEvent = TimerDto
+/**
+ * A website identified by domain.
+ */
+export type Website = { 
+/**
+ * Unique identifier (same as domain).
+ */
+id: string; domain: string; name: string | null; icon: string | null; color: string | null }
 export type WindowActivityDto = { appBundleId: string | null; appName: string | null; appIcon: string | null; appColor: string | null; websiteDomain: string | null; websiteName: string | null; websiteIcon: string | null; websiteColor: string | null; windowTitle: string | null; browserUrl: string | null; startedAt: number; endedAt: number }
 
 /** tauri-specta globals **/
