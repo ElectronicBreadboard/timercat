@@ -22,10 +22,16 @@ export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 					{title}
 				</span>
 			)}
-			{appInfo.stage === 'dev' && (
+			{appInfo.stage === 'dev' ? (
 				<Badge variant="warning" className="ml-2">
 					DEV
 				</Badge>
+			) : (
+				appInfo.version.startsWith('v0.') && (
+					<Badge variant="neutral" className="ml-2">
+						BETA
+					</Badge>
+				)
 			)}
 			<div data-tauri-drag-region className="flex-1" />
 			{children != null && <div className="flex items-center gap-1 pr-1">{children}</div>}
