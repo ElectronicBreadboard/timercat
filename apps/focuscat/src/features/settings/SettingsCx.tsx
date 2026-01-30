@@ -27,7 +27,7 @@ export class SettingsCx {
 		activity: {
 			enabled: true,
 			trackWindows: true,
-			trackBrowser: false
+			trackBrowser: true
 		}
 	});
 

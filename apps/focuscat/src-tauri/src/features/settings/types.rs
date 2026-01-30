@@ -114,7 +114,7 @@ impl Default for ActivitySettings {
         return Self {
             enabled: true,
             track_windows: true,
-            track_browser: false,
+            track_browser: true,
         };
     }
 }

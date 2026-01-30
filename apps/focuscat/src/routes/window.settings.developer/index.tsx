@@ -44,7 +44,7 @@ function RouteComponent() {
 				>
 					<span className="text-base-500 font-mono text-sm">{settings.debug.timerSpeed}x</span>
 				</SettingItem>
-				<SettingItem label="Cat Borders" description="Show cat widget debug borders">
+				<SettingItem label="Cat Debug" description="Enable debug mode for cat window">
 					<Switch
 						checked={settings.debug.cat}
 						onCheckedChange={(checked) => updateDebug({ cat: checked })}
