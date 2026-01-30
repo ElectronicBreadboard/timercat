@@ -8,6 +8,7 @@ use super::types::{
     ScheduleMode,
 };
 use crate::environment::db::DatabaseState;
+use chrono::Datelike;
 use serde::Deserialize;
 use tauri::State;
 
@@ -104,6 +105,60 @@ pub async fn delete_focus_profile(db: State<'_, DatabaseState>, id: i32) -> Resu
         .map_err(|e| e.to_string())?;
 
     return Ok(());
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn get_active_focus_profiles(
+    db: State<'_, DatabaseState>,
+) -> Result<Vec<FocusProfileDto>, String> {
+    let all = FocusProfileRepository::get_all(&db.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let now = chrono::Local::now();
+    let current_day = now.weekday().num_days_from_monday() as i32;
+    let current_time = now.format("%H:%M").to_string();
+
+    // Get profile IDs linked to the active session (if any)
+    let session_profile_ids: Vec<i64> = sqlx::query_scalar(
+        r#"
+        SELECT sfp.focus_profile_id
+        FROM session_focus_profile sfp
+        JOIN sessions s ON s.id = sfp.session_id
+        WHERE s.status = 'active'
+        ORDER BY sfp.priority DESC
+        "#,
+    )
+    .fetch_all(&db.pool)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    let active: Vec<FocusProfileDto> = all
+        .into_iter()
+        .filter(|p| {
+            // Linked to active session
+            session_profile_ids.contains(&p.profile.id)
+            // Or has an always_on schedule matching current day + time
+            || p.schedules.iter().any(|s| {
+                let mode = ScheduleMode::from_str(&s.mode);
+                let days: Vec<i32> = serde_json::from_str(&s.days).unwrap_or_default();
+                let in_time_range = if s.start_time <= s.end_time {
+                    // Same-day range (e.g. 09:00–17:00)
+                    s.start_time <= current_time && current_time < s.end_time
+                } else {
+                    // Midnight-spanning range (e.g. 23:00–01:00)
+                    current_time >= s.start_time || current_time < s.end_time
+                };
+                matches!(mode, Some(ScheduleMode::AlwaysOn))
+                    && days.contains(&current_day)
+                    && in_time_range
+            })
+        })
+        .map(FocusProfileDto::from)
+        .collect();
+
+    return Ok(active);
 }
 
 #[derive(Debug, Clone, Deserialize, specta::Type)]

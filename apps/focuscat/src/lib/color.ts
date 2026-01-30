@@ -25,3 +25,19 @@ function getLuminance(hex: string): number {
 export function isColorDark(hex: string, threshold = 0.3): boolean {
 	return getLuminance(hex) < threshold;
 }
+
+/**
+ * Converts a hex color to an rgba string with the given alpha.
+ */
+export function hexToRgba(hex: string, alpha: number): string {
+	const rgb = hex
+		.replace('#', '')
+		.match(/.{2}/g)
+		?.map((x) => parseInt(x, 16));
+
+	if (rgb == null || rgb.length < 3) {
+		return `rgba(0, 0, 0, ${alpha})`;
+	}
+
+	return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
+}

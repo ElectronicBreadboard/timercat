@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckIcon, XIcon } from '@/components';
+import { Badge, CheckIcon, XIcon } from '@/components';
 import { specta } from '@/environment';
 import { cn, toTuple } from '@/lib';
 import { MultiSelect, useMultiSelect } from './MultiSelect';
@@ -160,9 +160,9 @@ const Chip: React.FC<TChipProps> = (props) => {
 	}, [item]);
 
 	return (
-		<span
+		<Badge
 			className={cn(
-				'inline-flex items-center gap-1.5 rounded-md py-0.5 pr-1 pl-1.5 text-sm',
+				'gap-1.5 px-1 text-sm',
 				item.type === 'app'
 					? 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
 					: 'bg-violet-500/20 text-violet-700 dark:text-violet-300'
@@ -181,7 +181,7 @@ const Chip: React.FC<TChipProps> = (props) => {
 			>
 				<XIcon size={10} />
 			</button>
-		</span>
+		</Badge>
 	);
 };
 
@@ -221,16 +221,15 @@ const ResultItem: React.FC<TResultItemProps> = (props) => {
 						<CheckIcon size={12} />
 					</span>
 				)}
-				<span
+				<Badge
 					className={cn(
-						'rounded px-1.5 py-0.5 text-xs',
 						result.type === 'app'
 							? 'bg-blue-500/20 text-blue-600 dark:text-blue-400'
 							: 'bg-violet-500/20 text-violet-600 dark:text-violet-400'
 					)}
 				>
 					{result.type}
-				</span>
+				</Badge>
 			</span>
 		</div>
 	);

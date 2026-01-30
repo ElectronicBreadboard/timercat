@@ -48,6 +48,14 @@ async showHistoryWindowAtSession(sessionId: number) : Promise<Result<null, strin
     else return { status: "error", error: e  as any };
 }
 },
+async showSettingsWindowAtProfile(profileId: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("show_settings_window_at_profile", { profileId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async hideMainWindow() : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("hide_main_window") };
@@ -306,6 +314,14 @@ async updateFocusProfile(id: number, name: string, color: string | null, rules: 
 async deleteFocusProfile(id: number) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("delete_focus_profile", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getActiveFocusProfiles() : Promise<Result<FocusProfileDto[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_active_focus_profiles") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };

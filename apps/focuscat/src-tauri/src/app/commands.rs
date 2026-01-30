@@ -104,6 +104,21 @@ pub fn show_history_window_at_session(
 
 #[tauri::command]
 #[specta::specta]
+pub fn show_settings_window_at_profile(
+    app: tauri::AppHandle,
+    profile_id: i32,
+) -> Result<(), String> {
+    let path = format!("/window/settings/focus-profiles/{}", profile_id);
+
+    Window::Main.hide(&app).map_err(|e| e.to_string())?;
+    Window::Settings
+        .show_at_path(&app, &path)
+        .map_err(|e| e.to_string())?;
+    return Ok(());
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn hide_history_window(app: tauri::AppHandle) -> Result<(), String> {
     Window::History.hide(&app).map_err(|e| e.to_string())?;
     return Ok(());

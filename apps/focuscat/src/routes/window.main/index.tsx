@@ -3,9 +3,8 @@ import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { specta } from '@/environment';
 import { Cat, catConfig, TCatRef } from '@/features/cat';
-import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
-import { Navbar, StatsCard, TimerView } from './components';
+import { Navbar, OverviewCard, TimerView } from './components';
 
 export const Route = createFileRoute('/window/main/')({
 	component: RouteComponent
@@ -14,8 +13,6 @@ export const Route = createFileRoute('/window/main/')({
 function RouteComponent() {
 	const catRef = React.useRef<TCatRef>(null);
 
-	const settingsCx = useSettingsCx();
-	const settings = useFeatureState(settingsCx.$appSettings);
 	const timerCx = useTimerCx();
 	const timerStatus = useFeatureState(timerCx.$status);
 
@@ -57,10 +54,10 @@ function RouteComponent() {
 		<div className="bg-base-0 flex h-screen w-[300px] flex-col">
 			<Navbar onMinimize={handleMinimize} onHistory={handleHistory} onSettings={handleSettings} />
 
-			{/* Top section: Stats + Cat */}
+			{/* Top section: Overview + Cat */}
 			<div className="flex shrink-0" style={{ height: topSection.height }}>
 				<div className="border-base-200 w-1/2 border-r">
-					<StatsCard className="size-full" debug={settings.debug.enabled} />
+					<OverviewCard className="size-full" />
 				</div>
 				<div className="relative z-30 w-1/2 overflow-visible">
 					<Cat

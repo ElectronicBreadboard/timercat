@@ -28,6 +28,7 @@ pub fn run() {
             commands::show_settings_window,
             commands::show_history_window,
             commands::show_history_window_at_session,
+            commands::show_settings_window_at_profile,
             commands::hide_main_window,
             commands::hide_cat_window,
             commands::hide_settings_window,
@@ -70,6 +71,7 @@ pub fn run() {
             focus_profile::commands::create_focus_profile,
             focus_profile::commands::update_focus_profile,
             focus_profile::commands::delete_focus_profile,
+            focus_profile::commands::get_active_focus_profiles,
         ])
         .events(collect_events![
             // Settings events

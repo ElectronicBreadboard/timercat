@@ -5,8 +5,8 @@ import { toTuple } from '@/lib';
 export const Route = createFileRoute('/window/history/')({
 	loader: async () => {
 		// Auto-select latest session if available
-		const [isOk, , session] = toTuple(await specta.commands.getLastWorkSession(30));
-		if (isOk && session != null) {
+		const [isSessionOk, , session] = toTuple(await specta.commands.getLastWorkSession(30));
+		if (isSessionOk && session != null) {
 			throw redirect({
 				to: '/window/history/$sessionId',
 				params: { sessionId: String(session.id) }

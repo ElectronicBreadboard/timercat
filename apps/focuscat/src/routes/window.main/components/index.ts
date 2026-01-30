@@ -1,3 +1,3 @@
 export * from './Navbar';
-export * from './StatsCard';
+export * from './OverviewCard';
 export * from './TimerView';

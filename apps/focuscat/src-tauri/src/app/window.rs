@@ -162,6 +162,7 @@ impl Window {
     fn build_at_path(&self, app: &AppHandle, path: &str) -> tauri::Result<WebviewWindow> {
         return match self {
             Self::History => self.build_history_at_path(app, path),
+            Self::Settings => self.build_settings_at_path(app, path),
             // Other windows don't support dynamic paths, fall back to default
             _ => self.build(app),
         };
@@ -207,10 +208,14 @@ impl Window {
     }
 
     fn build_settings(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
+        return self.build_settings_at_path(app, self.path());
+    }
+
+    fn build_settings_at_path(&self, app: &AppHandle, path: &str) -> tauri::Result<WebviewWindow> {
         let (width, height) = self.size();
 
         let mut builder = self
-            .base_builder(app)
+            .base_builder_at_path(app, path)
             .resizable(true)
             .maximizable(false)
             .minimizable(true)
