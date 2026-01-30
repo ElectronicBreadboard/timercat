@@ -73,14 +73,29 @@ export class FocusProfileCx {
 						}
 					])
 				},
-				rulesEnabled: {
+				ruleEnabled: {
 					defaultValue: false
 				},
-				mode: {
+				ruleMode: {
 					defaultValue: 'block'
 				},
-				targets: {
+				ruleTargets: {
 					defaultValue: []
+				},
+				scheduleEnabled: {
+					defaultValue: false
+				},
+				scheduleMode: {
+					defaultValue: 'always_on'
+				},
+				scheduleDays: {
+					defaultValue: [0, 1, 2, 3, 4]
+				},
+				scheduleStartTime: {
+					defaultValue: '09:00'
+				},
+				scheduleEndTime: {
+					defaultValue: '17:00'
 				}
 			},
 			validateMode: bitwiseFlag(FormFieldValidateMode.OnSubmit),
@@ -106,9 +121,14 @@ export class FocusProfileCx {
 		this.$editingId.set(null);
 		this.form.fields.name._intialValue = '';
 		this.form.fields.color._intialValue = null;
-		this.form.fields.rulesEnabled._intialValue = false;
-		this.form.fields.mode._intialValue = 'block';
-		this.form.fields.targets._intialValue = [];
+		this.form.fields.ruleEnabled._intialValue = false;
+		this.form.fields.ruleMode._intialValue = 'block';
+		this.form.fields.ruleTargets._intialValue = [];
+		this.form.fields.scheduleEnabled._intialValue = false;
+		this.form.fields.scheduleMode._intialValue = 'always_on';
+		this.form.fields.scheduleDays._intialValue = [0, 1, 2, 3, 4];
+		this.form.fields.scheduleStartTime._intialValue = '09:00';
+		this.form.fields.scheduleEndTime._intialValue = '17:00';
 		this.form.reset();
 	}
 
@@ -121,11 +141,17 @@ export class FocusProfileCx {
 		this.$editingId.set(id);
 		this.form.fields.name._intialValue = profile.name;
 		this.form.fields.color._intialValue = profile.color ?? null;
-		this.form.fields.rulesEnabled._intialValue = profile.rules.length > 0;
-		this.form.fields.mode._intialValue = profile.rules[0]?.action ?? 'block';
-		this.form.fields.targets._intialValue = profile.rules
+		this.form.fields.ruleEnabled._intialValue = profile.rules.length > 0;
+		this.form.fields.ruleMode._intialValue = profile.rules[0]?.action ?? 'block';
+		this.form.fields.ruleTargets._intialValue = profile.rules
 			.map(ruleToSelectedItem)
 			.filter((item): item is TSelectedItem => item != null);
+		const schedule = profile.schedules[0];
+		this.form.fields.scheduleEnabled._intialValue = profile.schedules.length > 0;
+		this.form.fields.scheduleMode._intialValue = schedule?.mode ?? 'always_on';
+		this.form.fields.scheduleDays._intialValue = schedule?.days ?? [0, 1, 2, 3, 4];
+		this.form.fields.scheduleStartTime._intialValue = schedule?.startTime ?? '09:00';
+		this.form.fields.scheduleEndTime._intialValue = schedule?.endTime ?? '17:00';
 		this.form.reset();
 	}
 
@@ -137,17 +163,27 @@ export class FocusProfileCx {
 
 		const editingId = this.$editingId.get();
 		const rules: specta.FocusProfileRuleParams[] =
-			data.rulesEnabled && data.targets.length > 0
-				? data.targets.map((item) => ({
-						action: data.mode,
+			data.ruleEnabled && data.ruleTargets.length > 0
+				? data.ruleTargets.map((item) => ({
+						action: data.ruleMode,
 						target: selectedItemToRuleTarget(item)
 					}))
 				: [];
+		const schedules: specta.FocusProfileScheduleParams[] = data.scheduleEnabled
+			? [
+					{
+						mode: data.scheduleMode,
+						days: data.scheduleDays,
+						startTime: data.scheduleStartTime,
+						endTime: data.scheduleEndTime
+					}
+				]
+			: [];
 
 		if (editingId == null) {
 			// Create new profile
 			const [isProfileOk, profileErr, profile] = toTuple(
-				await specta.commands.createFocusProfile(data.name, data.color, rules)
+				await specta.commands.createFocusProfile(data.name, data.color, rules, schedules)
 			);
 			if (!isProfileOk) {
 				console.error('Failed to create focus profile:', profileErr);
@@ -157,7 +193,7 @@ export class FocusProfileCx {
 		} else {
 			// Update existing profile
 			const [isProfileOk, profileErr, profile] = toTuple(
-				await specta.commands.updateFocusProfile(editingId, data.name, data.color, rules)
+				await specta.commands.updateFocusProfile(editingId, data.name, data.color, rules, schedules)
 			);
 			if (!isProfileOk) {
 				console.error('Failed to update focus profile:', profileErr);
@@ -183,9 +219,14 @@ export class FocusProfileCx {
 export interface TFocusProfileFormData {
 	name: string;
 	color: string | null;
-	rulesEnabled: boolean;
-	mode: specta.RuleAction;
-	targets: TSelectedItem[];
+	ruleEnabled: boolean;
+	ruleMode: specta.RuleAction;
+	ruleTargets: TSelectedItem[];
+	scheduleEnabled: boolean;
+	scheduleMode: specta.ScheduleMode;
+	scheduleDays: number[];
+	scheduleStartTime: string;
+	scheduleEndTime: string;
 }
 
 function ruleToSelectedItem(rule: specta.FocusProfileRuleDto): TSelectedItem | null {
