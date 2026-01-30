@@ -14,7 +14,11 @@ impl AppRepository {
             r#"
             INSERT INTO app (bundle_id, name, process_path, icon, color)
             VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(bundle_id) DO UPDATE SET bundle_id = bundle_id
+            ON CONFLICT(bundle_id) DO UPDATE SET
+                name = COALESCE(excluded.name, app.name),
+                process_path = COALESCE(excluded.process_path, app.process_path),
+                icon = COALESCE(excluded.icon, app.icon),
+                color = COALESCE(excluded.color, app.color)
             RETURNING id
             "#,
         )
@@ -52,7 +56,10 @@ impl WebsiteRepository {
             r#"
             INSERT INTO website (domain, name, icon, color)
             VALUES (?, ?, ?, ?)
-            ON CONFLICT(domain) DO UPDATE SET domain = domain
+            ON CONFLICT(domain) DO UPDATE SET
+                name = COALESCE(excluded.name, website.name),
+                icon = COALESCE(excluded.icon, website.icon),
+                color = COALESCE(excluded.color, website.color)
             RETURNING id
             "#,
         )
