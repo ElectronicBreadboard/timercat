@@ -8,7 +8,7 @@ import { SettingGroup, SettingItem } from '@/features/settings';
 import { cn } from '@/lib';
 import { useFocusProfileCx } from './FocusProfileCx';
 
-export const FocusProfileForm: React.FC<TFocusProfileForm> = (props) => {
+export const FocusProfileForm: React.FC<TFocusProfileFormProps> = (props) => {
 	const {
 		presetColors = [
 			{ label: 'Red', value: '#EF4444' },
@@ -151,7 +151,7 @@ export const FocusProfileForm: React.FC<TFocusProfileForm> = (props) => {
 	);
 };
 
-interface TFocusProfileForm {
+interface TFocusProfileFormProps {
 	presetColors?: { label: string; value: string }[];
 }
 

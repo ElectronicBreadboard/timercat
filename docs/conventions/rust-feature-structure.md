@@ -122,7 +122,7 @@ impl From<ItemRow> for ItemDto {
 Repository impl first, then Row/Input types.
 
 ```rust
-use super::types::{...};  // for shared Params if needed
+use super::types::{...};  // for shared domain types (enums, etc.)
 
 // MARK: - Repository
 
@@ -185,14 +185,14 @@ mod tests { ... }
 
 ## Type Naming
 
-| Type   | Suffix    | Location                               | Purpose                   |
-| ------ | --------- | -------------------------------------- | ------------------------- |
-| DTO    | `*Dto`    | types.rs                               | Returned to frontend      |
-| Event  | `*Event`  | types.rs                               | Pushed to frontend        |
-| State  | `*State`  | types.rs                               | Runtime state             |
-| Params | `*Params` | under function (or types.rs if shared) | Received from frontend    |
-| Row    | `*Row`    | repository.rs                          | Database row mapping      |
-| Input  | `*Input`  | repository.rs                          | Internal repository input |
+| Type   | Suffix    | Location      | Purpose                   |
+| ------ | --------- | ------------- | ------------------------- |
+| DTO    | `*Dto`    | types.rs      | Returned to frontend      |
+| Event  | `*Event`  | types.rs      | Pushed to frontend        |
+| State  | `*State`  | types.rs      | Runtime state             |
+| Params | `*Params` | commands.rs   | Received from frontend    |
+| Row    | `*Row`    | repository.rs | Database row mapping      |
+| Input  | `*Input`  | repository.rs | Internal repository input |
 
 ## Dependencies
 
@@ -210,13 +210,20 @@ repository.rs ──imports──> types.rs (for shared types only)
 
 ## Conversion Pattern
 
-Conversions (Row → DTO) live in `commands.rs` using `impl From`:
+Conversions live in `commands.rs` using `impl From`:
+
+- `Row → DTO` (database to frontend)
+- `Params → Input` (frontend to database)
 
 ```rust
 // commands.rs
 
 impl From<FooRow> for FooDto {
     fn from(row: FooRow) -> Self { ... }
+}
+
+impl From<FooParams> for CreateFooInput {
+    fn from(params: FooParams) -> Self { ... }
 }
 
 // Use TryFrom when conversion can fail (e.g., parsing enums from strings)
@@ -240,12 +247,13 @@ This keeps:
 ```
 focus_profile/
 ├── mod.rs
-├── types.rs        # FocusProfileDto, RuleAction, RuleTargetDto, FocusProfileRuleInput
-├── commands.rs     # CRUD handlers + impl From conversions
-└── repository.rs   # FocusProfileRow, CreateFocusProfileInput
+├── types.rs        # FocusProfileDto, RuleAction, RuleTargetDto
+├── commands.rs     # CRUD handlers + FocusProfileRuleParams + impl From conversions
+└── repository.rs   # FocusProfileRow, CreateFocusProfileInput, FocusProfileRuleInput
 ```
 
-- `FocusProfileRuleInput` in types.rs because it's shared with repository
+- `FocusProfileRuleParams` in commands.rs, `FocusProfileRuleInput` in repository.rs
+- `RuleAction`, `RuleTargetDto` in types.rs (shared domain types)
 
 ### Search Feature (app)
 

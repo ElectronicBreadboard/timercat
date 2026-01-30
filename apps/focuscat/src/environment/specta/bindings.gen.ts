@@ -287,7 +287,7 @@ async getFocusProfile(id: number) : Promise<Result<FocusProfileDto | null, strin
     else return { status: "error", error: e  as any };
 }
 },
-async createFocusProfile(name: string, color: string | null, rules: FocusProfileRuleInput[]) : Promise<Result<FocusProfileDto, string>> {
+async createFocusProfile(name: string, color: string | null, rules: FocusProfileRuleParams[]) : Promise<Result<FocusProfileDto, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("create_focus_profile", { name, color, rules }) };
 } catch (e) {
@@ -295,7 +295,7 @@ async createFocusProfile(name: string, color: string | null, rules: FocusProfile
     else return { status: "error", error: e  as any };
 }
 },
-async updateFocusProfile(id: number, name: string, color: string | null, rules: FocusProfileRuleInput[]) : Promise<Result<FocusProfileDto, string>> {
+async updateFocusProfile(id: number, name: string, color: string | null, rules: FocusProfileRuleParams[]) : Promise<Result<FocusProfileDto, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("update_focus_profile", { id, name, color, rules }) };
 } catch (e) {
@@ -373,10 +373,7 @@ export type FocusProfileDto = { id: number; name: string; color: string | null; 
  * A rule within a focus profile.
  */
 export type FocusProfileRuleDto = { id: number; action: RuleAction; target: RuleTargetDto }
-/**
- * Input for creating/updating rules (from frontend).
- */
-export type FocusProfileRuleInput = { action: RuleAction; target: RuleTargetDto }
+export type FocusProfileRuleParams = { action: RuleAction; target: RuleTargetDto }
 export type GetWindowActivitiesParams = { startedAfter: number; startedBefore: number; limit: number | null }
 /**
  * Event emitted when user input is detected (throttled).

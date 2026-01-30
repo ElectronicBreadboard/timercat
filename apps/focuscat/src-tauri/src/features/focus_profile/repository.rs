@@ -1,5 +1,7 @@
-use super::types::{FocusProfileRuleInput, RuleTargetDto};
-use crate::features::app::repository::{AppRepository, UpsertAppInput, WebsiteRepository};
+use super::types::{RuleAction, RuleTargetDto};
+use crate::features::app::repository::{
+    AppRepository, UpsertAppInput, UpsertWebsiteInput, WebsiteRepository,
+};
 use sqlx::{FromRow, Row, SqliteConnection, SqlitePool};
 
 pub struct FocusProfileRepository;
@@ -200,8 +202,22 @@ impl FocusProfileRepository {
                     .execute(&mut *conn)
                     .await?;
                 }
-                RuleTargetDto::Website { domain, .. } => {
-                    let website_id = WebsiteRepository::upsert(&mut *conn, domain).await?;
+                RuleTargetDto::Website {
+                    domain,
+                    name,
+                    icon,
+                    color,
+                } => {
+                    let website_id = WebsiteRepository::upsert(
+                        &mut *conn,
+                        &UpsertWebsiteInput {
+                            domain: domain.clone(),
+                            name: name.clone(),
+                            icon: icon.clone(),
+                            color: color.clone(),
+                        },
+                    )
+                    .await?;
 
                     sqlx::query(
                         "INSERT INTO focus_profile_rule (focus_profile_id, action, website_id) VALUES (?, ?, ?)",
@@ -229,6 +245,11 @@ pub struct UpdateFocusProfileInput {
     pub name: String,
     pub color: Option<String>,
     pub rules: Vec<FocusProfileRuleInput>,
+}
+
+pub struct FocusProfileRuleInput {
+    pub action: RuleAction,
+    pub target: RuleTargetDto,
 }
 
 #[derive(Debug, FromRow)]

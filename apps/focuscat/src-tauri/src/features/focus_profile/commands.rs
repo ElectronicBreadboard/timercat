@@ -1,11 +1,10 @@
 use super::repository::{
-    CreateFocusProfileInput, FocusProfileRepository, FocusProfileRuleRow, FocusProfileWithRules,
-    UpdateFocusProfileInput,
+    CreateFocusProfileInput, FocusProfileRepository, FocusProfileRuleInput, FocusProfileRuleRow,
+    FocusProfileWithRules, UpdateFocusProfileInput,
 };
-use super::types::{
-    FocusProfileDto, FocusProfileRuleDto, FocusProfileRuleInput, RuleAction, RuleTargetDto,
-};
+use super::types::{FocusProfileDto, FocusProfileRuleDto, RuleAction, RuleTargetDto};
 use crate::environment::db::DatabaseState;
+use serde::Deserialize;
 use tauri::State;
 
 #[tauri::command]
@@ -39,8 +38,9 @@ pub async fn create_focus_profile(
     db: State<'_, DatabaseState>,
     name: String,
     color: Option<String>,
-    rules: Vec<FocusProfileRuleInput>,
+    rules: Vec<FocusProfileRuleParams>,
 ) -> Result<FocusProfileDto, String> {
+    let rules = rules.into_iter().map(FocusProfileRuleInput::from).collect();
     let result =
         FocusProfileRepository::create(&db.pool, &CreateFocusProfileInput { name, color, rules })
             .await
@@ -56,8 +56,9 @@ pub async fn update_focus_profile(
     id: i32,
     name: String,
     color: Option<String>,
-    rules: Vec<FocusProfileRuleInput>,
+    rules: Vec<FocusProfileRuleParams>,
 ) -> Result<FocusProfileDto, String> {
+    let rules = rules.into_iter().map(FocusProfileRuleInput::from).collect();
     let result = FocusProfileRepository::update(
         &db.pool,
         id as i64,
@@ -79,7 +80,23 @@ pub async fn delete_focus_profile(db: State<'_, DatabaseState>, id: i32) -> Resu
     return Ok(());
 }
 
+#[derive(Debug, Clone, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct FocusProfileRuleParams {
+    pub action: RuleAction,
+    pub target: RuleTargetDto,
+}
+
 // MARK: - Conversions
+
+impl From<FocusProfileRuleParams> for FocusProfileRuleInput {
+    fn from(params: FocusProfileRuleParams) -> Self {
+        return Self {
+            action: params.action,
+            target: params.target,
+        };
+    }
+}
 
 impl From<FocusProfileWithRules> for FocusProfileDto {
     fn from(data: FocusProfileWithRules) -> Self {

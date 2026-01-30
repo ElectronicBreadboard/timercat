@@ -25,6 +25,8 @@ impl RuleAction {
     }
 }
 
+// MARK: - DTO
+
 /// Target for a focus profile rule.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(tag = "type", rename_all = "camelCase")]
@@ -50,8 +52,6 @@ pub enum RuleTargetDto {
     },
 }
 
-// MARK: - DTO
-
 /// Focus profile with its rules.
 #[derive(Debug, Clone, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
@@ -72,12 +72,3 @@ pub struct FocusProfileRuleDto {
     pub target: RuleTargetDto,
 }
 
-// MARK: - Params
-
-/// Input for creating/updating rules (from frontend).
-#[derive(Debug, Clone, Deserialize, specta::Type)]
-#[serde(rename_all = "camelCase")]
-pub struct FocusProfileRuleInput {
-    pub action: RuleAction,
-    pub target: RuleTargetDto,
-}

@@ -44,21 +44,32 @@ pub struct WebsiteRepository;
 
 impl WebsiteRepository {
     /// Upsert website (insert or return existing id).
-    pub async fn upsert<'e, E>(executor: E, domain: &str) -> Result<i64, sqlx::Error>
+    pub async fn upsert<'e, E>(executor: E, input: &UpsertWebsiteInput) -> Result<i64, sqlx::Error>
     where
         E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
     {
         let result = sqlx::query(
             r#"
-            INSERT INTO website (domain) VALUES (?)
+            INSERT INTO website (domain, name, icon, color)
+            VALUES (?, ?, ?, ?)
             ON CONFLICT(domain) DO UPDATE SET domain = domain
             RETURNING id
             "#,
         )
-        .bind(domain)
+        .bind(&input.domain)
+        .bind(&input.name)
+        .bind(&input.icon)
+        .bind(&input.color)
         .fetch_one(executor)
         .await?;
 
         return Ok(result.get(0));
     }
+}
+
+pub struct UpsertWebsiteInput {
+    pub domain: String,
+    pub name: Option<String>,
+    pub icon: Option<String>,
+    pub color: Option<String>,
 }

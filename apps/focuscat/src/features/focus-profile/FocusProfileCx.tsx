@@ -88,11 +88,7 @@ export class FocusProfileCx {
 			notifyOnStatusChange: false,
 			collectErrorMode: 'firstError'
 		});
-		this.init();
-	}
-
-	private async init(): Promise<void> {
-		await this.load();
+		void this.load();
 	}
 
 	public async load(): Promise<void> {
@@ -140,7 +136,7 @@ export class FocusProfileCx {
 		}
 
 		const editingId = this.$editingId.get();
-		const rules: specta.FocusProfileRuleInput[] =
+		const rules: specta.FocusProfileRuleParams[] =
 			data.rulesEnabled && data.targets.length > 0
 				? data.targets.map((item) => ({
 						action: data.mode,

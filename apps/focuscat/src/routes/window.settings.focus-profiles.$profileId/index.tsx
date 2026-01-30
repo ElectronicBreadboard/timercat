@@ -59,7 +59,7 @@ function RouteComponent() {
 							variant="default"
 							size="sm"
 							onClick={handleDelete}
-							className="hover:border-error hover:bg-error/10 hover:text-error"
+							className="hover:border-error/30 hover:bg-error/10 hover:text-error"
 							title="Delete profile"
 						>
 							<TrashIcon size={16} />

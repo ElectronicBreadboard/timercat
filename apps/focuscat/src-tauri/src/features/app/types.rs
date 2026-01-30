@@ -50,7 +50,6 @@ impl Website {
     }
 }
 
-/// Internal type for fuzzy search matching.
 #[derive(Debug, Clone)]
 pub enum SearchableItem {
     App {
@@ -110,22 +109,6 @@ impl SearchableItem {
         match self {
             Self::App { keywords, .. } => keywords,
             Self::Website { keywords, .. } => keywords,
-        }
-    }
-
-    /// Set the icon.
-    pub fn set_icon(&mut self, icon: Option<String>) {
-        match self {
-            Self::App { app, .. } => app.icon = icon,
-            Self::Website { website, .. } => website.icon = icon,
-        }
-    }
-
-    /// Set the color.
-    pub fn set_color(&mut self, color: Option<String>) {
-        match self {
-            Self::App { app, .. } => app.color = color,
-            Self::Website { website, .. } => website.color = color,
         }
     }
 }

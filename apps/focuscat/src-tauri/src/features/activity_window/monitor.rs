@@ -4,7 +4,9 @@ use super::repository::{
 };
 use crate::common::url::extract_domain;
 use crate::environment::db::DatabaseState;
-use crate::features::app::repository::{AppRepository, UpsertAppInput, WebsiteRepository};
+use crate::features::app::repository::{
+    AppRepository, UpsertAppInput, UpsertWebsiteInput, WebsiteRepository,
+};
 use crate::features::settings::types::AppSettingsState;
 use chrono::Utc;
 use mado::{MonitorConfig, WindowEvent, WindowListener, WindowMonitor};
@@ -236,7 +238,17 @@ impl WindowListener for WindowMonitorHandler {
                             // Extract website_id for browser activities
                             let website_id = if let Some(ref url) = browser_url {
                                 if let Some(domain) = extract_domain(url) {
-                                    WebsiteRepository::upsert(&state.pool, &domain).await.ok()
+                                    WebsiteRepository::upsert(
+                                        &state.pool,
+                                        &UpsertWebsiteInput {
+                                            domain,
+                                            name: None,
+                                            icon: None,
+                                            color: None,
+                                        },
+                                    )
+                                    .await
+                                    .ok()
                                 } else {
                                     None
                                 }

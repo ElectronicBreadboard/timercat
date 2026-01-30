@@ -159,7 +159,12 @@ mod tests {
         assert!(!results.is_empty());
 
         // Can mutate through the returned ref
-        results[0].0.set_icon(Some("test".to_string()));
+        match &mut results[0] {
+            (SearchableItem::App { app, .. }, _) => {
+                app.icon = Some("test".to_string());
+            }
+            _ => {}
+        }
         match &items[0] {
             SearchableItem::App { app, .. } => {
                 assert_eq!(app.icon, Some("test".to_string()));
