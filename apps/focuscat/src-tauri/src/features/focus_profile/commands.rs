@@ -1,8 +1,12 @@
 use super::repository::{
     CreateFocusProfileInput, FocusProfileRepository, FocusProfileRuleInput, FocusProfileRuleRow,
-    FocusProfileWithRules, UpdateFocusProfileInput,
+    FocusProfileScheduleInput, FocusProfileScheduleRow, FocusProfileWithRelations,
+    UpdateFocusProfileInput,
 };
-use super::types::{FocusProfileDto, FocusProfileRuleDto, RuleAction, RuleTargetDto};
+use super::types::{
+    FocusProfileDto, FocusProfileRuleDto, FocusProfileScheduleDto, RuleAction, RuleTargetDto,
+    ScheduleMode,
+};
 use crate::environment::db::DatabaseState;
 use serde::Deserialize;
 use tauri::State;
@@ -39,12 +43,24 @@ pub async fn create_focus_profile(
     name: String,
     color: Option<String>,
     rules: Vec<FocusProfileRuleParams>,
+    schedules: Vec<FocusProfileScheduleParams>,
 ) -> Result<FocusProfileDto, String> {
     let rules = rules.into_iter().map(FocusProfileRuleInput::from).collect();
-    let result =
-        FocusProfileRepository::create(&db.pool, &CreateFocusProfileInput { name, color, rules })
-            .await
-            .map_err(|e| e.to_string())?;
+    let schedules = schedules
+        .into_iter()
+        .map(FocusProfileScheduleInput::from)
+        .collect();
+    let result = FocusProfileRepository::create(
+        &db.pool,
+        &CreateFocusProfileInput {
+            name,
+            color,
+            rules,
+            schedules,
+        },
+    )
+    .await
+    .map_err(|e| e.to_string())?;
 
     return Ok(FocusProfileDto::from(result));
 }
@@ -57,12 +73,22 @@ pub async fn update_focus_profile(
     name: String,
     color: Option<String>,
     rules: Vec<FocusProfileRuleParams>,
+    schedules: Vec<FocusProfileScheduleParams>,
 ) -> Result<FocusProfileDto, String> {
     let rules = rules.into_iter().map(FocusProfileRuleInput::from).collect();
+    let schedules = schedules
+        .into_iter()
+        .map(FocusProfileScheduleInput::from)
+        .collect();
     let result = FocusProfileRepository::update(
         &db.pool,
         id as i64,
-        &UpdateFocusProfileInput { name, color, rules },
+        &UpdateFocusProfileInput {
+            name,
+            color,
+            rules,
+            schedules,
+        },
     )
     .await
     .map_err(|e| e.to_string())?;
@@ -87,6 +113,15 @@ pub struct FocusProfileRuleParams {
     pub target: RuleTargetDto,
 }
 
+#[derive(Debug, Clone, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct FocusProfileScheduleParams {
+    pub mode: ScheduleMode,
+    pub days: Vec<i32>,
+    pub start_time: String,
+    pub end_time: String,
+}
+
 // MARK: - Conversions
 
 impl From<FocusProfileRuleParams> for FocusProfileRuleInput {
@@ -98,8 +133,19 @@ impl From<FocusProfileRuleParams> for FocusProfileRuleInput {
     }
 }
 
-impl From<FocusProfileWithRules> for FocusProfileDto {
-    fn from(data: FocusProfileWithRules) -> Self {
+impl From<FocusProfileScheduleParams> for FocusProfileScheduleInput {
+    fn from(params: FocusProfileScheduleParams) -> Self {
+        return Self {
+            mode: params.mode,
+            days: params.days,
+            start_time: params.start_time,
+            end_time: params.end_time,
+        };
+    }
+}
+
+impl From<FocusProfileWithRelations> for FocusProfileDto {
+    fn from(data: FocusProfileWithRelations) -> Self {
         return Self {
             id: data.profile.id as i32,
             name: data.profile.name,
@@ -108,6 +154,11 @@ impl From<FocusProfileWithRules> for FocusProfileDto {
                 .rules
                 .into_iter()
                 .map(FocusProfileRuleDto::from)
+                .collect(),
+            schedules: data
+                .schedules
+                .into_iter()
+                .map(FocusProfileScheduleDto::from)
                 .collect(),
             created_at: data.profile.created_at as f64,
         };
@@ -138,6 +189,19 @@ impl From<FocusProfileRuleRow> for FocusProfileRuleDto {
             id: row.id as i32,
             action: RuleAction::from_str(&row.action).unwrap_or(RuleAction::Block),
             target,
+        };
+    }
+}
+
+impl From<FocusProfileScheduleRow> for FocusProfileScheduleDto {
+    fn from(row: FocusProfileScheduleRow) -> Self {
+        let days: Vec<i32> = serde_json::from_str(&row.days).unwrap_or_default();
+        return Self {
+            id: row.id as i32,
+            mode: ScheduleMode::from_str(&row.mode).unwrap_or(ScheduleMode::AlwaysOn),
+            days,
+            start_time: row.start_time,
+            end_time: row.end_time,
         };
     }
 }

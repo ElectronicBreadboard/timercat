@@ -25,6 +25,31 @@ impl RuleAction {
     }
 }
 
+/// Schedule mode for a focus profile.
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "snake_case")]
+pub enum ScheduleMode {
+    AlwaysOn,
+    SessionsOnly,
+}
+
+impl ScheduleMode {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ScheduleMode::AlwaysOn => "always_on",
+            ScheduleMode::SessionsOnly => "sessions_only",
+        }
+    }
+
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "always_on" => Some(ScheduleMode::AlwaysOn),
+            "sessions_only" => Some(ScheduleMode::SessionsOnly),
+            _ => None,
+        }
+    }
+}
+
 // MARK: - DTO
 
 /// Target for a focus profile rule.
@@ -52,7 +77,7 @@ pub enum RuleTargetDto {
     },
 }
 
-/// Focus profile with its rules.
+/// Focus profile with its rules and schedules.
 #[derive(Debug, Clone, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FocusProfileDto {
@@ -60,6 +85,7 @@ pub struct FocusProfileDto {
     pub name: String,
     pub color: Option<String>,
     pub rules: Vec<FocusProfileRuleDto>,
+    pub schedules: Vec<FocusProfileScheduleDto>,
     pub created_at: f64,
 }
 
@@ -70,5 +96,16 @@ pub struct FocusProfileRuleDto {
     pub id: i32,
     pub action: RuleAction,
     pub target: RuleTargetDto,
+}
+
+/// A schedule entry for a focus profile.
+#[derive(Debug, Clone, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct FocusProfileScheduleDto {
+    pub id: i32,
+    pub mode: ScheduleMode,
+    pub days: Vec<i32>,
+    pub start_time: String,
+    pub end_time: String,
 }
 

@@ -287,17 +287,17 @@ async getFocusProfile(id: number) : Promise<Result<FocusProfileDto | null, strin
     else return { status: "error", error: e  as any };
 }
 },
-async createFocusProfile(name: string, color: string | null, rules: FocusProfileRuleParams[]) : Promise<Result<FocusProfileDto, string>> {
+async createFocusProfile(name: string, color: string | null, scheduleMode: ScheduleMode | null, rules: FocusProfileRuleParams[], schedules: FocusProfileScheduleParams[]) : Promise<Result<FocusProfileDto, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("create_focus_profile", { name, color, rules }) };
+    return { status: "ok", data: await TAURI_INVOKE("create_focus_profile", { name, color, scheduleMode, rules, schedules }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-async updateFocusProfile(id: number, name: string, color: string | null, rules: FocusProfileRuleParams[]) : Promise<Result<FocusProfileDto, string>> {
+async updateFocusProfile(id: number, name: string, color: string | null, scheduleMode: ScheduleMode | null, rules: FocusProfileRuleParams[], schedules: FocusProfileScheduleParams[]) : Promise<Result<FocusProfileDto, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("update_focus_profile", { id, name, color, rules }) };
+    return { status: "ok", data: await TAURI_INVOKE("update_focus_profile", { id, name, color, scheduleMode, rules, schedules }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -366,14 +366,19 @@ export type FocusGoalSettings = {
  */
 dailyGoalMinutes: number }
 /**
- * Focus profile with its rules.
+ * Focus profile with its rules and schedules.
  */
-export type FocusProfileDto = { id: number; name: string; color: string | null; rules: FocusProfileRuleDto[]; createdAt: number }
+export type FocusProfileDto = { id: number; name: string; color: string | null; scheduleMode: ScheduleMode | null; rules: FocusProfileRuleDto[]; schedules: FocusProfileScheduleDto[]; createdAt: number }
 /**
  * A rule within a focus profile.
  */
 export type FocusProfileRuleDto = { id: number; action: RuleAction; target: RuleTargetDto }
 export type FocusProfileRuleParams = { action: RuleAction; target: RuleTargetDto }
+/**
+ * A schedule time slot for a focus profile.
+ */
+export type FocusProfileScheduleDto = { id: number; days: number[]; startTime: string; endTime: string }
+export type FocusProfileScheduleParams = { days: number[]; startTime: string; endTime: string }
 export type GetWindowActivitiesParams = { startedAfter: number; startedBefore: number; limit: number | null }
 /**
  * Event emitted when user input is detected (throttled).
@@ -404,6 +409,10 @@ export type RuleTargetDto =
  * Target a specific website.
  */
 { type: "website"; domain: string; name: string | null; icon: string | null; color: string | null }
+/**
+ * Schedule mode for a focus profile.
+ */
+export type ScheduleMode = "always_on" | "sessions_only"
 export type SearchParams = { 
 /**
  * Search query

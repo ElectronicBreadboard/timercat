@@ -1,4 +1,4 @@
-use super::types::{RuleAction, RuleTargetDto};
+use super::types::{RuleAction, RuleTargetDto, ScheduleMode};
 use crate::features::app::repository::{
     AppRepository, UpsertAppInput, UpsertWebsiteInput, WebsiteRepository,
 };
@@ -7,11 +7,11 @@ use sqlx::{FromRow, Row, SqliteConnection, SqlitePool};
 pub struct FocusProfileRepository;
 
 impl FocusProfileRepository {
-    /// Create new focus profile with rules.
+    /// Create new focus profile with rules and schedules.
     pub async fn create(
         pool: &SqlitePool,
         input: &CreateFocusProfileInput,
-    ) -> Result<FocusProfileWithRules, sqlx::Error> {
+    ) -> Result<FocusProfileWithRelations, sqlx::Error> {
         let mut tx = pool.begin().await?;
 
         let result = sqlx::query(
@@ -34,19 +34,25 @@ impl FocusProfileRepository {
         };
 
         Self::insert_rules(&mut *tx, profile.id, &input.rules).await?;
+        Self::insert_schedules(&mut *tx, profile.id, &input.schedules).await?;
 
         tx.commit().await?;
 
         let rules = Self::get_rules(pool, profile.id).await?;
+        let schedules = Self::get_schedules(pool, profile.id).await?;
 
-        return Ok(FocusProfileWithRules { profile, rules });
+        return Ok(FocusProfileWithRelations {
+            profile,
+            rules,
+            schedules,
+        });
     }
 
-    /// Get focus profile by id with rules.
+    /// Get focus profile by id with rules and schedules.
     pub async fn get(
         pool: &SqlitePool,
         id: i64,
-    ) -> Result<Option<FocusProfileWithRules>, sqlx::Error> {
+    ) -> Result<Option<FocusProfileWithRelations>, sqlx::Error> {
         let profile: Option<FocusProfileRow> =
             sqlx::query_as("SELECT id, name, color, created_at FROM focus_profile WHERE id = ?")
                 .bind(id)
@@ -56,14 +62,19 @@ impl FocusProfileRepository {
         match profile {
             Some(profile) => {
                 let rules = Self::get_rules(pool, profile.id).await?;
-                return Ok(Some(FocusProfileWithRules { profile, rules }));
+                let schedules = Self::get_schedules(pool, profile.id).await?;
+                return Ok(Some(FocusProfileWithRelations {
+                    profile,
+                    rules,
+                    schedules,
+                }));
             }
             None => return Ok(None),
         }
     }
 
-    /// Get all focus profiles with rules.
-    pub async fn get_all(pool: &SqlitePool) -> Result<Vec<FocusProfileWithRules>, sqlx::Error> {
+    /// Get all focus profiles with rules and schedules.
+    pub async fn get_all(pool: &SqlitePool) -> Result<Vec<FocusProfileWithRelations>, sqlx::Error> {
         let profiles: Vec<FocusProfileRow> = sqlx::query_as(
             "SELECT id, name, color, created_at FROM focus_profile ORDER BY created_at DESC",
         )
@@ -73,18 +84,23 @@ impl FocusProfileRepository {
         let mut results = Vec::with_capacity(profiles.len());
         for profile in profiles {
             let rules = Self::get_rules(pool, profile.id).await?;
-            results.push(FocusProfileWithRules { profile, rules });
+            let schedules = Self::get_schedules(pool, profile.id).await?;
+            results.push(FocusProfileWithRelations {
+                profile,
+                rules,
+                schedules,
+            });
         }
 
         return Ok(results);
     }
 
-    /// Update focus profile with rules (replaces all rules).
+    /// Update focus profile with rules and schedules (replaces all).
     pub async fn update(
         pool: &SqlitePool,
         id: i64,
         input: &UpdateFocusProfileInput,
-    ) -> Result<FocusProfileWithRules, sqlx::Error> {
+    ) -> Result<FocusProfileWithRelations, sqlx::Error> {
         let mut tx = pool.begin().await?;
 
         sqlx::query("UPDATE focus_profile SET name = ?, color = ? WHERE id = ?")
@@ -102,6 +118,14 @@ impl FocusProfileRepository {
 
         Self::insert_rules(&mut *tx, id, &input.rules).await?;
 
+        // Delete existing schedules and insert new ones
+        sqlx::query("DELETE FROM focus_profile_schedule WHERE focus_profile_id = ?")
+            .bind(id)
+            .execute(&mut *tx)
+            .await?;
+
+        Self::insert_schedules(&mut *tx, id, &input.schedules).await?;
+
         tx.commit().await?;
 
         // Fetch updated profile
@@ -112,11 +136,16 @@ impl FocusProfileRepository {
                 .await?;
 
         let rules = Self::get_rules(pool, profile.id).await?;
+        let schedules = Self::get_schedules(pool, profile.id).await?;
 
-        return Ok(FocusProfileWithRules { profile, rules });
+        return Ok(FocusProfileWithRelations {
+            profile,
+            rules,
+            schedules,
+        });
     }
 
-    /// Delete focus profile (rules cascade).
+    /// Delete focus profile (rules and schedules cascade).
     pub async fn delete(pool: &SqlitePool, id: i64) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM focus_profile WHERE id = ?")
             .bind(id)
@@ -233,23 +262,78 @@ impl FocusProfileRepository {
 
         return Ok(());
     }
+
+    /// Get schedules for a profile.
+    async fn get_schedules(
+        pool: &SqlitePool,
+        profile_id: i64,
+    ) -> Result<Vec<FocusProfileScheduleRow>, sqlx::Error> {
+        let rows = sqlx::query_as(
+            r#"
+            SELECT id, mode, days, start_time, end_time
+            FROM focus_profile_schedule
+            WHERE focus_profile_id = ?
+            ORDER BY created_at ASC
+            "#,
+        )
+        .bind(profile_id)
+        .fetch_all(pool)
+        .await?;
+
+        return Ok(rows);
+    }
+
+    /// Insert schedules for a profile.
+    async fn insert_schedules(
+        conn: &mut SqliteConnection,
+        profile_id: i64,
+        schedules: &[FocusProfileScheduleInput],
+    ) -> Result<(), sqlx::Error> {
+        for schedule in schedules {
+            let days_json = serde_json::to_string(&schedule.days).unwrap_or_default();
+            sqlx::query(
+                r#"
+                INSERT INTO focus_profile_schedule (focus_profile_id, mode, days, start_time, end_time)
+                VALUES (?, ?, ?, ?, ?)
+                "#,
+            )
+            .bind(profile_id)
+            .bind(schedule.mode.as_str())
+            .bind(&days_json)
+            .bind(&schedule.start_time)
+            .bind(&schedule.end_time)
+            .execute(&mut *conn)
+            .await?;
+        }
+
+        return Ok(());
+    }
 }
 
 pub struct CreateFocusProfileInput {
     pub name: String,
     pub color: Option<String>,
     pub rules: Vec<FocusProfileRuleInput>,
+    pub schedules: Vec<FocusProfileScheduleInput>,
 }
 
 pub struct UpdateFocusProfileInput {
     pub name: String,
     pub color: Option<String>,
     pub rules: Vec<FocusProfileRuleInput>,
+    pub schedules: Vec<FocusProfileScheduleInput>,
 }
 
 pub struct FocusProfileRuleInput {
     pub action: RuleAction,
     pub target: RuleTargetDto,
+}
+
+pub struct FocusProfileScheduleInput {
+    pub mode: ScheduleMode,
+    pub days: Vec<i32>,
+    pub start_time: String,
+    pub end_time: String,
 }
 
 #[derive(Debug, FromRow)]
@@ -274,7 +358,17 @@ pub struct FocusProfileRuleRow {
     pub website_color: Option<String>,
 }
 
-pub struct FocusProfileWithRules {
+#[derive(Debug, FromRow)]
+pub struct FocusProfileScheduleRow {
+    pub id: i64,
+    pub mode: String,
+    pub days: String,
+    pub start_time: String,
+    pub end_time: String,
+}
+
+pub struct FocusProfileWithRelations {
     pub profile: FocusProfileRow,
     pub rules: Vec<FocusProfileRuleRow>,
+    pub schedules: Vec<FocusProfileScheduleRow>,
 }

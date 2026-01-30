@@ -96,6 +96,23 @@ WHERE
     app_id IS NULL
     AND website_id IS NULL;
 
+-- Focus profile schedules (auto-activation time windows)
+-- No rows = manual-only profile.
+-- days: JSON array of day numbers [0=Mon .. 6=Sun]
+CREATE TABLE focus_profile_schedule (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    focus_profile_id INTEGER NOT NULL REFERENCES focus_profile (id) ON DELETE CASCADE,
+    mode TEXT NOT NULL CHECK (
+        mode IN ('always_on', 'sessions_only')
+    ),
+    days TEXT NOT NULL,
+    start_time TEXT NOT NULL, -- "HH:MM" format
+    end_time TEXT NOT NULL, -- "HH:MM" format
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+);
+
+CREATE INDEX idx_focus_profile_schedule_profile_id ON focus_profile_schedule (focus_profile_id);
+
 -- Session focus profiles (which profiles are active, with priority for override)
 CREATE TABLE session_focus_profile (
     session_id INTEGER NOT NULL REFERENCES sessions (id) ON DELETE CASCADE,
