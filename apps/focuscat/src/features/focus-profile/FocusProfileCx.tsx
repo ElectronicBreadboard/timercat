@@ -119,16 +119,18 @@ export class FocusProfileCx {
 
 	public startCreate(): void {
 		this.$editingId.set(null);
-		this.form.fields.name._intialValue = '';
-		this.form.fields.color._intialValue = null;
-		this.form.fields.ruleEnabled._intialValue = false;
-		this.form.fields.ruleMode._intialValue = 'block';
-		this.form.fields.ruleTargets._intialValue = [];
-		this.form.fields.scheduleEnabled._intialValue = false;
-		this.form.fields.scheduleMode._intialValue = 'always_on';
-		this.form.fields.scheduleDays._intialValue = [0, 1, 2, 3, 4];
-		this.form.fields.scheduleStartTime._intialValue = '09:00';
-		this.form.fields.scheduleEndTime._intialValue = '17:00';
+		this.setInitialValues({
+			name: '',
+			color: null,
+			ruleEnabled: false,
+			ruleMode: 'block',
+			ruleTargets: [],
+			scheduleEnabled: false,
+			scheduleMode: 'always_on',
+			scheduleDays: [0, 1, 2, 3, 4],
+			scheduleStartTime: '09:00',
+			scheduleEndTime: '17:00'
+		});
 		this.form.reset();
 	}
 
@@ -139,19 +141,7 @@ export class FocusProfileCx {
 		}
 
 		this.$editingId.set(id);
-		this.form.fields.name._intialValue = profile.name;
-		this.form.fields.color._intialValue = profile.color ?? null;
-		this.form.fields.ruleEnabled._intialValue = profile.rules.length > 0;
-		this.form.fields.ruleMode._intialValue = profile.rules[0]?.action ?? 'block';
-		this.form.fields.ruleTargets._intialValue = profile.rules
-			.map(ruleToSelectedItem)
-			.filter((item): item is TSelectedItem => item != null);
-		const schedule = profile.schedules[0];
-		this.form.fields.scheduleEnabled._intialValue = profile.schedules.length > 0;
-		this.form.fields.scheduleMode._intialValue = schedule?.mode ?? 'always_on';
-		this.form.fields.scheduleDays._intialValue = schedule?.days ?? [0, 1, 2, 3, 4];
-		this.form.fields.scheduleStartTime._intialValue = schedule?.startTime ?? '09:00';
-		this.form.fields.scheduleEndTime._intialValue = schedule?.endTime ?? '17:00';
+		this.setInitialValues(this.profileToFormData(profile));
 		this.form.reset();
 	}
 
@@ -166,7 +156,7 @@ export class FocusProfileCx {
 			data.ruleEnabled && data.ruleTargets.length > 0
 				? data.ruleTargets.map((item) => ({
 						action: data.ruleMode,
-						target: selectedItemToRuleTarget(item)
+						target: this.selectedItemToRuleTarget(item)
 					}))
 				: [];
 		const schedules: specta.FocusProfileScheduleParams[] = data.scheduleEnabled
@@ -214,6 +204,77 @@ export class FocusProfileCx {
 		console.error('Failed to delete focus profile:', err);
 		return false;
 	}
+
+	private setInitialValues(values: TFocusProfileFormData): void {
+		for (const key of Object.keys(values) as (keyof TFocusProfileFormData)[]) {
+			(this.form.fields[key] as { _intialValue: unknown })._intialValue = values[key];
+		}
+	}
+
+	private profileToFormData(profile: specta.FocusProfileDto): TFocusProfileFormData {
+		const schedule = profile.schedules[0];
+		return {
+			name: profile.name,
+			color: profile.color ?? null,
+			ruleEnabled: profile.rules.length > 0,
+			ruleMode: profile.rules[0]?.action ?? 'block',
+			ruleTargets: profile.rules
+				.map((rule) => this.ruleToSelectedItem(rule))
+				.filter((item): item is TSelectedItem => item != null),
+			scheduleEnabled: profile.schedules.length > 0,
+			scheduleMode: schedule?.mode ?? 'always_on',
+			scheduleDays: schedule?.days ?? [0, 1, 2, 3, 4],
+			scheduleStartTime: schedule?.startTime ?? '09:00',
+			scheduleEndTime: schedule?.endTime ?? '17:00'
+		};
+	}
+
+	private ruleToSelectedItem(rule: specta.FocusProfileRuleDto): TSelectedItem | null {
+		const { target } = rule;
+		switch (target.type) {
+			case 'app':
+				return {
+					id: target.bundle_id,
+					type: 'app',
+					bundleId: target.bundle_id,
+					name: target.name ?? undefined,
+					icon: target.icon ?? undefined,
+					color: target.color ?? undefined
+				};
+			case 'website':
+				return {
+					id: target.domain,
+					type: 'website',
+					domain: target.domain,
+					name: target.name ?? undefined,
+					icon: target.icon ?? undefined,
+					color: target.color ?? undefined
+				};
+			case 'all':
+				return null;
+		}
+	}
+
+	private selectedItemToRuleTarget(item: TSelectedItem): specta.RuleTargetDto {
+		switch (item.type) {
+			case 'app':
+				return {
+					type: 'app',
+					bundle_id: item.bundleId,
+					name: item.name ?? null,
+					icon: item.icon ?? null,
+					color: item.color ?? null
+				};
+			case 'website':
+				return {
+					type: 'website',
+					domain: item.domain,
+					name: item.name ?? null,
+					icon: item.icon ?? null,
+					color: item.color ?? null
+				};
+		}
+	}
 }
 
 export interface TFocusProfileFormData {
@@ -227,54 +288,6 @@ export interface TFocusProfileFormData {
 	scheduleDays: number[];
 	scheduleStartTime: string;
 	scheduleEndTime: string;
-}
-
-function ruleToSelectedItem(rule: specta.FocusProfileRuleDto): TSelectedItem | null {
-	const { target } = rule;
-	switch (target.type) {
-		case 'app':
-			return {
-				id: target.bundle_id,
-				type: 'app',
-				bundleId: target.bundle_id,
-				name: target.name ?? undefined,
-				icon: target.icon ?? undefined,
-				color: target.color ?? undefined
-			};
-		case 'website':
-			return {
-				id: target.domain,
-				type: 'website',
-				domain: target.domain,
-				name: target.name ?? undefined,
-				icon: target.icon ?? undefined,
-				color: target.color ?? undefined
-			};
-		case 'all':
-			// Skip 'all' targets - not supported in current UI
-			return null;
-	}
-}
-
-function selectedItemToRuleTarget(item: TSelectedItem): specta.RuleTargetDto {
-	switch (item.type) {
-		case 'app':
-			return {
-				type: 'app',
-				bundle_id: item.bundleId,
-				name: item.name ?? null,
-				icon: item.icon ?? null,
-				color: item.color ?? null
-			};
-		case 'website':
-			return {
-				type: 'website',
-				domain: item.domain,
-				name: item.name ?? null,
-				icon: item.icon ?? null,
-				color: item.color ?? null
-			};
-	}
 }
 
 // MARK: - React Context
