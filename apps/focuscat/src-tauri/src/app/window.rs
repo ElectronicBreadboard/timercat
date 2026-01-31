@@ -15,6 +15,7 @@ pub enum Window {
     Cat,
     Settings,
     History,
+    Blocker,
 }
 
 impl Window {
@@ -25,6 +26,7 @@ impl Window {
             Self::Cat => "cat",
             Self::Settings => "settings",
             Self::History => "history",
+            Self::Blocker => "blocker",
         };
     }
 
@@ -35,6 +37,7 @@ impl Window {
             Self::Cat => "Focuscat",
             Self::Settings => "Focuscat Settings",
             Self::History => "Focuscat History",
+            Self::Blocker => "Focuscat",
         };
     }
 
@@ -45,6 +48,7 @@ impl Window {
             Self::Cat => "/window/cat",
             Self::Settings => "/window/settings",
             Self::History => "/window/history",
+            Self::Blocker => "/window/blocker",
         };
     }
 
@@ -55,6 +59,7 @@ impl Window {
             Self::Cat => (180.0, 220.0),
             Self::Settings => (600.0, 450.0),
             Self::History => (600.0, 450.0),
+            Self::Blocker => (400.0, 300.0),
         };
     }
 
@@ -65,6 +70,7 @@ impl Window {
             Self::Cat => None,
             Self::Settings => Some((500.0, 400.0)),
             Self::History => Some((500.0, 400.0)),
+            Self::Blocker => None,
         };
     }
 
@@ -147,6 +153,36 @@ impl Window {
         return Ok(window);
     }
 
+    /// Show window centered over the given bounds.
+    pub fn show_at_bounds(
+        &self,
+        app: &AppHandle,
+        x: f64,
+        y: f64,
+        width: f64,
+        height: f64,
+    ) -> tauri::Result<WebviewWindow> {
+        let window = if let Some(window) = self.get(app) {
+            window
+        } else {
+            self.build(app)?
+        };
+
+        let (card_w, card_h) = self.size();
+        let center_x = x + (width - card_w) / 2.0;
+        let center_y = y + (height - card_h) / 2.0;
+
+        let _ = window.set_position(tauri::Position::Logical(tauri::LogicalPosition::new(
+            center_x, center_y,
+        )));
+        let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize::new(
+            card_w, card_h,
+        )));
+        window.show()?;
+        window.set_focus()?;
+        return Ok(window);
+    }
+
     // MARK: - Build
 
     fn build(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
@@ -155,6 +191,7 @@ impl Window {
             Self::Cat => self.build_cat(app),
             Self::Settings => self.build_settings(app),
             Self::History => self.build_history(app),
+            Self::Blocker => self.build_blocker(app),
         };
     }
 
@@ -203,6 +240,20 @@ impl Window {
             .transparent(true)
             .always_on_top(true)
             .shadow(false)
+            .skip_taskbar(true)
+            .build();
+    }
+
+    fn build_blocker(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
+        return self
+            .base_builder(app)
+            .resizable(false)
+            .maximizable(false)
+            .minimizable(false)
+            .closable(false)
+            .decorations(false)
+            .transparent(true)
+            .always_on_top(true)
             .skip_taskbar(true)
             .build();
     }
@@ -325,6 +376,10 @@ impl Window {
                 api.prevent_close();
                 let _ = window.hide();
                 let _ = Window::Main.show(window.app_handle());
+            }
+            "blocker" => {
+                api.prevent_close();
+                let _ = window.hide();
             }
             _ => {}
         }

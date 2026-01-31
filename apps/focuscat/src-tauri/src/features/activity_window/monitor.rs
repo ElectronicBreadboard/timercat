@@ -7,7 +7,7 @@ use crate::environment::db::DatabaseState;
 use crate::features::app::repository::{
     AppRepository, UpsertAppInput, UpsertWebsiteInput, WebsiteRepository,
 };
-use crate::features::blocking::types::BlockingCheckerState;
+use crate::features::blocking::types::BlockerState;
 use crate::features::settings::types::AppSettingsState;
 use chrono::Utc;
 use mado::{MonitorConfig, WindowEvent, WindowListener, WindowMonitor};
@@ -87,11 +87,12 @@ impl WindowListener for WindowMonitorHandler {
     fn on_focus_change(&self, event: WindowEvent) {
         match event {
             WindowEvent::AppActivated { app: app_info } => {
-                if let Some(state) = self.app.try_state::<BlockingCheckerState>() {
-                    state
-                        .lock()
-                        .unwrap()
-                        .check_app(app_info.bundle_id.as_deref());
+                if let Some(state) = self.app.try_state::<BlockerState>() {
+                    state.lock().unwrap().handle_app_activated(
+                        &self.app,
+                        app_info.bundle_id.as_deref(),
+                        app_info.name.as_deref(),
+                    );
                 }
 
                 if !self.is_tracking_enabled() {
@@ -157,12 +158,19 @@ impl WindowListener for WindowMonitorHandler {
             WindowEvent::WindowChanged {
                 window: window_info,
             } => {
-                if let Some(state) = self.app.try_state::<BlockingCheckerState>() {
+                if let Some(state) = self.app.try_state::<BlockerState>() {
                     let browser_url = window_info.browser.as_ref().and_then(|b| b.url.as_deref());
-                    state
-                        .lock()
-                        .unwrap()
-                        .check_window(window_info.app.bundle_id.as_deref(), browser_url);
+                    let bounds = window_info
+                        .bounds
+                        .as_ref()
+                        .map(|b| (b.x, b.y, b.width, b.height));
+                    state.lock().unwrap().handle_window_changed(
+                        &self.app,
+                        window_info.app.bundle_id.as_deref(),
+                        window_info.app.name.as_deref(),
+                        browser_url,
+                        bounds,
+                    );
                 }
 
                 if !self.is_window_tracking_enabled() {

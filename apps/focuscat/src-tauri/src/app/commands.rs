@@ -126,6 +126,13 @@ pub fn hide_history_window(app: tauri::AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 #[specta::specta]
+pub fn hide_blocker_window(app: tauri::AppHandle) -> Result<(), String> {
+    Window::Blocker.hide(&app).map_err(|e| e.to_string())?;
+    return Ok(());
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn quit_app(app: tauri::AppHandle) {
     app.exit(0);
 }

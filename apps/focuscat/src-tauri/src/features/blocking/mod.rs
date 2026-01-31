@@ -1,20 +1,21 @@
-pub mod checker;
+pub mod blocker;
+pub mod commands;
 pub mod config;
 pub mod types;
 
 use crate::environment::db::DatabaseState;
+use crate::features::focus_profile::repository::FocusProfileRepository;
 use crate::features::focus_profile::types::ProfileChangedEvent;
 use crate::features::session::types::SessionChangedEvent;
-use checker::BlockingChecker;
 use config::BlockingConfig;
 use std::sync::Arc;
 use tauri::{App, Manager};
 use tauri_specta::Event;
 use tokio::sync::Notify;
-use types::BlockingCheckerState;
+use types::BlockerState;
 
 pub fn setup(app: &App) {
-    app.manage(BlockingCheckerState::new());
+    app.manage(BlockerState::new());
 
     let notify = Arc::new(Notify::new());
 
@@ -33,9 +34,11 @@ pub fn setup(app: &App) {
     tauri::async_runtime::spawn(async move {
         loop {
             if let Some(db) = handle.try_state::<DatabaseState>() {
-                let checker = BlockingChecker::refresh(&db.pool).await;
-                if let Some(state) = handle.try_state::<BlockingCheckerState>() {
-                    *state.lock().unwrap() = checker;
+                let profiles = FocusProfileRepository::get_active(&db.pool).await;
+                if let (Ok(profiles), Some(state)) =
+                    (profiles, handle.try_state::<BlockerState>())
+                {
+                    state.lock().unwrap().set_profiles(profiles);
                 }
             }
 

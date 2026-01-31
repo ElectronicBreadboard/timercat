@@ -5,6 +5,7 @@ pub mod window;
 use crate::environment::db;
 use crate::features::{
     activity_window, app as app_feature, audio, blocking,
+    blocking::types::BlockingViolationEvent,
     focus_profile::{self, types::ProfileChangedEvent},
     input::{self, types::InputDetectedEvent},
     permission,
@@ -34,6 +35,7 @@ pub fn run() {
             commands::hide_cat_window,
             commands::hide_settings_window,
             commands::hide_history_window,
+            commands::hide_blocker_window,
             commands::quit_app,
             // Settings commands
             settings::commands::get_settings,
@@ -73,6 +75,8 @@ pub fn run() {
             focus_profile::commands::update_focus_profile,
             focus_profile::commands::delete_focus_profile,
             focus_profile::commands::get_active_focus_profiles,
+            // Blocking commands
+            blocking::commands::get_blocking_violation,
         ])
         .events(collect_events![
             // Settings events
@@ -84,6 +88,8 @@ pub fn run() {
             SessionChangedEvent,
             // Focus profile events
             ProfileChangedEvent,
+            // Blocking events
+            BlockingViolationEvent,
             // Input events
             InputDetectedEvent,
         ]);

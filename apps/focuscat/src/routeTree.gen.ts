@@ -13,10 +13,12 @@ import { Route as WindowSettingsRouteRouteImport } from './routes/window.setting
 import { Route as WindowMainRouteRouteImport } from './routes/window.main/route'
 import { Route as WindowHistoryRouteRouteImport } from './routes/window.history/route'
 import { Route as WindowCatRouteRouteImport } from './routes/window.cat/route'
+import { Route as WindowBlockerRouteRouteImport } from './routes/window.blocker/route'
 import { Route as WindowSettingsIndexRouteImport } from './routes/window.settings/index'
 import { Route as WindowMainIndexRouteImport } from './routes/window.main/index'
 import { Route as WindowHistoryIndexRouteImport } from './routes/window.history/index'
 import { Route as WindowCatIndexRouteImport } from './routes/window.cat/index'
+import { Route as WindowBlockerIndexRouteImport } from './routes/window.blocker/index'
 import { Route as WindowSettingsTimerIndexRouteImport } from './routes/window.settings.timer/index'
 import { Route as WindowSettingsGoalsIndexRouteImport } from './routes/window.settings.goals/index'
 import { Route as WindowSettingsFocusProfilesIndexRouteImport } from './routes/window.settings.focus-profiles/index'
@@ -48,6 +50,11 @@ const WindowCatRouteRoute = WindowCatRouteRouteImport.update({
   path: '/window/cat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WindowBlockerRouteRoute = WindowBlockerRouteRouteImport.update({
+  id: '/window/blocker',
+  path: '/window/blocker',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WindowSettingsIndexRoute = WindowSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -67,6 +74,11 @@ const WindowCatIndexRoute = WindowCatIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => WindowCatRouteRoute,
+} as any)
+const WindowBlockerIndexRoute = WindowBlockerIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WindowBlockerRouteRoute,
 } as any)
 const WindowSettingsTimerIndexRoute =
   WindowSettingsTimerIndexRouteImport.update({
@@ -128,10 +140,12 @@ const WindowSettingsFocusProfilesProfileIdIndexRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/window/blocker': typeof WindowBlockerRouteRouteWithChildren
   '/window/cat': typeof WindowCatRouteRouteWithChildren
   '/window/history': typeof WindowHistoryRouteRouteWithChildren
   '/window/main': typeof WindowMainRouteRouteWithChildren
   '/window/settings': typeof WindowSettingsRouteRouteWithChildren
+  '/window/blocker/': typeof WindowBlockerIndexRoute
   '/window/cat/': typeof WindowCatIndexRoute
   '/window/history/': typeof WindowHistoryIndexRoute
   '/window/main/': typeof WindowMainIndexRoute
@@ -148,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/window/settings/focus-profiles/new/': typeof WindowSettingsFocusProfilesNewIndexRoute
 }
 export interface FileRoutesByTo {
+  '/window/blocker': typeof WindowBlockerIndexRoute
   '/window/cat': typeof WindowCatIndexRoute
   '/window/history': typeof WindowHistoryIndexRoute
   '/window/main': typeof WindowMainIndexRoute
@@ -165,10 +180,12 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/window/blocker': typeof WindowBlockerRouteRouteWithChildren
   '/window/cat': typeof WindowCatRouteRouteWithChildren
   '/window/history': typeof WindowHistoryRouteRouteWithChildren
   '/window/main': typeof WindowMainRouteRouteWithChildren
   '/window/settings': typeof WindowSettingsRouteRouteWithChildren
+  '/window/blocker/': typeof WindowBlockerIndexRoute
   '/window/cat/': typeof WindowCatIndexRoute
   '/window/history/': typeof WindowHistoryIndexRoute
   '/window/main/': typeof WindowMainIndexRoute
@@ -187,10 +204,12 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/window/blocker'
     | '/window/cat'
     | '/window/history'
     | '/window/main'
     | '/window/settings'
+    | '/window/blocker/'
     | '/window/cat/'
     | '/window/history/'
     | '/window/main/'
@@ -207,6 +226,7 @@ export interface FileRouteTypes {
     | '/window/settings/focus-profiles/new/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/window/blocker'
     | '/window/cat'
     | '/window/history'
     | '/window/main'
@@ -223,10 +243,12 @@ export interface FileRouteTypes {
     | '/window/settings/focus-profiles/new'
   id:
     | '__root__'
+    | '/window/blocker'
     | '/window/cat'
     | '/window/history'
     | '/window/main'
     | '/window/settings'
+    | '/window/blocker/'
     | '/window/cat/'
     | '/window/history/'
     | '/window/main/'
@@ -244,6 +266,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  WindowBlockerRouteRoute: typeof WindowBlockerRouteRouteWithChildren
   WindowCatRouteRoute: typeof WindowCatRouteRouteWithChildren
   WindowHistoryRouteRoute: typeof WindowHistoryRouteRouteWithChildren
   WindowMainRouteRoute: typeof WindowMainRouteRouteWithChildren
@@ -280,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WindowCatRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/window/blocker': {
+      id: '/window/blocker'
+      path: '/window/blocker'
+      fullPath: '/window/blocker'
+      preLoaderRoute: typeof WindowBlockerRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/window/settings/': {
       id: '/window/settings/'
       path: '/'
@@ -307,6 +337,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/window/cat/'
       preLoaderRoute: typeof WindowCatIndexRouteImport
       parentRoute: typeof WindowCatRouteRoute
+    }
+    '/window/blocker/': {
+      id: '/window/blocker/'
+      path: '/'
+      fullPath: '/window/blocker/'
+      preLoaderRoute: typeof WindowBlockerIndexRouteImport
+      parentRoute: typeof WindowBlockerRouteRoute
     }
     '/window/settings/timer/': {
       id: '/window/settings/timer/'
@@ -381,6 +418,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface WindowBlockerRouteRouteChildren {
+  WindowBlockerIndexRoute: typeof WindowBlockerIndexRoute
+}
+
+const WindowBlockerRouteRouteChildren: WindowBlockerRouteRouteChildren = {
+  WindowBlockerIndexRoute: WindowBlockerIndexRoute,
+}
+
+const WindowBlockerRouteRouteWithChildren =
+  WindowBlockerRouteRoute._addFileChildren(WindowBlockerRouteRouteChildren)
+
 interface WindowCatRouteRouteChildren {
   WindowCatIndexRoute: typeof WindowCatIndexRoute
 }
@@ -450,6 +498,7 @@ const WindowSettingsRouteRouteWithChildren =
   WindowSettingsRouteRoute._addFileChildren(WindowSettingsRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  WindowBlockerRouteRoute: WindowBlockerRouteRouteWithChildren,
   WindowCatRouteRoute: WindowCatRouteRouteWithChildren,
   WindowHistoryRouteRoute: WindowHistoryRouteRouteWithChildren,
   WindowMainRouteRoute: WindowMainRouteRouteWithChildren,

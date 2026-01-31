@@ -88,6 +88,14 @@ async hideHistoryWindow() : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async hideBlockerWindow() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("hide_blocker_window") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async quitApp() : Promise<void> {
     await TAURI_INVOKE("quit_app");
 },
@@ -326,6 +334,9 @@ async getActiveFocusProfiles() : Promise<Result<FocusProfileDto[], string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async getBlockingViolation() : Promise<BlockingViolationDto | null> {
+    return await TAURI_INVOKE("get_blocking_violation");
 }
 }
 
@@ -334,6 +345,7 @@ async getActiveFocusProfiles() : Promise<Result<FocusProfileDto[], string>> {
 
 export const events = __makeEvents__<{
 appSettingsChangedEvent: AppSettingsChangedEvent,
+blockingViolationEvent: BlockingViolationEvent,
 inputDetectedEvent: InputDetectedEvent,
 profileChangedEvent: ProfileChangedEvent,
 sessionChangedEvent: SessionChangedEvent,
@@ -341,6 +353,7 @@ sessionCompletedEvent: SessionCompletedEvent,
 timerUpdatedEvent: TimerUpdatedEvent
 }>({
 appSettingsChangedEvent: "app-settings-changed-event",
+blockingViolationEvent: "blocking-violation-event",
 inputDetectedEvent: "input-detected-event",
 profileChangedEvent: "profile-changed-event",
 sessionChangedEvent: "session-changed-event",
@@ -379,6 +392,18 @@ export type AppInfo = { version: string; stage: Stage }
 export type AppSettings = { appearance: AppearanceSettings; debug: DebugSettings; timer: TimerSettings; focusGoal: FocusGoalSettings; activity: ActivitySettings }
 export type AppSettingsChangedEvent = AppSettings
 export type AppearanceSettings = { theme: Theme }
+/**
+ * The target that was blocked.
+ */
+export type BlockedTargetDto = { type: "app"; bundleId: string } | { type: "website"; domain: string }
+/**
+ * Describes what was blocked and by which profile.
+ */
+export type BlockingViolationDto = { profileName: string; profileColor: string | null; blockedTarget: BlockedTargetDto }
+/**
+ * Event emitted when a blocking violation is detected (or cleared).
+ */
+export type BlockingViolationEvent = BlockingViolationDto | null
 export type DebugSettings = { enabled: boolean; cat: boolean; timerSpeed: number }
 export type FocusGoalSettings = { 
 /**
