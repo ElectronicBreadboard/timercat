@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
+import { IconButton, ShuffleIcon } from '@/components';
 import { specta } from '@/environment';
-import { Cat, catConfig, TCatRef } from '@/features/cat';
+import { Cat, catConfig, TCatRef, type TCatFace, type TCatHat } from '@/features/cat';
 import { useTimerCx } from '@/features/timer';
 import { Navbar, OverviewCard, TimerView } from './components';
 
@@ -12,6 +13,8 @@ export const Route = createFileRoute('/window/main/')({
 
 function RouteComponent() {
 	const catRef = React.useRef<TCatRef>(null);
+	const [face, setFace] = React.useState<TCatFace>('cute');
+	const [hat, setHat] = React.useState<TCatHat | undefined>(undefined);
 
 	const timerCx = useTimerCx();
 	const timerStatus = useFeatureState(timerCx.$status);
@@ -43,6 +46,15 @@ function RouteComponent() {
 		catRef.current?.tap();
 	}, []);
 
+	const handleRandomize = React.useCallback(() => {
+		const faces = catConfig.parts.face.available;
+		const hats = catConfig.parts.hat.available;
+		setFace(faces[Math.floor(Math.random() * faces.length)] as TCatFace);
+		setHat(
+			Math.random() < 0.5 ? undefined : (hats[Math.floor(Math.random() * hats.length)] as TCatHat)
+		);
+	}, []);
+
 	const handleCatTap = React.useCallback(() => {
 		specta.commands.playSound('meow');
 		return timerStatus === 'running' ? { mode: 'both' as const } : undefined;
@@ -62,10 +74,20 @@ function RouteComponent() {
 				<div className="relative z-30 w-1/2 overflow-visible">
 					<Cat
 						ref={catRef}
+						face={face}
+						hat={hat}
 						size={topSection.width}
 						className="absolute right-0 bottom-0"
 						onTap={handleCatTap}
 					/>
+					<IconButton
+						variant="bare"
+						size="sm"
+						className="absolute top-2.5 right-3 z-40 size-3"
+						onClick={handleRandomize}
+					>
+						<ShuffleIcon size={16} />
+					</IconButton>
 				</div>
 			</div>
 

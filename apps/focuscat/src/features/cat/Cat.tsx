@@ -81,10 +81,7 @@ export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
 			style={{ width: size, height: containerHeight }}
 		>
 			{/* Tap target */}
-			<div
-				className="pointer-events-auto absolute inset-0 cursor-pointer"
-				onPointerDown={handleTap}
-			/>
+			<div className="pointer-events-auto absolute inset-0" onPointerDown={handleTap} />
 			{/* Cat layers */}
 			<div
 				className="pointer-events-none absolute bottom-0 left-0"

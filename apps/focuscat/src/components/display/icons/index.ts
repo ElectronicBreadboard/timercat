@@ -32,6 +32,7 @@ export {
 	Play as PlayIcon,
 	Plus as PlusIcon,
 	Settings as SettingsIcon,
+	Shuffle as ShuffleIcon,
 	ShieldBan as BlockIcon,
 	SkipForward as SkipIcon,
 	Sun as SunIcon,
