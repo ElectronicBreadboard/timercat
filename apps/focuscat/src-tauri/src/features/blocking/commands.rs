@@ -2,6 +2,7 @@ use super::blocker::{BlockedTarget, BlockingViolation};
 use super::types::{BlockedTargetDto, BlockerState, BlockingViolationDto};
 use tauri::Manager;
 
+/// Current blocking violation (None if nothing is blocked).
 #[tauri::command]
 #[specta::specta]
 pub fn get_blocking_violation(app: tauri::AppHandle) -> Option<BlockingViolationDto> {

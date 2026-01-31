@@ -1,7 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 import React from 'react';
-import { WindowHeader } from '@/components';
+import { Badge, WindowHeader } from '@/components';
 import { specta } from '@/environment';
+import { Cat, catConfig, type TCatFace, type TCatHat } from '@/features/cat';
+import { hexToRgba } from '@/lib';
 
 export const Route = createFileRoute('/window/blocker/')({
 	component: RouteComponent
@@ -9,6 +11,17 @@ export const Route = createFileRoute('/window/blocker/')({
 
 function RouteComponent() {
 	const [violation, setViolation] = React.useState<specta.BlockingViolationDto | null>(null);
+
+	// Randomized cat (picked once on mount)
+	const face = React.useMemo<TCatFace>(() => {
+		const faces = catConfig.parts.face.available;
+		return faces[Math.floor(Math.random() * faces.length)] as TCatFace;
+	}, []);
+	const hat = React.useMemo<TCatHat | undefined>(() => {
+		if (Math.random() < 0.5) return undefined;
+		const hats = catConfig.parts.hat.available;
+		return hats[Math.floor(Math.random() * hats.length)] as TCatHat;
+	}, []);
 
 	React.useEffect(() => {
 		let unlisten: (() => void) | undefined;
@@ -29,20 +42,30 @@ function RouteComponent() {
 		return () => unlisten?.();
 	}, []);
 
+	const profileColor = violation?.profileColor ?? '#9CA3AF';
+
 	return (
 		<div className="bg-base-0 flex h-screen flex-col">
 			<WindowHeader title="Blocked" showBadge={false} />
 			<div className="flex flex-1 flex-col items-center justify-center p-6">
+				<Cat face={face} hat={hat} position={violation != null ? 'edge' : 'centered'} />
 				{violation != null && (
-					<>
+					<div className="flex flex-col items-center gap-1">
 						<p className="text-base-900 text-lg font-semibold">
 							{describeTarget(violation.blockedTarget)}
 						</p>
-						<p className="text-base-500 mt-1 text-sm">
+						<p className="text-base-500 text-sm">
 							Blocked by{' '}
-							<span className="text-base-700 font-medium">{violation.profileName}</span>
+							<Badge
+								style={{
+									backgroundColor: hexToRgba(profileColor, 0.1),
+									color: profileColor
+								}}
+							>
+								{violation.profileName}
+							</Badge>
 						</p>
-					</>
+					</div>
 				)}
 			</div>
 		</div>

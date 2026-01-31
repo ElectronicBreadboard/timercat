@@ -245,17 +245,29 @@ impl Window {
     }
 
     fn build_blocker(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
-        return self
+        let mut builder = self
             .base_builder(app)
             .resizable(false)
             .maximizable(false)
             .minimizable(false)
-            .closable(false)
-            .decorations(false)
-            .transparent(true)
+            .transparent(false)
             .always_on_top(true)
-            .skip_taskbar(true)
-            .build();
+            .skip_taskbar(true);
+
+        #[cfg(target_os = "macos")]
+        {
+            builder = builder
+                .decorations(true)
+                .title_bar_style(TitleBarStyle::Overlay)
+                .hidden_title(true);
+        }
+
+        #[cfg(not(target_os = "macos"))]
+        {
+            builder = builder.decorations(false);
+        }
+
+        return builder.build();
     }
 
     fn build_settings(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {

@@ -96,40 +96,51 @@ impl FocusProfileRepository {
         return Ok(results);
     }
 
-    /// Get all currently active focus profiles.
+    /// Get all currently active focus profiles with their priority.
     ///
     /// A profile is active if:
     /// - It's linked to an active session (via session_focus_profile), OR
     /// - It has an always_on schedule matching the current day and time.
+    ///
+    /// Returns each profile paired with its priority (higher = overrides lower).
+    /// Session-linked profiles use their session_focus_profile.priority.
+    /// Always-on profiles default to priority 0.
     pub async fn get_active(
         pool: &SqlitePool,
-    ) -> Result<Vec<FocusProfileWithRelations>, sqlx::Error> {
+    ) -> Result<Vec<(FocusProfileWithRelations, i32)>, sqlx::Error> {
         let all = Self::get_all(pool).await?;
 
         let now = chrono::Local::now();
         let current_day = now.weekday().num_days_from_monday() as i32;
         let current_time = now.format("%H:%M").to_string();
 
-        // Get profile IDs linked to active sessions
-        let session_profile_ids: Vec<i64> = sqlx::query_scalar(
+        // Get profile IDs linked to active sessions with their max priority
+        let rows = sqlx::query(
             r#"
-            SELECT sfp.focus_profile_id
+            SELECT sfp.focus_profile_id, MAX(sfp.priority) as priority
             FROM session_focus_profile sfp
             JOIN sessions s ON s.id = sfp.session_id
             WHERE s.status = 'active'
-            ORDER BY sfp.priority DESC
+            GROUP BY sfp.focus_profile_id
             "#,
         )
         .fetch_all(pool)
         .await?;
 
+        let session_priorities: std::collections::HashMap<i64, i32> = rows
+            .iter()
+            .map(|r| (r.get("focus_profile_id"), r.get("priority")))
+            .collect();
+
         let active = all
             .into_iter()
-            .filter(|p| {
-                // Linked to active session
-                session_profile_ids.contains(&p.profile.id)
-                // Or has an always_on schedule matching current day + time
-                || p.schedules.iter().any(|s| {
+            .filter_map(|p| {
+                // Session-linked: use session priority
+                if let Some(&priority) = session_priorities.get(&p.profile.id) {
+                    return Some((p, priority));
+                }
+                // Always-on schedule: default priority 0
+                let is_always_on = p.schedules.iter().any(|s| {
                     let mode = ScheduleMode::from_str(&s.mode);
                     let days: Vec<i32> = serde_json::from_str(&s.days).unwrap_or_default();
                     let in_time_range = if s.start_time <= s.end_time {
@@ -142,7 +153,11 @@ impl FocusProfileRepository {
                     matches!(mode, Some(ScheduleMode::AlwaysOn))
                         && days.contains(&current_day)
                         && in_time_range
-                })
+                });
+                if is_always_on {
+                    return Some((p, 0));
+                }
+                return None;
             })
             .collect();
 

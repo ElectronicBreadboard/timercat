@@ -335,6 +335,9 @@ async getActiveFocusProfiles() : Promise<Result<FocusProfileDto[], string>> {
     else return { status: "error", error: e  as any };
 }
 },
+/**
+ * Current blocking violation (None if nothing is blocked).
+ */
 async getBlockingViolation() : Promise<BlockingViolationDto | null> {
     return await TAURI_INVOKE("get_blocking_violation");
 }

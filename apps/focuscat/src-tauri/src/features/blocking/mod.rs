@@ -35,8 +35,7 @@ pub fn setup(app: &App) {
         loop {
             if let Some(db) = handle.try_state::<DatabaseState>() {
                 let profiles = FocusProfileRepository::get_active(&db.pool).await;
-                if let (Ok(profiles), Some(state)) =
-                    (profiles, handle.try_state::<BlockerState>())
+                if let (Ok(profiles), Some(state)) = (profiles, handle.try_state::<BlockerState>())
                 {
                     state.lock().unwrap().set_profiles(profiles);
                 }

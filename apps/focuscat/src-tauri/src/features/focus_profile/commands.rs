@@ -125,7 +125,10 @@ pub async fn get_active_focus_profiles(
         .await
         .map_err(|e| e.to_string())?;
 
-    return Ok(active.into_iter().map(FocusProfileDto::from).collect());
+    return Ok(active
+        .into_iter()
+        .map(|(profile, _priority)| FocusProfileDto::from(profile))
+        .collect());
 }
 
 #[derive(Debug, Clone, Deserialize, specta::Type)]
