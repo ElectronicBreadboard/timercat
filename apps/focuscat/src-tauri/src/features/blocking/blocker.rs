@@ -13,6 +13,13 @@ pub struct Blocker {
 }
 
 impl Blocker {
+    pub fn new() -> Self {
+        return Self {
+            profiles: Vec::new(),
+            active_violation: None,
+        };
+    }
+
     /// Handle an app switch. Checks if the app is blocked and updates the overlay.
     pub fn handle_app_activated(
         &mut self,
@@ -86,11 +93,11 @@ impl Blocker {
         self.profiles = data.into_iter().map(ResolvedProfile::from).collect();
     }
 
-    pub(crate) fn empty() -> Self {
-        return Self {
-            profiles: Vec::new(),
-            active_violation: None,
-        };
+    /// Store violation and emit event.
+    fn set_violation(&mut self, app: &AppHandle, violation: Option<BlockingViolation>) {
+        self.active_violation = violation.clone();
+        let dto = violation.map(BlockingViolationDto::from);
+        let _ = BlockingViolationEvent(dto).emit(app);
     }
 
     /// Check if the given app belongs to our own app (never block ourselves).
@@ -157,16 +164,8 @@ impl Blocker {
 
         return None;
     }
-
-    /// Store violation and emit event.
-    fn set_violation(&mut self, app: &AppHandle, violation: Option<BlockingViolation>) {
-        self.active_violation = violation.clone();
-        let dto = violation.map(BlockingViolationDto::from);
-        let _ = BlockingViolationEvent(dto).emit(app);
-    }
 }
 
-/// A blocking violation detected by the blocker.
 #[derive(Debug, Clone)]
 pub struct BlockingViolation {
     pub profile_name: String,
@@ -174,7 +173,6 @@ pub struct BlockingViolation {
     pub blocked_target: BlockedTarget,
 }
 
-/// The target that was blocked.
 #[derive(Debug, Clone)]
 pub enum BlockedTarget {
     App { bundle_id: String },
@@ -183,7 +181,6 @@ pub enum BlockedTarget {
 
 // MARK: - ResolvedProfile
 
-/// A profile's rules flattened for fast matching.
 struct ResolvedProfile {
     name: String,
     color: Option<String>,

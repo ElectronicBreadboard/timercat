@@ -36,7 +36,7 @@ pub struct BlockerState(Mutex<Blocker>);
 
 impl BlockerState {
     pub fn new() -> Self {
-        return Self(Mutex::new(Blocker::empty()));
+        return Self(Mutex::new(Blocker::new()));
     }
 }
 
