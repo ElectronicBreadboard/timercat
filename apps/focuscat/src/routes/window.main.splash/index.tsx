@@ -44,7 +44,10 @@ function RouteComponent() {
 
 	return (
 		<div className="relative flex h-screen w-[300px] items-center justify-center bg-[#267DF7]">
-			<WindowHeader className="absolute top-0 right-0 left-0 border-transparent bg-transparent" />
+			<WindowHeader
+				showBadge={false}
+				className="absolute top-0 right-0 left-0 border-transparent bg-transparent"
+			/>
 			<Cat ref={catRef} size={150} position="centered" face={face} hat={hat} />
 		</div>
 	);
