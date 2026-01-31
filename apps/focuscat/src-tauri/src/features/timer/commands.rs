@@ -4,7 +4,9 @@ use super::types::{TimerDto, TimerState, TimerUpdatedEvent};
 use crate::environment::db::DatabaseState;
 use crate::features::session::repository::SessionRepository;
 use crate::features::session::session::{Phase, SessionEvent, SessionStatus};
-use crate::features::session::types::{SessionCompletedEvent, SessionSummaryDto};
+use crate::features::session::types::{
+    SessionChangedEvent, SessionCompletedEvent, SessionSummaryDto,
+};
 use crate::features::settings::types::AppSettingsState;
 use chrono::Utc;
 use std::sync::Mutex;
@@ -64,6 +66,7 @@ pub async fn start_timer(
     #[cfg(target_os = "macos")]
     TrayState::set_timer(&app, Some(timer.remaining_seconds));
 
+    let _ = SessionChangedEvent.emit(&app);
     start_runner(&app, &runner);
     return Ok(());
 }
@@ -200,6 +203,7 @@ pub async fn reset_timer(
     #[cfg(target_os = "macos")]
     TrayState::set_timer(&app, None);
 
+    let _ = SessionChangedEvent.emit(&app);
     stop_runner(&runner);
     return Ok(());
 }
@@ -270,6 +274,7 @@ pub async fn finish_timer(
     #[cfg(target_os = "macos")]
     TrayState::set_timer(&app, None);
 
+    let _ = SessionChangedEvent.emit(&app);
     stop_runner(&runner);
     return Ok(());
 }
@@ -373,6 +378,7 @@ pub async fn skip_timer(
     #[cfg(target_os = "macos")]
     TrayState::set_timer(&app, Some(timer.remaining_seconds));
 
+    let _ = SessionChangedEvent.emit(&app);
     restart_runner(&app, &runner);
     return Ok(());
 }

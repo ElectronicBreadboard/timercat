@@ -2,6 +2,7 @@ use super::types::{RuleAction, RuleTargetDto, ScheduleMode};
 use crate::features::app::repository::{
     AppRepository, UpsertAppInput, UpsertWebsiteInput, WebsiteRepository,
 };
+use chrono::Datelike;
 use sqlx::{FromRow, Row, SqliteConnection, SqlitePool};
 
 pub struct FocusProfileRepository;
@@ -93,6 +94,59 @@ impl FocusProfileRepository {
         }
 
         return Ok(results);
+    }
+
+    /// Get all currently active focus profiles.
+    ///
+    /// A profile is active if:
+    /// - It's linked to an active session (via session_focus_profile), OR
+    /// - It has an always_on schedule matching the current day and time.
+    pub async fn get_active(
+        pool: &SqlitePool,
+    ) -> Result<Vec<FocusProfileWithRelations>, sqlx::Error> {
+        let all = Self::get_all(pool).await?;
+
+        let now = chrono::Local::now();
+        let current_day = now.weekday().num_days_from_monday() as i32;
+        let current_time = now.format("%H:%M").to_string();
+
+        // Get profile IDs linked to active sessions
+        let session_profile_ids: Vec<i64> = sqlx::query_scalar(
+            r#"
+            SELECT sfp.focus_profile_id
+            FROM session_focus_profile sfp
+            JOIN sessions s ON s.id = sfp.session_id
+            WHERE s.status = 'active'
+            ORDER BY sfp.priority DESC
+            "#,
+        )
+        .fetch_all(pool)
+        .await?;
+
+        let active = all
+            .into_iter()
+            .filter(|p| {
+                // Linked to active session
+                session_profile_ids.contains(&p.profile.id)
+                // Or has an always_on schedule matching current day + time
+                || p.schedules.iter().any(|s| {
+                    let mode = ScheduleMode::from_str(&s.mode);
+                    let days: Vec<i32> = serde_json::from_str(&s.days).unwrap_or_default();
+                    let in_time_range = if s.start_time <= s.end_time {
+                        // Same-day range (e.g. 09:00–17:00)
+                        s.start_time <= current_time && current_time < s.end_time
+                    } else {
+                        // Midnight-spanning range (e.g. 23:00–01:00)
+                        current_time >= s.start_time || current_time < s.end_time
+                    };
+                    matches!(mode, Some(ScheduleMode::AlwaysOn))
+                        && days.contains(&current_day)
+                        && in_time_range
+                })
+            })
+            .collect();
+
+        return Ok(active);
     }
 
     /// Update focus profile with rules and schedules (replaces all).

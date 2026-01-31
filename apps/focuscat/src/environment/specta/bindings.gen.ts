@@ -335,11 +335,15 @@ async getActiveFocusProfiles() : Promise<Result<FocusProfileDto[], string>> {
 export const events = __makeEvents__<{
 appSettingsChangedEvent: AppSettingsChangedEvent,
 inputDetectedEvent: InputDetectedEvent,
+profileChangedEvent: ProfileChangedEvent,
+sessionChangedEvent: SessionChangedEvent,
 sessionCompletedEvent: SessionCompletedEvent,
 timerUpdatedEvent: TimerUpdatedEvent
 }>({
 appSettingsChangedEvent: "app-settings-changed-event",
 inputDetectedEvent: "input-detected-event",
+profileChangedEvent: "profile-changed-event",
+sessionChangedEvent: "session-changed-event",
 sessionCompletedEvent: "session-completed-event",
 timerUpdatedEvent: "timer-updated-event"
 })
@@ -406,6 +410,10 @@ export type InputDetectedEvent = InputType
 export type InputType = "keyboard" | "mouse"
 export type Phase = "work" | "shortBreak" | "longBreak"
 /**
+ * Event emitted when a focus profile is created, updated, or deleted.
+ */
+export type ProfileChangedEvent = null
+/**
  * Action for a focus profile rule.
  */
 export type RuleAction = "block" | "allow"
@@ -451,6 +459,10 @@ includeIcons?: boolean;
  */
 limit: number | null }
 export type SearchResultDto = { type: "app"; app: App; score: number } | { type: "website"; website: Website; score: number }
+/**
+ * Event emitted when session state changes (started, completed, cancelled).
+ */
+export type SessionChangedEvent = null
 /**
  * Event emitted when a session is completed.
  */

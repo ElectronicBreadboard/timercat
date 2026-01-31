@@ -4,13 +4,13 @@ use super::repository::{
     UpdateFocusProfileInput,
 };
 use super::types::{
-    FocusProfileDto, FocusProfileRuleDto, FocusProfileScheduleDto, RuleAction, RuleTargetDto,
-    ScheduleMode,
+    FocusProfileDto, FocusProfileRuleDto, FocusProfileScheduleDto, ProfileChangedEvent, RuleAction,
+    RuleTargetDto, ScheduleMode,
 };
 use crate::environment::db::DatabaseState;
-use chrono::Datelike;
 use serde::Deserialize;
-use tauri::State;
+use tauri::{AppHandle, State};
+use tauri_specta::Event;
 
 #[tauri::command]
 #[specta::specta]
@@ -40,6 +40,7 @@ pub async fn get_focus_profile(
 #[tauri::command]
 #[specta::specta]
 pub async fn create_focus_profile(
+    app: AppHandle,
     db: State<'_, DatabaseState>,
     name: String,
     color: Option<String>,
@@ -63,12 +64,14 @@ pub async fn create_focus_profile(
     .await
     .map_err(|e| e.to_string())?;
 
+    let _ = ProfileChangedEvent.emit(&app);
     return Ok(FocusProfileDto::from(result));
 }
 
 #[tauri::command]
 #[specta::specta]
 pub async fn update_focus_profile(
+    app: AppHandle,
     db: State<'_, DatabaseState>,
     id: i32,
     name: String,
@@ -94,16 +97,22 @@ pub async fn update_focus_profile(
     .await
     .map_err(|e| e.to_string())?;
 
+    let _ = ProfileChangedEvent.emit(&app);
     return Ok(FocusProfileDto::from(result));
 }
 
 #[tauri::command]
 #[specta::specta]
-pub async fn delete_focus_profile(db: State<'_, DatabaseState>, id: i32) -> Result<(), String> {
+pub async fn delete_focus_profile(
+    app: AppHandle,
+    db: State<'_, DatabaseState>,
+    id: i32,
+) -> Result<(), String> {
     FocusProfileRepository::delete(&db.pool, id as i64)
         .await
         .map_err(|e| e.to_string())?;
 
+    let _ = ProfileChangedEvent.emit(&app);
     return Ok(());
 }
 
@@ -112,53 +121,11 @@ pub async fn delete_focus_profile(db: State<'_, DatabaseState>, id: i32) -> Resu
 pub async fn get_active_focus_profiles(
     db: State<'_, DatabaseState>,
 ) -> Result<Vec<FocusProfileDto>, String> {
-    let all = FocusProfileRepository::get_all(&db.pool)
+    let active = FocusProfileRepository::get_active(&db.pool)
         .await
         .map_err(|e| e.to_string())?;
 
-    let now = chrono::Local::now();
-    let current_day = now.weekday().num_days_from_monday() as i32;
-    let current_time = now.format("%H:%M").to_string();
-
-    // Get profile IDs linked to the active session (if any)
-    let session_profile_ids: Vec<i64> = sqlx::query_scalar(
-        r#"
-        SELECT sfp.focus_profile_id
-        FROM session_focus_profile sfp
-        JOIN sessions s ON s.id = sfp.session_id
-        WHERE s.status = 'active'
-        ORDER BY sfp.priority DESC
-        "#,
-    )
-    .fetch_all(&db.pool)
-    .await
-    .map_err(|e| e.to_string())?;
-
-    let active: Vec<FocusProfileDto> = all
-        .into_iter()
-        .filter(|p| {
-            // Linked to active session
-            session_profile_ids.contains(&p.profile.id)
-            // Or has an always_on schedule matching current day + time
-            || p.schedules.iter().any(|s| {
-                let mode = ScheduleMode::from_str(&s.mode);
-                let days: Vec<i32> = serde_json::from_str(&s.days).unwrap_or_default();
-                let in_time_range = if s.start_time <= s.end_time {
-                    // Same-day range (e.g. 09:00–17:00)
-                    s.start_time <= current_time && current_time < s.end_time
-                } else {
-                    // Midnight-spanning range (e.g. 23:00–01:00)
-                    current_time >= s.start_time || current_time < s.end_time
-                };
-                matches!(mode, Some(ScheduleMode::AlwaysOn))
-                    && days.contains(&current_day)
-                    && in_time_range
-            })
-        })
-        .map(FocusProfileDto::from)
-        .collect();
-
-    return Ok(active);
+    return Ok(active.into_iter().map(FocusProfileDto::from).collect());
 }
 
 #[derive(Debug, Clone, Deserialize, specta::Type)]

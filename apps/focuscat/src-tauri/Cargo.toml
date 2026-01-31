@@ -29,7 +29,7 @@ tauri-specta = { version = "2.0.0-rc.21", features = ["derive", "typescript"] }
 specta-typescript = "0.0.9"
 png = "0.18.0"
 chrono = "0.4.42"
-tokio = { version = "1.48.0", features = ["sync"] }
+tokio = { version = "1.48.0", features = ["sync", "macros", "time"] }
 sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
 # Git version required for `set_is_main_thread()` fix - crashes on macOS keyboard events without it.
 # See: https://github.com/Narsil/rdev/issues/165

@@ -7,6 +7,7 @@ use crate::environment::db::DatabaseState;
 use crate::features::app::repository::{
     AppRepository, UpsertAppInput, UpsertWebsiteInput, WebsiteRepository,
 };
+use crate::features::blocking::types::BlockingCheckerState;
 use crate::features::settings::types::AppSettingsState;
 use chrono::Utc;
 use mado::{MonitorConfig, WindowEvent, WindowListener, WindowMonitor};
@@ -86,6 +87,13 @@ impl WindowListener for WindowMonitorHandler {
     fn on_focus_change(&self, event: WindowEvent) {
         match event {
             WindowEvent::AppActivated { app: app_info } => {
+                if let Some(state) = self.app.try_state::<BlockingCheckerState>() {
+                    state
+                        .lock()
+                        .unwrap()
+                        .check_app(app_info.bundle_id.as_deref());
+                }
+
                 if !self.is_tracking_enabled() {
                     return;
                 }
@@ -149,6 +157,14 @@ impl WindowListener for WindowMonitorHandler {
             WindowEvent::WindowChanged {
                 window: window_info,
             } => {
+                if let Some(state) = self.app.try_state::<BlockingCheckerState>() {
+                    let browser_url = window_info.browser.as_ref().and_then(|b| b.url.as_deref());
+                    state
+                        .lock()
+                        .unwrap()
+                        .check_window(window_info.app.bundle_id.as_deref(), browser_url);
+                }
+
                 if !self.is_window_tracking_enabled() {
                     return;
                 }

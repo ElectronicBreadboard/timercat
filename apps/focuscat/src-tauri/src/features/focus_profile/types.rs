@@ -109,3 +109,8 @@ pub struct FocusProfileScheduleDto {
     pub end_time: String,
 }
 
+// MARK: - Event
+
+/// Event emitted when a focus profile is created, updated, or deleted.
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, tauri_specta::Event)]
+pub struct ProfileChangedEvent;

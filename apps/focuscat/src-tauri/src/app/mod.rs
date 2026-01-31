@@ -4,13 +4,14 @@ pub mod window;
 
 use crate::environment::db;
 use crate::features::{
-    activity_window,
-    app as app_feature,
-    audio,
-    focus_profile,
+    activity_window, app as app_feature, audio, blocking,
+    focus_profile::{self, types::ProfileChangedEvent},
     input::{self, types::InputDetectedEvent},
     permission,
-    session::{self, types::SessionCompletedEvent},
+    session::{
+        self,
+        types::{SessionChangedEvent, SessionCompletedEvent},
+    },
     settings::{self, types::AppSettingsChangedEvent},
     timer::{self, types::TimerUpdatedEvent},
 };
@@ -80,6 +81,9 @@ pub fn run() {
             TimerUpdatedEvent,
             // Session events
             SessionCompletedEvent,
+            SessionChangedEvent,
+            // Focus profile events
+            ProfileChangedEvent,
             // Input events
             InputDetectedEvent,
         ]);
@@ -107,6 +111,7 @@ pub fn run() {
             settings::setup(app);
             timer::setup(app);
             input::setup(app);
+            blocking::setup(app);
             activity_window::setup(app);
             app_feature::setup(app);
             #[cfg(target_os = "macos")]

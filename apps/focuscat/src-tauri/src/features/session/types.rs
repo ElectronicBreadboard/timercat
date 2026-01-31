@@ -59,3 +59,7 @@ pub struct SessionStatsDto {
 #[derive(Debug, Clone, Serialize, specta::Type, tauri_specta::Event)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionCompletedEvent(pub SessionSummaryDto);
+
+/// Event emitted when session state changes (started, completed, cancelled).
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, tauri_specta::Event)]
+pub struct SessionChangedEvent;
