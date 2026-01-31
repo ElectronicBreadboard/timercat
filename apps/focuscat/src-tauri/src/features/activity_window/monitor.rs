@@ -87,12 +87,14 @@ impl WindowListener for WindowMonitorHandler {
     fn on_focus_change(&self, event: WindowEvent) {
         match event {
             WindowEvent::AppActivated { app: app_info } => {
-                if let Some(state) = self.app.try_state::<BlockerState>() {
-                    state.lock().unwrap().handle_app_activated(
-                        &self.app,
-                        app_info.bundle_id.as_deref(),
-                        app_info.name.as_deref(),
-                    );
+                if !self.is_window_tracking_enabled() {
+                    if let Some(state) = self.app.try_state::<BlockerState>() {
+                        state.lock().unwrap().handle_app_activated(
+                            &self.app,
+                            app_info.bundle_id.as_deref(),
+                            app_info.name.as_deref(),
+                        );
+                    }
                 }
 
                 if !self.is_tracking_enabled() {
