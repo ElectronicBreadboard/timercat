@@ -108,14 +108,12 @@ impl FocusProfileRepository {
     pub async fn get_active(
         pool: &SqlitePool,
     ) -> Result<Vec<(FocusProfileWithRelations, i32)>, sqlx::Error> {
-        let all = Self::get_all(pool).await?;
-
         let now = chrono::Local::now();
         let current_day = now.weekday().num_days_from_monday() as i32;
         let current_time = now.format("%H:%M").to_string();
 
-        // Get profile IDs linked to active sessions with their max priority
-        let rows = sqlx::query(
+        // Session-linked profiles: profile_id → max priority
+        let session_rows = sqlx::query(
             r#"
             SELECT sfp.focus_profile_id, MAX(sfp.priority) as priority
             FROM session_focus_profile sfp
@@ -127,11 +125,15 @@ impl FocusProfileRepository {
         .fetch_all(pool)
         .await?;
 
-        let session_priorities: std::collections::HashMap<i64, i32> = rows
+        let session_priorities: std::collections::HashMap<i64, i32> = session_rows
             .iter()
             .map(|r| (r.get("focus_profile_id"), r.get("priority")))
             .collect();
 
+        // All profiles with relations
+        let all = Self::get_all(pool).await?;
+
+        // Filter to active: session-linked OR always-on schedule matching now
         let active = all
             .into_iter()
             .filter_map(|p| {
@@ -139,24 +141,26 @@ impl FocusProfileRepository {
                 if let Some(&priority) = session_priorities.get(&p.profile.id) {
                     return Some((p, priority));
                 }
-                // Always-on schedule: default priority 0
+
+                // Always-on: active if any schedule matches current day and time
                 let is_always_on = p.schedules.iter().any(|s| {
-                    let mode = ScheduleMode::from_str(&s.mode);
+                    if s.mode != ScheduleMode::AlwaysOn.as_str() {
+                        return false;
+                    }
                     let days: Vec<i32> = serde_json::from_str(&s.days).unwrap_or_default();
-                    let in_time_range = if s.start_time <= s.end_time {
-                        // Same-day range (e.g. 09:00–17:00)
+                    if !days.contains(&current_day) {
+                        return false;
+                    }
+                    if s.start_time <= s.end_time {
                         s.start_time <= current_time && current_time < s.end_time
                     } else {
-                        // Midnight-spanning range (e.g. 23:00–01:00)
                         current_time >= s.start_time || current_time < s.end_time
-                    };
-                    matches!(mode, Some(ScheduleMode::AlwaysOn))
-                        && days.contains(&current_day)
-                        && in_time_range
+                    }
                 });
                 if is_always_on {
                     return Some((p, 0));
                 }
+
                 return None;
             })
             .collect();

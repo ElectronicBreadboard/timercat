@@ -32,7 +32,7 @@ export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
 		const offset = catConfig.baseBodyBottomOffset * (size / catConfig.baseSize);
 		return {
 			bottomOffset: position === 'edge' ? offset : 0,
-			containerHeight: position === 'edge' ? size - offset : size
+			containerHeight: position === 'edge' ? size - offset * 2 : size
 		};
 	}, [size, position]);
 

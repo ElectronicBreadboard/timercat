@@ -23,24 +23,28 @@ function RouteComponent() {
 		return hats[Math.floor(Math.random() * hats.length)] as TCatHat;
 	}, []);
 
+	// MARK: - Effects
+
+	// Fetch violation on mount (event may have fired before listener was ready),
+	// then listen for updates via event.
 	React.useEffect(() => {
 		let unlisten: (() => void) | undefined;
 
-		// Fetch initial violation (event may have fired before listener was ready)
-		specta.commands.getBlockingViolation().then((v) => {
+		(async () => {
+			const v = await specta.commands.getBlockingViolation();
 			setViolation(v ?? null);
-		});
 
-		specta.events.blockingViolationEvent
-			.listen((event) => {
-				setViolation(event.payload ?? null);
-			})
-			.then((fn) => {
-				unlisten = fn;
+			unlisten = await specta.events.blockingViolationEvent.listen((event) => {
+				setViolation(event.payload);
 			});
+		})();
 
-		return () => unlisten?.();
+		return () => {
+			unlisten?.();
+		};
 	}, []);
+
+	// MARK: - UI
 
 	const profileColor = violation?.profileColor ?? '#9CA3AF';
 
@@ -48,9 +52,9 @@ function RouteComponent() {
 		<div className="bg-base-0 flex h-screen flex-col">
 			<WindowHeader title="Blocked" showBadge={false} />
 			<div className="flex flex-1 flex-col items-center justify-center p-6">
-				<Cat face={face} hat={hat} position={violation != null ? 'edge' : 'centered'} />
-				{violation != null && (
+				{violation != null ? (
 					<div className="flex flex-col items-center gap-1">
+						<Cat face={face} hat={hat} />
 						<p className="text-base-900 text-lg font-semibold">
 							{describeTarget(violation.blockedTarget)}
 						</p>
@@ -66,6 +70,8 @@ function RouteComponent() {
 							</Badge>
 						</p>
 					</div>
+				) : (
+					<Cat face={face} hat={hat} position="centered" />
 				)}
 			</div>
 		</div>
