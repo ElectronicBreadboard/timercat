@@ -1,8 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
 import React from 'react';
+import { useFeatureState } from 'feature-react/state';
 import { Badge, WindowHeader } from '@/components';
 import { specta } from '@/environment';
-import { Cat, catConfig, type TCatFace, type TCatHat } from '@/features/cat';
+import { Cat } from '@/features/cat';
+import { useSettingsCx } from '@/features/settings';
 import { hexToRgba } from '@/lib';
 
 export const Route = createFileRoute('/window/blocker/')({
@@ -12,16 +14,8 @@ export const Route = createFileRoute('/window/blocker/')({
 function RouteComponent() {
 	const [violation, setViolation] = React.useState<specta.BlockingViolationDto | null>(null);
 
-	// Randomized cat (picked once on mount)
-	const face = React.useMemo<TCatFace>(() => {
-		const faces = catConfig.parts.face.available;
-		return faces[Math.floor(Math.random() * faces.length)] as TCatFace;
-	}, []);
-	const hat = React.useMemo<TCatHat | undefined>(() => {
-		if (Math.random() < 0.5) return undefined;
-		const hats = catConfig.parts.hat.available;
-		return hats[Math.floor(Math.random() * hats.length)] as TCatHat;
-	}, []);
+	const settingsCx = useSettingsCx();
+	const settings = useFeatureState(settingsCx.$appSettings);
 
 	// MARK: - Effects
 
@@ -54,16 +48,20 @@ function RouteComponent() {
 			<div className="flex flex-1 flex-col items-center justify-center p-6">
 				{violation != null ? (
 					<div className="flex flex-col items-center gap-1">
-						<Cat face={face} hat={hat} />
+						<Cat face={settings.cat.equippedFace} hat={settings.cat.equippedHat} />
 						<p className="text-base-900 text-lg font-semibold">
 							{describeTarget(violation.blockedTarget)}
 						</p>
 						<p className="text-base-500 text-sm">
 							Blocked by{' '}
 							<Badge
+								className="cursor-pointer"
 								style={{
 									backgroundColor: hexToRgba(profileColor, 0.1),
 									color: profileColor
+								}}
+								onClick={() => {
+									specta.commands.showSettingsWindowAtProfile(violation.profileId);
 								}}
 							>
 								{violation.profileName}
@@ -71,7 +69,7 @@ function RouteComponent() {
 						</p>
 					</div>
 				) : (
-					<Cat face={face} hat={hat} position="centered" />
+					<Cat face={settings.cat.equippedFace} hat={settings.cat.equippedHat} position="centered" />
 				)}
 			</div>
 		</div>

@@ -132,7 +132,7 @@ Cat.displayName = 'Cat';
 interface TCatProps {
 	fur?: TCatFur;
 	face?: TCatFace;
-	hat?: TCatHat;
+	hat?: TCatHat | null;
 	size?: number;
 	position?: 'edge' | 'centered';
 	className?: string;

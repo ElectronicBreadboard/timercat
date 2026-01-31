@@ -9,6 +9,7 @@ use std::sync::Mutex;
 #[derive(Debug, Clone, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct BlockingViolationDto {
+    pub profile_id: i32,
     pub profile_name: String,
     pub profile_color: Option<String>,
     pub blocked_target: BlockedTargetDto,

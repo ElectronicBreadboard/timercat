@@ -5,13 +5,14 @@ use std::sync::Mutex;
 use tauri::App;
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 pub struct AppSettings {
     pub appearance: AppearanceSettings,
     pub debug: DebugSettings,
     pub timer: TimerSettings,
     pub focus_goal: FocusGoalSettings,
     pub activity: ActivitySettings,
+    pub cat: CatSettings,
 }
 
 impl Default for AppSettings {
@@ -22,6 +23,7 @@ impl Default for AppSettings {
             timer: TimerSettings::default(),
             focus_goal: FocusGoalSettings::default(),
             activity: ActivitySettings::default(),
+            cat: CatSettings::default(),
         };
     }
 }
@@ -115,6 +117,24 @@ impl Default for ActivitySettings {
             enabled: true,
             track_windows: true,
             track_browser: true,
+        };
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CatSettings {
+    pub equipped_fur: String,
+    pub equipped_face: String,
+    pub equipped_hat: Option<String>,
+}
+
+impl Default for CatSettings {
+    fn default() -> Self {
+        return Self {
+            equipped_fur: "white".to_string(),
+            equipped_face: "cute".to_string(),
+            equipped_hat: None,
         };
     }
 }

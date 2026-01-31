@@ -3,7 +3,8 @@ import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { IconButton, ShuffleIcon } from '@/components';
 import { specta } from '@/environment';
-import { Cat, catConfig, TCatRef, type TCatFace, type TCatHat } from '@/features/cat';
+import { Cat, catConfig, type TCatRef } from '@/features/cat';
+import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
 import { Navbar, OverviewCard, TimerView } from './components';
 
@@ -13,8 +14,9 @@ export const Route = createFileRoute('/window/main/')({
 
 function RouteComponent() {
 	const catRef = React.useRef<TCatRef>(null);
-	const [face, setFace] = React.useState<TCatFace>('cute');
-	const [hat, setHat] = React.useState<TCatHat | undefined>(undefined);
+
+	const settingsCx = useSettingsCx();
+	const settings = useFeatureState(settingsCx.$appSettings);
 
 	const timerCx = useTimerCx();
 	const timerStatus = useFeatureState(timerCx.$status);
@@ -49,11 +51,15 @@ function RouteComponent() {
 	const handleRandomize = React.useCallback(() => {
 		const faces = catConfig.parts.face.available;
 		const hats = catConfig.parts.hat.available;
-		setFace(faces[Math.floor(Math.random() * faces.length)] as TCatFace);
-		setHat(
-			Math.random() < 0.5 ? undefined : (hats[Math.floor(Math.random() * hats.length)] as TCatHat)
-		);
-	}, []);
+		settingsCx.update({
+			cat: {
+				equippedFur: settings.cat.equippedFur,
+				equippedFace: faces[Math.floor(Math.random() * faces.length)],
+				equippedHat:
+					Math.random() < 0.5 ? null : hats[Math.floor(Math.random() * hats.length)]
+			}
+		});
+	}, [settingsCx, settings.cat]);
 
 	const handleCatTap = React.useCallback(() => {
 		specta.commands.playSound('meow');
@@ -74,8 +80,8 @@ function RouteComponent() {
 				<div className="relative z-30 w-1/2 overflow-visible">
 					<Cat
 						ref={catRef}
-						face={face}
-						hat={hat}
+						face={settings.cat.equippedFace}
+						hat={settings.cat.equippedHat}
 						size={topSection.width}
 						className="absolute right-0 bottom-0"
 						onTap={handleCatTap}

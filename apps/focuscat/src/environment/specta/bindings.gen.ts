@@ -392,7 +392,7 @@ export type App = {
  */
 id: string; bundleId: string; name: string | null; icon: string | null; color: string | null }
 export type AppInfo = { version: string; stage: Stage }
-export type AppSettings = { appearance: AppearanceSettings; debug: DebugSettings; timer: TimerSettings; focusGoal: FocusGoalSettings; activity: ActivitySettings }
+export type AppSettings = { appearance: AppearanceSettings; debug: DebugSettings; timer: TimerSettings; focusGoal: FocusGoalSettings; activity: ActivitySettings; cat: CatSettings }
 export type AppSettingsChangedEvent = AppSettings
 export type AppearanceSettings = { theme: Theme }
 /**
@@ -402,11 +402,12 @@ export type BlockedTargetDto = { type: "app"; bundleId: string } | { type: "webs
 /**
  * Describes what was blocked and by which profile.
  */
-export type BlockingViolationDto = { profileName: string; profileColor: string | null; blockedTarget: BlockedTargetDto }
+export type BlockingViolationDto = { profileId: number; profileName: string; profileColor: string | null; blockedTarget: BlockedTargetDto }
 /**
  * Event emitted when a blocking violation is detected (or cleared).
  */
 export type BlockingViolationEvent = BlockingViolationDto | null
+export type CatSettings = { equippedFur: string; equippedFace: string; equippedHat: string | null }
 export type DebugSettings = { enabled: boolean; cat: boolean; timerSpeed: number }
 export type FocusGoalSettings = { 
 /**

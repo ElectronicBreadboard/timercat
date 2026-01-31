@@ -152,8 +152,10 @@ impl FocusProfileRepository {
                         return false;
                     }
                     if s.start_time <= s.end_time {
+                        // Same-day range (e.g. 09:00–17:00)
                         s.start_time <= current_time && current_time < s.end_time
                     } else {
+                        // Midnight-spanning range (e.g. 23:00–01:00)
                         current_time >= s.start_time || current_time < s.end_time
                     }
                 });

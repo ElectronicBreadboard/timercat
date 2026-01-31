@@ -17,6 +17,7 @@ pub fn get_blocking_violation(app: tauri::AppHandle) -> Option<BlockingViolation
 impl From<BlockingViolation> for BlockingViolationDto {
     fn from(v: BlockingViolation) -> Self {
         return Self {
+            profile_id: v.profile_id as i32,
             profile_name: v.profile_name,
             profile_color: v.profile_color,
             blocked_target: BlockedTargetDto::from(v.blocked_target),

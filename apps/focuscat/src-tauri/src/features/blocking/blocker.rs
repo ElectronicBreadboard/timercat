@@ -121,6 +121,7 @@ impl Blocker {
         let (profile, action) = self.resolve(|t| t.matches_app(bid))?;
         if matches!(action, RuleAction::Block) {
             return Some(BlockingViolation {
+                profile_id: profile.id,
                 profile_name: profile.name.clone(),
                 profile_color: profile.color.clone(),
                 blocked_target: BlockedTarget::App {
@@ -136,6 +137,7 @@ impl Blocker {
         let (profile, action) = self.resolve(|t| t.matches_website(domain))?;
         if matches!(action, RuleAction::Block) {
             return Some(BlockingViolation {
+                profile_id: profile.id,
                 profile_name: profile.name.clone(),
                 profile_color: profile.color.clone(),
                 blocked_target: BlockedTarget::Website {
@@ -211,6 +213,7 @@ impl Blocker {
 /// Violation reported when a blocked app or website is detected.
 #[derive(Debug, Clone)]
 pub struct BlockingViolation {
+    pub profile_id: i64,
     pub profile_name: String,
     pub profile_color: Option<String>,
     pub blocked_target: BlockedTarget,
@@ -226,6 +229,7 @@ pub enum BlockedTarget {
 // MARK: - ResolvedProfile
 
 struct ResolvedProfile {
+    id: i64,
     name: String,
     color: Option<String>,
     priority: i32,
@@ -234,6 +238,7 @@ struct ResolvedProfile {
 
 impl ResolvedProfile {
     fn new(data: FocusProfileWithRelations, priority: i32) -> Self {
+        let id = data.profile.id;
         let name = data.profile.name;
         let color = data.profile.color;
         let rules = data
@@ -253,6 +258,7 @@ impl ResolvedProfile {
             .collect();
 
         return Self {
+            id,
             name,
             color,
             priority,
@@ -321,6 +327,7 @@ mod tests {
 
     fn profile(name: &str, priority: i32, rules: Vec<ResolvedRule>) -> ResolvedProfile {
         return ResolvedProfile {
+            id: 0,
             name: name.to_string(),
             color: None,
             priority,

@@ -1,12 +1,13 @@
 import { createState } from 'feature-state';
 import React from 'react';
 import { specta } from '@/environment';
+import { type TCatFace, type TCatFur, type TCatHat } from '@/features/cat';
 import { useMemoCleanup } from '@/hooks';
 
 export class SettingsCx {
 	private _unlisten?: () => void;
 
-	public readonly $appSettings = createState<specta.AppSettings>({
+	public readonly $appSettings = createState<TAppSettings>({
 		appearance: {
 			theme: 'auto'
 		},
@@ -28,6 +29,11 @@ export class SettingsCx {
 			enabled: true,
 			trackWindows: true,
 			trackBrowser: true
+		},
+		cat: {
+			equippedFur: 'white',
+			equippedFace: 'cute',
+			equippedHat: null
 		}
 	});
 
@@ -36,9 +42,9 @@ export class SettingsCx {
 	}
 
 	private async init(): Promise<void> {
-		this.$appSettings.set(await specta.commands.getSettings());
+		this.$appSettings.set((await specta.commands.getSettings()) as TAppSettings);
 		this._unlisten = await specta.events.appSettingsChangedEvent.listen((event) => {
-			this.$appSettings.set(event.payload);
+			this.$appSettings.set(event.payload as TAppSettings);
 		});
 	}
 
@@ -46,12 +52,20 @@ export class SettingsCx {
 		this._unlisten?.();
 	}
 
-	public async update(updates: Partial<specta.AppSettings>): Promise<void> {
+	public async update(updates: Partial<TAppSettings>): Promise<void> {
 		const current = this.$appSettings.get();
 		const updated = { ...current, ...updates };
 		this.$appSettings.set(updated);
 		await specta.commands.setSettings(updated);
 	}
+}
+
+export type TAppSettings = Omit<specta.AppSettings, 'cat'> & { cat: TCatSettings };
+
+export interface TCatSettings {
+	equippedFur: TCatFur;
+	equippedFace: TCatFace;
+	equippedHat: TCatHat | null;
 }
 
 const ReactSettingsCx = React.createContext<SettingsCx | null>(null);

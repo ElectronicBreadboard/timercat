@@ -95,6 +95,8 @@ function RouteComponent() {
 		>
 			<Cat
 				ref={catRef}
+				face={settings.cat.equippedFace}
+				hat={settings.cat.equippedHat}
 				size={170}
 				className={cn('z-10', settings.debug.cat && 'border border-green-500')}
 				onTap={handleCatTap}
