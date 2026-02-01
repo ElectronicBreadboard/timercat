@@ -84,22 +84,22 @@ pub fn hide_settings_window(app: tauri::AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 #[specta::specta]
-pub fn show_history_window(app: tauri::AppHandle) -> Result<(), String> {
+pub fn show_activity_window(app: tauri::AppHandle) -> Result<(), String> {
     Window::Main.hide(&app).map_err(|e| e.to_string())?;
-    Window::History.show(&app).map_err(|e| e.to_string())?;
+    Window::Activity.show(&app).map_err(|e| e.to_string())?;
     return Ok(());
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn show_history_window_at_session(
+pub fn show_activity_window_at_session(
     app: tauri::AppHandle,
     session_id: i32,
 ) -> Result<(), String> {
-    let path = format!("/window/history/{}", session_id);
+    let path = format!("/window/activity/{}", session_id);
 
     Window::Main.hide(&app).map_err(|e| e.to_string())?;
-    Window::History
+    Window::Activity
         .show_at_path(&app, &path)
         .map_err(|e| e.to_string())?;
     return Ok(());
@@ -122,8 +122,8 @@ pub fn show_settings_window_at_profile(
 
 #[tauri::command]
 #[specta::specta]
-pub fn hide_history_window(app: tauri::AppHandle) -> Result<(), String> {
-    Window::History.hide(&app).map_err(|e| e.to_string())?;
+pub fn hide_activity_window(app: tauri::AppHandle) -> Result<(), String> {
+    Window::Activity.hide(&app).map_err(|e| e.to_string())?;
     return Ok(());
 }
 

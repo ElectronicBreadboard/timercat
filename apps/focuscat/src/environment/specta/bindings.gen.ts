@@ -32,17 +32,17 @@ async showSettingsWindow() : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async showHistoryWindow() : Promise<Result<null, string>> {
+async showActivityWindow() : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("show_history_window") };
+    return { status: "ok", data: await TAURI_INVOKE("show_activity_window") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-async showHistoryWindowAtSession(sessionId: number) : Promise<Result<null, string>> {
+async showActivityWindowAtSession(sessionId: number) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("show_history_window_at_session", { sessionId }) };
+    return { status: "ok", data: await TAURI_INVOKE("show_activity_window_at_session", { sessionId }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -80,9 +80,9 @@ async hideSettingsWindow() : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async hideHistoryWindow() : Promise<Result<null, string>> {
+async hideActivityWindow() : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("hide_history_window") };
+    return { status: "ok", data: await TAURI_INVOKE("hide_activity_window") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };

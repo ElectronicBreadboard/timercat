@@ -29,10 +29,7 @@ function RouteComponent() {
 			<h1 className="text-base-900 text-xl font-semibold">Activity</h1>
 
 			<SettingGroup title="Tracking">
-				<SettingItem
-					label="Track Windows"
-					description="Track individual window and tab changes"
-				>
+				<SettingItem label="Track Windows" description="Track individual window and tab changes">
 					<Switch
 						checked={settings.activity.trackWindows}
 						onCheckedChange={(checked) => updateActivity({ trackWindows: checked })}

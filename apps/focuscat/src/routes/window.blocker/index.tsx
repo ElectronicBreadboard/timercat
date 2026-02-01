@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import React from 'react';
 import { useFeatureState } from 'feature-react/state';
+import React from 'react';
 import { Badge, WindowHeader } from '@/components';
 import { specta } from '@/environment';
 import { Cat } from '@/features/cat';
@@ -69,7 +69,11 @@ function RouteComponent() {
 						</p>
 					</div>
 				) : (
-					<Cat face={settings.cat.equippedFace} hat={settings.cat.equippedHat} position="centered" />
+					<Cat
+						face={settings.cat.equippedFace}
+						hat={settings.cat.equippedHat}
+						position="centered"
+					/>
 				)}
 			</div>
 		</div>

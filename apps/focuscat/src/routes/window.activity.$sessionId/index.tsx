@@ -8,37 +8,8 @@ import { useSettingsCx } from '@/features/settings';
 import { cn, formatDuration, formatTimeOfDayAmPm, toTuple } from '@/lib';
 import { SessionTimeline } from './components';
 
-export const Route = createFileRoute('/window/history/$sessionId/')({
+export const Route = createFileRoute('/window/activity/$sessionId/')({
 	loader: async ({ params }) => {
-		// Debug mode: "debug" loads last 4h of activities
-		if (params.sessionId === 'debug') {
-			const now = Date.now();
-			const startedAt = now - 4 * 60 * 60 * 1000;
-			return {
-				session: {
-					id: -1,
-					phase: 'work',
-					status: 'completed',
-					plannedSeconds: 4 * 60 * 60,
-					actualSeconds: 4 * 60 * 60,
-					startedAt,
-					endedAt: now,
-					events: [],
-					stats: { pausedSeconds: 0, extendedSeconds: 0, overtimeSeconds: 0 }
-				} satisfies specta.SessionDetailDto,
-				activities: unwrapOr(
-					toTuple(
-						await specta.commands.getWindowActivities({
-							startedAfter: startedAt,
-							startedBefore: now,
-							limit: null
-						})
-					),
-					[]
-				)
-			};
-		}
-
 		const sessionId = Number(params.sessionId);
 
 		// Load session detail

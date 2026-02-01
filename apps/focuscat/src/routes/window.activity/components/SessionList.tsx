@@ -1,22 +1,15 @@
 import { Link, useParams } from '@tanstack/react-router';
-import { useCompute } from 'feature-react/state';
 import React from 'react';
-import { BugIcon } from '@/components';
+import { ClockIcon } from '@/components';
 import { specta } from '@/environment';
-import { useSettingsCx } from '@/features/settings';
 import { cn } from '@/lib';
 import { SessionListItem } from './SessionListItem';
 
 export const SessionList: React.FC<TSessionListProps> = (props) => {
 	const { sessions, className } = props;
 	const params = useParams({ strict: false });
-	const settingsCx = useSettingsCx();
 
-	const debugEnabled = useCompute(
-		settingsCx.$appSettings,
-		({ value: settings }) => settings.features.debug
-	);
-	const isDebugSelected = params.sessionId === 'debug';
+	const isOverviewSelected = params.sessionId == null;
 
 	// Group sessions by date
 	const groupedSessions = React.useMemo(() => {
@@ -53,22 +46,19 @@ export const SessionList: React.FC<TSessionListProps> = (props) => {
 
 	return (
 		<div className={cn('bg-base-0 flex flex-col overflow-y-auto', className)}>
-			{/* Debug Entry */}
-			{debugEnabled && (
-				<Link
-					to="/window/history/$sessionId"
-					params={{ sessionId: 'debug' }}
-					className={cn(
-						'border-base-200 flex items-center gap-2 border-b px-3 py-2.5 transition-colors',
-						isDebugSelected ? 'bg-base-100' : 'hover:bg-base-100/50'
-					)}
-				>
-					<BugIcon size={14} className="shrink-0 text-amber-600" />
-					<span className={cn('text-sm text-amber-600', isDebugSelected && 'font-medium')}>
-						Debug: Last 4h
-					</span>
-				</Link>
-			)}
+			{/* Overview Entry */}
+			<Link
+				to="/window/activity/overview"
+				className={cn(
+					'border-base-200 flex items-center gap-2 border-b px-3 py-2.5 transition-colors',
+					isOverviewSelected ? 'bg-base-100' : 'hover:bg-base-100/50'
+				)}
+			>
+				<ClockIcon size={14} className="text-base-500 shrink-0" />
+				<span className={cn('text-base-700 text-sm', isOverviewSelected && 'font-medium')}>
+					Last 24 Hours
+				</span>
+			</Link>
 
 			{Array.from(groupedSessions.entries()).map(([dateKey, dateSessions], index) => (
 				<div key={dateKey}>

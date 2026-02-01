@@ -35,7 +35,7 @@ export const SessionListItem: React.FC<TSessionListItemProps> = (props) => {
 
 	return (
 		<Link
-			to="/window/history/$sessionId"
+			to="/window/activity/$sessionId"
 			params={{ sessionId: String(session.id) }}
 			className={cn(
 				'flex w-full flex-col gap-1.5 px-3 py-2.5 text-left transition-colors',

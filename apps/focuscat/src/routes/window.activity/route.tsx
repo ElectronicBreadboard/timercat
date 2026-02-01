@@ -8,7 +8,7 @@ import { useOnSessionComplete } from '@/hooks';
 import { toTuple } from '@/lib';
 import { SessionList } from './components';
 
-export const Route = createFileRoute('/window/history')({
+export const Route = createFileRoute('/window/activity')({
 	loader: async () => {
 		// Load sessions from the last 30 days, excluding very short sessions (< 30s)
 		const now = Date.now();
@@ -37,7 +37,7 @@ function LayoutComponent() {
 			<SettingsCxProvider>
 				<ThemeProvider>
 					<div className="bg-base-0 flex h-screen flex-col">
-						<WindowHeader title="History" />
+						<WindowHeader title="Activity" />
 						<div className="flex flex-1 items-center justify-center">
 							<div className="text-center">
 								<p className="text-base-600 text-sm font-medium">No sessions yet</p>
@@ -56,7 +56,7 @@ function LayoutComponent() {
 		<SettingsCxProvider>
 			<ThemeProvider>
 				<div className="bg-base-0 flex h-screen flex-col">
-					<WindowHeader title="History" />
+					<WindowHeader title="Activity" />
 
 					{/* Main Content */}
 					<div className="flex flex-1 overflow-hidden">

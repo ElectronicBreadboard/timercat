@@ -14,7 +14,7 @@ pub enum Window {
     Main,
     Cat,
     Settings,
-    History,
+    Activity,
     Blocker,
 }
 
@@ -25,7 +25,7 @@ impl Window {
             Self::Main => "main",
             Self::Cat => "cat",
             Self::Settings => "settings",
-            Self::History => "history",
+            Self::Activity => "activity",
             Self::Blocker => "blocker",
         };
     }
@@ -36,7 +36,7 @@ impl Window {
             Self::Main => "Focuscat",
             Self::Cat => "Focuscat",
             Self::Settings => "Focuscat Settings",
-            Self::History => "Focuscat History",
+            Self::Activity => "Focuscat Activity",
             Self::Blocker => "Focuscat",
         };
     }
@@ -47,7 +47,7 @@ impl Window {
             Self::Main => "/window/main/splash",
             Self::Cat => "/window/cat",
             Self::Settings => "/window/settings",
-            Self::History => "/window/history",
+            Self::Activity => "/window/activity",
             Self::Blocker => "/window/blocker",
         };
     }
@@ -58,7 +58,7 @@ impl Window {
             Self::Main => (300.0, 500.0),
             Self::Cat => (180.0, 220.0),
             Self::Settings => (600.0, 450.0),
-            Self::History => (600.0, 450.0),
+            Self::Activity => (600.0, 450.0),
             Self::Blocker => (400.0, 300.0),
         };
     }
@@ -69,7 +69,7 @@ impl Window {
             Self::Main => None,
             Self::Cat => None,
             Self::Settings => Some((500.0, 400.0)),
-            Self::History => Some((500.0, 400.0)),
+            Self::Activity => Some((500.0, 400.0)),
             Self::Blocker => None,
         };
     }
@@ -112,7 +112,7 @@ impl Window {
     pub fn focus_all_visible(app: &AppHandle) -> tauri::Result<()> {
         let mut any_focused = false;
 
-        for window_type in [Self::Main, Self::Cat, Self::Settings, Self::History] {
+        for window_type in [Self::Main, Self::Cat, Self::Settings, Self::Activity] {
             if let Some(window) = window_type.get(app) {
                 if window.is_visible().unwrap_or(false) {
                     let _ = window.set_focus();
@@ -190,7 +190,7 @@ impl Window {
             Self::Main => self.build_main(app),
             Self::Cat => self.build_cat(app),
             Self::Settings => self.build_settings(app),
-            Self::History => self.build_history(app),
+            Self::Activity => self.build_activity(app),
             Self::Blocker => self.build_blocker(app),
         };
     }
@@ -198,7 +198,7 @@ impl Window {
     /// Build window with a custom path (for dynamic routing).
     fn build_at_path(&self, app: &AppHandle, path: &str) -> tauri::Result<WebviewWindow> {
         return match self {
-            Self::History => self.build_history_at_path(app, path),
+            Self::Activity => self.build_activity_at_path(app, path),
             Self::Settings => self.build_settings_at_path(app, path),
             // Other windows don't support dynamic paths, fall back to default
             _ => self.build(app),
@@ -308,11 +308,11 @@ impl Window {
         return builder.build();
     }
 
-    fn build_history(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
-        return self.build_history_at_path(app, self.path());
+    fn build_activity(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
+        return self.build_activity_at_path(app, self.path());
     }
 
-    fn build_history_at_path(&self, app: &AppHandle, path: &str) -> tauri::Result<WebviewWindow> {
+    fn build_activity_at_path(&self, app: &AppHandle, path: &str) -> tauri::Result<WebviewWindow> {
         let (width, height) = self.size();
 
         let mut builder = self
@@ -378,13 +378,13 @@ impl Window {
     /// Handle window close request.
     pub fn handle_close(label: &str, window: &tauri::Window, api: &CloseRequestApi) {
         // Main window hides instead of closing (can reopen from tray).
-        // Settings/History windows hide and show main window.
+        // Settings/Activity windows hide and show main window.
         match label {
             "main" => {
                 api.prevent_close();
                 let _ = window.hide();
             }
-            "settings" | "history" => {
+            "settings" | "activity" => {
                 api.prevent_close();
                 let _ = window.hide();
                 let _ = Window::Main.show(window.app_handle());

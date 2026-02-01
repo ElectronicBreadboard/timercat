@@ -40,8 +40,8 @@ function RouteComponent() {
 		await specta.commands.showSettingsWindow();
 	}, []);
 
-	const handleHistory = React.useCallback(async () => {
-		await specta.commands.showHistoryWindow();
+	const handleActivity = React.useCallback(async () => {
+		await specta.commands.showActivityWindow();
 	}, []);
 
 	const handleTick = React.useCallback(() => {
@@ -72,9 +72,9 @@ function RouteComponent() {
 		<div className="bg-base-0 flex h-screen w-[300px] flex-col">
 			<Navbar
 				onMinimize={handleMinimize}
-				onHistory={handleHistory}
+				onActivity={handleActivity}
 				onSettings={handleSettings}
-				showHistory={settings.features.activity}
+				showActivity={settings.features.activity}
 				showMinimize={settings.features.catWindow}
 			/>
 

@@ -11,14 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WindowSettingsRouteRouteImport } from './routes/window.settings/route'
 import { Route as WindowMainRouteRouteImport } from './routes/window.main/route'
-import { Route as WindowHistoryRouteRouteImport } from './routes/window.history/route'
 import { Route as WindowCatRouteRouteImport } from './routes/window.cat/route'
 import { Route as WindowBlockerRouteRouteImport } from './routes/window.blocker/route'
+import { Route as WindowActivityRouteRouteImport } from './routes/window.activity/route'
 import { Route as WindowSettingsIndexRouteImport } from './routes/window.settings/index'
 import { Route as WindowMainIndexRouteImport } from './routes/window.main/index'
-import { Route as WindowHistoryIndexRouteImport } from './routes/window.history/index'
 import { Route as WindowCatIndexRouteImport } from './routes/window.cat/index'
 import { Route as WindowBlockerIndexRouteImport } from './routes/window.blocker/index'
+import { Route as WindowActivityIndexRouteImport } from './routes/window.activity/index'
 import { Route as WindowSettingsTimerIndexRouteImport } from './routes/window.settings.timer/index'
 import { Route as WindowSettingsGoalsIndexRouteImport } from './routes/window.settings.goals/index'
 import { Route as WindowSettingsFocusProfilesIndexRouteImport } from './routes/window.settings.focus-profiles/index'
@@ -26,7 +26,8 @@ import { Route as WindowSettingsDeveloperIndexRouteImport } from './routes/windo
 import { Route as WindowSettingsAppIndexRouteImport } from './routes/window.settings.app/index'
 import { Route as WindowSettingsActivityIndexRouteImport } from './routes/window.settings.activity/index'
 import { Route as WindowMainSplashIndexRouteImport } from './routes/window.main.splash/index'
-import { Route as WindowHistorySessionIdIndexRouteImport } from './routes/window.history.$sessionId/index'
+import { Route as WindowActivityOverviewIndexRouteImport } from './routes/window.activity.overview/index'
+import { Route as WindowActivitySessionIdIndexRouteImport } from './routes/window.activity.$sessionId/index'
 import { Route as WindowSettingsFocusProfilesNewIndexRouteImport } from './routes/window.settings.focus-profiles.new/index'
 import { Route as WindowSettingsFocusProfilesProfileIdIndexRouteImport } from './routes/window.settings.focus-profiles.$profileId/index'
 
@@ -40,11 +41,6 @@ const WindowMainRouteRoute = WindowMainRouteRouteImport.update({
   path: '/window/main',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WindowHistoryRouteRoute = WindowHistoryRouteRouteImport.update({
-  id: '/window/history',
-  path: '/window/history',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const WindowCatRouteRoute = WindowCatRouteRouteImport.update({
   id: '/window/cat',
   path: '/window/cat',
@@ -53,6 +49,11 @@ const WindowCatRouteRoute = WindowCatRouteRouteImport.update({
 const WindowBlockerRouteRoute = WindowBlockerRouteRouteImport.update({
   id: '/window/blocker',
   path: '/window/blocker',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WindowActivityRouteRoute = WindowActivityRouteRouteImport.update({
+  id: '/window/activity',
+  path: '/window/activity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WindowSettingsIndexRoute = WindowSettingsIndexRouteImport.update({
@@ -65,11 +66,6 @@ const WindowMainIndexRoute = WindowMainIndexRouteImport.update({
   path: '/',
   getParentRoute: () => WindowMainRouteRoute,
 } as any)
-const WindowHistoryIndexRoute = WindowHistoryIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => WindowHistoryRouteRoute,
-} as any)
 const WindowCatIndexRoute = WindowCatIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -79,6 +75,11 @@ const WindowBlockerIndexRoute = WindowBlockerIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => WindowBlockerRouteRoute,
+} as any)
+const WindowActivityIndexRoute = WindowActivityIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WindowActivityRouteRoute,
 } as any)
 const WindowSettingsTimerIndexRoute =
   WindowSettingsTimerIndexRouteImport.update({
@@ -120,11 +121,17 @@ const WindowMainSplashIndexRoute = WindowMainSplashIndexRouteImport.update({
   path: '/splash/',
   getParentRoute: () => WindowMainRouteRoute,
 } as any)
-const WindowHistorySessionIdIndexRoute =
-  WindowHistorySessionIdIndexRouteImport.update({
+const WindowActivityOverviewIndexRoute =
+  WindowActivityOverviewIndexRouteImport.update({
+    id: '/overview/',
+    path: '/overview/',
+    getParentRoute: () => WindowActivityRouteRoute,
+  } as any)
+const WindowActivitySessionIdIndexRoute =
+  WindowActivitySessionIdIndexRouteImport.update({
     id: '/$sessionId/',
     path: '/$sessionId/',
-    getParentRoute: () => WindowHistoryRouteRoute,
+    getParentRoute: () => WindowActivityRouteRoute,
   } as any)
 const WindowSettingsFocusProfilesNewIndexRoute =
   WindowSettingsFocusProfilesNewIndexRouteImport.update({
@@ -140,17 +147,18 @@ const WindowSettingsFocusProfilesProfileIdIndexRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/window/activity': typeof WindowActivityRouteRouteWithChildren
   '/window/blocker': typeof WindowBlockerRouteRouteWithChildren
   '/window/cat': typeof WindowCatRouteRouteWithChildren
-  '/window/history': typeof WindowHistoryRouteRouteWithChildren
   '/window/main': typeof WindowMainRouteRouteWithChildren
   '/window/settings': typeof WindowSettingsRouteRouteWithChildren
+  '/window/activity/': typeof WindowActivityIndexRoute
   '/window/blocker/': typeof WindowBlockerIndexRoute
   '/window/cat/': typeof WindowCatIndexRoute
-  '/window/history/': typeof WindowHistoryIndexRoute
   '/window/main/': typeof WindowMainIndexRoute
   '/window/settings/': typeof WindowSettingsIndexRoute
-  '/window/history/$sessionId/': typeof WindowHistorySessionIdIndexRoute
+  '/window/activity/$sessionId/': typeof WindowActivitySessionIdIndexRoute
+  '/window/activity/overview/': typeof WindowActivityOverviewIndexRoute
   '/window/main/splash/': typeof WindowMainSplashIndexRoute
   '/window/settings/activity/': typeof WindowSettingsActivityIndexRoute
   '/window/settings/app/': typeof WindowSettingsAppIndexRoute
@@ -162,12 +170,13 @@ export interface FileRoutesByFullPath {
   '/window/settings/focus-profiles/new/': typeof WindowSettingsFocusProfilesNewIndexRoute
 }
 export interface FileRoutesByTo {
+  '/window/activity': typeof WindowActivityIndexRoute
   '/window/blocker': typeof WindowBlockerIndexRoute
   '/window/cat': typeof WindowCatIndexRoute
-  '/window/history': typeof WindowHistoryIndexRoute
   '/window/main': typeof WindowMainIndexRoute
   '/window/settings': typeof WindowSettingsIndexRoute
-  '/window/history/$sessionId': typeof WindowHistorySessionIdIndexRoute
+  '/window/activity/$sessionId': typeof WindowActivitySessionIdIndexRoute
+  '/window/activity/overview': typeof WindowActivityOverviewIndexRoute
   '/window/main/splash': typeof WindowMainSplashIndexRoute
   '/window/settings/activity': typeof WindowSettingsActivityIndexRoute
   '/window/settings/app': typeof WindowSettingsAppIndexRoute
@@ -180,17 +189,18 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/window/activity': typeof WindowActivityRouteRouteWithChildren
   '/window/blocker': typeof WindowBlockerRouteRouteWithChildren
   '/window/cat': typeof WindowCatRouteRouteWithChildren
-  '/window/history': typeof WindowHistoryRouteRouteWithChildren
   '/window/main': typeof WindowMainRouteRouteWithChildren
   '/window/settings': typeof WindowSettingsRouteRouteWithChildren
+  '/window/activity/': typeof WindowActivityIndexRoute
   '/window/blocker/': typeof WindowBlockerIndexRoute
   '/window/cat/': typeof WindowCatIndexRoute
-  '/window/history/': typeof WindowHistoryIndexRoute
   '/window/main/': typeof WindowMainIndexRoute
   '/window/settings/': typeof WindowSettingsIndexRoute
-  '/window/history/$sessionId/': typeof WindowHistorySessionIdIndexRoute
+  '/window/activity/$sessionId/': typeof WindowActivitySessionIdIndexRoute
+  '/window/activity/overview/': typeof WindowActivityOverviewIndexRoute
   '/window/main/splash/': typeof WindowMainSplashIndexRoute
   '/window/settings/activity/': typeof WindowSettingsActivityIndexRoute
   '/window/settings/app/': typeof WindowSettingsAppIndexRoute
@@ -204,17 +214,18 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/window/activity'
     | '/window/blocker'
     | '/window/cat'
-    | '/window/history'
     | '/window/main'
     | '/window/settings'
+    | '/window/activity/'
     | '/window/blocker/'
     | '/window/cat/'
-    | '/window/history/'
     | '/window/main/'
     | '/window/settings/'
-    | '/window/history/$sessionId/'
+    | '/window/activity/$sessionId/'
+    | '/window/activity/overview/'
     | '/window/main/splash/'
     | '/window/settings/activity/'
     | '/window/settings/app/'
@@ -226,12 +237,13 @@ export interface FileRouteTypes {
     | '/window/settings/focus-profiles/new/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/window/activity'
     | '/window/blocker'
     | '/window/cat'
-    | '/window/history'
     | '/window/main'
     | '/window/settings'
-    | '/window/history/$sessionId'
+    | '/window/activity/$sessionId'
+    | '/window/activity/overview'
     | '/window/main/splash'
     | '/window/settings/activity'
     | '/window/settings/app'
@@ -243,17 +255,18 @@ export interface FileRouteTypes {
     | '/window/settings/focus-profiles/new'
   id:
     | '__root__'
+    | '/window/activity'
     | '/window/blocker'
     | '/window/cat'
-    | '/window/history'
     | '/window/main'
     | '/window/settings'
+    | '/window/activity/'
     | '/window/blocker/'
     | '/window/cat/'
-    | '/window/history/'
     | '/window/main/'
     | '/window/settings/'
-    | '/window/history/$sessionId/'
+    | '/window/activity/$sessionId/'
+    | '/window/activity/overview/'
     | '/window/main/splash/'
     | '/window/settings/activity/'
     | '/window/settings/app/'
@@ -266,9 +279,9 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  WindowActivityRouteRoute: typeof WindowActivityRouteRouteWithChildren
   WindowBlockerRouteRoute: typeof WindowBlockerRouteRouteWithChildren
   WindowCatRouteRoute: typeof WindowCatRouteRouteWithChildren
-  WindowHistoryRouteRoute: typeof WindowHistoryRouteRouteWithChildren
   WindowMainRouteRoute: typeof WindowMainRouteRouteWithChildren
   WindowSettingsRouteRoute: typeof WindowSettingsRouteRouteWithChildren
 }
@@ -289,13 +302,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WindowMainRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/window/history': {
-      id: '/window/history'
-      path: '/window/history'
-      fullPath: '/window/history'
-      preLoaderRoute: typeof WindowHistoryRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/window/cat': {
       id: '/window/cat'
       path: '/window/cat'
@@ -308,6 +314,13 @@ declare module '@tanstack/react-router' {
       path: '/window/blocker'
       fullPath: '/window/blocker'
       preLoaderRoute: typeof WindowBlockerRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/window/activity': {
+      id: '/window/activity'
+      path: '/window/activity'
+      fullPath: '/window/activity'
+      preLoaderRoute: typeof WindowActivityRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/window/settings/': {
@@ -324,13 +337,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WindowMainIndexRouteImport
       parentRoute: typeof WindowMainRouteRoute
     }
-    '/window/history/': {
-      id: '/window/history/'
-      path: '/'
-      fullPath: '/window/history/'
-      preLoaderRoute: typeof WindowHistoryIndexRouteImport
-      parentRoute: typeof WindowHistoryRouteRoute
-    }
     '/window/cat/': {
       id: '/window/cat/'
       path: '/'
@@ -344,6 +350,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/window/blocker/'
       preLoaderRoute: typeof WindowBlockerIndexRouteImport
       parentRoute: typeof WindowBlockerRouteRoute
+    }
+    '/window/activity/': {
+      id: '/window/activity/'
+      path: '/'
+      fullPath: '/window/activity/'
+      preLoaderRoute: typeof WindowActivityIndexRouteImport
+      parentRoute: typeof WindowActivityRouteRoute
     }
     '/window/settings/timer/': {
       id: '/window/settings/timer/'
@@ -394,12 +407,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WindowMainSplashIndexRouteImport
       parentRoute: typeof WindowMainRouteRoute
     }
-    '/window/history/$sessionId/': {
-      id: '/window/history/$sessionId/'
+    '/window/activity/overview/': {
+      id: '/window/activity/overview/'
+      path: '/overview'
+      fullPath: '/window/activity/overview/'
+      preLoaderRoute: typeof WindowActivityOverviewIndexRouteImport
+      parentRoute: typeof WindowActivityRouteRoute
+    }
+    '/window/activity/$sessionId/': {
+      id: '/window/activity/$sessionId/'
       path: '/$sessionId'
-      fullPath: '/window/history/$sessionId/'
-      preLoaderRoute: typeof WindowHistorySessionIdIndexRouteImport
-      parentRoute: typeof WindowHistoryRouteRoute
+      fullPath: '/window/activity/$sessionId/'
+      preLoaderRoute: typeof WindowActivitySessionIdIndexRouteImport
+      parentRoute: typeof WindowActivityRouteRoute
     }
     '/window/settings/focus-profiles/new/': {
       id: '/window/settings/focus-profiles/new/'
@@ -417,6 +437,21 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface WindowActivityRouteRouteChildren {
+  WindowActivityIndexRoute: typeof WindowActivityIndexRoute
+  WindowActivitySessionIdIndexRoute: typeof WindowActivitySessionIdIndexRoute
+  WindowActivityOverviewIndexRoute: typeof WindowActivityOverviewIndexRoute
+}
+
+const WindowActivityRouteRouteChildren: WindowActivityRouteRouteChildren = {
+  WindowActivityIndexRoute: WindowActivityIndexRoute,
+  WindowActivitySessionIdIndexRoute: WindowActivitySessionIdIndexRoute,
+  WindowActivityOverviewIndexRoute: WindowActivityOverviewIndexRoute,
+}
+
+const WindowActivityRouteRouteWithChildren =
+  WindowActivityRouteRoute._addFileChildren(WindowActivityRouteRouteChildren)
 
 interface WindowBlockerRouteRouteChildren {
   WindowBlockerIndexRoute: typeof WindowBlockerIndexRoute
@@ -440,19 +475,6 @@ const WindowCatRouteRouteChildren: WindowCatRouteRouteChildren = {
 const WindowCatRouteRouteWithChildren = WindowCatRouteRoute._addFileChildren(
   WindowCatRouteRouteChildren,
 )
-
-interface WindowHistoryRouteRouteChildren {
-  WindowHistoryIndexRoute: typeof WindowHistoryIndexRoute
-  WindowHistorySessionIdIndexRoute: typeof WindowHistorySessionIdIndexRoute
-}
-
-const WindowHistoryRouteRouteChildren: WindowHistoryRouteRouteChildren = {
-  WindowHistoryIndexRoute: WindowHistoryIndexRoute,
-  WindowHistorySessionIdIndexRoute: WindowHistorySessionIdIndexRoute,
-}
-
-const WindowHistoryRouteRouteWithChildren =
-  WindowHistoryRouteRoute._addFileChildren(WindowHistoryRouteRouteChildren)
 
 interface WindowMainRouteRouteChildren {
   WindowMainIndexRoute: typeof WindowMainIndexRoute
@@ -498,9 +520,9 @@ const WindowSettingsRouteRouteWithChildren =
   WindowSettingsRouteRoute._addFileChildren(WindowSettingsRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  WindowActivityRouteRoute: WindowActivityRouteRouteWithChildren,
   WindowBlockerRouteRoute: WindowBlockerRouteRouteWithChildren,
   WindowCatRouteRoute: WindowCatRouteRouteWithChildren,
-  WindowHistoryRouteRoute: WindowHistoryRouteRouteWithChildren,
   WindowMainRouteRoute: WindowMainRouteRouteWithChildren,
   WindowSettingsRouteRoute: WindowSettingsRouteRouteWithChildren,
 }

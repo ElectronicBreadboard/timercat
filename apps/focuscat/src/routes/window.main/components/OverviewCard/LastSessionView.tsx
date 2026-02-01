@@ -22,7 +22,7 @@ export const LastSessionView: React.FC = () => {
 		if (lastSession == null) {
 			return;
 		}
-		await specta.commands.showHistoryWindowAtSession(lastSession.id);
+		await specta.commands.showActivityWindowAtSession(lastSession.id);
 	}, [lastSession]);
 
 	// MARK: - Effects
