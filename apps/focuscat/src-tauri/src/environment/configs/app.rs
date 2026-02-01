@@ -1,3 +1,4 @@
+use serde::Serialize;
 use std::path::Path;
 
 pub struct AppConfig;
@@ -26,6 +27,13 @@ impl AppConfig {
         return None;
     }
 
+    pub fn distribution() -> AppDistribution {
+        if cfg!(feature = "app-store") {
+            return AppDistribution::AppStore;
+        }
+        return AppDistribution::Direct;
+    }
+
     pub fn tray_icon_bytes() -> &'static [u8] {
         if cfg!(debug_assertions) {
             return include_bytes!(concat!(
@@ -38,4 +46,11 @@ impl AppConfig {
             "/icons/tray-default-icon.png"
         ));
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub enum AppDistribution {
+    Direct,
+    AppStore,
 }

@@ -14,7 +14,7 @@ export const SessionList: React.FC<TSessionListProps> = (props) => {
 
 	const debugEnabled = useCompute(
 		settingsCx.$appSettings,
-		({ value: settings }) => settings.debug.enabled
+		({ value: settings }) => settings.features.debug
 	);
 	const isDebugSelected = params.sessionId === 'debug';
 

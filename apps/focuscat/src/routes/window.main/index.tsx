@@ -3,7 +3,7 @@ import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { IconButton, ShuffleIcon } from '@/components';
 import { specta } from '@/environment';
-import { Cat, catConfig, type TCatRef } from '@/features/cat';
+import { Cat, catConfig, TCatFace, TCatHat, type TCatRef } from '@/features/cat';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
 import { Navbar, OverviewCard, TimerView } from './components';
@@ -54,9 +54,9 @@ function RouteComponent() {
 		settingsCx.update({
 			cat: {
 				equippedFur: settings.cat.equippedFur,
-				equippedFace: faces[Math.floor(Math.random() * faces.length)],
+				equippedFace: faces[Math.floor(Math.random() * faces.length)] as TCatFace,
 				equippedHat:
-					Math.random() < 0.5 ? null : hats[Math.floor(Math.random() * hats.length)]
+					Math.random() < 0.5 ? null : (hats[Math.floor(Math.random() * hats.length)] as TCatHat)
 			}
 		});
 	}, [settingsCx, settings.cat]);
@@ -70,7 +70,13 @@ function RouteComponent() {
 
 	return (
 		<div className="bg-base-0 flex h-screen w-[300px] flex-col">
-			<Navbar onMinimize={handleMinimize} onHistory={handleHistory} onSettings={handleSettings} />
+			<Navbar
+				onMinimize={handleMinimize}
+				onHistory={handleHistory}
+				onSettings={handleSettings}
+				showHistory={settings.features.activity}
+				showMinimize={settings.features.catWindow}
+			/>
 
 			{/* Top section: Overview + Cat */}
 			<div className="flex shrink-0" style={{ height: topSection.height }}>

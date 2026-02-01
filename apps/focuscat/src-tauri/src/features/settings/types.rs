@@ -7,10 +7,11 @@ use tauri::App;
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AppSettings {
+    pub features: FeaturesSettings,
     pub appearance: AppearanceSettings,
     pub debug: DebugSettings,
     pub timer: TimerSettings,
-    pub focus_goal: FocusGoalSettings,
+    pub goals: GoalSettings,
     pub activity: ActivitySettings,
     pub cat: CatSettings,
 }
@@ -18,12 +19,35 @@ pub struct AppSettings {
 impl Default for AppSettings {
     fn default() -> Self {
         return Self {
+            features: FeaturesSettings::default(),
             appearance: AppearanceSettings::default(),
             debug: DebugSettings::default(),
             timer: TimerSettings::default(),
-            focus_goal: FocusGoalSettings::default(),
+            goals: GoalSettings::default(),
             activity: ActivitySettings::default(),
             cat: CatSettings::default(),
+        };
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase", default)]
+pub struct FeaturesSettings {
+    pub goals: bool,
+    pub activity: bool,
+    pub profiles: bool,
+    pub cat_window: bool,
+    pub debug: bool,
+}
+
+impl Default for FeaturesSettings {
+    fn default() -> Self {
+        return Self {
+            goals: true,
+            activity: true,
+            profiles: true,
+            cat_window: true,
+            debug: false,
         };
     }
 }
@@ -46,7 +70,6 @@ pub enum Theme {
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct DebugSettings {
-    pub enabled: bool,
     pub cat: bool,
     pub timer_speed: u32,
 }
@@ -54,7 +77,6 @@ pub struct DebugSettings {
 impl Default for DebugSettings {
     fn default() -> Self {
         return Self {
-            enabled: false,
             cat: false,
             timer_speed: 1,
         };
@@ -87,12 +109,12 @@ impl Default for TimerSettings {
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
-pub struct FocusGoalSettings {
+pub struct GoalSettings {
     /// Daily focus goal in minutes (default: 120 = 2h)
     pub daily_goal_minutes: u32,
 }
 
-impl Default for FocusGoalSettings {
+impl Default for GoalSettings {
     fn default() -> Self {
         return Self {
             daily_goal_minutes: 120,
@@ -103,8 +125,6 @@ impl Default for FocusGoalSettings {
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ActivitySettings {
-    /// Whether activity tracking is enabled
-    pub enabled: bool,
     /// Whether to track window changes (not just app switches)
     pub track_windows: bool,
     /// Whether to track browser URLs
@@ -114,7 +134,6 @@ pub struct ActivitySettings {
 impl Default for ActivitySettings {
     fn default() -> Self {
         return Self {
-            enabled: true,
             track_windows: true,
             track_browser: true,
         };
@@ -160,6 +179,6 @@ impl Deref for AppSettingsState {
 
 // MARK: - Events
 
-#[derive(Debug, Clone, Serialize, specta::Type, tauri_specta::Event)]
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, tauri_specta::Event)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSettingsChangedEvent(pub AppSettings);

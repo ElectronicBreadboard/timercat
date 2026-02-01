@@ -15,11 +15,11 @@ function RouteComponent() {
 
 	// MARK: - Actions
 
-	const updateFocusGoal = React.useCallback(
-		(updates: Partial<specta.FocusGoalSettings>) => {
-			settingsCx.update({ focusGoal: { ...settings.focusGoal, ...updates } });
+	const updateGoals = React.useCallback(
+		(updates: Partial<specta.GoalSettings>) => {
+			settingsCx.update({ goals: { ...settings.goals, ...updates } });
 		},
-		[settingsCx, settings.focusGoal]
+		[settingsCx, settings.goals]
 	);
 
 	// MARK: - UI
@@ -31,12 +31,12 @@ function RouteComponent() {
 			<SettingGroup title="Daily">
 				<SettingItem label="Focus Goal" description="Target focus hours per day">
 					<NumberField
-						value={settings.focusGoal.dailyGoalMinutes / 60}
+						value={settings.goals.dailyGoalMinutes / 60}
 						min={0.5}
 						max={12}
 						step={0.5}
 						size="sm"
-						onChange={(v) => updateFocusGoal({ dailyGoalMinutes: v * 60 })}
+						onChange={(v) => updateGoals({ dailyGoalMinutes: v * 60 })}
 					/>
 				</SettingItem>
 			</SettingGroup>

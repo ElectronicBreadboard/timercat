@@ -372,10 +372,6 @@ timerUpdatedEvent: "timer-updated-event"
 
 export type ActivitySettings = { 
 /**
- * Whether activity tracking is enabled
- */
-enabled: boolean; 
-/**
  * Whether to track window changes (not just app switches)
  */
 trackWindows: boolean; 
@@ -391,8 +387,9 @@ export type App = {
  * Unique identifier (same as bundle_id).
  */
 id: string; bundleId: string; name: string | null; icon: string | null; color: string | null }
-export type AppInfo = { version: string; stage: Stage }
-export type AppSettings = { appearance: AppearanceSettings; debug: DebugSettings; timer: TimerSettings; focusGoal: FocusGoalSettings; activity: ActivitySettings; cat: CatSettings }
+export type AppDistribution = "direct" | "appStore"
+export type AppInfo = { version: string; stage: Stage; distribution: AppDistribution }
+export type AppSettings = { features: FeaturesSettings; appearance: AppearanceSettings; debug: DebugSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; cat: CatSettings }
 export type AppSettingsChangedEvent = AppSettings
 export type AppearanceSettings = { theme: Theme }
 /**
@@ -408,12 +405,8 @@ export type BlockingViolationDto = { profileId: number; profileName: string; pro
  */
 export type BlockingViolationEvent = BlockingViolationDto | null
 export type CatSettings = { equippedFur: string; equippedFace: string; equippedHat: string | null }
-export type DebugSettings = { enabled: boolean; cat: boolean; timerSpeed: number }
-export type FocusGoalSettings = { 
-/**
- * Daily focus goal in minutes (default: 120 = 2h)
- */
-dailyGoalMinutes: number }
+export type DebugSettings = { cat: boolean; timerSpeed: number }
+export type FeaturesSettings = { goals: boolean; activity: boolean; profiles: boolean; catWindow: boolean; debug: boolean }
 /**
  * Focus profile with its rules and schedules.
  */
@@ -429,6 +422,11 @@ export type FocusProfileRuleParams = { action: RuleAction; target: RuleTargetDto
 export type FocusProfileScheduleDto = { id: number; mode: ScheduleMode; days: number[]; startTime: string; endTime: string }
 export type FocusProfileScheduleParams = { mode: ScheduleMode; days: number[]; startTime: string; endTime: string }
 export type GetWindowActivitiesParams = { startedAfter: number; startedBefore: number; limit: number | null }
+export type GoalSettings = { 
+/**
+ * Daily focus goal in minutes (default: 120 = 2h)
+ */
+dailyGoalMinutes: number }
 /**
  * Event emitted when user input is detected (throttled).
  */

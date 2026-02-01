@@ -9,6 +9,7 @@ import {
 	useInputMonitoringPermission
 } from '@/features/permission';
 import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
+import { useAppInfo } from '@/hooks';
 
 export const Route = createFileRoute('/window/settings/app/')({
 	component: RouteComponent
@@ -19,6 +20,7 @@ function RouteComponent() {
 	const settings = useFeatureState(settingsCx.$appSettings);
 	const accessibility = useAccessibilityPermission();
 	const inputMonitoring = useInputMonitoringPermission();
+	const appInfo = useAppInfo();
 
 	// MARK: - Actions
 
@@ -29,11 +31,11 @@ function RouteComponent() {
 		[settingsCx, settings.appearance]
 	);
 
-	const updateDebug = React.useCallback(
-		(updates: Partial<specta.DebugSettings>) => {
-			settingsCx.update({ debug: { ...settings.debug, ...updates } });
+	const updateFeatures = React.useCallback(
+		(updates: Partial<specta.FeaturesSettings>) => {
+			settingsCx.update({ features: { ...settings.features, ...updates } });
 		},
-		[settingsCx, settings.debug]
+		[settingsCx, settings.features]
 	);
 
 	// MARK: - UI
@@ -81,11 +83,47 @@ function RouteComponent() {
 				</SettingItem>
 			</SettingGroup>
 
-			<SettingGroup title="Advanced">
-				<SettingItem label="Developer Mode" description="Show developer tools tab">
+			<SettingGroup title="Features">
+				<SettingItem label="Focus Goals" description="Track daily focus time targets">
 					<Switch
-						checked={settings.debug.enabled}
-						onCheckedChange={(checked) => updateDebug({ enabled: checked })}
+						checked={settings.features.goals}
+						onCheckedChange={(checked) => updateFeatures({ goals: checked })}
+						size="sm"
+					/>
+				</SettingItem>
+				<SettingItem label="Focus Profiles" description="Block distracting apps and websites">
+					<Switch
+						checked={settings.features.profiles}
+						onCheckedChange={(checked) => updateFeatures({ profiles: checked })}
+						size="sm"
+					/>
+				</SettingItem>
+				<SettingItem label="Activity Tracking" description="Record app and window usage">
+					<Switch
+						checked={settings.features.activity}
+						onCheckedChange={(checked) => updateFeatures({ activity: checked })}
+						size="sm"
+					/>
+				</SettingItem>
+				<SettingItem
+					label="Cat Widget"
+					description={
+						appInfo.distribution === 'appStore'
+							? 'Not available in App Store builds'
+							: 'Floating cat companion window'
+					}
+				>
+					<Switch
+						checked={settings.features.catWindow}
+						onCheckedChange={(checked) => updateFeatures({ catWindow: checked })}
+						size="sm"
+						disabled={appInfo.distribution === 'appStore'}
+					/>
+				</SettingItem>
+				<SettingItem label="Developer Mode" description="Show developer tools and debug info">
+					<Switch
+						checked={settings.features.debug}
+						onCheckedChange={(checked) => updateFeatures({ debug: checked })}
 						size="sm"
 					/>
 				</SettingItem>

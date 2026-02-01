@@ -8,11 +8,17 @@ export class SettingsCx {
 	private _unlisten?: () => void;
 
 	public readonly $appSettings = createState<TAppSettings>({
+		features: {
+			goals: true,
+			activity: true,
+			profiles: true,
+			catWindow: true,
+			debug: false
+		},
 		appearance: {
 			theme: 'auto'
 		},
 		debug: {
-			enabled: false,
 			cat: false,
 			timerSpeed: 1
 		},
@@ -22,11 +28,10 @@ export class SettingsCx {
 			longBreakMinutes: 15,
 			sessionsBeforeLongBreak: 4
 		},
-		focusGoal: {
+		goals: {
 			dailyGoalMinutes: 120
 		},
 		activity: {
-			enabled: true,
 			trackWindows: true,
 			trackBrowser: true
 		},

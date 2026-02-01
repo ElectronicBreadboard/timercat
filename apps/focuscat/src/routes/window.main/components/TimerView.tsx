@@ -76,7 +76,7 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 
 			<TimeDisplay cx={timerCx} previewMinutes={previewMinutes} className="mt-4" />
 
-			{settings.debug.enabled && speed > 1 && (
+			{settings.features.debug && speed > 1 && (
 				<Badge variant="warning" className="mt-1 font-mono">
 					{speed}x
 				</Badge>

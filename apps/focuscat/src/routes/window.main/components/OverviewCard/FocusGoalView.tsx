@@ -11,7 +11,7 @@ export const FocusGoalView: React.FC = () => {
 	const settingsCx = useSettingsCx();
 	const goalSeconds = useCompute(
 		settingsCx.$appSettings,
-		({ value: settings }) => settings.focusGoal.dailyGoalMinutes * 60
+		({ value: settings }) => settings.goals.dailyGoalMinutes * 60
 	);
 
 	const progress = Math.min(focusSeconds / goalSeconds, 1);

@@ -1,4 +1,5 @@
 use super::window::Window;
+use crate::environment::configs::app::{AppConfig, AppDistribution};
 use serde::Serialize;
 use specta::Type;
 
@@ -17,6 +18,7 @@ pub fn get_app_info() -> AppInfo {
     AppInfo {
         version: format!("v{}{}", base_version, suffix),
         stage,
+        distribution: AppConfig::distribution(),
     }
 }
 
@@ -25,6 +27,7 @@ pub fn get_app_info() -> AppInfo {
 pub struct AppInfo {
     pub version: String,
     pub stage: Stage,
+    pub distribution: AppDistribution,
 }
 
 #[derive(Serialize, Type)]

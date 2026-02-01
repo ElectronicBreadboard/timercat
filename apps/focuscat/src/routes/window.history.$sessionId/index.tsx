@@ -148,7 +148,7 @@ function RouteComponent() {
 			<SessionTimeline session={data.session} activities={data.activities} />
 
 			{/* Debug JSON */}
-			{settings.debug.enabled && (
+			{settings.features.debug && (
 				<div className="border-base-200 mt-4 border-t pt-4">
 					<div className="text-base-500 mb-2 text-xs font-medium">Debug Data</div>
 					<pre className="bg-base-50 text-base-600 rounded p-3 text-xs break-all whitespace-pre-wrap">

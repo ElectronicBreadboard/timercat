@@ -15,28 +15,6 @@ function RouteComponent() {
 
 	// MARK: - Actions
 
-	const handleTrackingToggle = React.useCallback(
-		(enabled: boolean) => {
-			if (enabled) {
-				// Enable tracking with all sub-options enabled by default
-				settingsCx.update({
-					activity: { ...settings.activity, enabled: true, trackWindows: true, trackBrowser: true }
-				});
-			} else {
-				// Disable tracking and all sub-options
-				settingsCx.update({
-					activity: {
-						...settings.activity,
-						enabled: false,
-						trackWindows: false,
-						trackBrowser: false
-					}
-				});
-			}
-		},
-		[settingsCx, settings.activity]
-	);
-
 	const updateActivity = React.useCallback(
 		(updates: Partial<specta.ActivitySettings>) => {
 			settingsCx.update({ activity: { ...settings.activity, ...updates } });
@@ -51,34 +29,23 @@ function RouteComponent() {
 			<h1 className="text-base-900 text-xl font-semibold">Activity</h1>
 
 			<SettingGroup title="Tracking">
-				<SettingItem label="Enable Tracking" description="Track app usage during focus sessions">
+				<SettingItem
+					label="Track Windows"
+					description="Track individual window and tab changes"
+				>
 					<Switch
-						checked={settings.activity.enabled}
-						onCheckedChange={handleTrackingToggle}
+						checked={settings.activity.trackWindows}
+						onCheckedChange={(checked) => updateActivity({ trackWindows: checked })}
 						size="sm"
 					/>
 				</SettingItem>
-				{settings.activity.enabled && (
-					<>
-						<SettingItem
-							label="Track Windows"
-							description="Track individual window and tab changes"
-						>
-							<Switch
-								checked={settings.activity.trackWindows}
-								onCheckedChange={(checked) => updateActivity({ trackWindows: checked })}
-								size="sm"
-							/>
-						</SettingItem>
-						<SettingItem label="Track Browser" description="Record visited URLs in browsers">
-							<Switch
-								checked={settings.activity.trackBrowser}
-								onCheckedChange={(checked) => updateActivity({ trackBrowser: checked })}
-								size="sm"
-							/>
-						</SettingItem>
-					</>
-				)}
+				<SettingItem label="Track Browser" description="Record visited URLs in browsers">
+					<Switch
+						checked={settings.activity.trackBrowser}
+						onCheckedChange={(checked) => updateActivity({ trackBrowser: checked })}
+						size="sm"
+					/>
+				</SettingItem>
 			</SettingGroup>
 		</div>
 	);

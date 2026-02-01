@@ -25,18 +25,28 @@ export const Sidebar: React.FC = () => {
 				<ul className="space-y-0.5">
 					<SidebarItem to="/window/settings/app" icon={<AppWindowIcon size={16} />} label="App" />
 					<SidebarItem to="/window/settings/timer" icon={<TimerIcon size={16} />} label="Timer" />
-					<SidebarItem to="/window/settings/goals" icon={<TargetIcon size={16} />} label="Goals" />
-					<SidebarItem
-						to="/window/settings/focus-profiles"
-						icon={<TagIcon size={16} />}
-						label="Profiles"
-					/>
-					<SidebarItem
-						to="/window/settings/activity"
-						icon={<ActivityIcon size={16} />}
-						label="Activity"
-					/>
-					{settings.debug.enabled && (
+					{settings.features.goals && (
+						<SidebarItem
+							to="/window/settings/goals"
+							icon={<TargetIcon size={16} />}
+							label="Goals"
+						/>
+					)}
+					{settings.features.profiles && (
+						<SidebarItem
+							to="/window/settings/focus-profiles"
+							icon={<TagIcon size={16} />}
+							label="Profiles"
+						/>
+					)}
+					{settings.features.activity && (
+						<SidebarItem
+							to="/window/settings/activity"
+							icon={<ActivityIcon size={16} />}
+							label="Activity"
+						/>
+					)}
+					{settings.features.debug && (
 						<SidebarItem
 							to="/window/settings/developer"
 							icon={<CodeIcon size={16} />}

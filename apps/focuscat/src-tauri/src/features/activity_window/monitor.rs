@@ -58,7 +58,7 @@ impl WindowMonitorHandler {
     fn is_tracking_enabled(&self) -> bool {
         self.app
             .try_state::<AppSettingsState>()
-            .map(|state| state.lock().unwrap().activity.enabled)
+            .map(|state| state.lock().unwrap().features.activity)
             .unwrap_or(false)
     }
 
@@ -67,7 +67,7 @@ impl WindowMonitorHandler {
             .try_state::<AppSettingsState>()
             .map(|state| {
                 let settings = state.lock().unwrap();
-                settings.activity.enabled && settings.activity.track_windows
+                settings.features.activity && settings.activity.track_windows
             })
             .unwrap_or(false)
     }
@@ -77,7 +77,7 @@ impl WindowMonitorHandler {
             .try_state::<AppSettingsState>()
             .map(|state| {
                 let settings = state.lock().unwrap();
-                settings.activity.enabled && settings.activity.track_browser
+                settings.features.activity && settings.activity.track_browser
             })
             .unwrap_or(false)
     }

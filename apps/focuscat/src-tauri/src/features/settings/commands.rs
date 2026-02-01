@@ -3,6 +3,7 @@ use super::{
     types::{AppSettings, AppSettingsChangedEvent, AppSettingsState},
 };
 use crate::common::path::get_app_data_dir;
+use crate::environment::configs::app::{AppConfig, AppDistribution};
 use crate::features::timer::timer::{TimerConfig, TimerStatus};
 use crate::features::timer::types::{TimerDto, TimerState, TimerUpdatedEvent};
 use std::process::Command;
@@ -22,6 +23,12 @@ pub fn set_settings(
     state: State<'_, AppSettingsState>,
     settings: AppSettings,
 ) -> Result<(), String> {
+    // Force cat_window off in App Store builds
+    let mut settings = settings;
+    if AppConfig::distribution() == AppDistribution::AppStore {
+        settings.features.cat_window = false;
+    }
+
     // Update in-memory state
     *state.lock().unwrap() = settings.clone();
 
