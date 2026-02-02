@@ -124,9 +124,9 @@ async openDataDirectory() : Promise<Result<null, string>> {
 async getTimer() : Promise<TimerDto> {
     return await TAURI_INVOKE("get_timer");
 },
-async startTimer() : Promise<Result<null, string>> {
+async startTimer(goal: string | null, profileIds: number[] | null) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("start_timer") };
+    return { status: "ok", data: await TAURI_INVOKE("start_timer", { goal, profileIds }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -335,6 +335,14 @@ async getActiveFocusProfiles() : Promise<Result<FocusProfileDto[], string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async getSessionEligibleProfiles() : Promise<Result<EligibleProfileDto[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_session_eligible_profiles") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 /**
  * Current blocking violation (None if nothing is blocked).
  */
@@ -406,6 +414,10 @@ export type BlockingViolationDto = { profileId: number; profileName: string; pro
 export type BlockingViolationEvent = BlockingViolationDto | null
 export type CatSettings = { equippedFur: string; equippedFace: string; equippedHat: string | null }
 export type DebugSettings = { cat: boolean; timerSpeed: number }
+/**
+ * A profile eligible for session selection, with auto-selection flag.
+ */
+export type EligibleProfileDto = { profile: FocusProfileDto; autoSelected: boolean }
 export type FeaturesSettings = { goals: boolean; activity: boolean; profiles: boolean; catWindow: boolean; debug: boolean }
 /**
  * Focus profile with its rules and schedules.
@@ -494,7 +506,7 @@ export type SessionChangedEvent = null
  * Event emitted when a session is completed.
  */
 export type SessionCompletedEvent = SessionSummaryDto
-export type SessionDetailDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; startedAt: number; endedAt: number | null; events: SessionEventDto[]; stats: SessionStatsDto }
+export type SessionDetailDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; goal: string | null; startedAt: number; endedAt: number | null; events: SessionEventDto[]; stats: SessionStatsDto }
 export type SessionEventDataDto = { seconds: number | null }
 export type SessionEventDto = { eventType: string; timestamp: number; 
 /**
@@ -506,7 +518,7 @@ data: SessionEventDataDto | null }
  */
 export type SessionStatsDto = { pausedSeconds: number; extendedSeconds: number; overtimeSeconds: number }
 export type SessionStatus = "active" | "completed" | "cancelled"
-export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; startedAt: number; endedAt: number | null }
+export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; goal: string | null; startedAt: number; endedAt: number | null }
 export type SoundId = "tick" | "complete" | "meow"
 export type Stage = "dev" | "prod"
 export type Theme = "light" | "dark" | "auto"

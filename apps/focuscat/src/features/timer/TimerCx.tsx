@@ -58,8 +58,10 @@ export class TimerCx {
 
 	// Timer commands
 
-	public async start(): Promise<void> {
-		const [ok, , err] = toTuple(await specta.commands.startTimer());
+	public async start(goal?: string, profileIds?: number[]): Promise<void> {
+		const [ok, , err] = toTuple(
+			await specta.commands.startTimer(goal ?? null, profileIds ?? null)
+		);
 		if (ok) {
 			this.$startTime.set(new Date());
 		} else {

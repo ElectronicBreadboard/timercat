@@ -4,10 +4,11 @@ use super::repository::{
     UpdateFocusProfileInput,
 };
 use super::types::{
-    FocusProfileDto, FocusProfileRuleDto, FocusProfileScheduleDto, ProfileChangedEvent, RuleAction,
-    RuleTargetDto, ScheduleMode,
+    EligibleProfileDto, FocusProfileDto, FocusProfileRuleDto, FocusProfileScheduleDto,
+    ProfileChangedEvent, RuleAction, RuleTargetDto, ScheduleMode,
 };
 use crate::environment::db::DatabaseState;
+use chrono::Datelike;
 use serde::Deserialize;
 use tauri::{AppHandle, State};
 use tauri_specta::Event;
@@ -129,6 +130,55 @@ pub async fn get_active_focus_profiles(
         .into_iter()
         .map(|(profile, _priority)| FocusProfileDto::from(profile))
         .collect());
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn get_session_eligible_profiles(
+    db: State<'_, DatabaseState>,
+) -> Result<Vec<EligibleProfileDto>, String> {
+    let all = FocusProfileRepository::get_all(&db.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let now = chrono::Local::now();
+    let current_day = now.weekday().num_days_from_monday() as i32;
+    let current_time = now.format("%H:%M").to_string();
+
+    let profiles = all
+        .into_iter()
+        // Exclude profiles that only have always_on schedules (they're enforced independently)
+        .filter(|p| {
+            p.schedules.is_empty()
+                || p.schedules
+                    .iter()
+                    .any(|s| s.mode != ScheduleMode::AlwaysOn.as_str())
+        })
+        .map(|p| {
+            // Auto-select if any sessions_only schedule matches current day and time
+            let auto_selected = p.schedules.iter().any(|s| {
+                if s.mode != ScheduleMode::SessionsOnly.as_str() {
+                    return false;
+                }
+                let days: Vec<i32> = serde_json::from_str(&s.days).unwrap_or_default();
+                if !days.contains(&current_day) {
+                    return false;
+                }
+                if s.start_time <= s.end_time {
+                    s.start_time <= current_time && current_time < s.end_time
+                } else {
+                    current_time >= s.start_time || current_time < s.end_time
+                }
+            });
+
+            EligibleProfileDto {
+                profile: FocusProfileDto::from(p),
+                auto_selected,
+            }
+        })
+        .collect();
+
+    return Ok(profiles);
 }
 
 #[derive(Debug, Clone, Deserialize, specta::Type)]

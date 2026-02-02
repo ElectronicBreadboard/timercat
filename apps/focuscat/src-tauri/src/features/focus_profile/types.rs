@@ -109,6 +109,14 @@ pub struct FocusProfileScheduleDto {
     pub end_time: String,
 }
 
+/// A profile eligible for session selection, with auto-selection flag.
+#[derive(Debug, Clone, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct EligibleProfileDto {
+    pub profile: FocusProfileDto,
+    pub auto_selected: bool,
+}
+
 // MARK: - Event
 
 /// Event emitted when a focus profile is created, updated, or deleted.

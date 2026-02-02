@@ -75,6 +75,7 @@ pub fn run() {
             focus_profile::commands::update_focus_profile,
             focus_profile::commands::delete_focus_profile,
             focus_profile::commands::get_active_focus_profiles,
+            focus_profile::commands::get_session_eligible_profiles,
             // Blocking commands
             blocking::commands::get_blocking_violation,
         ])

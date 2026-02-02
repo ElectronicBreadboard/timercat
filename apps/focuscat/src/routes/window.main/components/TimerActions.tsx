@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router';
 import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
 import {
@@ -15,6 +16,7 @@ import { cn } from '@/lib';
 
 export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 	const { cx, className } = props;
+	const navigate = useNavigate();
 
 	const { status, phase, isOvertime } = useCombinedCompute(
 		[cx.$status, cx.$phase, cx.$overtimeSeconds] as const,
@@ -50,7 +52,7 @@ export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 		(action: TAction) => {
 			switch (action) {
 				case 'start':
-					cx.start();
+					navigate({ to: '/window/main/setup' });
 					break;
 				case 'pause':
 					cx.pause();
@@ -70,7 +72,7 @@ export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 					break;
 			}
 		},
-		[cx]
+		[cx, navigate]
 	);
 
 	const icon = (action: TAction, size: number): React.ReactNode => {

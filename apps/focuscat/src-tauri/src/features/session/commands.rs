@@ -77,6 +77,7 @@ pub async fn get_session(
         &row.phase,
         &row.status,
         row.planned_seconds as u32,
+        row.goal.clone(),
         row.started_at,
         row.ended_at,
         events,
@@ -93,6 +94,7 @@ pub async fn get_session(
         status: session.status,
         planned_seconds: session.planned_seconds,
         actual_seconds: row.actual_seconds.map(|s| s as u32),
+        goal: row.goal,
         started_at: session.started_at as f64,
         ended_at: session.ended_at.map(|t| t as f64),
         events: event_dtos,
@@ -137,6 +139,7 @@ impl TryFrom<SessionRow> for SessionSummaryDto {
             status,
             planned_seconds: row.planned_seconds as u32,
             actual_seconds: row.actual_seconds.map(|s| s as u32),
+            goal: row.goal,
             started_at: row.started_at as f64,
             ended_at: row.ended_at.map(|t| t as f64),
         });

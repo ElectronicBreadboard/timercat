@@ -8,6 +8,8 @@ pub struct Session {
     pub status: SessionStatus,
     /// Original duration at start (seconds)
     pub planned_seconds: u32,
+    /// Optional session goal text
+    pub goal: Option<String>,
     /// Unix timestamp when session started
     pub started_at: i64,
     /// Unix timestamp when session ended (set on complete/cancel)
@@ -17,12 +19,19 @@ pub struct Session {
 }
 
 impl Session {
-    pub fn new(id: i64, phase: Phase, planned_seconds: u32, started_at: i64) -> Self {
+    pub fn new(
+        id: i64,
+        phase: Phase,
+        planned_seconds: u32,
+        goal: Option<String>,
+        started_at: i64,
+    ) -> Self {
         return Self {
             id,
             phase,
             status: SessionStatus::Active,
             planned_seconds,
+            goal,
             started_at,
             ended_at: None,
             events: vec![SessionEvent::Started {
@@ -37,6 +46,7 @@ impl Session {
         phase: &str,
         status: &str,
         planned_seconds: u32,
+        goal: Option<String>,
         started_at: i64,
         ended_at: Option<i64>,
         events: Vec<SessionEvent>,
@@ -46,6 +56,7 @@ impl Session {
             phase: Phase::from_str(phase)?,
             status: SessionStatus::from_str(status)?,
             planned_seconds,
+            goal,
             started_at,
             ended_at,
             events,
@@ -259,7 +270,7 @@ mod tests {
     const START_MS: i64 = 1_000_000; // 1 second
 
     fn make_session() -> Session {
-        return Session::new(1, Phase::Work, 1500, START_MS);
+        return Session::new(1, Phase::Work, 1500, None, START_MS);
     }
 
     #[test]
