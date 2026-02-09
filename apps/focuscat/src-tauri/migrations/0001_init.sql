@@ -5,7 +5,7 @@ CREATE TABLE sessions (
     status TEXT NOT NULL DEFAULT 'active', -- 'active' | 'completed' | 'cancelled'
     planned_seconds INTEGER NOT NULL,
     actual_seconds INTEGER, -- NULL until session ends, excludes pauses
-    goal TEXT, -- optional session goal text
+    intention TEXT, -- optional session intention ("What are you focusing on?")
     started_at INTEGER NOT NULL,
     ended_at INTEGER, -- NULL until session ends
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)

@@ -8,8 +8,8 @@ pub struct Session {
     pub status: SessionStatus,
     /// Original duration at start (seconds)
     pub planned_seconds: u32,
-    /// Optional session goal text
-    pub goal: Option<String>,
+    /// Optional session intention ("What are you focusing on?")
+    pub intention: Option<String>,
     /// Unix timestamp when session started
     pub started_at: i64,
     /// Unix timestamp when session ended (set on complete/cancel)
@@ -23,7 +23,7 @@ impl Session {
         id: i64,
         phase: Phase,
         planned_seconds: u32,
-        goal: Option<String>,
+        intention: Option<String>,
         started_at: i64,
     ) -> Self {
         return Self {
@@ -31,7 +31,7 @@ impl Session {
             phase,
             status: SessionStatus::Active,
             planned_seconds,
-            goal,
+            intention,
             started_at,
             ended_at: None,
             events: vec![SessionEvent::Started {
@@ -46,7 +46,7 @@ impl Session {
         phase: &str,
         status: &str,
         planned_seconds: u32,
-        goal: Option<String>,
+        intention: Option<String>,
         started_at: i64,
         ended_at: Option<i64>,
         events: Vec<SessionEvent>,
@@ -56,7 +56,7 @@ impl Session {
             phase: Phase::from_str(phase)?,
             status: SessionStatus::from_str(status)?,
             planned_seconds,
-            goal,
+            intention,
             started_at,
             ended_at,
             events,

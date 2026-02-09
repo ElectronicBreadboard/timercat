@@ -7,6 +7,7 @@ export const Navbar: React.FC<TNavbarProps> = (props) => {
 		onActivity,
 		onSettings,
 		showActivity = true,
+		showSettings = true,
 		showMinimize = true,
 		className
 	} = props;
@@ -36,15 +37,17 @@ export const Navbar: React.FC<TNavbarProps> = (props) => {
 					<HistoryIcon size={16} />
 				</IconButton>
 			)}
-			<IconButton
-				variant="bare"
-				size="sm"
-				onClick={onSettings}
-				aria-label="Open settings"
-				className="size-7"
-			>
-				<SettingsIcon size={16} />
-			</IconButton>
+			{showSettings && (
+				<IconButton
+					variant="bare"
+					size="sm"
+					onClick={onSettings}
+					aria-label="Open settings"
+					className="size-7"
+				>
+					<SettingsIcon size={16} />
+				</IconButton>
+			)}
 		</WindowHeader>
 	);
 };
@@ -54,6 +57,7 @@ interface TNavbarProps {
 	onActivity: () => void;
 	onSettings: () => void;
 	showActivity?: boolean;
+	showSettings?: boolean;
 	showMinimize?: boolean;
 	className?: string;
 }

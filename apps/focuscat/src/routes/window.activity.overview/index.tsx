@@ -41,7 +41,7 @@ function RouteComponent() {
 		status: 'completed',
 		plannedSeconds: 24 * 60 * 60,
 		actualSeconds: 24 * 60 * 60,
-		goal: null,
+		intention: null,
 		startedAt,
 		endedAt,
 		events: [],

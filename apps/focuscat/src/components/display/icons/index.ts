@@ -14,6 +14,7 @@ export {
 	ShieldBan as BlockIcon,
 	Briefcase as BriefcaseIcon,
 	Bug as BugIcon,
+	CalendarDays as CalendarIcon,
 	CheckCircle2 as CheckCircleIcon,
 	Check as CheckIcon,
 	ChevronLeft as ChevronLeftIcon,

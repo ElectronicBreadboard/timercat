@@ -52,6 +52,7 @@ export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 		(action: TAction) => {
 			switch (action) {
 				case 'start':
+				case 'work':
 					navigate({ to: '/window/main/setup' });
 					break;
 				case 'pause':
@@ -61,7 +62,6 @@ export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 					cx.resume();
 					break;
 				case 'break':
-				case 'work':
 					cx.skip();
 					break;
 				case 'done':

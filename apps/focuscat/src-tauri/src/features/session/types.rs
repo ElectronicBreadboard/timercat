@@ -11,7 +11,7 @@ pub struct SessionSummaryDto {
     pub status: SessionStatus,
     pub planned_seconds: u32,
     pub actual_seconds: Option<u32>,
-    pub goal: Option<String>,
+    pub intention: Option<String>,
     pub started_at: f64,
     pub ended_at: Option<f64>,
 }
@@ -24,7 +24,7 @@ pub struct SessionDetailDto {
     pub status: SessionStatus,
     pub planned_seconds: u32,
     pub actual_seconds: Option<u32>,
-    pub goal: Option<String>,
+    pub intention: Option<String>,
     pub started_at: f64,
     pub ended_at: Option<f64>,
     pub events: Vec<SessionEventDto>,

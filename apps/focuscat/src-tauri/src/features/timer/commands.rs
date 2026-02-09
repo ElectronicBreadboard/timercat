@@ -30,13 +30,13 @@ pub async fn start_timer(
     app_settings: State<'_, AppSettingsState>,
     runner: State<'_, Mutex<Option<TimerRunner>>>,
     db: State<'_, DatabaseState>,
-    goal: Option<String>,
+    intention: Option<String>,
     profile_ids: Option<Vec<i32>>,
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
 
-    // Normalize empty goal to None
-    let goal = goal.filter(|g| !g.trim().is_empty());
+    // Normalize empty intention to None
+    let intention = intention.filter(|s| !s.trim().is_empty());
 
     // Extract data
     let (phase, planned_seconds, config) = {
@@ -53,7 +53,7 @@ pub async fn start_timer(
     };
 
     // DB operation
-    let session = SessionRepository::create(&db.pool, phase, planned_seconds, goal.as_deref(), now)
+    let session = SessionRepository::create(&db.pool, phase, planned_seconds, intention.as_deref(), now)
         .await
         .map_err(db_err)?;
 
@@ -264,7 +264,7 @@ pub async fn finish_timer(
             status: SessionStatus::Completed,
             planned_seconds: planned,
             actual_seconds: Some(actual),
-            goal: None,
+            intention: None,
             started_at: started_at as f64,
             ended_at: Some(now as f64),
         })
@@ -336,7 +336,7 @@ pub async fn skip_timer(
             status: SessionStatus::Completed,
             planned_seconds: planned,
             actual_seconds: Some(actual),
-            goal: None,
+            intention: None,
             started_at: started_at as f64,
             ended_at: Some(now as f64),
         })
@@ -360,7 +360,7 @@ pub async fn skip_timer(
     };
     let next_duration = Timer::get_duration_for_phase(next_phase, &config);
 
-    // Create next session (no goal for auto-created sessions)
+    // Create next session (no intention for auto-created sessions)
     let new_session = SessionRepository::create(&db.pool, next_phase, next_duration, None, now)
         .await
         .map_err(db_err)?;

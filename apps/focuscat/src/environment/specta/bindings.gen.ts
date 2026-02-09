@@ -124,9 +124,9 @@ async openDataDirectory() : Promise<Result<null, string>> {
 async getTimer() : Promise<TimerDto> {
     return await TAURI_INVOKE("get_timer");
 },
-async startTimer(goal: string | null, profileIds: number[] | null) : Promise<Result<null, string>> {
+async startTimer(intention: string | null, profileIds: number[] | null) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("start_timer", { goal, profileIds }) };
+    return { status: "ok", data: await TAURI_INVOKE("start_timer", { intention, profileIds }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -518,7 +518,7 @@ export type SessionChangedEvent = null
  * Event emitted when a session is completed.
  */
 export type SessionCompletedEvent = SessionSummaryDto
-export type SessionDetailDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; goal: string | null; startedAt: number; endedAt: number | null; events: SessionEventDto[]; stats: SessionStatsDto }
+export type SessionDetailDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; intention: string | null; startedAt: number; endedAt: number | null; events: SessionEventDto[]; stats: SessionStatsDto }
 export type SessionEventDataDto = { seconds: number | null }
 export type SessionEventDto = { eventType: string; timestamp: number; 
 /**
@@ -530,7 +530,7 @@ data: SessionEventDataDto | null }
  */
 export type SessionStatsDto = { pausedSeconds: number; extendedSeconds: number; overtimeSeconds: number }
 export type SessionStatus = "active" | "completed" | "cancelled"
-export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; goal: string | null; startedAt: number; endedAt: number | null }
+export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; intention: string | null; startedAt: number; endedAt: number | null }
 export type SoundId = "tick" | "complete" | "meow"
 export type Stage = "dev" | "prod"
 export type Theme = "light" | "dark" | "auto"

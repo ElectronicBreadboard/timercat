@@ -11,19 +11,19 @@ impl SessionRepository {
         pool: &SqlitePool,
         phase: Phase,
         planned_seconds: u32,
-        goal: Option<&str>,
+        intention: Option<&str>,
         started_at: i64,
     ) -> Result<Session, sqlx::Error> {
         let result = sqlx::query(
             r#"
-            INSERT INTO sessions (phase, status, planned_seconds, goal, started_at)
+            INSERT INTO sessions (phase, status, planned_seconds, intention, started_at)
             VALUES (?, 'active', ?, ?, ?)
             RETURNING id
             "#,
         )
         .bind(phase.as_str())
         .bind(planned_seconds as i64)
-        .bind(goal)
+        .bind(intention)
         .bind(started_at)
         .fetch_one(pool)
         .await?;
@@ -44,7 +44,7 @@ impl SessionRepository {
             id,
             phase,
             planned_seconds,
-            goal.map(|s| s.to_string()),
+            intention.map(|s| s.to_string()),
             started_at,
         ));
     }
@@ -195,7 +195,7 @@ impl SessionRepository {
 
         let results = sqlx::query_as::<_, SessionRow>(
             r#"
-            SELECT id, phase, status, planned_seconds, actual_seconds, goal, started_at, ended_at
+            SELECT id, phase, status, planned_seconds, actual_seconds, intention, started_at, ended_at
             FROM sessions
             WHERE started_at >= ? AND started_at < ?
               AND (? IS NULL OR actual_seconds IS NULL OR actual_seconds >= ?)
@@ -218,7 +218,7 @@ impl SessionRepository {
     pub async fn get_by_id(pool: &SqlitePool, id: i64) -> Result<Option<SessionRow>, sqlx::Error> {
         let result = sqlx::query_as::<_, SessionRow>(
             r#"
-            SELECT id, phase, status, planned_seconds, actual_seconds, goal, started_at, ended_at
+            SELECT id, phase, status, planned_seconds, actual_seconds, intention, started_at, ended_at
             FROM sessions
             WHERE id = ?
             "#,
@@ -340,7 +340,7 @@ pub struct SessionRow {
     pub status: String,
     pub planned_seconds: i64,
     pub actual_seconds: Option<i64>,
-    pub goal: Option<String>,
+    pub intention: Option<String>,
     pub started_at: i64,
     pub ended_at: Option<i64>,
 }
