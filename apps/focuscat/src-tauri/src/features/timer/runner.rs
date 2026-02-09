@@ -99,8 +99,10 @@ fn run_timer_loop(app: AppHandle, stop_flag: Arc<AtomicBool>) {
             timer.overtime_seconds += 1;
         }
 
-        // Play tick sound each second
-        audio::play(&app, SoundId::Tick);
+        // Play tick sound each second (only at 1x speed; at higher speeds it would overlap)
+        if timer.speed == 1 {
+            audio::play(&app, SoundId::Tick);
+        }
 
         // Play complete sound when entering overtime
         if !was_in_overtime && timer.overtime_seconds > 0 {
