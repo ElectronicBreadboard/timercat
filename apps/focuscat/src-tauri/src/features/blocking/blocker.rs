@@ -1,14 +1,20 @@
-use super::config::BlockingConfig;
-use super::types::{BlockingViolationDto, BlockingViolationEvent};
-use crate::app::window::Window;
-use crate::common::url::extract_domain;
-use crate::features::focus_profile::repository::FocusProfileWithRelations;
-use crate::features::focus_profile::types::RuleAction;
+use super::{
+    config::BlockingConfig,
+    types::{BlockingViolationDto, BlockingViolationEvent},
+};
+use crate::{
+    app::window::Window,
+    common::url::extract_domain,
+    features::focus_profile::{
+        resolution::{resolve_for_app, resolve_for_website, ResolutionProfile},
+        types::RuleAction,
+    },
+};
 use tauri::AppHandle;
 use tauri_specta::Event;
 
 pub struct Blocker {
-    profiles: Vec<ResolvedProfile>,
+    profiles: Vec<ResolutionProfile>,
     active_violation: Option<BlockingViolation>,
 }
 
@@ -86,11 +92,8 @@ impl Blocker {
         return self.active_violation.clone();
     }
 
-    pub fn set_profiles(&mut self, data: Vec<(FocusProfileWithRelations, i32)>) {
-        self.profiles = data
-            .into_iter()
-            .map(|(profile, priority)| ResolvedProfile::new(profile, priority))
-            .collect();
+    pub fn set_profiles(&mut self, profiles: Vec<ResolutionProfile>) {
+        self.profiles = profiles;
     }
 
     fn set_violation(&mut self, app: &AppHandle, violation: Option<BlockingViolation>) {
@@ -118,12 +121,12 @@ impl Blocker {
     /// Check if an app is blocked.
     fn check_app(&self, bundle_id: Option<&str>) -> Option<BlockingViolation> {
         let bid = bundle_id?;
-        let (profile, action) = self.resolve(|t| t.matches_app(bid))?;
+        let (action, profile) = resolve_for_app(bid, &self.profiles)?;
         if matches!(action, RuleAction::Block) {
             return Some(BlockingViolation {
-                profile_id: profile.id,
-                profile_name: profile.name.clone(),
-                profile_color: profile.color.clone(),
+                profile_id: profile.profile_id,
+                profile_name: profile.profile_name.clone(),
+                profile_color: profile.profile_color.clone(),
                 blocked_target: BlockedTarget::App {
                     bundle_id: bid.to_string(),
                 },
@@ -134,12 +137,12 @@ impl Blocker {
 
     /// Check if a website is blocked.
     fn check_website(&self, domain: &str) -> Option<BlockingViolation> {
-        let (profile, action) = self.resolve(|t| t.matches_website(domain))?;
+        let (action, profile) = resolve_for_website(domain, &self.profiles)?;
         if matches!(action, RuleAction::Block) {
             return Some(BlockingViolation {
-                profile_id: profile.id,
-                profile_name: profile.name.clone(),
-                profile_color: profile.color.clone(),
+                profile_id: profile.profile_id,
+                profile_name: profile.profile_name.clone(),
+                profile_color: profile.profile_color.clone(),
                 blocked_target: BlockedTarget::Website {
                     domain: domain.to_string(),
                 },
@@ -166,48 +169,6 @@ impl Blocker {
         }
         return None;
     }
-
-    /// Priority-based resolution across all profiles.
-    ///
-    /// 1. Collect all matching rules from all profiles
-    /// 2. Rule from highest priority profile wins
-    /// 3. Same priority: block wins (fail-safe)
-    /// 4. No matching rule: allowed (default)
-    fn resolve(
-        &self,
-        matcher: impl Fn(&ResolvedTarget) -> bool,
-    ) -> Option<(&ResolvedProfile, &RuleAction)> {
-        let mut winner: Option<(&ResolvedProfile, &RuleAction)> = None;
-
-        for profile in &self.profiles {
-            for rule in &profile.rules {
-                if !matcher(&rule.target) {
-                    continue;
-                }
-
-                let is_new_winner = match &winner {
-                    None => true,
-                    Some((best, best_action)) => {
-                        if profile.priority > best.priority {
-                            true
-                        } else if profile.priority == best.priority {
-                            // Same priority: block wins over allow
-                            matches!(rule.action, RuleAction::Block)
-                                && matches!(best_action, RuleAction::Allow)
-                        } else {
-                            false
-                        }
-                    }
-                };
-
-                if is_new_winner {
-                    winner = Some((profile, &rule.action));
-                }
-            }
-        }
-
-        return winner;
-    }
 }
 
 /// Violation reported when a blocked app or website is detected.
@@ -226,82 +187,6 @@ pub enum BlockedTarget {
     Website { domain: String },
 }
 
-// MARK: - ResolvedProfile
-
-struct ResolvedProfile {
-    id: i64,
-    name: String,
-    color: Option<String>,
-    priority: i32,
-    rules: Vec<ResolvedRule>,
-}
-
-impl ResolvedProfile {
-    fn new(data: FocusProfileWithRelations, priority: i32) -> Self {
-        let id = data.profile.id;
-        let name = data.profile.name;
-        let color = data.profile.color;
-        let rules = data
-            .rules
-            .into_iter()
-            .map(|row| {
-                let action = RuleAction::from_str(&row.action).unwrap_or(RuleAction::Block);
-                let target = if let Some(bundle_id) = row.app_bundle_id {
-                    ResolvedTarget::App { bundle_id }
-                } else if let Some(domain) = row.website_domain {
-                    ResolvedTarget::Website { domain }
-                } else {
-                    ResolvedTarget::All
-                };
-                ResolvedRule { action, target }
-            })
-            .collect();
-
-        return Self {
-            id,
-            name,
-            color,
-            priority,
-            rules,
-        };
-    }
-}
-
-// MARK: - ResolvedRule
-
-struct ResolvedRule {
-    action: RuleAction,
-    target: ResolvedTarget,
-}
-
-enum ResolvedTarget {
-    App { bundle_id: String },
-    Website { domain: String },
-    All,
-}
-
-impl ResolvedTarget {
-    fn matches_app(&self, bundle_id: &str) -> bool {
-        return match self {
-            ResolvedTarget::App {
-                bundle_id: rule_bid,
-            } => rule_bid == bundle_id,
-            ResolvedTarget::All => true,
-            ResolvedTarget::Website { .. } => false,
-        };
-    }
-
-    fn matches_website(&self, domain: &str) -> bool {
-        return match self {
-            ResolvedTarget::Website {
-                domain: rule_domain,
-            } => rule_domain == domain,
-            ResolvedTarget::All => true,
-            ResolvedTarget::App { .. } => false,
-        };
-    }
-}
-
 // MARK: - Tests
 
 #[cfg(test)]
@@ -318,70 +203,10 @@ mod tests {
         }
     }
 
-    fn make_blocker(profiles: Vec<ResolvedProfile>) -> Blocker {
+    fn make_blocker(profiles: Vec<ResolutionProfile>) -> Blocker {
         return Blocker {
             profiles,
             active_violation: None,
-        };
-    }
-
-    fn profile(name: &str, priority: i32, rules: Vec<ResolvedRule>) -> ResolvedProfile {
-        return ResolvedProfile {
-            id: 0,
-            name: name.to_string(),
-            color: None,
-            priority,
-            rules,
-        };
-    }
-
-    fn block_app(bundle_id: &str) -> ResolvedRule {
-        return ResolvedRule {
-            action: RuleAction::Block,
-            target: ResolvedTarget::App {
-                bundle_id: bundle_id.to_string(),
-            },
-        };
-    }
-
-    fn allow_app(bundle_id: &str) -> ResolvedRule {
-        return ResolvedRule {
-            action: RuleAction::Allow,
-            target: ResolvedTarget::App {
-                bundle_id: bundle_id.to_string(),
-            },
-        };
-    }
-
-    fn block_website(domain: &str) -> ResolvedRule {
-        return ResolvedRule {
-            action: RuleAction::Block,
-            target: ResolvedTarget::Website {
-                domain: domain.to_string(),
-            },
-        };
-    }
-
-    fn allow_website(domain: &str) -> ResolvedRule {
-        return ResolvedRule {
-            action: RuleAction::Allow,
-            target: ResolvedTarget::Website {
-                domain: domain.to_string(),
-            },
-        };
-    }
-
-    fn block_all() -> ResolvedRule {
-        return ResolvedRule {
-            action: RuleAction::Block,
-            target: ResolvedTarget::All,
-        };
-    }
-
-    fn allow_all() -> ResolvedRule {
-        return ResolvedRule {
-            action: RuleAction::Allow,
-            target: ResolvedTarget::All,
         };
     }
 
@@ -389,172 +214,6 @@ mod tests {
     fn test_no_profiles_means_not_blocked() {
         let blocker = make_blocker(vec![]);
         assert!(!blocker.is_app_blocked("com.apple.Calculator"));
-        assert!(!blocker.is_website_blocked("youtube.com"));
-    }
-
-    #[test]
-    fn test_no_matching_rules_means_not_blocked() {
-        let blocker = make_blocker(vec![profile(
-            "Test",
-            0,
-            vec![block_app("com.apple.Calculator")],
-        )]);
-        assert!(!blocker.is_app_blocked("com.microsoft.VSCode"));
-    }
-
-    #[test]
-    fn test_block_app_blocks_matching() {
-        let blocker = make_blocker(vec![profile(
-            "Test",
-            0,
-            vec![
-                block_app("com.apple.Calculator"),
-                block_app("com.discord.Discord"),
-            ],
-        )]);
-
-        assert!(blocker.is_app_blocked("com.apple.Calculator"));
-        assert!(blocker.is_app_blocked("com.discord.Discord"));
-        assert!(!blocker.is_app_blocked("com.microsoft.VSCode"));
-    }
-
-    #[test]
-    fn test_block_website_blocks_matching() {
-        let blocker = make_blocker(vec![profile(
-            "Test",
-            0,
-            vec![block_website("youtube.com"), block_website("twitter.com")],
-        )]);
-
-        assert!(blocker.is_website_blocked("youtube.com"));
-        assert!(blocker.is_website_blocked("twitter.com"));
-        assert!(!blocker.is_website_blocked("github.com"));
-    }
-
-    #[test]
-    fn test_block_all_blocks_everything() {
-        let blocker = make_blocker(vec![profile("Test", 0, vec![block_all()])]);
-        assert!(blocker.is_app_blocked("com.apple.Calculator"));
-        assert!(blocker.is_website_blocked("youtube.com"));
-    }
-
-    #[test]
-    fn test_empty_profile_blocks_nothing() {
-        let blocker = make_blocker(vec![profile("Test", 0, vec![])]);
-        assert!(!blocker.is_app_blocked("com.apple.Calculator"));
-        assert!(!blocker.is_website_blocked("youtube.com"));
-    }
-
-    #[test]
-    fn test_allow_all_blocks_nothing() {
-        let blocker = make_blocker(vec![profile("Test", 0, vec![allow_all()])]);
-        assert!(!blocker.is_app_blocked("com.apple.Calculator"));
-        assert!(!blocker.is_website_blocked("youtube.com"));
-    }
-
-    #[test]
-    fn test_app_rules_dont_affect_websites() {
-        let blocker = make_blocker(vec![profile(
-            "Test",
-            0,
-            vec![block_app("com.apple.Calculator")],
-        )]);
-        assert!(blocker.is_app_blocked("com.apple.Calculator"));
-        assert!(!blocker.is_website_blocked("calculator.com"));
-    }
-
-    #[test]
-    fn test_website_rules_dont_affect_apps() {
-        let blocker = make_blocker(vec![profile("Test", 0, vec![block_website("youtube.com")])]);
-        assert!(blocker.is_website_blocked("youtube.com"));
-        assert!(!blocker.is_app_blocked("com.google.YouTube"));
-    }
-
-    #[test]
-    fn test_higher_priority_allow_overrides_block() {
-        let blocker = make_blocker(vec![
-            profile("Block", 0, vec![block_app("com.apple.Calculator")]),
-            profile("Allow", 1, vec![allow_app("com.apple.Calculator")]),
-        ]);
-        assert!(!blocker.is_app_blocked("com.apple.Calculator"));
-    }
-
-    #[test]
-    fn test_same_priority_block_wins_over_allow() {
-        let blocker = make_blocker(vec![
-            profile("Allow", 0, vec![allow_app("com.apple.Calculator")]),
-            profile("Block", 0, vec![block_app("com.apple.Calculator")]),
-        ]);
-        assert!(blocker.is_app_blocked("com.apple.Calculator"));
-    }
-
-    /// Blocklist: "No Social Media" (blocks twitter, facebook)
-    ///   -> those sites blocked, everything else allowed
-    #[test]
-    fn test_blocklist_pattern() {
-        let blocker = make_blocker(vec![profile(
-            "No Social Media",
-            0,
-            vec![block_website("twitter.com"), block_website("facebook.com")],
-        )]);
-
-        assert!(blocker.is_website_blocked("twitter.com"));
-        assert!(blocker.is_website_blocked("facebook.com"));
-        assert!(!blocker.is_website_blocked("github.com"));
-    }
-
-    /// Exception: "No Social Media" (pri 0) + "Allow Twitter" (pri 1)
-    ///   -> facebook blocked, twitter allowed
-    #[test]
-    fn test_exception_pattern() {
-        let blocker = make_blocker(vec![
-            profile(
-                "No Social Media",
-                0,
-                vec![block_website("twitter.com"), block_website("facebook.com")],
-            ),
-            profile("Allow Twitter", 1, vec![allow_website("twitter.com")]),
-        ]);
-
-        assert!(!blocker.is_website_blocked("twitter.com"));
-        assert!(blocker.is_website_blocked("facebook.com"));
-        assert!(!blocker.is_website_blocked("github.com"));
-    }
-
-    /// Whitelist: "Block All" (pri 0) + "Coding Apps" (pri 1)
-    ///   -> only coding apps allowed, rest blocked
-    #[test]
-    fn test_whitelist_pattern() {
-        let blocker = make_blocker(vec![
-            profile("Block All", 0, vec![block_all()]),
-            profile(
-                "Coding Apps",
-                1,
-                vec![
-                    allow_app("com.microsoft.VSCode"),
-                    allow_app("com.apple.Terminal"),
-                ],
-            ),
-        ]);
-
-        assert!(!blocker.is_app_blocked("com.microsoft.VSCode"));
-        assert!(!blocker.is_app_blocked("com.apple.Terminal"));
-        assert!(blocker.is_app_blocked("com.apple.Calculator"));
-        // Block All also blocks websites
-        assert!(blocker.is_website_blocked("youtube.com"));
-    }
-
-    /// Break: "Allow All" (pri 99) overrides everything
-    #[test]
-    fn test_break_pattern() {
-        let blocker = make_blocker(vec![
-            profile("Block All", 0, vec![block_all()]),
-            profile("Coding Apps", 1, vec![allow_app("com.microsoft.VSCode")]),
-            profile("Break", 99, vec![allow_all()]),
-        ]);
-
-        assert!(!blocker.is_app_blocked("com.apple.Calculator"));
-        assert!(!blocker.is_app_blocked("com.microsoft.VSCode"));
         assert!(!blocker.is_website_blocked("youtube.com"));
     }
 }

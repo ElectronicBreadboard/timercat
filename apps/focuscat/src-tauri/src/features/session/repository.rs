@@ -64,7 +64,7 @@ impl SessionRepository {
             )
             .bind(session_id)
             .bind(*profile_id as i64)
-            .bind(i as i64)
+            .bind((i + 1) as i64)
             .execute(pool)
             .await?;
         }

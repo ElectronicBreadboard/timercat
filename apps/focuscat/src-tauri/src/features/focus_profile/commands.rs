@@ -1,11 +1,14 @@
-use super::repository::{
-    CreateFocusProfileInput, FocusProfileRepository, FocusProfileRuleInput, FocusProfileRuleRow,
-    FocusProfileScheduleInput, FocusProfileScheduleRow, FocusProfileWithRelations,
-    UpdateFocusProfileInput,
-};
-use super::types::{
-    EligibleProfileDto, FocusProfileDto, FocusProfileRuleDto, FocusProfileScheduleDto,
-    ProfileChangedEvent, RuleAction, RuleTargetDto, ScheduleMode,
+use super::{
+    repository::{
+        CreateFocusProfileInput, FocusProfileRepository, FocusProfileRuleInput,
+        FocusProfileRuleRow, FocusProfileScheduleInput, FocusProfileScheduleRow,
+        FocusProfileWithRelations, UpdateFocusProfileInput,
+    },
+    resolution::{is_always_on_now, resolve_rules, ResolvedRules, ResolvedTarget},
+    types::{
+        EligibleProfileDto, FocusProfileDto, FocusProfileRuleDto, FocusProfileScheduleDto,
+        PreviewRulesDto, ProfileChangedEvent, RuleAction, RuleTargetDto, ScheduleMode,
+    },
 };
 use crate::environment::db::DatabaseState;
 use chrono::Datelike;
@@ -181,6 +184,37 @@ pub async fn get_session_eligible_profiles(
     return Ok(profiles);
 }
 
+#[tauri::command]
+#[specta::specta]
+pub async fn preview_session_rules(
+    db: State<'_, DatabaseState>,
+    profile_ids: Vec<i32>,
+) -> Result<PreviewRulesDto, String> {
+    let all = FocusProfileRepository::get_all(&db.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let now = chrono::Local::now();
+    let current_day = now.weekday().num_days_from_monday() as i32;
+    let current_time = now.format("%H:%M").to_string();
+
+    // Selected session profiles: priority = position + 1. Always-on: priority = 0.
+    let mut active: Vec<(&FocusProfileWithRelations, i64)> = Vec::new();
+    for profile in &all {
+        if let Some(pos) = profile_ids
+            .iter()
+            .position(|&id| id as i64 == profile.profile.id)
+        {
+            active.push((profile, (pos + 1) as i64));
+        } else if is_always_on_now(&profile.schedules, current_day, &current_time) {
+            active.push((profile, 0));
+        }
+    }
+
+    let resolved = resolve_rules(&active);
+    return Ok(PreviewRulesDto::from(&resolved));
+}
+
 #[derive(Debug, Clone, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FocusProfileRuleParams {
@@ -277,6 +311,45 @@ impl From<FocusProfileScheduleRow> for FocusProfileScheduleDto {
             days,
             start_time: row.start_time,
             end_time: row.end_time,
+        };
+    }
+}
+
+impl From<&ResolvedRules> for PreviewRulesDto {
+    fn from(resolved: &ResolvedRules) -> Self {
+        return Self {
+            blocked: resolved.blocked.iter().map(RuleTargetDto::from).collect(),
+            allowed: resolved.allowed.iter().map(RuleTargetDto::from).collect(),
+        };
+    }
+}
+
+impl From<&ResolvedTarget> for RuleTargetDto {
+    fn from(t: &ResolvedTarget) -> Self {
+        return match t {
+            ResolvedTarget::All => RuleTargetDto::All,
+            ResolvedTarget::App {
+                bundle_id,
+                name,
+                icon,
+                color,
+            } => RuleTargetDto::App {
+                bundle_id: bundle_id.clone(),
+                name: name.clone(),
+                icon: icon.clone(),
+                color: color.clone(),
+            },
+            ResolvedTarget::Website {
+                domain,
+                name,
+                icon,
+                color,
+            } => RuleTargetDto::Website {
+                domain: domain.clone(),
+                name: name.clone(),
+                icon: icon.clone(),
+                color: color.clone(),
+            },
         };
     }
 }

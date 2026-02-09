@@ -343,6 +343,14 @@ async getSessionEligibleProfiles() : Promise<Result<EligibleProfileDto[], string
     else return { status: "error", error: e  as any };
 }
 },
+async previewSessionRules(profileIds: number[]) : Promise<Result<PreviewRulesDto, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("preview_session_rules", { profileIds }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 /**
  * Current blocking violation (None if nothing is blocked).
  */
@@ -448,6 +456,10 @@ export type InputDetectedEvent = InputType
  */
 export type InputType = "keyboard" | "mouse"
 export type Phase = "work" | "shortBreak" | "longBreak"
+/**
+ * Preview of resolved rules for a session setup.
+ */
+export type PreviewRulesDto = { blocked: RuleTargetDto[]; allowed: RuleTargetDto[] }
 /**
  * Event emitted when a focus profile is created, updated, or deleted.
  */

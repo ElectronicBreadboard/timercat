@@ -1,4 +1,7 @@
-use super::types::{RuleAction, RuleTargetDto, ScheduleMode};
+use super::{
+    resolution::is_always_on_now,
+    types::{RuleAction, RuleTargetDto, ScheduleMode},
+};
 use crate::features::app::repository::{
     AppRepository, UpsertAppInput, UpsertWebsiteInput, WebsiteRepository,
 };
@@ -143,23 +146,7 @@ impl FocusProfileRepository {
                 }
 
                 // Always-on: active if any schedule matches current day and time
-                let is_always_on = p.schedules.iter().any(|s| {
-                    if s.mode != ScheduleMode::AlwaysOn.as_str() {
-                        return false;
-                    }
-                    let days: Vec<i32> = serde_json::from_str(&s.days).unwrap_or_default();
-                    if !days.contains(&current_day) {
-                        return false;
-                    }
-                    if s.start_time <= s.end_time {
-                        // Same-day range (e.g. 09:00–17:00)
-                        s.start_time <= current_time && current_time < s.end_time
-                    } else {
-                        // Midnight-spanning range (e.g. 23:00–01:00)
-                        current_time >= s.start_time || current_time < s.end_time
-                    }
-                });
-                if is_always_on {
+                if is_always_on_now(&p.schedules, current_day, &current_time) {
                     return Some((p, 0));
                 }
 

@@ -3,11 +3,16 @@ pub mod commands;
 pub mod config;
 pub mod types;
 
-use crate::environment::db::DatabaseState;
-use crate::features::focus_profile::repository::FocusProfileRepository;
-use crate::features::focus_profile::types::ProfileChangedEvent;
-use crate::features::session::types::SessionChangedEvent;
-use crate::features::settings::types::{AppSettingsChangedEvent, AppSettingsState};
+use crate::{
+    environment::db::DatabaseState,
+    features::focus_profile::{
+        repository::{FocusProfileRepository, FocusProfileWithRelations},
+        resolution::to_resolution_profiles,
+        types::ProfileChangedEvent,
+    },
+    features::session::types::SessionChangedEvent,
+    features::settings::types::{AppSettingsChangedEvent, AppSettingsState},
+};
 use config::BlockingConfig;
 use std::sync::Arc;
 use tauri::{App, Manager};
@@ -48,10 +53,15 @@ pub fn setup(app: &App) {
             if profiles_enabled {
                 was_disabled = false;
                 if let Some(db) = handle.try_state::<DatabaseState>() {
-                    let profiles = FocusProfileRepository::get_active(&db.pool).await;
-                    if let (Ok(profiles), Some(state)) =
-                        (profiles, handle.try_state::<BlockerState>())
+                    let db_profiles = FocusProfileRepository::get_active(&db.pool).await;
+                    if let (Ok(db_profiles), Some(state)) =
+                        (db_profiles, handle.try_state::<BlockerState>())
                     {
+                        let refs: Vec<(&FocusProfileWithRelations, i64)> = db_profiles
+                            .iter()
+                            .map(|(p, pri)| (p, *pri as i64))
+                            .collect();
+                        let profiles = to_resolution_profiles(&refs);
                         state.lock().unwrap().set_profiles(profiles);
                     }
                 }

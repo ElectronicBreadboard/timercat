@@ -117,6 +117,14 @@ pub struct EligibleProfileDto {
     pub auto_selected: bool,
 }
 
+/// Preview of resolved rules for a session setup.
+#[derive(Debug, Clone, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PreviewRulesDto {
+    pub blocked: Vec<RuleTargetDto>,
+    pub allowed: Vec<RuleTargetDto>,
+}
+
 // MARK: - Event
 
 /// Event emitted when a focus profile is created, updated, or deleted.

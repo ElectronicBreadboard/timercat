@@ -11,6 +11,7 @@ The goal is balance: enough signposts to navigate, not so many that they become 
 ## Core Principles
 
 - **Value-Driven** - Always ask "Does this help the next reader?"
+- **Long-Term** - Comments should help someone reading the code in a week. Avoid session-only rationale (e.g. "we chose X over Y") unless it explains non-obvious constraints.
 - **Balanced** - Never over-comment obvious code, never under-comment complex logic
 
 ## What TO Comment
@@ -120,6 +121,9 @@ for item in items {
 // Check if null or id different
 if (current == null || current.id !== id) {
 ```
+
+### Session Rationale
+Never document design choices that only matter during the current refactor. "Type-safe; no string formatting" or "we use enum instead of string" add noise once the change is done.
 
 ### Type Information
 Never restate what types already document.
