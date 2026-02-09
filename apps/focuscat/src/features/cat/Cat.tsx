@@ -40,12 +40,12 @@ export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
 
 	const tap = React.useCallback(
 		(options: TTapOptions = {}) => {
-			if (Date.now() < cooldownUntil.current) {
-				return;
-			}
-
 			const { mode = lastHand === 'right' ? 'left' : 'right', cooldown = catConfig.tapThrottleMs } =
 				options;
+
+			if (cooldown !== 0 && Date.now() < cooldownUntil.current) {
+				return;
+			}
 
 			if (mode === 'left' || mode === 'both') {
 				setLeftHand('down');
@@ -65,8 +65,8 @@ export const Cat = React.forwardRef<TCatRef, TCatProps>((props, ref) => {
 	);
 
 	const handleTap = React.useCallback(() => {
-		cooldownUntil.current = 0; // UI taps always go through
-		tap(onTap?.() as TTapOptions | undefined);
+		const tapOptions = onTap?.() as TTapOptions | undefined;
+		tap({ ...tapOptions, cooldown: 0 });
 	}, [tap, onTap]);
 
 	// MARK: - Effects

@@ -85,7 +85,7 @@ function RouteComponent() {
 
 	// MARK: - Effects
 
-	useOnInputDetected(React.useCallback(() => catRef.current?.tap(), []));
+	useOnInputDetected(React.useCallback(() => catRef.current?.tap({ cooldown: 0 }), []));
 
 	// MARK: - UI
 
