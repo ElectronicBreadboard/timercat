@@ -1,5 +1,4 @@
 // Custom Icons
-export * from './ResizeGripIcon';
 export * from './TriangleDownIcon';
 export * from './TriangleLeftIcon';
 export * from './TriangleRightIcon';

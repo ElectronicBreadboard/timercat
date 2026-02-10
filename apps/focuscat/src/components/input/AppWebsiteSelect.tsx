@@ -1,6 +1,6 @@
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { Badge, CheckIcon, ResizeGripIcon, XIcon } from '@/components';
+import { Badge, CheckIcon, XIcon } from '@/components';
 import { specta } from '@/environment';
 import { cn, toTuple } from '@/lib';
 import { MultiSelect, useMultiSelect, type MultiSelectCx } from './MultiSelect';
@@ -112,70 +112,25 @@ const InputArea: React.FC<TInputAreaProps> = (props) => {
 		value,
 		placeholder,
 		className,
-		defaultMaxHeight = 96,
+		defaultHeight = 96,
 		minHeight = 32,
-		maxHeight: maxHeightLimit = 320
+		maxHeight = 320
 	} = props;
 	const containerProps = cx.useContainerProps();
 	const inputProps = cx.useInputProps();
-	const [currentMaxHeight, setCurrentMaxHeight] = React.useState(defaultMaxHeight);
-
-	const handleResizePointerDown = React.useCallback(
-		(e: React.PointerEvent<HTMLDivElement>) => {
-			e.preventDefault();
-			const container = e.currentTarget.previousElementSibling as HTMLElement | null;
-			if (container == null) {
-				return;
-			}
-
-			const startY = e.clientY;
-			const startHeight = container.offsetHeight;
-
-			function onPointerMove(moveE: PointerEvent) {
-				const newHeight = Math.max(
-					minHeight,
-					Math.min(startHeight + (moveE.clientY - startY), maxHeightLimit)
-				);
-				setCurrentMaxHeight(newHeight);
-			}
-
-			function onPointerUp() {
-				document.removeEventListener('pointermove', onPointerMove);
-				document.removeEventListener('pointerup', onPointerUp);
-			}
-
-			document.addEventListener('pointermove', onPointerMove);
-			document.addEventListener('pointerup', onPointerUp);
-		},
-		[minHeight, maxHeightLimit]
-	);
 
 	return (
-		<div className="relative">
-			<MultiSelect.Container
-				size="sm"
-				className={cn('overflow-y-auto overscroll-contain', className)}
-				style={{ maxHeight: currentMaxHeight }}
-				{...containerProps}
-			>
-				{value.map((item) => (
-					<Chip key={item.id} item={item} onRemove={() => cx.remove(item.id)} />
-				))}
-				<MultiSelect.Input
-					{...inputProps}
-					size="sm"
-					placeholder={!value.length ? placeholder : ''}
-				/>
-			</MultiSelect.Container>
-			{/* Resize grip */}
-			<div
-				className="text-base-300 hover:text-base-400 absolute right-0 bottom-0 h-5 w-5 cursor-ns-resize"
-				onPointerDown={handleResizePointerDown}
-				onClick={(e) => e.stopPropagation()}
-			>
-				<ResizeGripIcon className="h-4 w-4" />
-			</div>
-		</div>
+		<MultiSelect.Container
+			size="sm"
+			className={cn('resize-y overflow-y-auto overscroll-contain', className)}
+			style={{ height: defaultHeight, minHeight, maxHeight }}
+			{...containerProps}
+		>
+			{value.map((item) => (
+				<Chip key={item.id} item={item} onRemove={() => cx.remove(item.id)} />
+			))}
+			<MultiSelect.Input {...inputProps} size="sm" placeholder={!value.length ? placeholder : ''} />
+		</MultiSelect.Container>
 	);
 };
 
@@ -183,10 +138,10 @@ interface TInputAreaProps {
 	cx: MultiSelectCx<TSelectedItem>;
 	value: TSelectedItem[];
 	placeholder?: string;
-	className?: string;
-	defaultMaxHeight?: number;
+	defaultHeight?: number;
 	minHeight?: number;
 	maxHeight?: number;
+	className?: string;
 }
 
 // Memo'd: parent re-renders on every keystroke ($query), but search state only changes after debounce
