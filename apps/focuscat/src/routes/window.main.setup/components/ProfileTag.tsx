@@ -54,7 +54,7 @@ export const ProfileTag: React.FC<TProfileTagProps> = (props) => {
 			{variant === 'removable' && (
 				<button
 					type="button"
-					className="absolute inset-y-0 right-0 z-10 min-w-10 cursor-pointer"
+					className="absolute inset-y-0 right-0 z-10 min-w-5 cursor-pointer"
 					aria-label="Remove profile"
 					onClick={(e) => {
 						e.stopPropagation();

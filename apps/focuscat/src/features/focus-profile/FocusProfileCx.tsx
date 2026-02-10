@@ -15,6 +15,7 @@ import { toTuple } from '@/lib';
 
 export class FocusProfileCx {
 	public readonly $profiles = createState<specta.FocusProfileDto[]>([]);
+	public readonly $activeProfileIds = createState<number[]>([]);
 	public readonly $editingId = createState<number | null>(null);
 	public readonly form: TForm<TFocusProfileFormData, []>;
 
@@ -107,13 +108,21 @@ export class FocusProfileCx {
 	}
 
 	public async load(): Promise<void> {
-		const [areProfilesOk, profilesErr, profiles] = toTuple(
-			await specta.commands.getFocusProfiles()
-		);
+		const [profilesResult, activeResult] = await Promise.all([
+			specta.commands.getFocusProfiles().then(toTuple),
+			specta.commands.getActiveFocusProfiles().then(toTuple)
+		]);
+		const [areProfilesOk, profilesErr, profiles] = profilesResult;
+		const [areActiveOk, activeErr, activeProfiles] = activeResult;
 		if (areProfilesOk) {
 			this.$profiles.set(profiles);
 		} else {
 			console.error('Failed to load focus profiles:', profilesErr);
+		}
+		if (areActiveOk) {
+			this.$activeProfileIds.set(activeProfiles.map((p) => p.id));
+		} else {
+			console.error('Failed to load active focus profiles:', activeErr);
 		}
 	}
 
