@@ -1,13 +1,11 @@
+import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { Badge, CheckIcon, XIcon } from '@/components';
 import { specta } from '@/environment';
 import { cn, toTuple } from '@/lib';
-import { MultiSelect, useMultiSelect } from './MultiSelect';
+import { MultiSelect, useMultiSelect, type MultiSelectCx } from './MultiSelect';
 
-/**
- * Multi-select input for apps and websites, similar to Notion's tag selector.
- * Shows selected items as chips with inline search.
- */
+/** Multi-select input for apps/websites, similar to Notion's tag selector. */
 export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 	const {
 		value,
@@ -60,7 +58,7 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 		[includeApps, includeWebsites]
 	);
 
-	const multiSelect = useMultiSelect({
+	const cx = useMultiSelect({
 		value,
 		onChange,
 		onSearch: handleSearch,
@@ -68,51 +66,12 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 		emptyResults: value
 	});
 
-	const isShowingSelected = !multiSelect.query && !multiSelect.isSearching && value.length > 0;
+	const rootProps = cx.useRootProps();
 
 	return (
-		<MultiSelect.Root {...multiSelect.getRootProps()}>
-			<MultiSelect.Container
-				size="sm"
-				className={cn('max-h-24 overflow-y-auto', className)}
-				{...multiSelect.getContainerProps()}
-			>
-				{value.map((item) => (
-					<Chip key={item.id} item={item} onRemove={() => multiSelect.remove(item.id)} />
-				))}
-				<MultiSelect.Input
-					{...multiSelect.getInputProps()}
-					size="sm"
-					placeholder={value.length === 0 ? placeholder : ''}
-				/>
-			</MultiSelect.Container>
-
-			<MultiSelect.Portal>
-				<MultiSelect.Positioner side={popupSide}>
-					<MultiSelect.Popup {...multiSelect.getPopupProps()}>
-						<MultiSelect.HelperText>
-							{multiSelect.isSearching
-								? 'Searching...'
-								: isShowingSelected
-									? 'Selected'
-									: 'Select an app or website'}
-						</MultiSelect.HelperText>
-
-						{multiSelect.showEmpty && (
-							<MultiSelect.Empty>No results for &quot;{multiSelect.query}&quot;</MultiSelect.Empty>
-						)}
-
-						{multiSelect.results.map((result, index) => (
-							<ResultItem
-								key={result.id}
-								result={result}
-								onToggle={() => multiSelect.toggle(result)}
-								{...multiSelect.getItemProps(index)}
-							/>
-						))}
-					</MultiSelect.Popup>
-				</MultiSelect.Positioner>
-			</MultiSelect.Portal>
+		<MultiSelect.Root {...rootProps}>
+			<InputArea cx={cx} value={value} placeholder={placeholder} className={className} />
+			<PopupArea cx={cx} popupSide={popupSide} />
 		</MultiSelect.Root>
 	);
 };
@@ -147,17 +106,77 @@ export type TSelectedWebsite = {
 
 export type TSelectedItem = TSelectedApp | TSelectedWebsite;
 
+const InputArea: React.FC<TInputAreaProps> = (props) => {
+	const { cx, value, placeholder, className } = props;
+	const containerProps = cx.useContainerProps();
+	const inputProps = cx.useInputProps();
+
+	return (
+		<MultiSelect.Container
+			size="sm"
+			className={cn('max-h-24 overflow-y-auto', className)}
+			{...containerProps}
+		>
+			{value.map((item) => (
+				<Chip key={item.id} item={item} onRemove={() => cx.remove(item.id)} />
+			))}
+			<MultiSelect.Input {...inputProps} size="sm" placeholder={!value.length ? placeholder : ''} />
+		</MultiSelect.Container>
+	);
+};
+
+interface TInputAreaProps {
+	cx: MultiSelectCx<TSelectedItem>;
+	value: TSelectedItem[];
+	placeholder?: string;
+	className?: string;
+}
+
+// Memo'd: parent re-renders on every keystroke ($query), but search state only changes after debounce
+const PopupArea = React.memo<TPopupAreaProps>(function PopupArea({ cx, popupSide }) {
+	const searchResults = useFeatureState(cx.$searchResults);
+	const isSearching = useFeatureState(cx.$isSearching);
+	const emptyResults = useFeatureState(cx.$emptyResults);
+	const popupProps = cx.usePopupProps();
+
+	const hasQuery = cx.hasQuery;
+	const results = hasQuery || isSearching ? searchResults : emptyResults;
+	const showEmpty = !isSearching && !searchResults.length && hasQuery;
+	const isShowingSelected = !hasQuery && !isSearching && emptyResults.length > 0;
+
+	return (
+		<MultiSelect.Portal>
+			<MultiSelect.Positioner side={popupSide}>
+				<MultiSelect.Popup {...popupProps}>
+					<MultiSelect.HelperText>
+						{isSearching
+							? 'Searching...'
+							: isShowingSelected
+								? 'Selected'
+								: 'Select an app or website'}
+					</MultiSelect.HelperText>
+
+					{showEmpty && (
+						<MultiSelect.Empty>No results for &quot;{cx.query}&quot;</MultiSelect.Empty>
+					)}
+
+					{results.map((result, index) => (
+						<ResultItem key={result.id} cx={cx} result={result} index={index} />
+					))}
+				</MultiSelect.Popup>
+			</MultiSelect.Positioner>
+		</MultiSelect.Portal>
+	);
+});
+
+interface TPopupAreaProps {
+	cx: MultiSelectCx<TSelectedItem>;
+	popupSide?: 'top' | 'bottom';
+}
+
 const Chip: React.FC<TChipProps> = (props) => {
 	const { item, onRemove } = props;
-
-	const displayName = React.useMemo(() => {
-		switch (item.type) {
-			case 'app':
-				return item.name ?? item.bundleId;
-			case 'website':
-				return item.name ?? item.domain;
-		}
-	}, [item]);
+	const displayName = React.useMemo(() => getItemDisplayName(item), [item]);
 
 	return (
 		<Badge
@@ -191,26 +210,21 @@ interface TChipProps {
 }
 
 const ResultItem: React.FC<TResultItemProps> = (props) => {
-	const { result, selected, onToggle, 'data-highlighted': highlighted, onPointerMove } = props;
+	const { cx, result, index } = props;
 
-	const displayName = React.useMemo(() => {
-		switch (result.type) {
-			case 'app':
-				return result.name ?? result.bundleId;
-			case 'website':
-				return result.name ?? result.domain;
-		}
-	}, [result]);
+	const { selected, 'data-highlighted': highlighted, ...ariaProps } = cx.useItemProps(index);
+
+	const displayName = React.useMemo(() => getItemDisplayName(result), [result]);
 
 	return (
 		<div
+			{...ariaProps}
 			className={cn(
 				'flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-(--color-base-900)',
 				highlighted && (result.type === 'app' ? 'bg-blue-500/10' : 'bg-violet-500/10')
 			)}
-			onClick={onToggle}
+			onClick={() => cx.toggle(result)}
 			onMouseDown={(e) => e.preventDefault()}
-			onPointerMove={onPointerMove}
 			data-highlighted={highlighted}
 		>
 			<ItemIcon item={result} />
@@ -236,11 +250,9 @@ const ResultItem: React.FC<TResultItemProps> = (props) => {
 };
 
 interface TResultItemProps {
-	'result': TSelectedItem;
-	'selected': boolean;
-	'onToggle': () => void;
-	'data-highlighted'?: true;
-	'onPointerMove'?: (e: React.PointerEvent) => void;
+	cx: MultiSelectCx<TSelectedItem>;
+	result: TSelectedItem;
+	index: number;
 }
 
 const ItemIcon: React.FC<TItemIconProps> = (props) => {
@@ -274,4 +286,13 @@ const ItemIcon: React.FC<TItemIconProps> = (props) => {
 interface TItemIconProps {
 	item: TSelectedItem;
 	size?: number;
+}
+
+function getItemDisplayName(item: TSelectedItem): string {
+	switch (item.type) {
+		case 'app':
+			return item.name ?? item.bundleId;
+		case 'website':
+			return item.name ?? item.domain;
+	}
 }

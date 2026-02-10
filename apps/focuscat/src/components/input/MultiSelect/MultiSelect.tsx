@@ -235,13 +235,18 @@ export interface TMultiSelectEmptyProps {
  *
  * @example
  * ```tsx
- * <MultiSelect.Root {...multiSelect.getRootProps()}>
- *   <MultiSelect.Container {...multiSelect.getContainerProps()}>
- *     <MultiSelect.Input {...multiSelect.getInputProps()} />
+ * const cx = useMultiSelect({ value, onChange, onSearch });
+ * const rootProps = cx.useRootProps();
+ * const containerProps = cx.useContainerProps();
+ * const inputProps = cx.useInputProps();
+ *
+ * <MultiSelect.Root {...rootProps}>
+ *   <MultiSelect.Container {...containerProps}>
+ *     <MultiSelect.Input {...inputProps} />
  *   </MultiSelect.Container>
  *   <MultiSelect.Portal>
  *     <MultiSelect.Positioner>
- *       <MultiSelect.Popup {...multiSelect.getPopupProps()}>
+ *       <MultiSelect.Popup {...cx.getPopupProps()}>
  *         <MultiSelect.HelperText>Select an item</MultiSelect.HelperText>
  *         {results.map(item => <ResultItem />)}
  *       </MultiSelect.Popup>
