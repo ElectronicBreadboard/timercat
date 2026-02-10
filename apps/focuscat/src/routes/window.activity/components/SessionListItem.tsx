@@ -10,7 +10,8 @@ export const SessionListItem: React.FC<TSessionListItemProps> = (props) => {
 	const isSelected = params.sessionId === String(session.id);
 
 	const isWork = session.phase === 'work';
-	const sessionName = isWork ? 'Focus Session' : 'Break';
+	const intention = session.intention?.trim() ?? '';
+	const sessionName = isWork ? (intention !== '' ? intention : 'Focus') : 'Break';
 	const duration = session.actualSeconds ?? session.plannedSeconds;
 
 	const iconColor = React.useMemo(() => {

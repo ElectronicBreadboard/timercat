@@ -56,6 +56,7 @@ pub fn run() {
             // Session commands
             session::commands::get_today_focus_seconds,
             session::commands::get_sessions,
+            session::commands::get_most_recent_session_id,
             session::commands::get_session,
             session::commands::get_last_work_session,
             // Permission commands

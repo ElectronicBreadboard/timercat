@@ -67,9 +67,10 @@ function RouteComponent() {
 				? `${formatTimeOfDayAmPm(startDate)} - ${formatTimeOfDayAmPm(endDate)}`
 				: `${formatTimeOfDayAmPm(startDate)} - ongoing`;
 
+		const intention = session.intention?.trim() ?? '';
 		return {
 			isWork,
-			name: isWork ? 'Focus Session' : 'Break',
+			name: isWork ? (intention !== '' ? intention : 'Focus') : 'Break',
 			duration,
 			dateStr,
 			timeRange,

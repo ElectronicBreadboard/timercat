@@ -214,6 +214,31 @@ impl SessionRepository {
         return Ok(results);
     }
 
+    /// Return id of the most recent session in time range, or None.
+    pub async fn get_most_recent_session_id(
+        pool: &SqlitePool,
+        input: &GetMostRecentSessionIdInput,
+    ) -> Result<Option<i64>, sqlx::Error> {
+        let id: Option<i64> = sqlx::query_scalar(
+            r#"
+            SELECT id
+            FROM sessions
+            WHERE started_at >= ? AND started_at < ?
+              AND (? IS NULL OR actual_seconds IS NULL OR actual_seconds >= ?)
+            ORDER BY started_at DESC
+            LIMIT 1
+            "#,
+        )
+        .bind(input.started_after)
+        .bind(input.started_before)
+        .bind(input.min_duration_secs)
+        .bind(input.min_duration_secs)
+        .fetch_optional(pool)
+        .await?;
+
+        return Ok(id);
+    }
+
     /// Get session by id.
     pub async fn get_by_id(pool: &SqlitePool, id: i64) -> Result<Option<SessionRow>, sqlx::Error> {
         let result = sqlx::query_as::<_, SessionRow>(
@@ -330,6 +355,12 @@ pub struct GetSessionsInput {
     pub started_after: i64,
     pub started_before: i64,
     pub limit: Option<i64>,
+    pub min_duration_secs: Option<i64>,
+}
+
+pub struct GetMostRecentSessionIdInput {
+    pub started_after: i64,
+    pub started_before: i64,
     pub min_duration_secs: Option<i64>,
 }
 

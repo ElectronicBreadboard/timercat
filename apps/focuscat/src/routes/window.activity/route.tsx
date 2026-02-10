@@ -7,14 +7,22 @@ import { SettingsCxProvider } from '@/features/settings';
 import { useOnSessionComplete } from '@/hooks';
 import { toTuple } from '@/lib';
 import { SessionList } from './components';
+import { activitySessionConfig } from './config';
 
 export const Route = createFileRoute('/window/activity')({
 	loader: async () => {
-		// Load sessions from the last 30 days, excluding very short sessions (< 30s)
-		const now = Date.now();
-		const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+		const { startedAfter, startedBefore } = activitySessionConfig.activitySessionTimeRange();
 		return (
-			unwrapOrNull(toTuple(await specta.commands.getSessions(thirtyDaysAgo, now, 100, 30))) ?? []
+			unwrapOrNull(
+				toTuple(
+					await specta.commands.getSessions(
+						startedAfter,
+						startedBefore,
+						activitySessionConfig.limit,
+						activitySessionConfig.minDurationSecs
+					)
+				)
+			) ?? []
 		);
 	},
 	pendingComponent: LoadingComponent,

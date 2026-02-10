@@ -1,4 +1,6 @@
-use super::repository::{GetSessionsInput, SessionRepository, SessionRow};
+use super::repository::{
+    GetMostRecentSessionIdInput, GetSessionsInput, SessionRepository, SessionRow,
+};
 use super::session::{Phase, Session, SessionEvent, SessionStatus};
 use super::types::{
     SessionDetailDto, SessionEventDataDto, SessionEventDto, SessionStatsDto, SessionSummaryDto,
@@ -41,6 +43,27 @@ pub async fn get_sessions(
         .collect();
 
     return Ok(sessions);
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn get_most_recent_session_id(
+    db: State<'_, DatabaseState>,
+    started_after: f64,
+    started_before: f64,
+    min_duration_secs: Option<i32>,
+) -> Result<Option<i32>, String> {
+    let input = GetMostRecentSessionIdInput {
+        started_after: started_after as i64,
+        started_before: started_before as i64,
+        min_duration_secs: min_duration_secs.map(|s| s as i64),
+    };
+
+    let id = SessionRepository::get_most_recent_session_id(&db.pool, &input)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    return Ok(id.map(|n| n as i32));
 }
 
 #[tauri::command]

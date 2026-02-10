@@ -211,6 +211,14 @@ async getSessions(startedAfter: number, startedBefore: number, limit: number | n
     else return { status: "error", error: e  as any };
 }
 },
+async getMostRecentSessionId(startedAfter: number, startedBefore: number, minDurationSecs: number | null) : Promise<Result<number | null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_most_recent_session_id", { startedAfter, startedBefore, minDurationSecs }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async getSession(sessionId: number) : Promise<Result<SessionDetailDto | null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_session", { sessionId }) };
