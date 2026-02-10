@@ -26,7 +26,7 @@ export interface TMultiSelectRootProps {
  * Renders as a div but acts as the Popover trigger.
  */
 const Container = React.forwardRef<HTMLDivElement, TMultiSelectContainerProps>((props, ref) => {
-	const { open, side, size, className, children, onClick } = props;
+	const { open, side, size, className, style, children, onClick } = props;
 
 	return (
 		<Popover.Trigger
@@ -47,6 +47,7 @@ const Container = React.forwardRef<HTMLDivElement, TMultiSelectContainerProps>((
 					: 'ring-base-200 focus-within:ring-primary rounded-md ring-1 focus-within:ring-2',
 				className
 			)}
+			style={style}
 			render={<div />}
 			onClick={onClick}
 			data-side={side}
@@ -85,6 +86,7 @@ export interface TMultiSelectContainerProps extends VariantProps<typeof containe
 	/** Popup position relative to container (affects connected visual) */
 	side?: 'top' | 'bottom';
 	className?: string;
+	style?: React.CSSProperties;
 	children: React.ReactNode;
 	onClick?: () => void;
 }
