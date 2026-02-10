@@ -56,7 +56,7 @@ impl Window {
     pub fn size(&self) -> (f64, f64) {
         return match self {
             Self::Main => (300.0, 500.0),
-            Self::Cat => (180.0, 220.0),
+            Self::Cat => (170.0, 170.0),
             Self::Settings => (600.0, 450.0),
             Self::Activity => (600.0, 450.0),
             Self::Blocker => (400.0, 300.0),

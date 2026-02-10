@@ -91,7 +91,10 @@ function RouteComponent() {
 
 	return (
 		<div
-			className={cn('flex flex-col items-center', settings.debug.cat && 'border border-red-500')}
+			className={cn(
+				'flex h-screen flex-col items-center overflow-hidden',
+				settings.debug.cat && 'border border-red-500'
+			)}
 		>
 			<Cat
 				ref={catRef}
