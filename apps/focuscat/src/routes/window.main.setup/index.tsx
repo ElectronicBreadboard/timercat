@@ -7,13 +7,7 @@ import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
 import { toTuple } from '@/lib';
 import { Navbar } from '../window.main/components';
-import {
-	AddProfileButton,
-	ProfileTag,
-	ScheduledProfileTag,
-	targetKey,
-	TargetTag
-} from './components';
+import { AddProfileButton, ProfileTag, targetKey, TargetTag } from './components';
 
 export const Route = createFileRoute('/window/main/setup/')({
 	component: RouteComponent
@@ -183,8 +177,9 @@ function RouteComponent() {
 							</span>
 							<div className="flex flex-wrap gap-2">
 								{scheduledProfiles.map((profile) => (
-									<ScheduledProfileTag
+									<ProfileTag
 										key={profile.id}
+										variant="scheduled"
 										name={profile.name}
 										color={profile.color}
 										onProfileClick={() => handleOpenProfileInSettings(profile.id)}
@@ -193,6 +188,7 @@ function RouteComponent() {
 								{selectedProfiles.map((profile) => (
 									<ProfileTag
 										key={profile.id}
+										variant="removable"
 										name={profile.name}
 										color={profile.color}
 										onRemove={() => handleRemoveProfile(profile.id)}
@@ -211,7 +207,7 @@ function RouteComponent() {
 							<span className="text-base-500 text-xs font-medium tracking-wider uppercase">
 								Blocking
 							</span>
-							<div className="flex flex-wrap gap-1.5">
+							<div className="flex flex-wrap gap-2">
 								{rulePreview.blocked.map((target) => (
 									<TargetTag key={targetKey(target)} target={target} />
 								))}
@@ -223,7 +219,7 @@ function RouteComponent() {
 							<span className="text-base-500 text-xs font-medium tracking-wider uppercase">
 								Allowing
 							</span>
-							<div className="flex flex-wrap gap-1.5">
+							<div className="flex flex-wrap gap-2">
 								{rulePreview.allowed.map((target) => (
 									<TargetTag key={targetKey(target)} target={target} />
 								))}

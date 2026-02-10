@@ -36,7 +36,7 @@ interface TTargetTagProps {
 	target: specta.RuleTargetDto;
 }
 
-const badgeVariants = cva('gap-1.5', {
+const badgeVariants = cva('gap-1.5 px-1.5 text-sm', {
 	variants: {
 		type: {
 			app: 'bg-blue-500/20 text-blue-700 dark:text-blue-300',

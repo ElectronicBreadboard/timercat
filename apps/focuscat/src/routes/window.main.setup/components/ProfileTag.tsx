@@ -1,11 +1,13 @@
 import React from 'react';
-import { Badge, XIcon } from '@/components';
+import { Badge, CalendarIcon, XIcon } from '@/components';
 import { cn, hexToRgba } from '@/lib';
 
 export const ProfileTag: React.FC<TProfileTagProps> = (props) => {
-	const { name, color, onRemove, onProfileClick } = props;
-
-	const badgeStyle = color != null ? { backgroundColor: hexToRgba(color, 0.1), color } : undefined;
+	const { name, color, variant, onProfileClick } = props;
+	const badgeStyle = React.useMemo(
+		() => (color != null ? { backgroundColor: hexToRgba(color, 0.1), color } : undefined),
+		[color]
+	);
 
 	const handleKeyDown = React.useCallback(
 		(e: React.KeyboardEvent) => {
@@ -21,38 +23,61 @@ export const ProfileTag: React.FC<TProfileTagProps> = (props) => {
 		<Badge
 			variant="neutral"
 			className={cn(
-				'gap-1.5',
-				onProfileClick != null && 'cursor-pointer transition-opacity hover:opacity-90'
+				'relative flex gap-1.5 px-1.5 py-0.5 text-sm',
+				variant === 'removable' &&
+					'[&:has(button:focus-visible)_.tag-remove-icon]:opacity-100 [&:has(button:hover)_.tag-remove-icon]:opacity-100'
 			)}
 			style={badgeStyle}
-			role={onProfileClick != null ? 'button' : undefined}
-			tabIndex={onProfileClick != null ? 0 : undefined}
-			onClick={onProfileClick != null ? () => onProfileClick() : undefined}
-			onKeyDown={onProfileClick != null ? handleKeyDown : undefined}
 		>
-			<span
-				className="size-2.5 shrink-0 rounded-full"
-				style={{ backgroundColor: color ?? 'var(--color-base-400)' }}
-			/>
-			{name}
-			<button
-				type="button"
-				className="inline-flex h-4 w-4 cursor-pointer items-center justify-center rounded-full opacity-60 hover:opacity-100"
-				onClick={(e) => {
-					e.stopPropagation();
-					onRemove();
-				}}
-				onMouseDown={(e) => e.preventDefault()}
+			<div
+				className={cn(
+					'flex min-w-0 flex-1 items-center gap-1.5',
+					onProfileClick != null && 'cursor-pointer transition-opacity hover:opacity-90'
+				)}
+				role={onProfileClick != null ? 'button' : undefined}
+				tabIndex={onProfileClick != null ? 0 : undefined}
+				onClick={onProfileClick != null ? () => onProfileClick() : undefined}
+				onKeyDown={onProfileClick != null ? handleKeyDown : undefined}
 			>
-				<XIcon size={10} />
-			</button>
+				<span className="min-w-0 flex-1 truncate">{name}</span>
+				{variant === 'scheduled' ? (
+					<CalendarIcon size={12} className="shrink-0 opacity-80" />
+				) : (
+					<XIcon
+						size={12}
+						className="tag-remove-icon shrink-0 opacity-60 transition-opacity"
+						aria-hidden
+					/>
+				)}
+			</div>
+			{/* Hit area on the right so the remove button is easier to click without opening profile */}
+			{variant === 'removable' && (
+				<button
+					type="button"
+					className="absolute inset-y-0 right-0 z-10 min-w-10 cursor-pointer"
+					aria-label="Remove profile"
+					onClick={(e) => {
+						e.stopPropagation();
+						props.onRemove();
+					}}
+					onMouseDown={(e) => e.preventDefault()}
+				/>
+			)}
 		</Badge>
 	);
 };
 
-interface TProfileTagProps {
-	name: string;
-	color: string | null;
-	onRemove: () => void;
-	onProfileClick?: () => void;
-}
+type TProfileTagProps =
+	| {
+			name: string;
+			color: string | null;
+			variant: 'scheduled';
+			onProfileClick?: () => void;
+	  }
+	| {
+			name: string;
+			color: string | null;
+			variant: 'removable';
+			onRemove: () => void;
+			onProfileClick?: () => void;
+	  };
