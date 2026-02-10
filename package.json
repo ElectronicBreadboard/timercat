@@ -21,11 +21,12 @@
 		"lint": "turbo run lint",
 		"start:dev": "turbo run start:dev",
 		"test": "turbo run test",
-		"update:latest": "turbo run update:latest --force && pnpm update --latest && pnpm build"
+		"update:latest": "turbo run update:latest --force && pnpm update --latest '!eslint' '!@eslint/js' && pnpm build"
 	},
 	"devDependencies": {
 		"@blgc/config": "^0.0.40",
-		"eslint": "^10.0.0",
+		"@eslint/js": "^9.39.2",
+		"eslint": "^9.39.2",
 		"prettier": "^3.8.1",
 		"rollup": "^4.57.1",
 		"rollup-presets": "^0.0.26",
