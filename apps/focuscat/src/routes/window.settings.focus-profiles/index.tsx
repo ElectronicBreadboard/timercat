@@ -63,7 +63,7 @@ function RouteComponent() {
 // MARK: - Profile Row
 
 const ProfileRow: React.FC<TProfileRowProps> = (props) => {
-	const { profile, isActive } = props;
+	const { profile, isActive, isScheduled } = props;
 
 	return (
 		<li>
