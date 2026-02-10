@@ -1,0 +1,26 @@
+name: '⚙️ Setup Tauri'
+description: 'Install Rust toolchain and configure caching for Tauri builds'
+
+inputs:
+  targets:
+    description: 'Rust targets to install (comma-separated)'
+    required: false
+    default: ''
+  working-directory:
+    description: 'Working directory for Rust cache'
+    required: false
+    default: 'apps/focuscat/src-tauri'
+
+runs:
+  using: composite
+  steps:
+    - name: Install Rust stable
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ inputs.targets }}
+
+    - name: Rust cache
+      uses: swatinem/rust-cache@v2
+      with:
+        workspaces: ${{ inputs.working-directory }} -> target
+        cache-on-failure: true

@@ -1,0 +1,83 @@
+name: '📦 Version Bump'
+description: 'Bump patch version and create git tag'
+
+inputs:
+  app:
+    description: 'App name (e.g., focuscat)'
+    required: true
+  app-directory:
+    description: 'App directory path'
+    required: true
+
+outputs:
+  version:
+    description: 'New version number'
+    value: ${{ steps.bump.outputs.version }}
+  tag:
+    description: 'Git tag name'
+    value: ${{ steps.bump.outputs.tag }}
+
+runs:
+  using: composite
+  steps:
+    - name: Bump patch version
+      id: bump
+      shell: bash
+      run: |
+        # Read current version from package.json
+        CURRENT_VERSION=$(node -p "require('./${{ inputs.app-directory }}/package.json').version")
+        echo "Current version: $CURRENT_VERSION"
+        
+        # Bump patch version
+        IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+        NEW_PATCH=$((patch + 1))
+        NEW_VERSION="$major.$minor.$NEW_PATCH"
+        echo "New version: $NEW_VERSION"
+        
+        # Update package.json
+        node -e "
+          const fs = require('fs');
+          const path = '${{ inputs.app-directory }}/package.json';
+          const pkg = JSON.parse(fs.readFileSync(path));
+          pkg.version = '$NEW_VERSION';
+          fs.writeFileSync(path, JSON.stringify(pkg, null, '\t') + '\n');
+        "
+        
+        # Update tauri.conf.json
+        node -e "
+          const fs = require('fs');
+          const path = '${{ inputs.app-directory }}/src-tauri/tauri.conf.json';
+          const config = JSON.parse(fs.readFileSync(path));
+          config.version = '$NEW_VERSION';
+          fs.writeFileSync(path, JSON.stringify(config, null, '\t') + '\n');
+        "
+        
+        # Update tauri.prod.conf.json
+        node -e "
+          const fs = require('fs');
+          const path = '${{ inputs.app-directory }}/src-tauri/tauri.prod.conf.json';
+          const config = JSON.parse(fs.readFileSync(path));
+          config.version = '$NEW_VERSION';
+          fs.writeFileSync(path, JSON.stringify(config, null, '\t') + '\n');
+        "
+        
+        # Set outputs
+        echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "tag=${{ inputs.app }}-v$NEW_VERSION" >> $GITHUB_OUTPUT
+
+    - name: Commit version bump
+      shell: bash
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add ${{ inputs.app-directory }}/package.json
+        git add ${{ inputs.app-directory }}/src-tauri/tauri.conf.json
+        git add ${{ inputs.app-directory }}/src-tauri/tauri.prod.conf.json
+        git commit -m "chore: bump ${{ inputs.app }} to v${{ steps.bump.outputs.version }}"
+
+    - name: Create and push tag
+      shell: bash
+      run: |
+        git tag ${{ steps.bump.outputs.tag }}
+        git push origin HEAD:${{ github.ref_name }}
+        git push origin ${{ steps.bump.outputs.tag }}

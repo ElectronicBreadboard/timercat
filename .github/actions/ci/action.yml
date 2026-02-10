@@ -1,0 +1,25 @@
+name: '🔍 CI'
+description: 'Run full CI pipeline: lint, typecheck, test'
+
+inputs:
+  app:
+    description: 'App name to run CI for'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Setup pnpm
+      uses: ./.github/actions/setup-pnpm
+
+    - name: Lint
+      shell: bash
+      run: pnpm --filter @repo/${{ inputs.app }} lint
+
+    - name: Typecheck
+      shell: bash
+      run: pnpm --filter @repo/${{ inputs.app }} typecheck
+
+    - name: Test
+      shell: bash
+      run: pnpm --filter @repo/${{ inputs.app }} test
