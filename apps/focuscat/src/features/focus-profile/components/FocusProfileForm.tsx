@@ -47,45 +47,49 @@ export const FocusProfileForm: React.FC<TFocusProfileFormProps> = (props) => {
 	return (
 		<div className="space-y-6">
 			<SettingGroup title="Details">
-				<SettingItem
-					label="Name"
-					description={nameError ?? 'Give your profile a name'}
-					className={cn(nameError != null && '[&_p]:text-red-500')}
-				>
-					<Input
-						ref={inputRef}
-						{...register('name', true)}
-						placeholder="e.g. Deep Work, Study..."
-						size="sm"
-						className={cn('w-40', nameError != null && 'border-red-500')}
-					/>
-				</SettingItem>
-				<SettingItem
-					label="Color"
-					description={colorError ?? 'Pick a color for your profile'}
-					className={cn(colorError != null && '[&_p]:text-red-500')}
-				>
-					<div className="flex gap-2">
-						{presetColors.map((preset) => (
-							<button
-								key={preset.value}
-								type="button"
-								onClick={() => handleColorClick(preset.value)}
-								className="focus:ring-primary relative size-7 rounded-full transition-transform hover:scale-110 focus:ring-2 focus:ring-offset-2 focus:outline-none"
-								style={{ backgroundColor: preset.value }}
-								title={preset.label}
-							>
-								{color === preset.value && (
-									<CheckIcon
-										size={14}
-										className="absolute inset-0 m-auto text-white"
-										strokeWidth={3}
-									/>
-								)}
-							</button>
-						))}
-					</div>
-				</SettingItem>
+				<div data-field="name">
+					<SettingItem
+						label="Name"
+						description={nameError ?? 'Give your profile a name'}
+						className={cn(nameError != null && '[&_p]:text-red-500')}
+					>
+						<Input
+							ref={inputRef}
+							{...register('name', true)}
+							placeholder="e.g. Deep Work, Study..."
+							size="sm"
+							className={cn('w-40', nameError != null && 'border-red-500')}
+						/>
+					</SettingItem>
+				</div>
+				<div data-field="color">
+					<SettingItem
+						label="Color"
+						description={colorError ?? 'Pick a color for your profile'}
+						className={cn(colorError != null && '[&_p]:text-red-500')}
+					>
+						<div className="flex gap-2">
+							{presetColors.map((preset) => (
+								<button
+									key={preset.value}
+									type="button"
+									onClick={() => handleColorClick(preset.value)}
+									className="focus:ring-primary relative size-7 rounded-full transition-transform hover:scale-110 focus:ring-2 focus:ring-offset-2 focus:outline-none"
+									style={{ backgroundColor: preset.value }}
+									title={preset.label}
+								>
+									{color === preset.value && (
+										<CheckIcon
+											size={14}
+											className="absolute inset-0 m-auto text-white"
+											strokeWidth={3}
+										/>
+									)}
+								</button>
+							))}
+						</div>
+					</SettingItem>
+				</div>
 			</SettingGroup>
 
 			<RuleSettingGroup form={form} />

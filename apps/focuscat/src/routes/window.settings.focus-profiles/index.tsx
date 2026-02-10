@@ -1,6 +1,5 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
-import React from 'react';
 import { ChevronRightIcon, IconButton, PlusIcon } from '@/components';
 import { specta } from '@/environment';
 import { useFocusProfileCx } from '@/features/focus-profile';
@@ -11,19 +10,20 @@ export const Route = createFileRoute('/window/settings/focus-profiles/')({
 });
 
 function RouteComponent() {
-	const navigate = useNavigate();
 	const profileCx = useFocusProfileCx();
 	const profiles = useFeatureState(profileCx.$profiles);
-
-	const handleCreate = React.useCallback(() => {
-		navigate({ to: '/window/settings/focus-profiles/new' });
-	}, [navigate]);
 
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
 				<h1 className="text-base-900 text-xl font-semibold">Profiles</h1>
-				<IconButton variant="default" size="sm" onClick={handleCreate} title="Create profile">
+				<IconButton
+					variant="default"
+					size="sm"
+					title="Create profile"
+					nativeButton={false}
+					render={<Link to="/window/settings/focus-profiles/new" />}
+				>
 					<PlusIcon size={16} />
 				</IconButton>
 			</div>

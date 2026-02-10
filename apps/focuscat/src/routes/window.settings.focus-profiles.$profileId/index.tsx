@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { hasFormChanged } from 'feature-form';
 import { useForm } from 'feature-react/form';
-import { useFeatureState } from 'feature-react/state';
+import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { Button, IconButton, TrashIcon } from '@/components';
 import { FocusProfileForm, useFocusProfileCx } from '@/features/focus-profile';
@@ -16,6 +16,11 @@ function RouteComponent() {
 	const profileCx = useFocusProfileCx();
 	const { form, handleSubmit } = useForm(profileCx.form);
 	const isSubmitting = useFeatureState(profileCx.form.isSubmitting);
+	const showInvalidState = useCombinedCompute(
+		[profileCx.form.isSubmitted, profileCx.form.isValid] as const,
+		([{ value: isSubmitted }, { value: isValid }]) => isSubmitted && !isValid,
+		[]
+	);
 	const isDirty = hasFormChanged(form);
 
 	// MARK: - Actions
@@ -36,6 +41,15 @@ function RouteComponent() {
 			const success = await profileCx.save();
 			if (success) {
 				navigate({ to: '/window/settings/focus-profiles' });
+			}
+		},
+		onInvalidSubmit: () => {
+			const errors = form.getErrors();
+			const firstInvalidKey = (['name', 'color'] as const).find((key) => errors[key]?.length);
+			if (firstInvalidKey != null) {
+				document
+					.querySelector(`[data-field="${firstInvalidKey}"]`)
+					?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 			}
 		}
 	});
@@ -73,7 +87,11 @@ function RouteComponent() {
 				<Button type="button" variant="ghost" onClick={handleCancel} disabled={isSubmitting}>
 					Cancel
 				</Button>
-				<Button type="submit" variant="primary" disabled={!isDirty || isSubmitting}>
+				<Button
+					type="submit"
+					variant={showInvalidState ? 'danger' : 'primary'}
+					disabled={!isDirty || isSubmitting}
+				>
 					Save
 				</Button>
 			</footer>
