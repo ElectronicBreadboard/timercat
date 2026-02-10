@@ -43,25 +43,52 @@ Isshin is developed with a **validation-first approach**. Instead of building th
 
 ### Minimal Viable Product — _FocusCat_ (January)
 
-FocusCat is a small, free macOS app built under the Isshin umbrella.  
-It has its own identity, runs fully locally, and works independently of the full Isshin system.
+> FocusCat — friendly focus sessions with a cozy companion
 
-Its purpose is to test whether users are interested in **enforced focus sessions** with:
+FocusCat is a free, standalone macOS app built under the Isshin umbrella.
+It runs fully locally and works independently of the full Isshin system.
 
-- Pomodoro-style timers
-- App and site blocking
-- Mandatory breaks
-
-FocusCat is intentionally limited. It does **not** include planning, Zones, Tasks, or analytics. Feedback from this phase will inform how Isshin evolves.
+**Validates:** Do users want **enforced focus sessions** with Pomodoro timers, app blocking, and mandatory breaks?
 
 **Scope:**
 
-- **Pomodoro Timer** — Core focus and break cycles
-- **App & Site Blocking** — Active only during focus sessions
+- **Pomodoro Timer** — Focus and break cycles with configurable durations
+- **App & Site Blocking** — Distractions blocked during focus sessions only
 - **Break Enforcement** — Breaks cannot be skipped once started
+- **Cat Companion** — Bongo Cat-inspired mascot that reacts to your focus
 - **Minimal Landing Page** — Simple download and explanation
 
-The POC also features a **cozy mascot companion**, inspired by Bongo Cat, to gamify focus sessions. It is designed to be shareable and fun, but exists as a standalone tool.
+FocusCat is intentionally limited — no planning, Zones, Tasks, or analytics.
+
+### Minimal Viable Product — _Abstand_ (February)
+
+> Abstand — intentional distance from the digital
+
+Abstand is a free, standalone macOS app built under the Isshin umbrella.
+It runs fully locally and works independently of the full Isshin system.
+
+**Validates:** Do users value **self-imposed commitment** over external enforcement — and does visible accountability lead to deeper focus?
+
+**Concept:**
+
+You start a detox mission for a set number of days. You're not locked out of anything — but every deviation is tracked. Open YouTube during a detox? A popup appears: _"This is not part of your Detox. Watching will degrade your rank."_ You can continue, but the cost is visible and immediate.
+
+Two outcomes exist:
+
+- **Complete** — Finish the mission with a rank (Platinum → Bronze) based on adherence
+- **Cancel** — End the mission early and it's gone forever, no record
+
+No locks. No tricks. Just honesty with yourself.
+
+**Scope:**
+
+- **Detox Missions** — Fixed-duration commitments (e.g. 3, 7, 14 days)
+- **Deviation Warnings** — Popup when opening blocked apps/sites, showing rank cost
+- **Rank Degradation** — Platinum, Gold, Silver, Bronze based on time spent deviating
+- **One-Way Cancellation** — Ending a mission permanently removes it
+- **Minimal UI** — One active mission, no history, no recovery mechanics
+
+Abstand is intentionally limited — no streaks, no reminders, no external enforcement.
 
 ### Beyond the POC — Isshin Vision
 

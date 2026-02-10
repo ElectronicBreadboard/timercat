@@ -1,0 +1,82 @@
+use sqlx::Row;
+
+// MARK: - App Repository
+
+pub struct AppRepository;
+
+impl AppRepository {
+    /// Upsert app (insert or return existing id).
+    pub async fn upsert<'e, E>(executor: E, input: &UpsertAppInput) -> Result<i64, sqlx::Error>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+    {
+        let result = sqlx::query(
+            r#"
+            INSERT INTO app (bundle_id, name, process_path, icon, color)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(bundle_id) DO UPDATE SET
+                name = COALESCE(excluded.name, app.name),
+                process_path = COALESCE(excluded.process_path, app.process_path),
+                icon = COALESCE(excluded.icon, app.icon),
+                color = COALESCE(excluded.color, app.color)
+            RETURNING id
+            "#,
+        )
+        .bind(&input.bundle_id)
+        .bind(&input.name)
+        .bind(&input.process_path)
+        .bind(&input.icon)
+        .bind(&input.color)
+        .fetch_one(executor)
+        .await?;
+
+        return Ok(result.get(0));
+    }
+}
+
+pub struct UpsertAppInput {
+    pub bundle_id: Option<String>,
+    pub name: Option<String>,
+    pub process_path: Option<String>,
+    pub icon: Option<String>,
+    pub color: Option<String>,
+}
+
+// MARK: - Website Repository
+
+pub struct WebsiteRepository;
+
+impl WebsiteRepository {
+    /// Upsert website (insert or return existing id).
+    pub async fn upsert<'e, E>(executor: E, input: &UpsertWebsiteInput) -> Result<i64, sqlx::Error>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+    {
+        let result = sqlx::query(
+            r#"
+            INSERT INTO website (domain, name, icon, color)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(domain) DO UPDATE SET
+                name = COALESCE(excluded.name, website.name),
+                icon = COALESCE(excluded.icon, website.icon),
+                color = COALESCE(excluded.color, website.color)
+            RETURNING id
+            "#,
+        )
+        .bind(&input.domain)
+        .bind(&input.name)
+        .bind(&input.icon)
+        .bind(&input.color)
+        .fetch_one(executor)
+        .await?;
+
+        return Ok(result.get(0));
+    }
+}
+
+pub struct UpsertWebsiteInput {
+    pub domain: String,
+    pub name: Option<String>,
+    pub icon: Option<String>,
+    pub color: Option<String>,
+}

@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+// MARK: - Window Monitoring
+
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AppInfo {
@@ -12,6 +14,27 @@ pub struct AppInfo {
     pub bundle_id: Option<String>,
     /// Path to the executable
     pub process_path: Option<String>,
+    /// App icon and brand color (only populated if `include_app_icon` is enabled)
+    pub icon: Option<AppIcon>,
+}
+
+impl fmt::Display for AppInfo {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "   App:")?;
+        writeln!(f, "      Name:       {}", fmt_display(&self.name))?;
+        writeln!(f, "      PID:        {}", self.pid)?;
+        writeln!(f, "      Bundle ID:  {}", fmt_display(&self.bundle_id))?;
+        writeln!(f, "      Path:       {}", fmt_display(&self.process_path))?;
+        if let Some(icon) = &self.icon {
+            if let Some(data_url) = &icon.data_url {
+                writeln!(f, "      Icon:       (base64 PNG, {} bytes)", data_url.len())?;
+            }
+            if let Some(color) = &icon.color {
+                writeln!(f, "      Color:      {}", color)?;
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
@@ -25,6 +48,19 @@ pub struct BrowserInfo {
     /// - `Some(true)` if private mode is active
     /// - `Some(false)` if private mode is not active
     pub is_private: Option<bool>,
+    /// Website information (only populated if `include_website_info` is enabled in config)
+    pub website: Option<WebsiteInfo>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct WebsiteInfo {
+    /// Domain extracted from the browser URL (e.g., "github.com")
+    pub domain: String,
+    /// Favicon as base64 PNG data URL (e.g., "data:image/png;base64,...")
+    pub favicon: Option<String>,
+    /// Dominant color extracted from favicon as hex string (e.g., "#FF5733")
+    pub color: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
@@ -38,8 +74,62 @@ pub struct WindowInfo {
     pub bounds: Option<WindowBounds>,
     /// Application information
     pub app: AppInfo,
-    /// Browser information (only populated if `allow_browser` is enabled in config)
+    /// Browser information (only populated if `include_browser_info` is enabled in config)
     pub browser: Option<BrowserInfo>,
+}
+
+impl fmt::Display for WindowInfo {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "   Window:")?;
+        writeln!(f, "      Title:      {}", fmt_display(&self.title))?;
+        writeln!(f, "      Window ID:  {}", fmt_display(&self.window_id))?;
+
+        let bounds_str = match self.bounds.as_ref() {
+            Some(bounds) => format!(
+                "({:.0}, {:.0}) {:.0}×{:.0}",
+                bounds.x, bounds.y, bounds.width, bounds.height
+            ),
+            None => "(not available)".to_string(),
+        };
+        writeln!(f, "      Bounds:     {}", bounds_str)?;
+
+        writeln!(f, "   App:")?;
+        writeln!(f, "      Name:       {}", fmt_display(&self.app.name))?;
+        writeln!(f, "      PID:        {}", self.app.pid)?;
+        writeln!(f, "      Bundle ID:  {}", fmt_display(&self.app.bundle_id))?;
+        writeln!(
+            f,
+            "      Path:       {}",
+            fmt_display(&self.app.process_path)
+        )?;
+
+        if let Some(browser) = &self.browser {
+            writeln!(f, "   Browser:")?;
+            writeln!(f, "      URL:        {}", fmt_display(&browser.url))?;
+            let mode_str = match browser.is_private {
+                Some(true) => "Private/Incognito",
+                Some(false) => "Normal",
+                None => "(not available)",
+            };
+            writeln!(f, "      Mode:       {}", mode_str)?;
+
+            if let Some(website) = &browser.website {
+                writeln!(f, "      Domain:     {}", website.domain)?;
+                if website.favicon.is_some() {
+                    writeln!(
+                        f,
+                        "      Favicon:    (base64 PNG, {} bytes)",
+                        website.favicon.as_ref().unwrap().len()
+                    )?;
+                }
+                if let Some(color) = &website.color {
+                    writeln!(f, "      Color:      {}", color)?;
+                }
+            }
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
@@ -95,56 +185,33 @@ impl WindowEvent {
     }
 }
 
-impl fmt::Display for AppInfo {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "   App:")?;
-        writeln!(f, "      Name:       {}", fmt_display(&self.name))?;
-        writeln!(f, "      PID:        {}", self.pid)?;
-        writeln!(f, "      Bundle ID:  {}", fmt_display(&self.bundle_id))?;
-        writeln!(f, "      Path:       {}", fmt_display(&self.process_path))?;
-        Ok(())
-    }
+// MARK: - App Information
+
+/// Information about an installed application.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct InstalledApp {
+    /// Bundle identifier (e.g., "com.apple.Safari")
+    pub bundle_id: String,
+    /// Application name (localized)
+    pub name: String,
+    /// Path to the application bundle
+    pub path: String,
+    /// App icon and brand color (only populated if `include_icon` is enabled)
+    pub icon: Option<AppIcon>,
 }
 
-impl fmt::Display for WindowInfo {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "   Window:")?;
-        writeln!(f, "      Title:      {}", fmt_display(&self.title))?;
-        writeln!(f, "      Window ID:  {}", fmt_display(&self.window_id))?;
-
-        let bounds_str = match self.bounds.as_ref() {
-            Some(bounds) => format!(
-                "({:.0}, {:.0}) {:.0}×{:.0}",
-                bounds.x, bounds.y, bounds.width, bounds.height
-            ),
-            None => "(not available)".to_string(),
-        };
-        writeln!(f, "      Bounds:     {}", bounds_str)?;
-
-        writeln!(f, "   App:")?;
-        writeln!(f, "      Name:       {}", fmt_display(&self.app.name))?;
-        writeln!(f, "      PID:        {}", self.app.pid)?;
-        writeln!(f, "      Bundle ID:  {}", fmt_display(&self.app.bundle_id))?;
-        writeln!(
-            f,
-            "      Path:       {}",
-            fmt_display(&self.app.process_path)
-        )?;
-
-        if let Some(browser) = &self.browser {
-            writeln!(f, "   Browser:")?;
-            writeln!(f, "      URL:        {}", fmt_display(&browser.url))?;
-            let mode_str = match browser.is_private {
-                Some(true) => "Private/Incognito",
-                Some(false) => "Normal",
-                None => "(not available)",
-            };
-            writeln!(f, "      Mode:       {}", mode_str)?;
-        }
-
-        Ok(())
-    }
+/// App icon with brand color.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AppIcon {
+    /// Icon as base64 PNG data URL
+    pub data_url: Option<String>,
+    /// Brand color as hex string like "#5865F2"
+    pub color: Option<String>,
 }
+
+// MARK: - Helpers
 
 /// Format an optional value for display, truncating strings to 70 characters
 fn fmt_display<T: fmt::Display>(opt: &Option<T>) -> String {

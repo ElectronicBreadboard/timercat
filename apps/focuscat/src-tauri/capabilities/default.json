@@ -1,0 +1,13 @@
+{
+	"$schema": "../gen/schemas/desktop-schema.json",
+	"identifier": "default",
+	"description": "Capability for app windows",
+	"windows": ["main", "cat", "settings", "activity", "blocker"],
+	"permissions": [
+		"core:default",
+		"opener:default",
+		"os:default",
+		"core:window:allow-start-dragging",
+		"core:window:allow-set-theme"
+	]
+}

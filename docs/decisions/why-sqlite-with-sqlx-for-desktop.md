@@ -6,33 +6,66 @@ We chose **SQLite** with **SQLx** for persistent data storage in our Tauri deskt
 
 ## Rationale
 
-### Why SQLite with SQLx
+### Why SQLite
 
 #### Embedded & Zero-Setup
 
-SQLite is embedded, requires no separate server installation, and is fully portable. The database file is stored at `~/Library/Application Support/com.buildergroup.isshin/isshin.db`. This makes it ideal for desktop applications where users shouldn't need to manage database infrastructure.
+SQLite is embedded, requires no separate server installation, and is fully portable. The database file is stored at `~/Library/Application Support/com.buildergroup.isshin/isshin.db`. Users never need to manage database infrastructure.
 
-#### Rust-Side Database Logic
+#### Battle-Tested
 
-We use SQLx directly in Rust rather than `tauri-plugin-sql`. Since our backend lives in Rust, keeping database logic there is more secure and scales better. All database operations go through Tauri commands rather than exposing database access to the frontend, providing better security and control.
+SQLite is the most deployed database in the world - it's in every smartphone, browser, and countless desktop apps. It's not a toy database; it handles terabytes of data reliably.
 
-#### Flexibility & Power
+#### Perfect for Desktop
 
-SQLite provides the flexibility and power of a real database while being lightweight. It's suitable for long-term and larger datasets that need querying, relationships, and transactions.
+- **Single-user**: No concurrent write contention issues
+- **Local-first**: Data stays on device, no network latency
+- **Portable**: Database is a single file, easy to backup/migrate
+
+### Why SQLx
+
+#### Compile-Time Query Verification
+
+SQLx checks SQL queries at compile time against your actual database schema. Typos and schema mismatches are caught before runtime.
+
+```rust
+// This won't compile if the table/columns don't exist
+let user = sqlx::query_as!(User, "SELECT * FROM users WHERE id = ?", id)
+    .fetch_one(&pool)
+    .await?;
+```
 
 #### Migration Management
 
-Migrations are stored in `src-tauri/migrations/` and run automatically on application startup, ensuring the database schema stays in sync with the codebase.
+Migrations are stored in `src-tauri/migrations/` and run automatically on application startup via `sqlx::migrate!()`. The schema stays in sync with the codebase.
+
+### Why Rust-Side Database Logic
+
+We use SQLx directly in Rust rather than `tauri-plugin-sql` because:
+
+1. **Security**: Database operations go through Tauri commands, not exposed to frontend
+2. **Type Safety**: Rust's type system catches errors at compile time
+3. **Performance**: No IPC overhead for complex queries
+4. **Control**: Full access to SQLite pragmas and advanced features
 
 ## Storage Strategy
 
 We use a tiered approach for different types of data:
 
-- **LocalStorage**: UI preferences that are not critical; things the user wouldn't mind losing
-- **`tauri-plugin-store`**: Backend preferences that are somewhat critical, like API keys or license keys; gives more control over storage
-- **SQLite (via SQLx)**: Long-term and larger datasets; provides the flexibility and power of a real database while being embedded, zero-setup, and fully portable
+| Storage              | Use Case                               | Example                        |
+| -------------------- | -------------------------------------- | ------------------------------ |
+| LocalStorage         | UI preferences, non-critical           | Theme, sidebar collapsed state |
+| `tauri-plugin-store` | Backend preferences, somewhat critical | API keys, license keys         |
+| SQLite (SQLx)        | Long-term data, relationships, queries | Activity logs, user data       |
+
+## Trade-offs
+
+### No Cloud Sync Built-in
+
+SQLite is local-only. If we need sync, we'd add it separately (e.g., sync to backend API). This is intentional - local-first with optional sync is our architecture.
 
 ## Alternatives Considered
 
 - **`tauri-plugin-sql`**: Exposes database access to the frontend, which is less secure. Our backend lives in Rust, so keeping database logic there is more appropriate.
-- **PostgreSQL**: Not embeddable - users would need to install and run a separate server, which is impractical for a desktop app. See [discussion](https://github.com/tauri-apps/tauri/discussions/5418).
+- **PostgreSQL**: Not embeddable - users would need to install and run a separate server, which is impractical for a desktop app.
+- **IndexedDB**: Browser-based, limited query capabilities, no compile-time checking.

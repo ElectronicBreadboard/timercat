@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<link rel="icon" type="image/svg+xml" href="/vite.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Tauri + React + Typescript</title>
+		<script>
+			// Prevent white flash on window open (CSS not loaded yet)
+			(() => {
+				// Window-specific background styles (checked in order, first match wins)
+				const windowStyles = [
+					{ path: '/window/cat', transparent: true },
+					{ path: '/window/main/splash', background: '#267DF7' }
+				];
+
+				const pathname = window.location.pathname;
+				const matchedStyle = windowStyles.find((style) => pathname.startsWith(style.path));
+
+				// Handle matched window style
+				if (matchedStyle) {
+					if (matchedStyle.background) {
+						document.documentElement.style.backgroundColor = matchedStyle.background;
+					}
+					// transparent: no background set
+					return;
+				}
+
+				// Default: theme-based background
+				const theme = localStorage.getItem('theme');
+				const isDark =
+					theme === 'dark' ||
+					((!theme || theme === 'auto') &&
+						window.matchMedia('(prefers-color-scheme: dark)').matches);
+				if (isDark) {
+					document.documentElement.classList.add('dark');
+					document.documentElement.style.backgroundColor = '#09090b';
+				} else {
+					document.documentElement.style.backgroundColor = '#ffffff';
+				}
+			})();
+		</script>
+	</head>
+
+	<body>
+		<div id="root"></div>
+		<script type="module" src="/src/main.tsx"></script>
+	</body>
+</html>

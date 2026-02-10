@@ -12,26 +12,42 @@
 
 5. **No speculation** - Never speculate about code you have not opened. If I reference a specific file, you MUST read it before answering. Investigate and read relevant files BEFORE answering questions about the codebase. Never make claims about code before investigating unless certain - give grounded, hallucination-free answers.
 
+## Thinking & Context
+
+Use `.claude/.local/thinking/` for detailed thinking, research notes, architecture references, and context that helps across sessions but isn't relevant for Git.
+
+**Examples:**
+
+- `isshin-architecture-reference.md` - Patterns and conventions from Isshin POC
+- `feature-research.md` - Research notes for a feature implementation
+- `refactor-plan.md` - Detailed refactoring plans
+
+This folder is gitignored - use it freely for context preservation.
+
 ## Code Style
 
 Language-specific rules are in `.claude/rules/` (auto-loaded).
 
 ## Project
 
-Tauri desktop app for activity tracking.
+Tauri desktop apps for productivity and activity tracking.
 
 **Tech Stack:**
+
 - Rust + Swift (backend, `crates/`)
 - TypeScript + React (frontend, `apps/`)
 - SQLite (database)
+- tauri-specta (type-safe IPC)
 
 **Key Commands:**
+
 - `pnpm start:dev` - Start development
 - `pnpm build` - Build all
 - `pnpm test` - Run all tests
 - `cargo test -p mado` - Test mado crate
 
 **Important Directories:**
+
 - `crates/mado/` - Window monitoring library (Swift + Rust FFI)
-- `apps/desktop/` - Tauri desktop app
-- `apps/web/` - Web app
+- `apps/isshin/` - Isshin POC (activity tracker, reference implementation)
+- `apps/focuscat/` - Focuscat app (pomodoro + cat widget)

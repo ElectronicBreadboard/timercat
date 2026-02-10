@@ -43,8 +43,8 @@ const AppSettingsGeneralIndexRoute = AppSettingsGeneralIndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/settings': typeof AppSettingsRouteRouteWithChildren
-  '/pomodoro': typeof AppPomodoroIndexRoute
-  '/settings/general': typeof AppSettingsGeneralIndexRoute
+  '/pomodoro/': typeof AppPomodoroIndexRoute
+  '/settings/general/': typeof AppSettingsGeneralIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,7 +62,7 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/settings' | '/pomodoro' | '/settings/general'
+  fullPaths: '/' | '/settings' | '/pomodoro/' | '/settings/general/'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/settings' | '/pomodoro' | '/settings/general'
   id:
@@ -84,7 +84,7 @@ declare module '@tanstack/react-router' {
     '/_app': {
       id: '/_app'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AppRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -105,14 +105,14 @@ declare module '@tanstack/react-router' {
     '/_app/pomodoro/': {
       id: '/_app/pomodoro/'
       path: '/pomodoro'
-      fullPath: '/pomodoro'
+      fullPath: '/pomodoro/'
       preLoaderRoute: typeof AppPomodoroIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_app/settings/general/': {
       id: '/_app/settings/general/'
       path: '/general'
-      fullPath: '/settings/general'
+      fullPath: '/settings/general/'
       preLoaderRoute: typeof AppSettingsGeneralIndexRouteImport
       parentRoute: typeof AppSettingsRouteRoute
     }

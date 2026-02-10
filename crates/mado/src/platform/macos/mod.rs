@@ -3,10 +3,10 @@ mod parser;
 
 use crate::platform::call_listener_safe;
 use crate::{
-    config::{MonitorConfig, QueryConfig},
+    config::{InstalledAppsConfig, MonitorConfig, QueryConfig},
     error::Error,
     listener::WindowListener,
-    types::{AppInfo, WindowInfo},
+    types::{AppIcon, AppInfo, InstalledApp, WindowInfo},
 };
 use ffi::*;
 use parser::{parse_app_info, parse_event, parse_window_info};
@@ -54,7 +54,9 @@ pub fn run(listener: Arc<dyn WindowListener>, config: MonitorConfig) -> Result<(
         mado_start_monitor(
             callback_ptr,
             config.track_window_changes,
-            config.allow_browser,
+            config.include_app_icon,
+            config.include_browser_info,
+            config.include_website_info,
         );
     }
 
@@ -83,9 +85,9 @@ pub fn stop() -> Result<(), Error> {
 }
 
 /// Get information about the currently active application.
-pub fn get_active_app() -> Result<AppInfo, Error> {
+pub fn get_active_app(config: QueryConfig) -> Result<AppInfo, Error> {
     let json = unsafe {
-        match mado_get_active_app() {
+        match mado_get_active_app(config.include_app_icon) {
             Some(s) => s.as_str().to_string(),
             None => return Err(Error::NoActiveApp),
         }
@@ -98,7 +100,7 @@ pub fn get_active_app() -> Result<AppInfo, Error> {
 /// Get information about the currently active window.
 pub fn get_active_window(config: QueryConfig) -> Result<WindowInfo, Error> {
     let json = unsafe {
-        match mado_get_active_window(config.allow_browser) {
+        match mado_get_active_window(config.include_app_icon, config.include_browser_info, config.include_website_info) {
             Some(s) => s.as_str().to_string(),
             None => return Err(Error::NoActiveWindow),
         }
@@ -132,5 +134,39 @@ extern "C" fn window_event_callback(event_json_ptr: *const SRString) {
     let guard = GLOBAL_LISTENER.lock().unwrap();
     if let Some(listener) = guard.as_ref() {
         call_listener_safe(listener, event);
+    }
+}
+
+/// Get all installed applications on the system.
+pub fn get_installed_apps(config: InstalledAppsConfig) -> Vec<InstalledApp> {
+    let icon_size = if config.icon_size == 0 {
+        32
+    } else {
+        config.icon_size as i32
+    };
+
+    let json_opt = unsafe { mado_get_installed_apps(config.include_icon, icon_size) };
+
+    match json_opt {
+        Some(json) => {
+            let json_str = json.as_str().to_string();
+            serde_json::from_str(&json_str).unwrap_or_default()
+        }
+        None => Vec::new(),
+    }
+}
+
+/// Get icon for a specific app by bundle identifier.
+pub fn get_app_icon(bundle_id: &str, size: u32) -> AppIcon {
+    let icon_size = if size == 0 { 32 } else { size as i32 };
+    let bundle_id_sr = SRString::from(bundle_id);
+    let json_opt = unsafe { mado_get_app_icon(&bundle_id_sr, icon_size) };
+
+    match json_opt {
+        Some(json) => {
+            let json_str = json.as_str().to_string();
+            serde_json::from_str(&json_str).unwrap_or_default()
+        }
+        None => AppIcon::default(),
     }
 }

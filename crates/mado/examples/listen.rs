@@ -41,7 +41,9 @@ fn main() -> Result<(), mado::Error> {
     let monitor = WindowMonitor::with_config(
         FocusListener,
         MonitorConfig {
-            allow_browser: true,
+            include_app_icon: true,
+            include_browser_info: true,
+            include_website_info: true,
             track_window_changes: true,
         },
     );

@@ -21,7 +21,13 @@ fn main() -> Result<(), mado::Error> {
     }
 
     loop {
-        match mado::get_active_app() {
+        let config = mado::QueryConfig {
+            include_app_icon: true,
+            include_browser_info: true,
+            include_website_info: true,
+        };
+
+        match mado::get_active_app_with_config(config) {
             Ok(app) => {
                 println!("📱 Current App");
                 print!("{}", app);
@@ -29,9 +35,7 @@ fn main() -> Result<(), mado::Error> {
             Err(e) => eprintln!("❌ Error getting app: {}", e),
         }
 
-        match mado::get_active_window_with_config(mado::QueryConfig {
-            allow_browser: true,
-        }) {
+        match mado::get_active_window_with_config(config) {
             Ok(window) => {
                 println!("\n🪟 Current Window");
                 print!("{}", window);

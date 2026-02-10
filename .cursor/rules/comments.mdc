@@ -1,0 +1,153 @@
+---
+description: Comment guidelines for clear, valuable code documentation
+globs: ["**/*.rs", "**/*.ts", "**/*.tsx"]
+alwaysApply: true
+---
+
+# Comment Guidelines
+
+The goal is balance: enough signposts to navigate, not so many that they become noise.
+
+## Core Principles
+
+- **Value-Driven** - Always ask "Does this help the next reader?"
+- **Long-Term** - Comments should help someone reading the code in a week. Avoid session-only rationale (e.g. "we chose X over Y") unless it explains non-obvious constraints.
+- **Balanced** - Never over-comment obvious code, never under-comment complex logic
+
+## What TO Comment
+
+### Section Headers
+Short labels to help readers skim longer functions.
+
+✅ Good:
+```rust
+// Validate input
+...
+
+// Process data
+...
+
+// Save results
+...
+```
+
+❌ Bad:
+```rust
+// This section validates the input by checking all required fields
+...
+```
+
+### WHY Comments
+Explain non-obvious constraints or tradeoffs.
+
+✅ Good:
+```rust
+// Outside lock to avoid deadlock with UI updates
+db.insert(...).await;
+```
+
+❌ Bad:
+```rust
+// Insert into database
+db.insert(...).await;
+```
+
+### Domain Logic
+Explain business rules that need context.
+
+✅ Good:
+```rust
+// Overtime = time beyond planned (base + extensions)
+let overtime = actual.saturating_sub(planned + extended);
+```
+
+### Thresholds and Config Values
+Explain what a value means, not its literal value. Document on props/parameters.
+
+✅ Good:
+```typescript
+interface TProps {
+    /** Minimum size (px) for element to be visible */
+    minSizePx?: number;
+}
+```
+
+❌ Bad:
+```typescript
+interface TProps {
+    minSizePx?: number; // 8
+}
+```
+
+### Data State Documentation
+Document non-obvious data states.
+
+✅ Good:
+```rust
+/// Insert new record (ended_at is NULL until complete).
+pub async fn insert(...) -> Result<i64>
+```
+
+❌ Bad:
+```rust
+/// Insert a new record into the database.
+pub async fn insert(...) -> Result<i64>
+```
+
+## What NOT TO Comment
+
+### Restating Code
+Never restate what the code literally does.
+
+✅ Good - Intent helps readers skim:
+```typescript
+if (current == null || current.id !== id) {
+    // Start new group
+    ...
+} else {
+    // Extend current group
+    ...
+}
+```
+
+❌ Bad - Restates mechanics:
+```rust
+// Get the timer
+let timer = state.lock();
+
+// Loop through items
+for item in items {
+
+// Check if null or id different
+if (current == null || current.id !== id) {
+```
+
+### Session Rationale
+Never document design choices that only matter during the current refactor. "Type-safe; no string formatting" or "we use enum instead of string" add noise once the change is done.
+
+### Type Information
+Never restate what types already document.
+
+✅ Good:
+```rust
+// Unix timestamp in seconds
+let timestamp: i64 = row.get("created_at");
+```
+
+❌ Bad:
+```rust
+// The ID as an integer
+let id: i64 = row.get("id");
+```
+
+## Language Specifics
+
+### Rust
+- `//` for inline comments
+- `///` for doc comments (only when adding value)
+- `// MARK: -` for IDE navigation (sparingly)
+
+### TypeScript
+- `//` for inline comments
+- `/** */` for JSDoc (only when adding value)
+- `// MARK: -` for IDE navigation (sparingly)
