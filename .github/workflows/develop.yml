@@ -3,6 +3,7 @@ name: 🚀 Develop
 on:
   push:
     branches: [develop]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -28,16 +29,21 @@ jobs:
     outputs:
       should-deploy: ${{ steps.check.outputs.should-deploy }}
     steps:
-      - name: Check commit message
+      - name: Check deploy trigger
         id: check
         run: |
-          COMMIT_MSG="${{ github.event.head_commit.message }}"
-          if [[ "$COMMIT_MSG" == *"#patch"* ]] || [[ "$COMMIT_MSG" == *"#deploy"* ]]; then
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "should-deploy=true" >> $GITHUB_OUTPUT
-            echo "✅ Deploy marker found in commit message"
+            echo "✅ Manual trigger (workflow_dispatch)"
           else
-            echo "should-deploy=false" >> $GITHUB_OUTPUT
-            echo "⏭️  No deploy marker found, skipping deployment"
+            COMMIT_MSG="${{ github.event.head_commit.message }}"
+            if [[ "$COMMIT_MSG" == *"#patch"* ]] || [[ "$COMMIT_MSG" == *"#deploy"* ]]; then
+              echo "should-deploy=true" >> $GITHUB_OUTPUT
+              echo "✅ Deploy marker found in commit message"
+            else
+              echo "should-deploy=false" >> $GITHUB_OUTPUT
+              echo "⏭️  No deploy marker found, skipping deployment"
+            fi
           fi
 
   version-bump:
@@ -112,11 +118,11 @@ jobs:
           name: Focuscat v${{ needs.version-bump.outputs.version }}
           body: |
             ## Focuscat v${{ needs.version-bump.outputs.version }}
-            
-            Auto-deployed from develop branch.
-            
+
+            ${{ github.event_name == 'workflow_dispatch' && 'Manual release from Actions.' || 'Auto-deployed from develop branch.' }}
+
             ### Changes
-            ${{ github.event.head_commit.message }}
+            ${{ github.event_name == 'workflow_dispatch' && 'Triggered via workflow_dispatch.' || github.event.head_commit.message }}
           draft: false
           prerelease: true
           files: |

@@ -24,10 +24,12 @@
 git commit -m "fix: something"
 git push origin develop
 
-# CI + deploy
+# CI + deploy (commit message)
 git commit -m "fix: critical bug #patch"
 git push origin develop
 ```
+
+Or trigger deploy from the UI: **Actions → 🚀 Develop → Run workflow** (select `develop`).
 
 ### `pr.yml`
 
