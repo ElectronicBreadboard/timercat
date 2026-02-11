@@ -30,12 +30,20 @@ pub fn load_settings<R: Runtime, M: Manager<R>>(app: &M) -> AppSettings {
                 }
             };
 
+            let version_before = version_from_value(&value);
             while version_from_value(&value) != SettingsVersion::current() {
                 migrate_value_one_step(&mut value);
             }
 
             match serde_json::from_value::<AppSettings>(value) {
-                Ok(settings) => return settings,
+                Ok(settings) => {
+                    if version_before != SettingsVersion::current() {
+                        if let Err(e) = save_settings(app, &settings) {
+                            eprintln!("[Settings] Failed to persist migrated settings: {}", e);
+                        }
+                    }
+                    return settings;
+                }
                 Err(e) => {
                     eprintln!(
                         "[Settings] Failed to deserialize settings after migration: {}",
