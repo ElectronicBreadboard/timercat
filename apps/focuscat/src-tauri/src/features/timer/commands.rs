@@ -38,7 +38,7 @@ pub async fn start_timer(
     // Normalize empty intention to None
     let intention = intention.filter(|s| !s.trim().is_empty());
 
-    // Extract data
+    // Read state
     let (session_type, planned_seconds, settings) = {
         let timer = state.lock().unwrap();
         if timer.status != TimerStatus::Idle {
@@ -49,7 +49,7 @@ pub async fn start_timer(
         (session_type, planned_seconds, (*settings).clone())
     };
 
-    // DB operation
+    // DB: create session
     let session = SessionRepository::create(
         &db.pool,
         session_type,
@@ -69,7 +69,7 @@ pub async fn start_timer(
         }
     }
 
-    // Update state
+    // Write state
     let timer = {
         let mut timer = state.lock().unwrap();
         timer.session = Some(session);
@@ -98,7 +98,7 @@ pub async fn pause_timer(
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
 
-    // Extract data
+    // Read state
     let session_id = {
         let timer = state.lock().unwrap();
         if timer.status != TimerStatus::Running {
@@ -107,7 +107,7 @@ pub async fn pause_timer(
         timer.active_session_id()
     };
 
-    // DB operation
+    // DB: pause event
     let event = SessionEvent::Paused { timestamp: now };
     if let Some(id) = session_id {
         SessionRepository::insert_event(&db.pool, id, &event)
@@ -115,7 +115,7 @@ pub async fn pause_timer(
             .map_err(db_err)?;
     }
 
-    // Update state
+    // Write state
     let timer = {
         let mut timer = state.lock().unwrap();
         if let Some(session) = &mut timer.session {
@@ -140,7 +140,7 @@ pub async fn resume_timer(
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
 
-    // Extract data
+    // Read state
     let session_id = {
         let timer = state.lock().unwrap();
         if timer.status != TimerStatus::Paused {
@@ -149,7 +149,7 @@ pub async fn resume_timer(
         timer.active_session_id()
     };
 
-    // DB operation
+    // DB: resume event
     let event = SessionEvent::Resumed { timestamp: now };
     if let Some(id) = session_id {
         SessionRepository::insert_event(&db.pool, id, &event)
@@ -157,7 +157,7 @@ pub async fn resume_timer(
             .map_err(db_err)?;
     }
 
-    // Update state
+    // Write state
     let timer = {
         let mut timer = state.lock().unwrap();
         if let Some(session) = &mut timer.session {
@@ -183,7 +183,7 @@ pub async fn reset_timer(
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
 
-    // Extract data
+    // Read state
     let (settings, session_data) = {
         let timer = state.lock().unwrap();
         let settings = app_settings.lock().unwrap();
@@ -194,13 +194,14 @@ pub async fn reset_timer(
         ((*settings).clone(), session_data)
     };
 
-    // Cancel session in DB
+    // DB: cancel session
     if let Some((id, actual_seconds)) = session_data {
         SessionRepository::cancel(&db.pool, id, now, actual_seconds)
             .await
             .map_err(db_err)?;
     }
 
+    // Write state
     let timer = {
         let mut timer = state.lock().unwrap();
         timer.reset_to_idle(&settings);
@@ -230,7 +231,7 @@ pub async fn finish_timer(
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
 
-    // Extract data
+    // Read state
     let (settings, session_data) = {
         let timer = state.lock().unwrap();
         let settings = app_settings.lock().unwrap();
@@ -246,11 +247,12 @@ pub async fn finish_timer(
         ((*settings).clone(), session_data)
     };
 
-    // Complete session in DB
+    // DB: complete session
     if let Some(data) = session_data {
         complete_and_emit_session(&db.pool, &app, data, now).await?;
     }
 
+    // Write state
     let timer = {
         let mut timer = state.lock().unwrap();
         timer.reset_to_idle(&settings);
@@ -278,8 +280,8 @@ pub async fn skip_timer(
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
 
-    // Extract data (need timer clone to call next_session / first_session)
-    let (timer_clone, session_data) = {
+    // Read state
+    let (session_data, current_session_type, sessions_completed) = {
         let timer = state.lock().unwrap();
         let session_data = timer.session.as_ref().map(|s| {
             (
@@ -290,24 +292,28 @@ pub async fn skip_timer(
                 s.started_at,
             )
         });
-        (timer.clone(), session_data)
+        let (current_session_type, sessions_completed) = match &timer.session {
+            None => return Err("No active session".to_string()),
+            Some(s) => (s.session_type, timer.sessions_completed),
+        };
+        (session_data, current_session_type, sessions_completed)
     };
-    if timer_clone.session.is_none() {
-        return Err("No active session".to_string());
-    }
-    let current_session_type = timer_clone.session.as_ref().unwrap().session_type;
-    let sessions_completed = timer_clone.sessions_completed;
     let is_work = current_session_type == SessionType::PomodoroWork;
 
-    // Complete current session
+    // DB: complete current session
     if let Some(data) = session_data {
         complete_and_emit_session(&db.pool, &app, data, now).await?;
     }
 
-    let (next_session_type, next_duration_seconds) = timer_clone
-        .next_session(current_session_type, sessions_completed)
-        .unwrap_or_else(|| timer_clone.first_session());
+    // Next session
+    let (next_session_type, next_duration_seconds) = {
+        let timer = state.lock().unwrap();
+        timer
+            .next_session(current_session_type, sessions_completed)
+            .unwrap_or_else(|| timer.first_session())
+    };
 
+    // DB: create next session
     let new_session = SessionRepository::create(
         &db.pool,
         next_session_type,
@@ -318,6 +324,7 @@ pub async fn skip_timer(
     .await
     .map_err(db_err)?;
 
+    // Write state
     let timer = {
         let mut timer = state.lock().unwrap();
         timer.skip_to_next_session(new_session, next_duration_seconds, is_work, now);
@@ -345,7 +352,7 @@ pub async fn set_timer_duration(
     let now = Utc::now().timestamp_millis();
     let new_seconds = minutes * 60;
 
-    // Extract data
+    // Read state
     let (is_idle, session_id, old_seconds) = {
         let timer = state.lock().unwrap();
         (
@@ -370,14 +377,14 @@ pub async fn set_timer_duration(
                 .map_err(db_err)?;
         }
 
-        // Update session state
+        // Write state (session)
         let mut timer = state.lock().unwrap();
         if let Some(session) = &mut timer.session {
             session.add_event(event);
         }
     }
 
-    // Update timer state
+    // Write state (timer)
     let timer = {
         let mut timer = state.lock().unwrap();
         timer.total_seconds = new_seconds;

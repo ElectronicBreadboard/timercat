@@ -35,12 +35,12 @@ impl Timer {
         self.speed = settings.debug.timer_speed;
     }
 
-    /// First session in the queue (what we show and start when idle). Returns (session_type, duration_seconds).
+    /// First session in the queue.
     pub fn first_session(&self) -> (SessionType, u32) {
         return self.mode.first_session();
     }
 
-    /// Next session after completing the current one. None if there is no next (e.g. countdown done). Returns (session_type, duration_seconds).
+    /// Next session after completing the current one. None if no next (e.g. countdown done).
     pub fn next_session(
         &self,
         current_session_type: SessionType,
@@ -49,7 +49,7 @@ impl Timer {
         return self.mode.next_session(current_session_type, completed_work);
     }
 
-    /// Complete the current session and start the given one.
+    /// Complete the current session and start the given one. Caller must create the new session in DB first.
     pub fn skip_to_next_session(
         &mut self,
         new_session: Session,
@@ -72,7 +72,7 @@ impl Timer {
         self.status = TimerStatus::Running;
     }
 
-    /// Id of the active session, if any.
+    /// Active session id, if any.
     pub fn active_session_id(&self) -> Option<i64> {
         return self.session.as_ref().map(|s| s.id);
     }
@@ -86,7 +86,7 @@ impl Timer {
             .unwrap_or_else(|| self.mode.first_session().0);
     }
 
-    /// Clear the active session and set timer to idle; mode and countdown from settings.
+    /// Clear active session and set timer to idle; mode and countdown from settings.
     pub fn reset_to_idle(&mut self, settings: &AppSettings) {
         self.apply_settings(settings);
         self.session = None;
@@ -146,7 +146,7 @@ impl TimerMode {
         };
     }
 
-    /// First session in the queue for this mode. Returns (session_type, duration_seconds).
+    /// First session in the queue for this mode.
     pub fn first_session(&self) -> (SessionType, u32) {
         return match self {
             Self::Pomodoro {
@@ -157,7 +157,7 @@ impl TimerMode {
         };
     }
 
-    /// Next session after completing the current one. None if no next (e.g. countdown done). Returns (session_type, duration_seconds).
+    /// Next session after completing the current one. None if no next (e.g. countdown done).
     pub fn next_session(
         &self,
         current: SessionType,
@@ -187,7 +187,7 @@ impl TimerMode {
         return Some((next_type, duration_seconds));
     }
 
-    /// Duration in seconds for the given session type.
+    /// Duration (seconds) for the given session type.
     pub fn duration_seconds_for(&self, session_type: SessionType) -> u32 {
         return match (self, session_type) {
             (
