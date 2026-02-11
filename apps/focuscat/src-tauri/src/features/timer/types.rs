@@ -1,4 +1,4 @@
-use super::timer::{Timer, TimerConfig, TimerStatus};
+use super::timer::{Timer, TimerStatus};
 use crate::features::settings::types::AppSettingsState;
 use serde::Serialize;
 use std::ops::Deref;
@@ -23,7 +23,7 @@ impl From<&Timer> for TimerDto {
     fn from(timer: &Timer) -> Self {
         return Self {
             status: timer.status,
-            session_type: timer.session_type.as_str().to_string(),
+            session_type: timer.active_session_type().as_str().to_string(),
             total_seconds: timer.total_seconds,
             remaining_seconds: timer.remaining_seconds,
             overtime_seconds: timer.overtime_seconds,
@@ -41,8 +41,7 @@ impl TimerState {
     pub fn init(app: &App) -> Self {
         let settings_state = app.state::<AppSettingsState>();
         let settings = settings_state.lock().unwrap();
-        let config = TimerConfig::from(&*settings);
-        return Self(Mutex::new(Timer::new(&config)));
+        return Self(Mutex::new(Timer::from_settings(&*settings)));
     }
 }
 

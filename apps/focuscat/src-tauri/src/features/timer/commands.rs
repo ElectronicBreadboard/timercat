@@ -1,8 +1,5 @@
-use super::modes::countdown::CountdownMode;
-use super::modes::pomodoro::PomodoroMode;
-use super::modes::TimerMode;
 use super::runner::TimerRunner;
-use super::timer::{TimerConfig, TimerStatus};
+use super::timer::TimerStatus;
 use super::types::{TimerDto, TimerState, TimerUpdatedEvent};
 use crate::environment::db::DatabaseState;
 use crate::features::session::repository::SessionRepository;
@@ -11,7 +8,6 @@ use crate::features::session::types::{
     SessionChangedEvent, SessionCompletedEvent, SessionSummaryDto,
 };
 use crate::features::settings::types::AppSettingsState;
-use crate::features::settings::types::TimerModeEnum;
 use chrono::Utc;
 use std::sync::Mutex;
 use tauri::{AppHandle, State};
@@ -43,17 +39,14 @@ pub async fn start_timer(
     let intention = intention.filter(|s| !s.trim().is_empty());
 
     // Extract data
-    let (session_type, planned_seconds, config) = {
+    let (session_type, planned_seconds, settings) = {
         let timer = state.lock().unwrap();
         if timer.status != TimerStatus::Idle {
             return Err("Timer is not idle".to_string());
         }
         let settings = app_settings.lock().unwrap();
-        (
-            timer.session_type,
-            timer.total_seconds,
-            TimerConfig::from(&*settings),
-        )
+        let (session_type, planned_seconds) = timer.first_session();
+        (session_type, planned_seconds, (*settings).clone())
     };
 
     // DB operation
@@ -81,7 +74,7 @@ pub async fn start_timer(
         let mut timer = state.lock().unwrap();
         timer.session = Some(session);
         timer.status = TimerStatus::Running;
-        timer.speed = config.speed;
+        timer.speed = settings.debug.timer_speed;
         timer.clone()
     };
 
@@ -111,7 +104,7 @@ pub async fn pause_timer(
         if timer.status != TimerStatus::Running {
             return Err("Timer is not running".to_string());
         }
-        timer.session_id()
+        timer.active_session_id()
     };
 
     // DB operation
@@ -153,7 +146,7 @@ pub async fn resume_timer(
         if timer.status != TimerStatus::Paused {
             return Err("Timer is not paused".to_string());
         }
-        timer.session_id()
+        timer.active_session_id()
     };
 
     // DB operation
@@ -191,15 +184,14 @@ pub async fn reset_timer(
     let now = Utc::now().timestamp_millis();
 
     // Extract data
-    let (config, session_data) = {
+    let (settings, session_data) = {
         let timer = state.lock().unwrap();
         let settings = app_settings.lock().unwrap();
-        let config = TimerConfig::from(&*settings);
         let session_data = timer
             .session
             .as_ref()
             .map(|s| (s.id, s.compute_actual_seconds(now)));
-        (config, session_data)
+        ((*settings).clone(), session_data)
     };
 
     // Cancel session in DB
@@ -209,12 +201,9 @@ pub async fn reset_timer(
             .map_err(db_err)?;
     }
 
-    // Reset to initial state
-    let mode = active_mode(&config);
-    let initial = mode.initial_session_type();
     let timer = {
         let mut timer = state.lock().unwrap();
-        timer.reset_to_idle(initial, mode.duration_for(initial, &config));
+        timer.reset_to_idle(&settings);
         timer.clone()
     };
 
@@ -242,10 +231,9 @@ pub async fn finish_timer(
     let now = Utc::now().timestamp_millis();
 
     // Extract data
-    let (config, session_data) = {
+    let (settings, session_data) = {
         let timer = state.lock().unwrap();
         let settings = app_settings.lock().unwrap();
-        let config = TimerConfig::from(&*settings);
         let session_data = timer.session.as_ref().map(|s| {
             (
                 s.id,
@@ -255,7 +243,7 @@ pub async fn finish_timer(
                 s.started_at,
             )
         });
-        (config, session_data)
+        ((*settings).clone(), session_data)
     };
 
     // Complete session in DB
@@ -263,12 +251,9 @@ pub async fn finish_timer(
         complete_and_emit_session(&db.pool, &app, data, now).await?;
     }
 
-    // Reset to initial state
-    let mode = active_mode(&config);
-    let initial = mode.initial_session_type();
     let timer = {
         let mut timer = state.lock().unwrap();
-        timer.reset_to_idle(initial, mode.duration_for(initial, &config));
+        timer.reset_to_idle(&settings);
         timer.clone()
     };
 
@@ -287,17 +272,15 @@ pub async fn finish_timer(
 pub async fn skip_timer(
     app: AppHandle,
     state: State<'_, TimerState>,
-    app_settings: State<'_, AppSettingsState>,
+    _app_settings: State<'_, AppSettingsState>,
     runner: State<'_, Mutex<Option<TimerRunner>>>,
     db: State<'_, DatabaseState>,
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
 
-    // Extract data
-    let (config, current_session_type, session_data, sessions_completed) = {
+    // Extract data (need timer clone to call next_session / first_session)
+    let (timer_clone, session_data) = {
         let timer = state.lock().unwrap();
-        let settings = app_settings.lock().unwrap();
-        let config = TimerConfig::from(&*settings);
         let session_data = timer.session.as_ref().map(|s| {
             (
                 s.id,
@@ -307,13 +290,13 @@ pub async fn skip_timer(
                 s.started_at,
             )
         });
-        (
-            config,
-            timer.session_type,
-            session_data,
-            timer.sessions_completed,
-        )
+        (timer.clone(), session_data)
     };
+    if timer_clone.session.is_none() {
+        return Err("No active session".to_string());
+    }
+    let current_session_type = timer_clone.session.as_ref().unwrap().session_type;
+    let sessions_completed = timer_clone.sessions_completed;
     let is_work = current_session_type == SessionType::PomodoroWork;
 
     // Complete current session
@@ -321,40 +304,23 @@ pub async fn skip_timer(
         complete_and_emit_session(&db.pool, &app, data, now).await?;
     }
 
-    // Determine next session type via mode
-    let mode = active_mode(&config);
-    let next_session_type = mode
-        .next_session_type(current_session_type, sessions_completed, &config)
-        .unwrap_or_else(|| mode.initial_session_type());
-    let next_duration = mode.duration_for(next_session_type, &config);
+    let (next_session_type, next_duration_seconds) = timer_clone
+        .next_session(current_session_type, sessions_completed)
+        .unwrap_or_else(|| timer_clone.first_session());
 
-    // Create next session (no intention for auto-created sessions)
-    let new_session =
-        SessionRepository::create(&db.pool, next_session_type, next_duration, None, now)
-            .await
-            .map_err(db_err)?;
+    let new_session = SessionRepository::create(
+        &db.pool,
+        next_session_type,
+        next_duration_seconds,
+        None,
+        now,
+    )
+    .await
+    .map_err(db_err)?;
 
-    // Update state
     let timer = {
         let mut timer = state.lock().unwrap();
-
-        // Update completed session
-        if let Some(session) = &mut timer.session {
-            session.status = SessionStatus::Completed;
-            session.ended_at = Some(now);
-            session.add_event(SessionEvent::Completed { timestamp: now });
-        }
-
-        if is_work {
-            timer.sessions_completed += 1;
-        }
-
-        timer.session = Some(new_session);
-        timer.session_type = next_session_type;
-        timer.total_seconds = next_duration;
-        timer.remaining_seconds = next_duration;
-        timer.overtime_seconds = 0;
-        timer.status = TimerStatus::Running;
+        timer.skip_to_next_session(new_session, next_duration_seconds, is_work, now);
         timer.clone()
     };
 
@@ -384,7 +350,7 @@ pub async fn set_timer_duration(
         let timer = state.lock().unwrap();
         (
             timer.status == TimerStatus::Idle,
-            timer.session_id(),
+            timer.active_session_id(),
             timer.total_seconds,
         )
     };
@@ -431,14 +397,6 @@ pub async fn set_timer_duration(
 }
 
 // MARK: - Helpers
-
-/// Active timer mode based on settings.
-fn active_mode(config: &TimerConfig) -> Box<dyn TimerMode> {
-    return match config.timer_mode {
-        TimerModeEnum::Pomodoro => Box::new(PomodoroMode),
-        TimerModeEnum::Countdown => Box::new(CountdownMode),
-    };
-}
 
 /// Complete session in DB and emit SessionCompletedEvent.
 async fn complete_and_emit_session(
