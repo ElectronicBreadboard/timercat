@@ -20,9 +20,7 @@ pub fn load_settings<R: Runtime, M: Manager<R>>(app: &M) -> AppSettings {
 
     match fs::read_to_string(&settings_path) {
         Ok(content) => match serde_json::from_str::<AppSettings>(&content) {
-            Ok(settings) => {
-                return settings;
-            }
+            Ok(settings) => return settings,
             Err(e) => {
                 eprintln!("[Settings] Failed to parse settings file: {}", e);
                 return AppSettings::default();

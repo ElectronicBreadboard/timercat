@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useCombinedCompute } from 'feature-react/state';
+import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
 import {
 	BriefcaseIcon,
@@ -11,12 +11,15 @@ import {
 	PlayIcon,
 	XIcon
 } from '@/components';
+import { useSettingsCx } from '@/features/settings';
 import { type TimerCx } from '@/features/timer';
 import { cn } from '@/lib';
 
 export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 	const { cx, className } = props;
 	const navigate = useNavigate();
+	const settingsCx = useSettingsCx();
+	const settings = useFeatureState(settingsCx.$appSettings);
 
 	const { status, phase, isOvertime } = useCombinedCompute(
 		[cx.$status, cx.$phase, cx.$overtimeSeconds] as const,
@@ -53,7 +56,11 @@ export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 			switch (action) {
 				case 'start':
 				case 'work':
-					navigate({ to: '/window/main/setup' });
+					if (settings.timer.showSessionSetup === false) {
+						void cx.start();
+					} else {
+						navigate({ to: '/window/main/setup' });
+					}
 					break;
 				case 'pause':
 					cx.pause();
@@ -72,7 +79,7 @@ export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 					break;
 			}
 		},
-		[cx, navigate]
+		[cx, navigate, settings.timer.showSessionSetup]
 	);
 
 	const icon = (action: TAction, size: number): React.ReactNode => {

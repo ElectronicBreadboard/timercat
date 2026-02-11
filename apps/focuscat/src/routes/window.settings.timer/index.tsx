@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { NumberField } from '@/components';
+import { NumberField, Switch } from '@/components';
 import { specta } from '@/environment';
 import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
 
@@ -72,6 +72,16 @@ function RouteComponent() {
 						max={10}
 						size="sm"
 						onChange={(v) => updateTimer({ sessionsBeforeLongBreak: v })}
+					/>
+				</SettingItem>
+				<SettingItem
+					label="Show Session Setup"
+					description="Show intention and profile selection before starting a session"
+				>
+					<Switch
+						checked={settings.timer.showSessionSetup ?? true}
+						onCheckedChange={(checked) => updateTimer({ showSessionSetup: checked })}
+						size="sm"
 					/>
 				</SettingItem>
 			</SettingGroup>

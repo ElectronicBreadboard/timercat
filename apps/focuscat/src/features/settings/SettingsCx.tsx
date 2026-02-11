@@ -26,7 +26,8 @@ export class SettingsCx {
 			workDurationMinutes: 25,
 			shortBreakMinutes: 5,
 			longBreakMinutes: 15,
-			sessionsBeforeLongBreak: 4
+			sessionsBeforeLongBreak: 4,
+			showSessionSetup: true
 		},
 		goals: {
 			dailyGoalMinutes: 120

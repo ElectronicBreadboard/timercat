@@ -94,6 +94,8 @@ pub struct TimerSettings {
     pub long_break_minutes: u32,
     /// Number of work sessions before a long break
     pub sessions_before_long_break: u32,
+    /// Show the intention/profile setup screen when starting a session
+    pub show_session_setup: bool,
 }
 
 impl Default for TimerSettings {
@@ -103,6 +105,7 @@ impl Default for TimerSettings {
             short_break_minutes: 5,
             long_break_minutes: 15,
             sessions_before_long_break: 4,
+            show_session_setup: true,
         };
     }
 }

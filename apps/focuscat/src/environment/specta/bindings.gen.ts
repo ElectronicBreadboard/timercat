@@ -559,7 +559,11 @@ longBreakMinutes: number;
 /**
  * Number of work sessions before a long break
  */
-sessionsBeforeLongBreak: number }
+sessionsBeforeLongBreak: number; 
+/**
+ * Show the intention/profile setup screen when starting a session
+ */
+showSessionSetup: boolean }
 export type TimerStatus = "idle" | "running" | "paused"
 export type TimerUpdatedEvent = TimerDto
 /**
