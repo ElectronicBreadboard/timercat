@@ -1,4 +1,4 @@
-use super::session::{Phase, Session, SessionEvent};
+use super::session::{Session, SessionEvent, SessionType};
 use chrono::{Local, TimeZone};
 use sqlx::{Row, SqlitePool};
 
@@ -9,19 +9,19 @@ impl SessionRepository {
     /// Returns the session with its DB id.
     pub async fn create(
         pool: &SqlitePool,
-        phase: Phase,
+        session_type: SessionType,
         planned_seconds: u32,
         intention: Option<&str>,
         started_at: i64,
     ) -> Result<Session, sqlx::Error> {
         let result = sqlx::query(
             r#"
-            INSERT INTO sessions (phase, status, planned_seconds, intention, started_at)
+            INSERT INTO sessions (session_type, status, planned_seconds, intention, started_at)
             VALUES (?, 'active', ?, ?, ?)
             RETURNING id
             "#,
         )
-        .bind(phase.as_str())
+        .bind(session_type.as_str())
         .bind(planned_seconds as i64)
         .bind(intention)
         .bind(started_at)
@@ -42,7 +42,7 @@ impl SessionRepository {
 
         return Ok(Session::new(
             id,
-            phase,
+            session_type,
             planned_seconds,
             intention.map(|s| s.to_string()),
             started_at,
@@ -174,7 +174,7 @@ impl SessionRepository {
             r#"
             SELECT COALESCE(SUM(actual_seconds), 0)
             FROM sessions
-            WHERE phase = 'work'
+            WHERE session_type = 'pomodoro:work'
               AND status = 'completed'
               AND started_at >= ?
             "#,
@@ -195,7 +195,7 @@ impl SessionRepository {
 
         let results = sqlx::query_as::<_, SessionRow>(
             r#"
-            SELECT id, phase, status, planned_seconds, actual_seconds, intention, started_at, ended_at
+            SELECT id, session_type, status, planned_seconds, actual_seconds, intention, started_at, ended_at
             FROM sessions
             WHERE started_at >= ? AND started_at < ?
               AND (? IS NULL OR actual_seconds IS NULL OR actual_seconds >= ?)
@@ -243,7 +243,7 @@ impl SessionRepository {
     pub async fn get_by_id(pool: &SqlitePool, id: i64) -> Result<Option<SessionRow>, sqlx::Error> {
         let result = sqlx::query_as::<_, SessionRow>(
             r#"
-            SELECT id, phase, status, planned_seconds, actual_seconds, intention, started_at, ended_at
+            SELECT id, session_type, status, planned_seconds, actual_seconds, intention, started_at, ended_at
             FROM sessions
             WHERE id = ?
             "#,
@@ -284,7 +284,7 @@ impl SessionRepository {
             r#"
             SELECT id
             FROM sessions
-            WHERE phase = 'work'
+            WHERE session_type = 'pomodoro:work'
               AND status = 'completed'
               AND (? IS NULL OR actual_seconds >= ?)
             ORDER BY started_at DESC
@@ -367,7 +367,7 @@ pub struct GetMostRecentSessionIdInput {
 #[derive(Debug, sqlx::FromRow)]
 pub struct SessionRow {
     pub id: i64,
-    pub phase: String,
+    pub session_type: String,
     pub status: String,
     pub planned_seconds: i64,
     pub actual_seconds: Option<i64>,

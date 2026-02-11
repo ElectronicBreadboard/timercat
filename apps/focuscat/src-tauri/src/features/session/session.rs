@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-/// A timer session (work or break period).
+/// A timed block (countdown timer) regardless of mode. `session_type` describes
+/// the flavor (pomodoro:work, pomodoro:short_break, etc.).
 #[derive(Debug, Clone)]
 pub struct Session {
     pub id: i64,
-    pub phase: Phase,
+    pub session_type: SessionType,
     pub status: SessionStatus,
     /// Original duration at start (seconds)
     pub planned_seconds: u32,
@@ -21,14 +22,14 @@ pub struct Session {
 impl Session {
     pub fn new(
         id: i64,
-        phase: Phase,
+        session_type: SessionType,
         planned_seconds: u32,
         intention: Option<String>,
         started_at: i64,
     ) -> Self {
         return Self {
             id,
-            phase,
+            session_type,
             status: SessionStatus::Active,
             planned_seconds,
             intention,
@@ -43,7 +44,7 @@ impl Session {
     /// Construct from database fields.
     pub fn from_db(
         id: i64,
-        phase: &str,
+        session_type: &str,
         status: &str,
         planned_seconds: u32,
         intention: Option<String>,
@@ -53,7 +54,7 @@ impl Session {
     ) -> Option<Self> {
         return Some(Self {
             id,
-            phase: Phase::from_str(phase)?,
+            session_type: SessionType::from_str(session_type)?,
             status: SessionStatus::from_str(status)?,
             planned_seconds,
             intention,
@@ -149,6 +150,46 @@ pub struct SessionStats {
     pub overtime_seconds: u32,
 }
 
+/// Flavor of a session (mode:phase). Sessions are universal timed blocks;
+/// this describes what kind of block it was.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SessionType {
+    PomodoroWork,
+    PomodoroShortBreak,
+    PomodoroLongBreak,
+    // Future: ProgressivePomodoroWork, ProgressivePomodoroShortBreak, ProgressivePomodoroLongBreak,
+    // Future: Countdown,
+}
+
+impl SessionType {
+    pub fn as_str(&self) -> &'static str {
+        return match self {
+            SessionType::PomodoroWork => "pomodoro:work",
+            SessionType::PomodoroShortBreak => "pomodoro:short_break",
+            SessionType::PomodoroLongBreak => "pomodoro:long_break",
+        };
+    }
+
+    pub fn from_str(s: &str) -> Option<Self> {
+        return match s {
+            "pomodoro:work" => Some(SessionType::PomodoroWork),
+            "pomodoro:short_break" => Some(SessionType::PomodoroShortBreak),
+            "pomodoro:long_break" => Some(SessionType::PomodoroLongBreak),
+            _ => None,
+        };
+    }
+
+    /// For display and duration lookup. Maps to Phase.
+    pub fn to_phase(&self) -> Phase {
+        return match self {
+            SessionType::PomodoroWork => Phase::Work,
+            SessionType::PomodoroShortBreak => Phase::ShortBreak,
+            SessionType::PomodoroLongBreak => Phase::LongBreak,
+        };
+    }
+}
+
+/// Display phase for UI. Maps from SessionType.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum Phase {
@@ -172,6 +213,14 @@ impl Phase {
             "short_break" => Some(Phase::ShortBreak),
             "long_break" => Some(Phase::LongBreak),
             _ => None,
+        };
+    }
+
+    pub fn to_session_type(&self) -> SessionType {
+        return match self {
+            Phase::Work => SessionType::PomodoroWork,
+            Phase::ShortBreak => SessionType::PomodoroShortBreak,
+            Phase::LongBreak => SessionType::PomodoroLongBreak,
         };
     }
 }
@@ -270,7 +319,7 @@ mod tests {
     const START_MS: i64 = 1_000_000; // 1 second
 
     fn make_session() -> Session {
-        return Session::new(1, Phase::Work, 1500, None, START_MS);
+        return Session::new(1, SessionType::PomodoroWork, 1500, None, START_MS);
     }
 
     #[test]

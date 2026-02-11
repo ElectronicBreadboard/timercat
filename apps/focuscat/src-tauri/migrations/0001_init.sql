@@ -1,11 +1,12 @@
--- Sessions (pomodoro timer sessions)
+-- Sessions: timed blocks (countdown timers). session_type = flavor (pomodoro:work, etc.).
 CREATE TABLE sessions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    phase TEXT NOT NULL, -- 'work' | 'short_break' | 'long_break'
+    session_type TEXT NOT NULL, -- 'pomodoro:work' | 'pomodoro:short_break' | 'pomodoro:long_break'
+    -- Future: 'progressive_pomodoro:work' | 'countdown'
     status TEXT NOT NULL DEFAULT 'active', -- 'active' | 'completed' | 'cancelled'
     planned_seconds INTEGER NOT NULL,
     actual_seconds INTEGER, -- NULL until session ends, excludes pauses
-    intention TEXT, -- optional session intention ("What are you focusing on?")
+    intention TEXT, -- optional ("What are you focusing on?")
     started_at INTEGER NOT NULL,
     ended_at INTEGER, -- NULL until session ends
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
@@ -13,7 +14,7 @@ CREATE TABLE sessions (
 
 CREATE INDEX idx_sessions_started_at ON sessions (started_at);
 
-CREATE INDEX idx_sessions_phase ON sessions (phase);
+CREATE INDEX idx_sessions_session_type ON sessions (session_type);
 
 -- Session events (state changes during a session)
 CREATE TABLE session_events (

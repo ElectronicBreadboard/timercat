@@ -53,7 +53,7 @@ pub async fn start_timer(
     };
 
     // DB operation
-    let session = SessionRepository::create(&db.pool, phase, planned_seconds, intention.as_deref(), now)
+    let session = SessionRepository::create(&db.pool, phase.to_session_type(), planned_seconds, intention.as_deref(), now)
         .await
         .map_err(db_err)?;
 
@@ -243,7 +243,7 @@ pub async fn finish_timer(
         let session_data = timer.session.as_ref().map(|s| {
             (
                 s.id,
-                s.phase,
+                s.session_type.to_phase(),
                 s.planned_seconds,
                 s.compute_actual_seconds(now),
                 s.started_at,
@@ -361,7 +361,7 @@ pub async fn skip_timer(
     let next_duration = Timer::get_duration_for_phase(next_phase, &config);
 
     // Create next session (no intention for auto-created sessions)
-    let new_session = SessionRepository::create(&db.pool, next_phase, next_duration, None, now)
+    let new_session = SessionRepository::create(&db.pool, next_phase.to_session_type(), next_duration, None, now)
         .await
         .map_err(db_err)?;
 
