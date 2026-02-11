@@ -36,7 +36,7 @@ export {
 	Plus as PlusIcon,
 	Settings as SettingsIcon,
 	Shuffle as ShuffleIcon,
-	SkipForward as SkipIcon,
+	SkipForward as SkipForwardIcon,
 	Sun as SunIcon,
 	Tag as TagIcon,
 	Target as TargetIcon,

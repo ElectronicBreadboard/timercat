@@ -156,21 +156,25 @@ async resetTimer() : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async skipTimer() : Promise<Result<null, string>> {
+/**
+ * Complete the current session and advance to the next in the sequence (work↔break).
+ * When the next session is work, intention and profile_ids may be provided.
+ */
+async advanceTimer(intention: string | null, profileIds: number[] | null) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("skip_timer") };
+    return { status: "ok", data: await TAURI_INVOKE("advance_timer", { intention, profileIds }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
 /**
- * Finish the current session and reset timer.
+ * Complete the current session and reset timer.
  * Like reset, but marks session as completed instead of cancelled.
  */
-async finishTimer() : Promise<Result<null, string>> {
+async completeTimer() : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("finish_timer") };
+    return { status: "ok", data: await TAURI_INVOKE("complete_timer") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };

@@ -29,12 +29,12 @@ export const CountdownTimerActions: React.FC<TProps> = (props) => {
 			if (!settings.timer.showSessionSetup) {
 				cx.start();
 			} else {
-				navigate({ to: '/window/main/setup' });
+				navigate({ to: '/window/main/setup', search: { advance: false } });
 			}
 		};
 		const handlePause = () => cx.pause();
 		const handleResume = () => cx.resume();
-		const handleDone = () => cx.finish();
+		const handleComplete = () => cx.complete();
 		const handleCancel = () => cx.reset();
 
 		// Idle
@@ -50,7 +50,7 @@ export const CountdownTimerActions: React.FC<TProps> = (props) => {
 		if (isOvertime) {
 			return {
 				left: null,
-				center: { type: 'icon', icon: <CheckIcon size={24} />, onClick: handleDone },
+				center: { type: 'icon', icon: <CheckIcon size={24} />, onClick: handleComplete },
 				right: {
 					type: 'icon',
 					icon: status === 'running' ? <PauseIcon size={18} /> : <PlayIcon size={18} />,

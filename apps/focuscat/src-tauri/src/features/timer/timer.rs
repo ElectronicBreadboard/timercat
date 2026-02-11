@@ -49,8 +49,8 @@ impl Timer {
         return self.mode.next_session(current_session_type, completed_work);
     }
 
-    /// Complete the current session and start the given one. Caller must create the new session in DB first.
-    pub fn skip_to_next_session(
+    /// Advance the timer by completing the current session and starting the given one.
+    pub fn advance_to_session(
         &mut self,
         new_session: Session,
         next_duration_seconds: u32,

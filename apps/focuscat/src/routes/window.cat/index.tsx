@@ -10,7 +10,7 @@ import {
 	GripIcon,
 	PauseIcon,
 	PlayIcon,
-	SkipIcon
+	SkipForwardIcon
 } from '@/components';
 import { specta } from '@/environment';
 import { Cat, type TCatRef } from '@/features/cat';
@@ -30,7 +30,12 @@ function RouteComponent() {
 	const catRef = React.useRef<TCatRef>(null);
 
 	const { isBreak, isOvertime, isRunning, isPaused, displayTime } = useCombinedCompute(
-		[timerCx.$status, timerCx.$sessionType, timerCx.$remainingSeconds, timerCx.$overtimeSeconds] as const,
+		[
+			timerCx.$status,
+			timerCx.$sessionType,
+			timerCx.$remainingSeconds,
+			timerCx.$overtimeSeconds
+		] as const,
 		([
 			{ value: status = 'idle' },
 			{ value: sessionType = 'pomodoro:work' },
@@ -65,7 +70,7 @@ function RouteComponent() {
 		await specta.commands.hideCatWindow();
 	}, []);
 
-	const handlePlayPause = React.useCallback(async () => {
+	const handlePauseResume = React.useCallback(async () => {
 		if (isRunning) {
 			await timerCx.pause();
 		} else if (isPaused) {
@@ -75,8 +80,8 @@ function RouteComponent() {
 		}
 	}, [timerCx, isRunning, isPaused]);
 
-	const handleSkip = React.useCallback(async () => {
-		await timerCx.skip();
+	const handleAdvance = React.useCallback(async () => {
+		await timerCx.advance();
 	}, [timerCx]);
 
 	const handleCatTap = React.useCallback(() => {
@@ -145,15 +150,15 @@ function RouteComponent() {
 					<div className="absolute inset-0 flex items-center justify-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
 						<Button
 							className="text-base-400 hover:text-base-950 flex items-center p-1 transition-colors"
-							onClick={handlePlayPause}
+							onClick={handlePauseResume}
 						>
 							{isRunning ? <PauseIcon size={14} /> : <PlayIcon size={14} />}
 						</Button>
 						<Button
 							className="text-base-400 hover:text-base-950 flex items-center p-1 transition-colors"
-							onClick={handleSkip}
+							onClick={handleAdvance}
 						>
-							<SkipIcon size={14} />
+							<SkipForwardIcon size={14} />
 						</Button>
 					</div>
 				</div>

@@ -218,11 +218,11 @@ pub async fn reset_timer(
     return Ok(());
 }
 
-/// Finish the current session and reset timer.
+/// Complete the current session and reset timer.
 /// Like reset, but marks session as completed instead of cancelled.
 #[tauri::command]
 #[specta::specta]
-pub async fn finish_timer(
+pub async fn complete_timer(
     app: AppHandle,
     state: State<'_, TimerState>,
     app_settings: State<'_, AppSettingsState>,
@@ -269,16 +269,23 @@ pub async fn finish_timer(
     return Ok(());
 }
 
+/// Complete the current session and advance to the next in the sequence (work↔break).
+/// When the next session is work, intention and profile_ids may be provided.
 #[tauri::command]
 #[specta::specta]
-pub async fn skip_timer(
+pub async fn advance_timer(
     app: AppHandle,
     state: State<'_, TimerState>,
     _app_settings: State<'_, AppSettingsState>,
     runner: State<'_, Mutex<Option<TimerRunner>>>,
     db: State<'_, DatabaseState>,
+    intention: Option<String>,
+    profile_ids: Option<Vec<i32>>,
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
+
+    // Normalize empty intention to None
+    let intention = intention.filter(|s| !s.trim().is_empty());
 
     // Read state
     let (session_data, current_session_type, sessions_completed) = {
@@ -314,20 +321,36 @@ pub async fn skip_timer(
     };
 
     // DB: create next session
+    let intention_for_create = if next_session_type == SessionType::PomodoroWork {
+        intention.as_deref()
+    } else {
+        None
+    };
     let new_session = SessionRepository::create(
         &db.pool,
         next_session_type,
         next_duration_seconds,
-        None,
+        intention_for_create,
         now,
     )
     .await
     .map_err(db_err)?;
 
+    // Link profiles if provided
+    if next_session_type == SessionType::PomodoroWork {
+        if let Some(ids) = &profile_ids {
+            if !ids.is_empty() {
+                SessionRepository::link_profiles(&db.pool, new_session.id, ids)
+                    .await
+                    .map_err(db_err)?;
+            }
+        }
+    }
+
     // Write state
     let timer = {
         let mut timer = state.lock().unwrap();
-        timer.skip_to_next_session(new_session, next_duration_seconds, is_work, now);
+        timer.advance_to_session(new_session, next_duration_seconds, is_work, now);
         timer.clone()
     };
 

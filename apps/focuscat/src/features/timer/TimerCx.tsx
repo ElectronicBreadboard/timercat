@@ -94,21 +94,23 @@ export class TimerCx {
 		}
 	}
 
-	public async skip(): Promise<void> {
-		const [ok, , err] = toTuple(await specta.commands.skipTimer());
+	public async advance(intention?: string, profileIds?: number[]): Promise<void> {
+		const [ok, , err] = toTuple(
+			await specta.commands.advanceTimer(intention ?? null, profileIds ?? null)
+		);
 		if (ok) {
 			this.$startTime.set(null);
 		} else {
-			console.error('Failed to skip timer:', err);
+			console.error('Failed to advance timer:', err);
 		}
 	}
 
-	public async finish(): Promise<void> {
-		const [ok, , err] = toTuple(await specta.commands.finishTimer());
+	public async complete(): Promise<void> {
+		const [ok, , err] = toTuple(await specta.commands.completeTimer());
 		if (ok) {
 			this.$startTime.set(null);
 		} else {
-			console.error('Failed to finish timer:', err);
+			console.error('Failed to complete timer:', err);
 		}
 	}
 

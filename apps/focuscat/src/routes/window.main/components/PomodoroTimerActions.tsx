@@ -43,13 +43,19 @@ export const PomodoroTimerActions: React.FC<TProps> = (props) => {
 			if (!settings.timer.showSessionSetup) {
 				cx.start();
 			} else {
-				navigate({ to: '/window/main/setup' });
+				navigate({ to: '/window/main/setup', search: { advance: false } });
+			}
+		};
+		const handleAdvance = (openSetupFirst?: boolean) => {
+			if (openSetupFirst) {
+				navigate({ to: '/window/main/setup', search: { advance: true } });
+			} else {
+				cx.advance();
 			}
 		};
 		const handlePause = () => cx.pause();
 		const handleResume = () => cx.resume();
-		const handleSkip = () => cx.skip();
-		const handleDone = () => cx.finish();
+		const handleComplete = () => cx.complete();
 		const handleCancel = () => cx.reset();
 
 		// Idle
@@ -64,11 +70,11 @@ export const PomodoroTimerActions: React.FC<TProps> = (props) => {
 		// Overtime
 		if (isOvertime) {
 			return {
-				left: { type: 'icon', icon: <CheckIcon size={18} />, onClick: handleDone },
+				left: { type: 'icon', icon: <CheckIcon size={18} />, onClick: handleComplete },
 				center: {
 					type: 'icon',
 					icon: isBreak ? <BriefcaseIcon size={24} /> : <CoffeeIcon size={24} />,
-					onClick: handleSkip
+					onClick: () => handleAdvance(isBreak && settings.timer.showSessionSetup)
 				},
 				right: {
 					type: 'icon',
@@ -94,7 +100,7 @@ export const PomodoroTimerActions: React.FC<TProps> = (props) => {
 			right: {
 				type: 'icon',
 				icon: isBreak ? <BriefcaseIcon size={18} /> : <CoffeeIcon size={18} />,
-				onClick: handleSkip
+				onClick: () => handleAdvance(isBreak && settings.timer.showSessionSetup)
 			}
 		};
 	}, [status, isBreak, isOvertime, settings.timer.showSessionSetup, cx, navigate]);
