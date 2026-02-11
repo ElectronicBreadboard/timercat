@@ -91,13 +91,14 @@ Settings → Actions → General → Workflow permissions → "Read and write pe
 
 Settings → Secrets and variables → Actions:
 
-| Secret                       | Value                                   |
-| ---------------------------- | --------------------------------------- |
-| `APPLE_CERTIFICATE`          | Base64-encoded Developer ID certificate |
-| `APPLE_CERTIFICATE_PASSWORD` | Certificate password                    |
-| `APPLE_ID`                   | Apple ID email                          |
-| `APPLE_PASSWORD`             | App-specific password                   |
-| `APPLE_TEAM_ID`              | Team ID (10 chars)                      |
+| Secret                       | Value                                                               |
+| ---------------------------- | ------------------------------------------------------------------- |
+| `APPLE_CERTIFICATE`          | Base64-encoded Developer ID .p12                                    |
+| `APPLE_CERTIFICATE_PASSWORD` | Certificate password                                                |
+| `APPLE_ID`                   | Apple ID email                                                      |
+| `APPLE_PASSWORD`             | App-specific password                                               |
+| `APPLE_SIGNING_IDENTITY`     | Must be `Developer ID Application: Name (TEAM_ID)` for notarization |
+| `APPLE_TEAM_ID`              | Team ID (10 chars)                                                  |
 
 See [`.secrets.template`](.secrets.template).
 

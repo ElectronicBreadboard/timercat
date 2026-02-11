@@ -77,6 +77,7 @@ runs:
       env:
         APPLE_ID: ${{ env.APPLE_ID }}
         APPLE_PASSWORD: ${{ env.APPLE_PASSWORD }}
+        APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
         APPLE_TEAM_ID: ${{ env.APPLE_TEAM_ID }}
       run: |
         if [ "${{ inputs.config }}" = "prod" ]; then
