@@ -127,6 +127,6 @@ jobs:
           draft: false
           prerelease: true
           files: |
-            apps/focuscat/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-            apps/focuscat/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz
+            target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+            target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz
           fail_on_unmatched_files: false
