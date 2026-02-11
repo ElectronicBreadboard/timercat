@@ -231,7 +231,7 @@ impl Window {
     }
 
     fn build_cat(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
-        return self
+        let mut builder = self
             .base_builder(app)
             .resizable(false)
             .maximizable(false)
@@ -240,8 +240,15 @@ impl Window {
             .transparent(true)
             .always_on_top(true)
             .shadow(false)
-            .skip_taskbar(true)
-            .build();
+            .skip_taskbar(true);
+
+        #[cfg(target_os = "macos")]
+        {
+            // Allow first click on unfocused window to reach webview (enables drag without pre-focusing)
+            builder = builder.accept_first_mouse(true);
+        }
+
+        return builder.build();
     }
 
     fn build_blocker(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
