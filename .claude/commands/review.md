@@ -1,5 +1,7 @@
 Review my staged and unstaged changes before committing:
 
+**CRITICAL: NEVER stage changes with `git add` and NEVER commit changes with `git commit`. This is a review-only command.**
+
 1. Run `git diff` and `git diff --staged` to see all changes
 2. Read the relevant rules from `.claude/rules/` (e.g., `react.md` for .tsx files, `typescript.md` for .ts files, `rust.md` for .rs files)
 3. For each changed file:

@@ -5,7 +5,7 @@ use super::timer::{TimerConfig, TimerStatus};
 use super::types::{TimerDto, TimerState, TimerUpdatedEvent};
 use crate::environment::db::DatabaseState;
 use crate::features::session::repository::SessionRepository;
-use crate::features::session::session::{Phase, SessionEvent, SessionStatus, SessionType};
+use crate::features::session::session::{SessionEvent, SessionStatus, SessionType};
 use crate::features::session::types::{
     SessionChangedEvent, SessionCompletedEvent, SessionSummaryDto,
 };
@@ -246,7 +246,7 @@ pub async fn finish_timer(
         let session_data = timer.session.as_ref().map(|s| {
             (
                 s.id,
-                s.session_type.to_phase(),
+                s.session_type.as_str().to_string(),
                 s.planned_seconds,
                 s.compute_actual_seconds(now),
                 s.started_at,
@@ -300,7 +300,7 @@ pub async fn skip_timer(
         let session_data = timer.session.as_ref().map(|s| {
             (
                 s.id,
-                s.session_type.to_phase(),
+                s.session_type.as_str().to_string(),
                 s.planned_seconds,
                 s.compute_actual_seconds(now),
                 s.started_at,
@@ -428,17 +428,17 @@ pub async fn set_timer_duration(
 async fn complete_and_emit_session(
     db: &sqlx::SqlitePool,
     app: &AppHandle,
-    session_data: (i64, Phase, u32, u32, i64),
+    session_data: (i64, String, u32, u32, i64),
     now: i64,
 ) -> Result<(), String> {
-    let (id, phase, planned, actual, started_at) = session_data;
+    let (id, session_type, planned, actual, started_at) = session_data;
     SessionRepository::complete(db, id, now, actual)
         .await
         .map_err(db_err)?;
 
     let _ = SessionCompletedEvent(SessionSummaryDto {
         id: id as i32,
-        phase,
+        session_type,
         status: SessionStatus::Completed,
         planned_seconds: planned,
         actual_seconds: Some(actual),

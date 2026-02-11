@@ -179,50 +179,6 @@ impl SessionType {
         };
     }
 
-    /// For display and duration lookup. Maps to Phase.
-    pub fn to_phase(&self) -> Phase {
-        return match self {
-            SessionType::PomodoroWork => Phase::Work,
-            SessionType::PomodoroShortBreak => Phase::ShortBreak,
-            SessionType::PomodoroLongBreak => Phase::LongBreak,
-        };
-    }
-}
-
-/// Display phase for UI. Maps from SessionType.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
-#[serde(rename_all = "camelCase")]
-pub enum Phase {
-    Work,
-    ShortBreak,
-    LongBreak,
-}
-
-impl Phase {
-    pub fn as_str(&self) -> &'static str {
-        return match self {
-            Phase::Work => "work",
-            Phase::ShortBreak => "short_break",
-            Phase::LongBreak => "long_break",
-        };
-    }
-
-    pub fn from_str(s: &str) -> Option<Self> {
-        return match s {
-            "work" => Some(Phase::Work),
-            "short_break" => Some(Phase::ShortBreak),
-            "long_break" => Some(Phase::LongBreak),
-            _ => None,
-        };
-    }
-
-    pub fn to_session_type(&self) -> SessionType {
-        return match self {
-            Phase::Work => SessionType::PomodoroWork,
-            Phase::ShortBreak => SessionType::PomodoroShortBreak,
-            Phase::LongBreak => SessionType::PomodoroLongBreak,
-        };
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type)]

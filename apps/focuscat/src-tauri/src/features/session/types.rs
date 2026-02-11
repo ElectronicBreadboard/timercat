@@ -1,4 +1,4 @@
-use super::session::{Phase, SessionStatus};
+use super::session::SessionStatus;
 use serde::{Deserialize, Serialize};
 
 // MARK: - DTO
@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct SessionSummaryDto {
     pub id: i32,
-    pub phase: Phase,
+    pub session_type: String,
     pub status: SessionStatus,
     pub planned_seconds: u32,
     pub actual_seconds: Option<u32>,
@@ -20,7 +20,7 @@ pub struct SessionSummaryDto {
 #[serde(rename_all = "camelCase")]
 pub struct SessionDetailDto {
     pub id: i32,
-    pub phase: Phase,
+    pub session_type: String,
     pub status: SessionStatus,
     pub planned_seconds: u32,
     pub actual_seconds: Option<u32>,

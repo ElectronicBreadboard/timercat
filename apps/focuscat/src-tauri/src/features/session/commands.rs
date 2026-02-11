@@ -113,7 +113,7 @@ pub async fn get_session(
 
     return Ok(Some(SessionDetailDto {
         id: session.id as i32,
-        phase: session.session_type.to_phase(),
+        session_type: session.session_type.as_str().to_string(),
         status: session.status,
         planned_seconds: session.planned_seconds,
         actual_seconds: row.actual_seconds.map(|s| s as u32),
@@ -158,7 +158,7 @@ impl TryFrom<SessionRow> for SessionSummaryDto {
 
         return Ok(Self {
             id: row.id as i32,
-            phase: session_type.to_phase(),
+            session_type: session_type.as_str().to_string(),
             status,
             planned_seconds: row.planned_seconds as u32,
             actual_seconds: row.actual_seconds.map(|s| s as u32),

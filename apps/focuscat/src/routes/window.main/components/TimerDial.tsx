@@ -28,10 +28,10 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 		{ isEqual: (a, b) => a.value === b.value && a.smooth === b.smooth }
 	);
 	const sessionProgress = useCombinedCompute(
-		[cx.$status, cx.$phase, cx.$remainingSeconds, cx.$totalSeconds, cx.$sessionsCompleted] as const,
+		[cx.$status, cx.$sessionType, cx.$remainingSeconds, cx.$totalSeconds, cx.$sessionsCompleted] as const,
 		([
 			{ value: status = 'idle' },
-			{ value: phase = 'work' },
+			{ value: sessionType = 'pomodoro:work' },
 			{ value: remainingSeconds = 0 },
 			{ value: totalSeconds = 0 },
 			{ value: sessionsCompleted = 0 }
@@ -42,7 +42,7 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 
 			// Session progress: each session spans 0→1, split into work (0→0.5) and break (0.5→1.0)
 			const phaseProgress = totalSeconds > 0 ? (totalSeconds - remainingSeconds) / totalSeconds : 0;
-			return phase === 'work'
+			return sessionType.endsWith(':work')
 				? sessionsCompleted + phaseProgress * 0.5
 				: sessionsCompleted - 0.5 + phaseProgress * 0.5;
 		}

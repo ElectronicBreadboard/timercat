@@ -21,22 +21,25 @@ export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 
-	const { status, phase, isOvertime } = useCombinedCompute(
-		[cx.$status, cx.$phase, cx.$overtimeSeconds] as const,
-		([{ value: status = 'idle' }, { value: phase = 'work' }, { value: overtimeSeconds = 0 }]) => ({
+	const { status, isBreak, isOvertime } = useCombinedCompute(
+		[cx.$status, cx.$sessionType, cx.$overtimeSeconds] as const,
+		([
+			{ value: status = 'idle' },
+			{ value: sessionType = 'pomodoro:work' },
+			{ value: overtimeSeconds = 0 }
+		]) => ({
 			status,
-			phase,
+			isBreak: !sessionType.endsWith(':work'),
 			isOvertime: overtimeSeconds > 0
 		}),
 		[],
 		{
 			isEqual: (a, b) =>
-				a.status === b.status && a.phase === b.phase && a.isOvertime === b.isOvertime
+				a.status === b.status && a.isBreak === b.isBreak && a.isOvertime === b.isOvertime
 		}
 	);
 
 	const { left, center, right } = React.useMemo(() => {
-		const isBreak = phase === 'shortBreak' || phase === 'longBreak';
 		const skip = isBreak ? 'work' : 'break';
 
 		if (status === 'idle') {
@@ -49,7 +52,7 @@ export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 			return { center: 'pause' };
 		}
 		return { left: 'cancel', center: 'resume', right: skip };
-	}, [status, phase, isOvertime]) as TButtonConfig;
+	}, [status, isBreak, isOvertime]) as TButtonConfig;
 
 	const handleClick = React.useCallback(
 		(action: TAction) => {

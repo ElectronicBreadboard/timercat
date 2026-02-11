@@ -464,10 +464,6 @@ export type InputDetectedEvent = InputType
  */
 export type InputType = "keyboard" | "mouse"
 /**
- * Display phase for UI. Maps from SessionType.
- */
-export type Phase = "work" | "shortBreak" | "longBreak"
-/**
  * Preview of resolved rules for a session setup.
  */
 export type PreviewRulesDto = { blocked: RuleTargetDto[]; allowed: RuleTargetDto[] }
@@ -529,7 +525,7 @@ export type SessionChangedEvent = null
  * Event emitted when a session is completed.
  */
 export type SessionCompletedEvent = SessionSummaryDto
-export type SessionDetailDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; intention: string | null; startedAt: number; endedAt: number | null; events: SessionEventDto[]; stats: SessionStatsDto }
+export type SessionDetailDto = { id: number; sessionType: string; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; intention: string | null; startedAt: number; endedAt: number | null; events: SessionEventDto[]; stats: SessionStatsDto }
 export type SessionEventDataDto = { seconds: number | null }
 export type SessionEventDto = { eventType: string; timestamp: number; 
 /**
@@ -541,12 +537,12 @@ data: SessionEventDataDto | null }
  */
 export type SessionStatsDto = { pausedSeconds: number; extendedSeconds: number; overtimeSeconds: number }
 export type SessionStatus = "active" | "completed" | "cancelled"
-export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; intention: string | null; startedAt: number; endedAt: number | null }
+export type SessionSummaryDto = { id: number; sessionType: string; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; intention: string | null; startedAt: number; endedAt: number | null }
 export type SettingsVersion = "0.0.1"
 export type SoundId = "tick" | "complete" | "meow"
 export type Stage = "dev" | "prod"
 export type Theme = "light" | "dark" | "auto"
-export type TimerDto = { status: TimerStatus; phase: Phase; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; speed: number }
+export type TimerDto = { status: TimerStatus; sessionType: string; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; speed: number }
 export type TimerSettings = { 
 /**
  * Work duration in minutes

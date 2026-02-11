@@ -30,17 +30,17 @@ function RouteComponent() {
 	const catRef = React.useRef<TCatRef>(null);
 
 	const { isBreak, isOvertime, isRunning, isPaused, displayTime } = useCombinedCompute(
-		[timerCx.$status, timerCx.$phase, timerCx.$remainingSeconds, timerCx.$overtimeSeconds] as const,
+		[timerCx.$status, timerCx.$sessionType, timerCx.$remainingSeconds, timerCx.$overtimeSeconds] as const,
 		([
 			{ value: status = 'idle' },
-			{ value: phase = 'work' },
+			{ value: sessionType = 'pomodoro:work' },
 			{ value: remainingSeconds = 0 },
 			{ value: overtimeSeconds = 0 }
 		]) => {
 			const isOvertime = overtimeSeconds > 0;
 
 			return {
-				isBreak: phase !== 'work',
+				isBreak: !sessionType.endsWith(':work'),
 				isOvertime,
 				isRunning: status === 'running',
 				isPaused: status === 'paused',
@@ -123,7 +123,7 @@ function RouteComponent() {
 					<GripIcon size={14} className="text-base-500" />
 				</div>
 
-				{/* Phase Indicator */}
+				{/* Session Type Indicator */}
 				{isBreak ? (
 					<CoffeeIcon size={14} className="text-base-400" />
 				) : (

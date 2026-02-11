@@ -8,7 +8,7 @@ export class TimerCx {
 	private _unlisten?: () => void;
 
 	public readonly $status = createState<specta.TimerStatus>('idle');
-	public readonly $phase = createState<specta.Phase>('work');
+	public readonly $sessionType = createState('pomodoro:work');
 	public readonly $remainingSeconds = createState(0);
 	public readonly $totalSeconds = createState(0);
 	public readonly $overtimeSeconds = createState(0);
@@ -36,8 +36,8 @@ export class TimerCx {
 		if (this.$status.get() !== timer.status) {
 			this.$status.set(timer.status);
 		}
-		if (this.$phase.get() !== timer.phase) {
-			this.$phase.set(timer.phase);
+		if (this.$sessionType.get() !== timer.sessionType) {
+			this.$sessionType.set(timer.sessionType);
 		}
 		if (this.$remainingSeconds.get() !== timer.remainingSeconds) {
 			this.$remainingSeconds.set(timer.remainingSeconds);
