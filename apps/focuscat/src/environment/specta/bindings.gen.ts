@@ -413,7 +413,7 @@ export type App = {
 id: string; bundleId: string; name: string | null; icon: string | null; color: string | null }
 export type AppDistribution = "direct" | "appStore"
 export type AppInfo = { version: string; stage: Stage; distribution: AppDistribution }
-export type AppSettings = { features: FeaturesSettings; appearance: AppearanceSettings; debug: DebugSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; cat: CatSettings }
+export type AppSettings = { version: SettingsVersion; features: FeaturesSettings; appearance: AppearanceSettings; debug: DebugSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; cat: CatSettings }
 export type AppSettingsChangedEvent = AppSettings
 export type AppearanceSettings = { theme: Theme }
 /**
@@ -539,6 +539,7 @@ data: SessionEventDataDto | null }
 export type SessionStatsDto = { pausedSeconds: number; extendedSeconds: number; overtimeSeconds: number }
 export type SessionStatus = "active" | "completed" | "cancelled"
 export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; intention: string | null; startedAt: number; endedAt: number | null }
+export type SettingsVersion = "0.0.1"
 export type SoundId = "tick" | "complete" | "meow"
 export type Stage = "dev" | "prod"
 export type Theme = "light" | "dark" | "auto"

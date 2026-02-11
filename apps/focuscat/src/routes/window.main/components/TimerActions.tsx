@@ -56,8 +56,8 @@ export const TimerActions: React.FC<TTimerActionsProps> = (props) => {
 			switch (action) {
 				case 'start':
 				case 'work':
-					if (settings.timer.showSessionSetup === false) {
-						void cx.start();
+					if (!settings.timer.showSessionSetup) {
+						cx.start();
 					} else {
 						navigate({ to: '/window/main/setup' });
 					}

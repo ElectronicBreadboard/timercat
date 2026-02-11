@@ -7,6 +7,7 @@ use tauri::App;
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AppSettings {
+    pub version: SettingsVersion,
     pub features: FeaturesSettings,
     pub appearance: AppearanceSettings,
     pub debug: DebugSettings,
@@ -19,6 +20,7 @@ pub struct AppSettings {
 impl Default for AppSettings {
     fn default() -> Self {
         return Self {
+            version: SettingsVersion::current(),
             features: FeaturesSettings::default(),
             appearance: AppearanceSettings::default(),
             debug: DebugSettings::default(),
@@ -27,6 +29,25 @@ impl Default for AppSettings {
             activity: ActivitySettings::default(),
             cat: CatSettings::default(),
         };
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub enum SettingsVersion {
+    #[serde(rename = "0.0.1")]
+    V0_0_1,
+}
+
+impl SettingsVersion {
+    pub fn current() -> Self {
+        return Self::V0_0_1;
+    }
+}
+
+impl Default for SettingsVersion {
+    fn default() -> Self {
+        return Self::current();
     }
 }
 

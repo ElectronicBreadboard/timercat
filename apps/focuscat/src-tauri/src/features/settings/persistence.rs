@@ -1,7 +1,9 @@
 use crate::{
-    common::path::get_app_data_dir, environment::configs::settings::SettingsConfig,
-    features::settings::types::AppSettings,
+    common::path::get_app_data_dir,
+    environment::configs::settings::SettingsConfig,
+    features::settings::types::{AppSettings, SettingsVersion},
 };
+use serde_json::Value;
 use std::{fs, path::PathBuf};
 use tauri::{Manager, Runtime};
 
@@ -19,13 +21,30 @@ pub fn load_settings<R: Runtime, M: Manager<R>>(app: &M) -> AppSettings {
     }
 
     match fs::read_to_string(&settings_path) {
-        Ok(content) => match serde_json::from_str::<AppSettings>(&content) {
-            Ok(settings) => return settings,
-            Err(e) => {
-                eprintln!("[Settings] Failed to parse settings file: {}", e);
-                return AppSettings::default();
+        Ok(content) => {
+            let mut value: Value = match serde_json::from_str(&content) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("[Settings] Failed to parse settings file: {}", e);
+                    return AppSettings::default();
+                }
+            };
+
+            while version_from_value(&value) != SettingsVersion::current() {
+                migrate_value_one_step(&mut value);
             }
-        },
+
+            match serde_json::from_value::<AppSettings>(value) {
+                Ok(settings) => return settings,
+                Err(e) => {
+                    eprintln!(
+                        "[Settings] Failed to deserialize settings after migration: {}",
+                        e
+                    );
+                    return AppSettings::default();
+                }
+            }
+        }
         Err(e) => {
             eprintln!("[Settings] Failed to read settings file: {}", e);
             return AppSettings::default();
@@ -46,4 +65,18 @@ pub fn save_settings<R: Runtime, M: Manager<R>>(
     fs::write(&settings_path, json).map_err(|e| format!("Failed to write settings file: {}", e))?;
 
     return Ok(());
+}
+
+fn migrate_value_one_step(value: &mut Value) {
+    let version = version_from_value(value);
+    match version {
+        SettingsVersion::V0_0_1 => {}
+    }
+}
+
+fn version_from_value(value: &Value) -> SettingsVersion {
+    return value
+        .get("version")
+        .and_then(|v| serde_json::from_value(v.clone()).ok())
+        .unwrap_or_else(SettingsVersion::default);
 }

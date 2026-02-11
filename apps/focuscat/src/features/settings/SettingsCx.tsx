@@ -8,6 +8,7 @@ export class SettingsCx {
 	private _unlisten?: () => void;
 
 	public readonly $appSettings = createState<TAppSettings>({
+		version: '0.0.1',
 		features: {
 			goals: true,
 			activity: true,
