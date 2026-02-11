@@ -4,7 +4,7 @@ use super::{
 };
 use crate::common::path::get_app_data_dir;
 use crate::environment::configs::app::{AppConfig, AppDistribution};
-use crate::features::timer::timer::{TimerConfig, TimerStatus};
+use crate::features::timer::timer::TimerStatus;
 use crate::features::timer::types::{TimerDto, TimerState, TimerUpdatedEvent};
 use std::process::Command;
 use tauri::{AppHandle, Manager, State};
@@ -39,10 +39,7 @@ pub fn set_settings(
     if let Some(timer_state) = app.try_state::<TimerState>() {
         let mut timer = timer_state.lock().unwrap();
         if timer.status == TimerStatus::Idle {
-            let config = TimerConfig::from(&settings);
-            timer.total_seconds = config.work_duration;
-            timer.remaining_seconds = config.work_duration;
-            timer.speed = config.speed;
+            timer.reset_to_idle(&settings);
             let _ = TimerUpdatedEvent(TimerDto::from(&*timer)).emit(&app);
         }
     }

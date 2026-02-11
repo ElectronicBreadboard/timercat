@@ -37,7 +37,7 @@ function RouteComponent() {
 	// Synthetic session for the timeline (no events = no session markers)
 	const syntheticSession: specta.SessionDetailDto = {
 		id: -1,
-		phase: 'work',
+		sessionType: 'pomodoro:work',
 		status: 'completed',
 		plannedSeconds: 24 * 60 * 60,
 		actualSeconds: 24 * 60 * 60,

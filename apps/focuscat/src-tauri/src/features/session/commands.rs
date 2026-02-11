@@ -1,7 +1,7 @@
 use super::repository::{
     GetMostRecentSessionIdInput, GetSessionsInput, SessionRepository, SessionRow,
 };
-use super::session::{Phase, Session, SessionEvent, SessionStatus};
+use super::session::{Session, SessionEvent, SessionStatus, SessionType};
 use super::types::{
     SessionDetailDto, SessionEventDataDto, SessionEventDto, SessionStatsDto, SessionSummaryDto,
 };
@@ -97,7 +97,7 @@ pub async fn get_session(
     // Build session with events
     let session = Session::from_db(
         row.id,
-        &row.phase,
+        &row.session_type,
         &row.status,
         row.planned_seconds as u32,
         row.intention.clone(),
@@ -113,7 +113,7 @@ pub async fn get_session(
 
     return Ok(Some(SessionDetailDto {
         id: session.id as i32,
-        phase: session.phase,
+        session_type: session.session_type.as_str().to_string(),
         status: session.status,
         planned_seconds: session.planned_seconds,
         actual_seconds: row.actual_seconds.map(|s| s as u32),
@@ -153,12 +153,12 @@ impl TryFrom<SessionRow> for SessionSummaryDto {
     type Error = ();
 
     fn try_from(row: SessionRow) -> Result<Self, Self::Error> {
-        let phase = Phase::from_str(&row.phase).ok_or(())?;
+        let session_type = SessionType::from_str(&row.session_type).ok_or(())?;
         let status = SessionStatus::from_str(&row.status).ok_or(())?;
 
         return Ok(Self {
             id: row.id as i32,
-            phase,
+            session_type: session_type.as_str().to_string(),
             status,
             planned_seconds: row.planned_seconds as u32,
             actual_seconds: row.actual_seconds.map(|s| s as u32),

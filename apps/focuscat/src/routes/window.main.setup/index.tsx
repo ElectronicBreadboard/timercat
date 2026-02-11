@@ -10,6 +10,9 @@ import { Navbar } from '../window.main/components';
 import { AddProfileButton, ProfileTag, targetKey, TargetTag } from './components';
 
 export const Route = createFileRoute('/window/main/setup/')({
+	validateSearch: (search: Record<string, unknown>): { advance: boolean } => ({
+		advance: search['advance'] === true
+	}),
 	component: RouteComponent
 });
 
@@ -18,6 +21,7 @@ function RouteComponent() {
 	const timerCx = useTimerCx();
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
+	const { advance } = Route.useSearch();
 
 	const [intention, setIntention] = React.useState('');
 	const [selectedIds, setSelectedIds] = React.useState<number[]>([]);
@@ -56,12 +60,15 @@ function RouteComponent() {
 			return;
 		}
 		setIsStarting(true);
-		await timerCx.start(
-			intention.trim() || undefined,
-			selectedIds.length > 0 ? selectedIds : undefined
-		);
+		const intentionOpt = intention.trim() || undefined;
+		const profileIdsOpt = selectedIds.length > 0 ? selectedIds : undefined;
+		if (advance) {
+			await timerCx.advance(intentionOpt, profileIdsOpt);
+		} else {
+			await timerCx.start(intentionOpt, profileIdsOpt);
+		}
 		navigate({ to: '/window/main' });
-	}, [isStarting, intention, selectedIds, timerCx, navigate]);
+	}, [isStarting, intention, selectedIds, advance, timerCx, navigate]);
 
 	const handleAddProfile = React.useCallback((id: number) => {
 		setSelectedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));

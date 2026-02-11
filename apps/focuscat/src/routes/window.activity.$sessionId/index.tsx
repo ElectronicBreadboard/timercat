@@ -50,7 +50,7 @@ function RouteComponent() {
 		}
 
 		const { session } = data;
-		const isWork = session.phase === 'work';
+		const isWork = session.sessionType.endsWith(':work');
 		const duration = session.actualSeconds ?? session.plannedSeconds;
 
 		const startDate = new Date(session.startedAt);

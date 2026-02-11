@@ -156,21 +156,25 @@ async resetTimer() : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async skipTimer() : Promise<Result<null, string>> {
+/**
+ * Complete the current session and advance to the next in the sequence (work↔break).
+ * When the next session is work, intention and profile_ids may be provided.
+ */
+async advanceTimer(intention: string | null, profileIds: number[] | null) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("skip_timer") };
+    return { status: "ok", data: await TAURI_INVOKE("advance_timer", { intention, profileIds }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
 /**
- * Finish the current session and reset timer.
+ * Complete the current session and reset timer.
  * Like reset, but marks session as completed instead of cancelled.
  */
-async finishTimer() : Promise<Result<null, string>> {
+async completeTimer() : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("finish_timer") };
+    return { status: "ok", data: await TAURI_INVOKE("complete_timer") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -429,6 +433,7 @@ export type BlockingViolationDto = { profileId: number; profileName: string; pro
  */
 export type BlockingViolationEvent = BlockingViolationDto | null
 export type CatSettings = { equippedFur: string; equippedFace: string; equippedHat: string | null }
+export type CountdownSettings = { durationMinutes: number }
 export type DebugSettings = { cat: boolean; timerSpeed: number }
 /**
  * A profile eligible for session selection, with auto-selection flag.
@@ -463,7 +468,7 @@ export type InputDetectedEvent = InputType
  * Type of input event detected.
  */
 export type InputType = "keyboard" | "mouse"
-export type Phase = "work" | "shortBreak" | "longBreak"
+export type PomodoroSettings = { workDurationMinutes: number; shortBreakMinutes: number; longBreakMinutes: number; sessionsBeforeLongBreak: number }
 /**
  * Preview of resolved rules for a session setup.
  */
@@ -526,7 +531,7 @@ export type SessionChangedEvent = null
  * Event emitted when a session is completed.
  */
 export type SessionCompletedEvent = SessionSummaryDto
-export type SessionDetailDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; intention: string | null; startedAt: number; endedAt: number | null; events: SessionEventDto[]; stats: SessionStatsDto }
+export type SessionDetailDto = { id: number; sessionType: string; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; intention: string | null; startedAt: number; endedAt: number | null; events: SessionEventDto[]; stats: SessionStatsDto }
 export type SessionEventDataDto = { seconds: number | null }
 export type SessionEventDto = { eventType: string; timestamp: number; 
 /**
@@ -538,29 +543,14 @@ data: SessionEventDataDto | null }
  */
 export type SessionStatsDto = { pausedSeconds: number; extendedSeconds: number; overtimeSeconds: number }
 export type SessionStatus = "active" | "completed" | "cancelled"
-export type SessionSummaryDto = { id: number; phase: Phase; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; intention: string | null; startedAt: number; endedAt: number | null }
+export type SessionSummaryDto = { id: number; sessionType: string; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; intention: string | null; startedAt: number; endedAt: number | null }
 export type SettingsVersion = "0.0.1"
 export type SoundId = "tick" | "complete" | "meow"
 export type Stage = "dev" | "prod"
 export type Theme = "light" | "dark" | "auto"
-export type TimerDto = { status: TimerStatus; phase: Phase; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; speed: number }
-export type TimerSettings = { 
-/**
- * Work duration in minutes
- */
-workDurationMinutes: number; 
-/**
- * Short break duration in minutes
- */
-shortBreakMinutes: number; 
-/**
- * Long break duration in minutes
- */
-longBreakMinutes: number; 
-/**
- * Number of work sessions before a long break
- */
-sessionsBeforeLongBreak: number; 
+export type TimerDto = { status: TimerStatus; sessionType: string; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; speed: number }
+export type TimerModeEnum = "pomodoro" | "countdown"
+export type TimerSettings = { timerMode: TimerModeEnum; pomodoro: PomodoroSettings; countdown: CountdownSettings; 
 /**
  * Show the intention/profile setup screen when starting a session
  */

@@ -48,8 +48,8 @@ pub fn run() {
             timer::commands::pause_timer,
             timer::commands::resume_timer,
             timer::commands::reset_timer,
-            timer::commands::skip_timer,
-            timer::commands::finish_timer,
+            timer::commands::advance_timer,
+            timer::commands::complete_timer,
             timer::commands::set_timer_duration,
             // Activity window commands
             activity_window::commands::get_window_activities,

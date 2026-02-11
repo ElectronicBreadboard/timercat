@@ -107,14 +107,9 @@ impl Default for DebugSettings {
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct TimerSettings {
-    /// Work duration in minutes
-    pub work_duration_minutes: u32,
-    /// Short break duration in minutes
-    pub short_break_minutes: u32,
-    /// Long break duration in minutes
-    pub long_break_minutes: u32,
-    /// Number of work sessions before a long break
-    pub sessions_before_long_break: u32,
+    pub timer_mode: TimerModeEnum,
+    pub pomodoro: PomodoroSettings,
+    pub countdown: CountdownSettings,
     /// Show the intention/profile setup screen when starting a session
     pub show_session_setup: bool,
 }
@@ -122,11 +117,52 @@ pub struct TimerSettings {
 impl Default for TimerSettings {
     fn default() -> Self {
         return Self {
+            timer_mode: TimerModeEnum::Pomodoro,
+            pomodoro: PomodoroSettings::default(),
+            countdown: CountdownSettings::default(),
+            show_session_setup: true,
+        };
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum TimerModeEnum {
+    #[default]
+    Pomodoro,
+    Countdown,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PomodoroSettings {
+    pub work_duration_minutes: u32,
+    pub short_break_minutes: u32,
+    pub long_break_minutes: u32,
+    pub sessions_before_long_break: u32,
+}
+
+impl Default for PomodoroSettings {
+    fn default() -> Self {
+        return Self {
             work_duration_minutes: 25,
             short_break_minutes: 5,
             long_break_minutes: 15,
             sessions_before_long_break: 4,
-            show_session_setup: true,
+        };
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CountdownSettings {
+    pub duration_minutes: u32,
+}
+
+impl Default for CountdownSettings {
+    fn default() -> Self {
+        return Self {
+            duration_minutes: 25,
         };
     }
 }

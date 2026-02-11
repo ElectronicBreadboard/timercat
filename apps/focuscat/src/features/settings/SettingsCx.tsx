@@ -24,10 +24,16 @@ export class SettingsCx {
 			timerSpeed: 1
 		},
 		timer: {
-			workDurationMinutes: 25,
-			shortBreakMinutes: 5,
-			longBreakMinutes: 15,
-			sessionsBeforeLongBreak: 4,
+			timerMode: 'pomodoro',
+			pomodoro: {
+				workDurationMinutes: 25,
+				shortBreakMinutes: 5,
+				longBreakMinutes: 15,
+				sessionsBeforeLongBreak: 4
+			},
+			countdown: {
+				durationMinutes: 25
+			},
 			showSessionSetup: true
 		},
 		goals: {

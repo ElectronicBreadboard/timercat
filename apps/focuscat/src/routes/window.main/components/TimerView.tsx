@@ -4,9 +4,11 @@ import { Badge } from '@/components';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
 import { cn } from '@/lib';
+import { CountdownTimerActions } from './CountdownTimerActions';
+import { CountdownTimerDial } from './CountdownTimerDial';
+import { PomodoroTimerActions } from './PomodoroTimerActions';
+import { PomodoroTimerDial } from './PomodoroTimerDial';
 import { TimeDisplay } from './TimeDisplay';
-import { TimerActions } from './TimerActions';
-import { TimerDial } from './TimerDial';
 
 export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	const { onTick, className, style } = props;
@@ -42,6 +44,15 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 
 	// MARK: - Effects
 
+	// Reset timer when mode changes
+	const lastTimerMode = React.useRef(settings.timer.timerMode);
+	React.useEffect(() => {
+		if (lastTimerMode.current !== settings.timer.timerMode) {
+			timerCx.reset();
+			lastTimerMode.current = settings.timer.timerMode;
+		}
+	}, [settings.timer.timerMode, timerCx]);
+
 	// Countdown tick handler - fires every second when running
 	useListener(
 		timerCx.$remainingSeconds,
@@ -67,12 +78,20 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 
 	return (
 		<div className={cn('flex flex-col items-center pb-4', className)} style={style}>
-			<TimerDial
-				cx={timerCx}
-				previewMinutes={previewMinutes}
-				sessionsBeforeLongBreak={settings.timer.sessionsBeforeLongBreak}
-				onPreviewChange={handlePreviewChange}
-			/>
+			{settings.timer.timerMode === 'countdown' ? (
+				<CountdownTimerDial
+					cx={timerCx}
+					previewMinutes={previewMinutes}
+					onPreviewChange={handlePreviewChange}
+				/>
+			) : (
+				<PomodoroTimerDial
+					cx={timerCx}
+					previewMinutes={previewMinutes}
+					sessionsBeforeLongBreak={settings.timer.pomodoro.sessionsBeforeLongBreak}
+					onPreviewChange={handlePreviewChange}
+				/>
+			)}
 
 			<TimeDisplay cx={timerCx} previewMinutes={previewMinutes} className="mt-4" />
 
@@ -82,7 +101,11 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 				</Badge>
 			)}
 
-			<TimerActions cx={timerCx} className="mt-auto" />
+			{settings.timer.timerMode === 'countdown' ? (
+				<CountdownTimerActions cx={timerCx} className="mt-auto" />
+			) : (
+				<PomodoroTimerActions cx={timerCx} className="mt-auto" />
+			)}
 		</div>
 	);
 };
