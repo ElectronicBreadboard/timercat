@@ -1,4 +1,5 @@
 pub mod commands;
+pub mod modes;
 pub mod runner;
 pub mod timer;
 pub mod types;

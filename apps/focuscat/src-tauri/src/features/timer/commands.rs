@@ -1,9 +1,11 @@
+use super::modes::pomodoro::PomodoroMode;
+use super::modes::TimerMode;
 use super::runner::TimerRunner;
-use super::timer::{Timer, TimerConfig, TimerStatus};
+use super::timer::{TimerConfig, TimerStatus};
 use super::types::{TimerDto, TimerState, TimerUpdatedEvent};
 use crate::environment::db::DatabaseState;
 use crate::features::session::repository::SessionRepository;
-use crate::features::session::session::{Phase, SessionEvent, SessionStatus};
+use crate::features::session::session::{Phase, SessionEvent, SessionStatus, SessionType};
 use crate::features::session::types::{
     SessionChangedEvent, SessionCompletedEvent, SessionSummaryDto,
 };
@@ -15,6 +17,11 @@ use tauri_specta::Event;
 
 #[cfg(target_os = "macos")]
 use crate::app::tray::TrayState;
+
+/// Active timer mode. Hardcoded to Pomodoro for now.
+fn active_mode() -> PomodoroMode {
+    return PomodoroMode;
+}
 
 #[tauri::command]
 #[specta::specta]
@@ -39,21 +46,21 @@ pub async fn start_timer(
     let intention = intention.filter(|s| !s.trim().is_empty());
 
     // Extract data
-    let (phase, planned_seconds, config) = {
+    let (session_type, planned_seconds, config) = {
         let timer = state.lock().unwrap();
         if timer.status != TimerStatus::Idle {
             return Err("Timer is not idle".to_string());
         }
         let settings = app_settings.lock().unwrap();
         (
-            timer.phase,
+            timer.session_type,
             timer.total_seconds,
             TimerConfig::from(&*settings),
         )
     };
 
     // DB operation
-    let session = SessionRepository::create(&db.pool, phase.to_session_type(), planned_seconds, intention.as_deref(), now)
+    let session = SessionRepository::create(&db.pool, session_type, planned_seconds, intention.as_deref(), now)
         .await
         .map_err(db_err)?;
 
@@ -192,23 +199,19 @@ pub async fn reset_timer(
         (config, session_data)
     };
 
-    // DB operation
+    // Cancel session in DB
     if let Some((id, actual_seconds)) = session_data {
         SessionRepository::cancel(&db.pool, id, now, actual_seconds)
             .await
             .map_err(db_err)?;
     }
 
-    // Update state
+    // Reset to initial state
+    let mode = active_mode();
+    let initial = mode.initial_session_type();
     let timer = {
         let mut timer = state.lock().unwrap();
-        timer.session = None;
-        timer.status = TimerStatus::Idle;
-        timer.phase = Phase::Work;
-        timer.total_seconds = config.work_duration;
-        timer.remaining_seconds = config.work_duration;
-        timer.overtime_seconds = 0;
-        timer.sessions_completed = 0;
+        timer.reset_to_idle(initial, mode.duration_for(initial, &config));
         timer.clone()
     };
 
@@ -253,34 +256,16 @@ pub async fn finish_timer(
     };
 
     // Complete session in DB
-    if let Some((id, phase, planned, actual, started_at)) = session_data {
-        SessionRepository::complete(&db.pool, id, now, actual)
-            .await
-            .map_err(db_err)?;
-
-        let _ = SessionCompletedEvent(SessionSummaryDto {
-            id: id as i32,
-            phase,
-            status: SessionStatus::Completed,
-            planned_seconds: planned,
-            actual_seconds: Some(actual),
-            intention: None,
-            started_at: started_at as f64,
-            ended_at: Some(now as f64),
-        })
-        .emit(&app);
+    if let Some(data) = session_data {
+        complete_and_emit_session(&db.pool, &app, data, now).await?;
     }
 
-    // Reset timer to idle
+    // Reset to initial state
+    let mode = active_mode();
+    let initial = mode.initial_session_type();
     let timer = {
         let mut timer = state.lock().unwrap();
-        timer.session = None;
-        timer.status = TimerStatus::Idle;
-        timer.phase = Phase::Work;
-        timer.total_seconds = config.work_duration;
-        timer.remaining_seconds = config.work_duration;
-        timer.overtime_seconds = 0;
-        timer.sessions_completed = 0;
+        timer.reset_to_idle(initial, mode.duration_for(initial, &config));
         timer.clone()
     };
 
@@ -305,63 +290,39 @@ pub async fn skip_timer(
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
 
+    let mode = active_mode();
+
     // Extract data
-    let (config, phase, session_data, sessions_completed) = {
+    let (config, current_session_type, session_data, sessions_completed) = {
         let timer = state.lock().unwrap();
         let settings = app_settings.lock().unwrap();
         let config = TimerConfig::from(&*settings);
-        let phase = timer.phase;
         let session_data = timer.session.as_ref().map(|s| {
             (
                 s.id,
+                s.session_type.to_phase(),
                 s.planned_seconds,
                 s.compute_actual_seconds(now),
                 s.started_at,
             )
         });
-        (config, phase, session_data, timer.sessions_completed)
+        (config, timer.session_type, session_data, timer.sessions_completed)
     };
-    let is_work_phase = phase == Phase::Work;
+    let is_work = current_session_type == SessionType::PomodoroWork;
 
     // Complete current session
-    if let Some((id, planned, actual, started_at)) = session_data {
-        SessionRepository::complete(&db.pool, id, now, actual)
-            .await
-            .map_err(db_err)?;
-
-        // Emit session completed event
-        let _ = SessionCompletedEvent(SessionSummaryDto {
-            id: id as i32,
-            phase,
-            status: SessionStatus::Completed,
-            planned_seconds: planned,
-            actual_seconds: Some(actual),
-            intention: None,
-            started_at: started_at as f64,
-            ended_at: Some(now as f64),
-        })
-        .emit(&app);
+    if let Some(data) = session_data {
+        complete_and_emit_session(&db.pool, &app, data, now).await?;
     }
 
-    // Determine next phase
-    let new_sessions_completed = if is_work_phase {
-        sessions_completed + 1
-    } else {
-        sessions_completed
-    };
-    let next_phase = if is_work_phase {
-        if new_sessions_completed % config.sessions_before_long_break == 0 {
-            Phase::LongBreak
-        } else {
-            Phase::ShortBreak
-        }
-    } else {
-        Phase::Work
-    };
-    let next_duration = Timer::get_duration_for_phase(next_phase, &config);
+    // Determine next session type via mode
+    let next_session_type = mode
+        .next_session_type(current_session_type, sessions_completed, &config)
+        .unwrap_or_else(|| mode.initial_session_type());
+    let next_duration = mode.duration_for(next_session_type, &config);
 
     // Create next session (no intention for auto-created sessions)
-    let new_session = SessionRepository::create(&db.pool, next_phase.to_session_type(), next_duration, None, now)
+    let new_session = SessionRepository::create(&db.pool, next_session_type, next_duration, None, now)
         .await
         .map_err(db_err)?;
 
@@ -376,12 +337,12 @@ pub async fn skip_timer(
             session.add_event(SessionEvent::Completed { timestamp: now });
         }
 
-        if is_work_phase {
+        if is_work {
             timer.sessions_completed += 1;
         }
 
         timer.session = Some(new_session);
-        timer.phase = next_phase;
+        timer.session_type = next_session_type;
         timer.total_seconds = next_duration;
         timer.remaining_seconds = next_duration;
         timer.overtime_seconds = 0;
@@ -463,6 +424,33 @@ pub async fn set_timer_duration(
 
 // MARK: - Helpers
 
+/// Complete session in DB and emit SessionCompletedEvent.
+async fn complete_and_emit_session(
+    db: &sqlx::SqlitePool,
+    app: &AppHandle,
+    session_data: (i64, Phase, u32, u32, i64),
+    now: i64,
+) -> Result<(), String> {
+    let (id, phase, planned, actual, started_at) = session_data;
+    SessionRepository::complete(db, id, now, actual)
+        .await
+        .map_err(db_err)?;
+
+    let _ = SessionCompletedEvent(SessionSummaryDto {
+        id: id as i32,
+        phase,
+        status: SessionStatus::Completed,
+        planned_seconds: planned,
+        actual_seconds: Some(actual),
+        intention: None,
+        started_at: started_at as f64,
+        ended_at: Some(now as f64),
+    })
+    .emit(app);
+
+    return Ok(());
+}
+
 fn db_err(e: sqlx::Error) -> String {
     return format!("Database error: {}", e);
 }
@@ -490,18 +478,3 @@ fn restart_runner(app: &AppHandle, runner: &State<'_, Mutex<Option<TimerRunner>>
     *guard = Some(TimerRunner::start(app.clone()));
 }
 
-// MARK: - Conversions
-
-impl From<&Timer> for TimerDto {
-    fn from(timer: &Timer) -> Self {
-        return Self {
-            status: timer.status,
-            phase: timer.phase,
-            total_seconds: timer.total_seconds,
-            remaining_seconds: timer.remaining_seconds,
-            overtime_seconds: timer.overtime_seconds,
-            sessions_completed: timer.sessions_completed,
-            speed: timer.speed,
-        };
-    }
-}

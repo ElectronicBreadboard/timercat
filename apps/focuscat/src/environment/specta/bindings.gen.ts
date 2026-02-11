@@ -463,6 +463,9 @@ export type InputDetectedEvent = InputType
  * Type of input event detected.
  */
 export type InputType = "keyboard" | "mouse"
+/**
+ * Display phase for UI. Maps from SessionType.
+ */
 export type Phase = "work" | "shortBreak" | "longBreak"
 /**
  * Preview of resolved rules for a session setup.

@@ -1,11 +1,14 @@
-use crate::features::session::session::{Phase, Session};
+use crate::features::session::session::{Session, SessionType};
 use crate::features::settings::types::AppSettings;
 use serde::{Deserialize, Serialize};
+
+use super::modes::pomodoro::PomodoroMode;
+use super::modes::TimerMode;
 
 #[derive(Debug, Clone)]
 pub struct Timer {
     pub status: TimerStatus,
-    pub phase: Phase,
+    pub session_type: SessionType,
     pub total_seconds: u32,
     pub remaining_seconds: u32,
     pub overtime_seconds: u32,
@@ -16,11 +19,14 @@ pub struct Timer {
 
 impl Timer {
     pub fn new(config: &TimerConfig) -> Self {
+        let mode = PomodoroMode;
+        let initial = mode.initial_session_type();
+        let duration = mode.duration_for(initial, config);
         return Self {
             status: TimerStatus::Idle,
-            phase: Phase::Work,
-            total_seconds: config.work_duration,
-            remaining_seconds: config.work_duration,
+            session_type: initial,
+            total_seconds: duration,
+            remaining_seconds: duration,
             overtime_seconds: 0,
             sessions_completed: 0,
             speed: config.speed,
@@ -28,17 +34,20 @@ impl Timer {
         };
     }
 
-    pub fn get_duration_for_phase(phase: Phase, config: &TimerConfig) -> u32 {
-        return match phase {
-            Phase::Work => config.work_duration,
-            Phase::ShortBreak => config.short_break_duration,
-            Phase::LongBreak => config.long_break_duration,
-        };
-    }
-
     /// Get current session id if active.
     pub fn session_id(&self) -> Option<i64> {
         return self.session.as_ref().map(|s| s.id);
+    }
+
+    /// Reset timer to idle with given session type and duration.
+    pub fn reset_to_idle(&mut self, session_type: SessionType, duration: u32) {
+        self.session = None;
+        self.status = TimerStatus::Idle;
+        self.session_type = session_type;
+        self.total_seconds = duration;
+        self.remaining_seconds = duration;
+        self.overtime_seconds = 0;
+        self.sessions_completed = 0;
     }
 }
 
