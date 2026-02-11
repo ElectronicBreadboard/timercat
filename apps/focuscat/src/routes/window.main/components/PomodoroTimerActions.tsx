@@ -68,7 +68,7 @@ export const PomodoroTimerActions: React.FC<TProps> = (props) => {
 				center: {
 					type: 'icon',
 					icon: isBreak ? <BriefcaseIcon size={24} /> : <CoffeeIcon size={24} />,
-					onClick: isBreak ? handleStart : handleSkip
+					onClick: handleSkip
 				},
 				right: {
 					type: 'icon',
@@ -94,7 +94,7 @@ export const PomodoroTimerActions: React.FC<TProps> = (props) => {
 			right: {
 				type: 'icon',
 				icon: isBreak ? <BriefcaseIcon size={18} /> : <CoffeeIcon size={18} />,
-				onClick: isBreak ? handleStart : handleSkip
+				onClick: handleSkip
 			}
 		};
 	}, [status, isBreak, isOvertime, settings.timer.showSessionSetup, cx, navigate]);
