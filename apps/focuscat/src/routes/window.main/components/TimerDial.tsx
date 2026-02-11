@@ -1,12 +1,13 @@
 import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
 import { TriangleDownIcon, TriangleRightIcon } from '@/components';
+import { specta } from '@/environment';
 import { type TimerCx } from '@/features/timer';
 import { SessionWheel } from './SessionWheel';
 import { TimeWheel } from './TimeWheel';
 
 export const TimerDial: React.FC<TTimerDialProps> = (props) => {
-	const { cx, previewMinutes, sessionsBeforeLongBreak, onPreviewChange } = props;
+	const { cx, previewMinutes, timerMode, sessionsBeforeLongBreak, onPreviewChange } = props;
 
 	const wasRunningRef = React.useRef(false);
 
@@ -28,7 +29,13 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 		{ isEqual: (a, b) => a.value === b.value && a.smooth === b.smooth }
 	);
 	const sessionProgress = useCombinedCompute(
-		[cx.$status, cx.$sessionType, cx.$remainingSeconds, cx.$totalSeconds, cx.$sessionsCompleted] as const,
+		[
+			cx.$status,
+			cx.$sessionType,
+			cx.$remainingSeconds,
+			cx.$totalSeconds,
+			cx.$sessionsCompleted
+		] as const,
 		([
 			{ value: status = 'idle' },
 			{ value: sessionType = 'pomodoro:work' },
@@ -108,27 +115,35 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 				</div>
 			</div>
 
-			{/* Divider */}
-			<div className="bg-base-200 h-16 w-px" />
+			{/* Session wheel - only for Pomodoro mode */}
+			{timerMode === 'pomodoro' && (
+				<>
+					{/* Divider */}
+					<div className="bg-base-200 h-16 w-px" />
 
-			{/* Session wheel */}
-			<div className="relative mr-2">
-				<SessionWheel value={sessionProgress} sessionsBeforeLongBreak={sessionsBeforeLongBreak} />
+					{/* Session wheel */}
+					<div className="relative mr-2">
+						<SessionWheel
+							value={sessionProgress}
+							sessionsBeforeLongBreak={sessionsBeforeLongBreak}
+						/>
 
-				{/* Edge fades */}
-				<div className="from-base-0 pointer-events-none absolute inset-x-0 top-px z-10 h-6 bg-linear-to-b to-transparent" />
-				<div className="from-base-0 pointer-events-none absolute inset-x-0 bottom-px z-10 h-6 bg-linear-to-t to-transparent" />
+						{/* Edge fades */}
+						<div className="from-base-0 pointer-events-none absolute inset-x-0 top-px z-10 h-6 bg-linear-to-b to-transparent" />
+						<div className="from-base-0 pointer-events-none absolute inset-x-0 bottom-px z-10 h-6 bg-linear-to-t to-transparent" />
 
-				{/* Center indicator */}
-				<div className="pointer-events-none absolute inset-y-0 left-0 z-30 flex items-center">
-					<TriangleRightIcon
-						width={6}
-						height={10}
-						preserveAspectRatio="none"
-						className="text-base-300"
-					/>
-				</div>
-			</div>
+						{/* Center indicator */}
+						<div className="pointer-events-none absolute inset-y-0 left-0 z-30 flex items-center">
+							<TriangleRightIcon
+								width={6}
+								height={10}
+								preserveAspectRatio="none"
+								className="text-base-300"
+							/>
+						</div>
+					</div>
+				</>
+			)}
 		</div>
 	);
 };
@@ -136,6 +151,7 @@ export const TimerDial: React.FC<TTimerDialProps> = (props) => {
 interface TTimerDialProps {
 	cx: TimerCx;
 	previewMinutes: number | null;
+	timerMode: specta.TimerModeEnum;
 	sessionsBeforeLongBreak: number;
 	onPreviewChange?: (minutes: number | null) => void;
 }

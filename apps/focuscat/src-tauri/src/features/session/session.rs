@@ -157,8 +157,8 @@ pub enum SessionType {
     PomodoroWork,
     PomodoroShortBreak,
     PomodoroLongBreak,
+    Countdown,
     // Future: ProgressivePomodoroWork, ProgressivePomodoroShortBreak, ProgressivePomodoroLongBreak,
-    // Future: Countdown,
 }
 
 impl SessionType {
@@ -167,6 +167,7 @@ impl SessionType {
             SessionType::PomodoroWork => "pomodoro:work",
             SessionType::PomodoroShortBreak => "pomodoro:short_break",
             SessionType::PomodoroLongBreak => "pomodoro:long_break",
+            SessionType::Countdown => "countdown",
         };
     }
 
@@ -175,6 +176,7 @@ impl SessionType {
             "pomodoro:work" => Some(SessionType::PomodoroWork),
             "pomodoro:short_break" => Some(SessionType::PomodoroShortBreak),
             "pomodoro:long_break" => Some(SessionType::PomodoroLongBreak),
+            "countdown" => Some(SessionType::Countdown),
             _ => None,
         };
     }

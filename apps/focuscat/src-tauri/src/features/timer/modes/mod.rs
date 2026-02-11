@@ -1,3 +1,4 @@
+pub mod countdown;
 pub mod pomodoro;
 
 use crate::features::session::session::SessionType;
@@ -6,7 +7,7 @@ use super::timer::TimerConfig;
 /// Defines behavior for a timer mode (Pomodoro, Progressive, Countdown, etc.).
 /// All modes share the same countdown mechanics; this trait captures the differences:
 /// what to start with, what comes next, and how long each session type lasts.
-pub trait TimerMode {
+pub trait TimerMode: Send {
     /// First session type when starting fresh.
     fn initial_session_type(&self) -> SessionType;
 

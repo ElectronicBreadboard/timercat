@@ -429,6 +429,7 @@ export type BlockingViolationDto = { profileId: number; profileName: string; pro
  */
 export type BlockingViolationEvent = BlockingViolationDto | null
 export type CatSettings = { equippedFur: string; equippedFace: string; equippedHat: string | null }
+export type CountdownSettings = { durationMinutes: number }
 export type DebugSettings = { cat: boolean; timerSpeed: number }
 /**
  * A profile eligible for session selection, with auto-selection flag.
@@ -463,6 +464,7 @@ export type InputDetectedEvent = InputType
  * Type of input event detected.
  */
 export type InputType = "keyboard" | "mouse"
+export type PomodoroSettings = { workDurationMinutes: number; shortBreakMinutes: number; longBreakMinutes: number; sessionsBeforeLongBreak: number }
 /**
  * Preview of resolved rules for a session setup.
  */
@@ -543,23 +545,8 @@ export type SoundId = "tick" | "complete" | "meow"
 export type Stage = "dev" | "prod"
 export type Theme = "light" | "dark" | "auto"
 export type TimerDto = { status: TimerStatus; sessionType: string; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; speed: number }
-export type TimerSettings = { 
-/**
- * Work duration in minutes
- */
-workDurationMinutes: number; 
-/**
- * Short break duration in minutes
- */
-shortBreakMinutes: number; 
-/**
- * Long break duration in minutes
- */
-longBreakMinutes: number; 
-/**
- * Number of work sessions before a long break
- */
-sessionsBeforeLongBreak: number; 
+export type TimerModeEnum = "pomodoro" | "countdown"
+export type TimerSettings = { timerMode: TimerModeEnum; pomodoro: PomodoroSettings; countdown: CountdownSettings; 
 /**
  * Show the intention/profile setup screen when starting a session
  */

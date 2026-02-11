@@ -1,3 +1,4 @@
+use super::modes::countdown::CountdownMode;
 use super::modes::pomodoro::PomodoroMode;
 use super::modes::TimerMode;
 use super::runner::TimerRunner;
@@ -10,6 +11,7 @@ use crate::features::session::types::{
     SessionChangedEvent, SessionCompletedEvent, SessionSummaryDto,
 };
 use crate::features::settings::types::AppSettingsState;
+use crate::features::settings::types::TimerModeEnum;
 use chrono::Utc;
 use std::sync::Mutex;
 use tauri::{AppHandle, State};
@@ -17,11 +19,6 @@ use tauri_specta::Event;
 
 #[cfg(target_os = "macos")]
 use crate::app::tray::TrayState;
-
-/// Active timer mode. Hardcoded to Pomodoro for now.
-fn active_mode() -> PomodoroMode {
-    return PomodoroMode;
-}
 
 #[tauri::command]
 #[specta::specta]
@@ -60,9 +57,15 @@ pub async fn start_timer(
     };
 
     // DB operation
-    let session = SessionRepository::create(&db.pool, session_type, planned_seconds, intention.as_deref(), now)
-        .await
-        .map_err(db_err)?;
+    let session = SessionRepository::create(
+        &db.pool,
+        session_type,
+        planned_seconds,
+        intention.as_deref(),
+        now,
+    )
+    .await
+    .map_err(db_err)?;
 
     // Link profiles if provided
     if let Some(ids) = &profile_ids {
@@ -207,7 +210,7 @@ pub async fn reset_timer(
     }
 
     // Reset to initial state
-    let mode = active_mode();
+    let mode = active_mode(&config);
     let initial = mode.initial_session_type();
     let timer = {
         let mut timer = state.lock().unwrap();
@@ -261,7 +264,7 @@ pub async fn finish_timer(
     }
 
     // Reset to initial state
-    let mode = active_mode();
+    let mode = active_mode(&config);
     let initial = mode.initial_session_type();
     let timer = {
         let mut timer = state.lock().unwrap();
@@ -290,8 +293,6 @@ pub async fn skip_timer(
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
 
-    let mode = active_mode();
-
     // Extract data
     let (config, current_session_type, session_data, sessions_completed) = {
         let timer = state.lock().unwrap();
@@ -306,7 +307,12 @@ pub async fn skip_timer(
                 s.started_at,
             )
         });
-        (config, timer.session_type, session_data, timer.sessions_completed)
+        (
+            config,
+            timer.session_type,
+            session_data,
+            timer.sessions_completed,
+        )
     };
     let is_work = current_session_type == SessionType::PomodoroWork;
 
@@ -316,15 +322,17 @@ pub async fn skip_timer(
     }
 
     // Determine next session type via mode
+    let mode = active_mode(&config);
     let next_session_type = mode
         .next_session_type(current_session_type, sessions_completed, &config)
         .unwrap_or_else(|| mode.initial_session_type());
     let next_duration = mode.duration_for(next_session_type, &config);
 
     // Create next session (no intention for auto-created sessions)
-    let new_session = SessionRepository::create(&db.pool, next_session_type, next_duration, None, now)
-        .await
-        .map_err(db_err)?;
+    let new_session =
+        SessionRepository::create(&db.pool, next_session_type, next_duration, None, now)
+            .await
+            .map_err(db_err)?;
 
     // Update state
     let timer = {
@@ -424,6 +432,14 @@ pub async fn set_timer_duration(
 
 // MARK: - Helpers
 
+/// Active timer mode based on settings.
+fn active_mode(config: &TimerConfig) -> Box<dyn TimerMode> {
+    return match config.timer_mode {
+        TimerModeEnum::Pomodoro => Box::new(PomodoroMode),
+        TimerModeEnum::Countdown => Box::new(CountdownMode),
+    };
+}
+
 /// Complete session in DB and emit SessionCompletedEvent.
 async fn complete_and_emit_session(
     db: &sqlx::SqlitePool,
@@ -477,4 +493,3 @@ fn restart_runner(app: &AppHandle, runner: &State<'_, Mutex<Option<TimerRunner>>
     }
     *guard = Some(TimerRunner::start(app.clone()));
 }
-

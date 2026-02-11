@@ -30,6 +30,8 @@ impl TimerMode for PomodoroMode {
             SessionType::PomodoroShortBreak | SessionType::PomodoroLongBreak => {
                 Some(SessionType::PomodoroWork)
             }
+            // Countdown is not part of Pomodoro mode
+            SessionType::Countdown => None,
         };
     }
 
@@ -38,6 +40,7 @@ impl TimerMode for PomodoroMode {
             SessionType::PomodoroWork => config.work_duration,
             SessionType::PomodoroShortBreak => config.short_break_duration,
             SessionType::PomodoroLongBreak => config.long_break_duration,
+            SessionType::Countdown => config.countdown_duration,
         };
     }
 }

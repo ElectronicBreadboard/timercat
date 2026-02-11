@@ -1,7 +1,8 @@
 use crate::features::session::session::{Session, SessionType};
-use crate::features::settings::types::AppSettings;
+use crate::features::settings::types::{AppSettings, TimerModeEnum};
 use serde::{Deserialize, Serialize};
 
+use super::modes::countdown::CountdownMode;
 use super::modes::pomodoro::PomodoroMode;
 use super::modes::TimerMode;
 
@@ -19,7 +20,10 @@ pub struct Timer {
 
 impl Timer {
     pub fn new(config: &TimerConfig) -> Self {
-        let mode = PomodoroMode;
+        let mode: Box<dyn TimerMode> = match config.timer_mode {
+            TimerModeEnum::Pomodoro => Box::new(PomodoroMode),
+            TimerModeEnum::Countdown => Box::new(CountdownMode),
+        };
         let initial = mode.initial_session_type();
         let duration = mode.duration_for(initial, config);
         return Self {
@@ -59,6 +63,8 @@ impl Default for Timer {
 
 #[derive(Debug, Clone)]
 pub struct TimerConfig {
+    pub timer_mode: TimerModeEnum,
+    pub countdown_duration: u32,
     pub work_duration: u32,
     pub short_break_duration: u32,
     pub long_break_duration: u32,
@@ -69,10 +75,12 @@ pub struct TimerConfig {
 impl From<&AppSettings> for TimerConfig {
     fn from(settings: &AppSettings) -> Self {
         return Self {
-            work_duration: settings.timer.work_duration_minutes * 60,
-            short_break_duration: settings.timer.short_break_minutes * 60,
-            long_break_duration: settings.timer.long_break_minutes * 60,
-            sessions_before_long_break: settings.timer.sessions_before_long_break,
+            timer_mode: settings.timer.timer_mode,
+            countdown_duration: settings.timer.countdown.duration_minutes * 60,
+            work_duration: settings.timer.pomodoro.work_duration_minutes * 60,
+            short_break_duration: settings.timer.pomodoro.short_break_minutes * 60,
+            long_break_duration: settings.timer.pomodoro.long_break_minutes * 60,
+            sessions_before_long_break: settings.timer.pomodoro.sessions_before_long_break,
             speed: settings.debug.timer_speed,
         };
     }
