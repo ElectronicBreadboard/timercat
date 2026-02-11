@@ -5,9 +5,10 @@ import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
 import { cn } from '@/lib';
 import { CountdownTimerActions } from './CountdownTimerActions';
+import { CountdownTimerDial } from './CountdownTimerDial';
 import { PomodoroTimerActions } from './PomodoroTimerActions';
+import { PomodoroTimerDial } from './PomodoroTimerDial';
 import { TimeDisplay } from './TimeDisplay';
-import { TimerDial } from './TimerDial';
 
 export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	const { onTick, className, style } = props;
@@ -77,13 +78,20 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 
 	return (
 		<div className={cn('flex flex-col items-center pb-4', className)} style={style}>
-			<TimerDial
-				cx={timerCx}
-				previewMinutes={previewMinutes}
-				timerMode={settings.timer.timerMode}
-				sessionsBeforeLongBreak={settings.timer.pomodoro.sessionsBeforeLongBreak}
-				onPreviewChange={handlePreviewChange}
-			/>
+			{settings.timer.timerMode === 'countdown' ? (
+				<CountdownTimerDial
+					cx={timerCx}
+					previewMinutes={previewMinutes}
+					onPreviewChange={handlePreviewChange}
+				/>
+			) : (
+				<PomodoroTimerDial
+					cx={timerCx}
+					previewMinutes={previewMinutes}
+					sessionsBeforeLongBreak={settings.timer.pomodoro.sessionsBeforeLongBreak}
+					onPreviewChange={handlePreviewChange}
+				/>
+			)}
 
 			<TimeDisplay cx={timerCx} previewMinutes={previewMinutes} className="mt-4" />
 
