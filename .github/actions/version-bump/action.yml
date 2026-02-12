@@ -61,6 +61,15 @@ runs:
           fs.writeFileSync(path, JSON.stringify(config, null, '\t') + '\n');
         "
         
+        # Update Cargo.toml [package].version (first version line after [package], before next [section])
+        CARGO_TOML="${{ inputs.app-directory }}/src-tauri/Cargo.toml"
+        awk -v new="$NEW_VERSION" '
+          /^\[package\]/ { in_package=1; print; next }
+          /^\[/ { in_package=0 }
+          in_package && /^version = "/ { $0 = "version = \"" new "\""; in_package=0 }
+          { print }
+        ' "$CARGO_TOML" > "$CARGO_TOML.tmp" && mv "$CARGO_TOML.tmp" "$CARGO_TOML"
+        
         # Set outputs
         echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
         echo "tag=${{ inputs.app }}-v$NEW_VERSION" >> $GITHUB_OUTPUT
@@ -71,6 +80,7 @@ runs:
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git add ${{ inputs.app-directory }}/package.json
+        git add ${{ inputs.app-directory }}/src-tauri/Cargo.toml
         git add ${{ inputs.app-directory }}/src-tauri/tauri.conf.json
         git add ${{ inputs.app-directory }}/src-tauri/tauri.prod.conf.json
         git commit -m "chore: bump ${{ inputs.app }} to v${{ steps.bump.outputs.version }}"
