@@ -98,12 +98,12 @@ pub fn run() {
         ]);
 
     #[cfg(debug_assertions)]
-    builder
-        .export(
-            Typescript::default(),
-            "../src/environment/specta/bindings.gen.ts",
-        )
-        .expect("Failed to export Typescript bindings");
+    if let Err(e) = builder.export(
+        Typescript::default(),
+        "../src/environment/specta/bindings.gen.ts",
+    ) {
+        eprintln!("Skipping TypeScript bindings export: {}", e);
+    }
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())

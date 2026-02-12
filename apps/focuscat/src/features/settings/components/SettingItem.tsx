@@ -23,14 +23,24 @@ const settingItemVariants = cva('flex w-full items-center justify-between px-4 p
 });
 
 export const SettingItem: React.FC<TSettingItemProps> = (props) => {
-	const { label, description, variant = 'static', onClick, children, className } = props;
+	const {
+		label,
+		description,
+		descriptionClassName,
+		variant = 'static',
+		onClick,
+		children,
+		className
+	} = props;
 	const isInteractive = variant === 'button' || variant === 'link';
 
 	const content = (
 		<>
 			<div className="flex-1 pr-4">
 				<span className="text-base-900 text-sm font-medium">{label}</span>
-				{description != null && <p className="text-base-500 text-xs">{description}</p>}
+				{description != null && (
+					<p className={cn('text-base-500 text-xs', descriptionClassName)}>{description}</p>
+				)}
 			</div>
 			<div className="flex shrink-0 items-center gap-2">
 				{children}
@@ -57,6 +67,7 @@ export const SettingItem: React.FC<TSettingItemProps> = (props) => {
 export interface TSettingItemProps extends VariantProps<typeof settingItemVariants> {
 	label: string;
 	description?: string;
+	descriptionClassName?: string;
 	onClick?: () => void;
 	children?: React.ReactNode;
 	className?: string;

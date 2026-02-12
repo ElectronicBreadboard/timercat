@@ -133,7 +133,7 @@ function RouteComponent() {
 					description="Show intention and profile selection before starting a session"
 				>
 					<Switch
-						checked={settings.timer.showSessionSetup ?? true}
+						checked={settings.timer.showSessionSetup}
 						onCheckedChange={(checked) => updateTimer({ showSessionSetup: checked })}
 						size="sm"
 					/>

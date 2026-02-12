@@ -67,7 +67,7 @@ impl Default for FeaturesSettings {
             goals: true,
             activity: true,
             profiles: true,
-            cat_window: true,
+            cat_window: !cfg!(feature = "app-store"),
             debug: false,
         };
     }
@@ -120,7 +120,7 @@ impl Default for TimerSettings {
             timer_mode: TimerModeEnum::Pomodoro,
             pomodoro: PomodoroSettings::default(),
             countdown: CountdownSettings::default(),
-            show_session_setup: true,
+            show_session_setup: false,
         };
     }
 }

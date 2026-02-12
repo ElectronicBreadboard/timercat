@@ -211,7 +211,6 @@ impl Window {
             .resizable(true)
             .maximizable(false)
             .minimizable(true)
-            .transparent(false)
             .always_on_top(false);
 
         #[cfg(target_os = "macos")]
@@ -237,10 +236,14 @@ impl Window {
             .maximizable(false)
             .minimizable(false)
             .decorations(false)
-            .transparent(true)
             .always_on_top(true)
             .shadow(false)
             .skip_taskbar(true);
+
+        #[cfg(not(feature = "app-store"))]
+        {
+            builder = builder.transparent(true);
+        }
 
         #[cfg(target_os = "macos")]
         {
@@ -257,7 +260,6 @@ impl Window {
             .resizable(false)
             .maximizable(false)
             .minimizable(false)
-            .transparent(false)
             .always_on_top(true)
             .skip_taskbar(true);
 
@@ -289,7 +291,6 @@ impl Window {
             .resizable(true)
             .maximizable(false)
             .minimizable(true)
-            .transparent(false)
             .always_on_top(false);
 
         // Center over main window if available, otherwise center on screen
@@ -327,7 +328,6 @@ impl Window {
             .resizable(true)
             .maximizable(false)
             .minimizable(true)
-            .transparent(false)
             .always_on_top(false);
 
         // Center over main window if available, otherwise center on screen

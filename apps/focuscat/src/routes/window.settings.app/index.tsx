@@ -21,6 +21,7 @@ function RouteComponent() {
 	const accessibility = useAccessibilityPermission();
 	const inputMonitoring = useInputMonitoringPermission();
 	const appInfo = useAppInfo();
+	const isAppStore = appInfo.distribution === 'appStore';
 
 	// MARK: - Actions
 
@@ -108,16 +109,16 @@ function RouteComponent() {
 				<SettingItem
 					label="Cat Widget"
 					description={
-						appInfo.distribution === 'appStore'
-							? 'Not available in App Store builds'
-							: 'Floating cat companion window'
+						isAppStore ? 'Not available in App Store builds' : 'Floating cat companion window'
 					}
+					descriptionClassName={isAppStore ? 'text-yellow-600' : undefined}
+					className={isAppStore ? 'bg-base-100' : undefined}
 				>
 					<Switch
-						checked={settings.features.catWindow}
-						onCheckedChange={(checked) => updateFeatures({ catWindow: checked })}
+						checked={isAppStore ? false : settings.features.catWindow}
+						onCheckedChange={(checked) => !isAppStore && updateFeatures({ catWindow: checked })}
 						size="sm"
-						disabled={appInfo.distribution === 'appStore'}
+						disabled={isAppStore}
 					/>
 				</SettingItem>
 				<SettingItem label="Developer Mode" description="Show developer tools and debug info">

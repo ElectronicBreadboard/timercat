@@ -2,27 +2,23 @@ use crate::environment::configs::app::AppConfig;
 use std::path::PathBuf;
 use tauri::{Manager, Runtime};
 
-/// Get a resource file path, checking dev path first then bundled resources.
+/// Resolve path to a resource file from the app bundle (resource_dir).
 pub fn get_resource_path<R: Runtime, M: Manager<R>>(
     app: &M,
     relative: &str,
 ) -> Result<PathBuf, String> {
-    // Dev: resources are at CARGO_MANIFEST_DIR/resources/
-    let dev_path = AppConfig::cargo_manifest_dir()
-        .join("resources")
-        .join(relative);
-    if dev_path.exists() {
-        return Ok(dev_path);
-    }
-
-    // Prod: resources are bundled at resource_dir()/resources/
-    app.path()
+    let dir = app
+        .path()
         .resource_dir()
-        .map(|dir| dir.join("resources").join(relative))
-        .map_err(|e| format!("Failed to get resource directory: {}", e))
+        .map_err(|e| format!("Failed to get resource directory: {}", e))?;
+    let path = dir.join("resources").join(relative);
+    if !path.exists() {
+        return Err(format!("Resource not found: {}", relative));
+    }
+    return Ok(path);
 }
 
-/// Get the app data directory, creating it if it doesn't exist.
+/// Get app data directory path, creating it if missing.
 pub fn get_app_data_dir<R: Runtime, M: Manager<R>>(app: &M) -> PathBuf {
     let base_data_dir = app
         .path()

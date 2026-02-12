@@ -34,7 +34,7 @@ export class SettingsCx {
 			countdown: {
 				durationMinutes: 25
 			},
-			showSessionSetup: true
+			showSessionSetup: false
 		},
 		goals: {
 			dailyGoalMinutes: 120
