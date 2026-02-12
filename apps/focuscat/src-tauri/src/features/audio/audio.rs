@@ -63,7 +63,23 @@ impl Audio {
     }
 
     fn load_sounds(&mut self, app: &AppHandle) {
-        for id in [SoundId::Tick, SoundId::Complete, SoundId::Meow] {
+        let ids = [
+            SoundId::Tick,
+            SoundId::Complete,
+            SoundId::Meow,
+            SoundId::WindUpTick1,
+            SoundId::WindUpTick2,
+            SoundId::WindUpTick3,
+            SoundId::WindUpTick4,
+            SoundId::WindUpTick5,
+            SoundId::WindUpTick6,
+            SoundId::WindUpTick7,
+            SoundId::WindUpTick8,
+            SoundId::WindUpTick9,
+            SoundId::WindUpTick10,
+            SoundId::WindUpTick11,
+        ];
+        for id in ids {
             if let Ok(path) = get_audio_path(app, id) {
                 match std::fs::read(&path) {
                     Ok(bytes) => {
@@ -93,6 +109,17 @@ fn get_audio_path(app: &AppHandle, id: SoundId) -> Result<PathBuf, String> {
         SoundId::Tick => "timer-tick.mp3",
         SoundId::Complete => "timer-complete.mp3",
         SoundId::Meow => "cat-meow.mp3",
+        SoundId::WindUpTick1 => "timer-wind-up-tick-1.mp3",
+        SoundId::WindUpTick2 => "timer-wind-up-tick-2.mp3",
+        SoundId::WindUpTick3 => "timer-wind-up-tick-3.mp3",
+        SoundId::WindUpTick4 => "timer-wind-up-tick-4.mp3",
+        SoundId::WindUpTick5 => "timer-wind-up-tick-5.mp3",
+        SoundId::WindUpTick6 => "timer-wind-up-tick-6.mp3",
+        SoundId::WindUpTick7 => "timer-wind-up-tick-7.mp3",
+        SoundId::WindUpTick8 => "timer-wind-up-tick-8.mp3",
+        SoundId::WindUpTick9 => "timer-wind-up-tick-9.mp3",
+        SoundId::WindUpTick10 => "timer-wind-up-tick-10.mp3",
+        SoundId::WindUpTick11 => "timer-wind-up-tick-11.mp3",
     };
     return get_resource_path(app, &format!("audio/{}", filename));
 }

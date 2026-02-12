@@ -2,12 +2,14 @@ import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
 import { TriangleDownIcon } from '@/components';
 import { type TimerCx } from '@/features/timer';
+import { useWindUpTick } from '../hooks';
 import { TimeWheel } from './TimeWheel';
 
 export const TimeDial: React.FC<TTimeDialProps> = (props) => {
 	const { cx, previewMinutes, onPreviewChange } = props;
 
 	const wasRunningRef = React.useRef(false);
+	const windUpTick = useWindUpTick();
 
 	const { value, smooth } = useCombinedCompute(
 		[cx.$status, cx.$remainingSeconds] as const,
@@ -30,17 +32,19 @@ export const TimeDial: React.FC<TTimeDialProps> = (props) => {
 	// MARK: - Actions
 
 	const handleDragStart = React.useCallback(() => {
+		windUpTick.reset();
 		wasRunningRef.current = cx.$status.get() === 'running';
 		if (wasRunningRef.current) {
 			cx.pause();
 		}
-	}, [cx]);
+	}, [cx, windUpTick]);
 
 	const handleDragMove = React.useCallback(
 		(minutes: number) => {
+			windUpTick.tick(minutes);
 			onPreviewChange?.(minutes);
 		},
-		[onPreviewChange]
+		[onPreviewChange, windUpTick]
 	);
 
 	const handleDragEnd = React.useCallback(
