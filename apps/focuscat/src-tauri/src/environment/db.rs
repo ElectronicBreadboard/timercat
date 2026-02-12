@@ -1,6 +1,6 @@
 use crate::common::path::get_app_data_dir;
 use crate::environment::configs::db::DbConfig;
-use sqlx::{migrate::Migrator, sqlite::SqlitePool, Pool, Sqlite};
+use sqlx::{sqlite::SqlitePool, Pool, Sqlite};
 use std::ops::Deref;
 use tauri::{App, Manager};
 
@@ -27,8 +27,8 @@ impl Database {
 
         let pool = SqlitePool::connect_with(connection_options).await?;
 
-        let migrator = Migrator::new(DbConfig::migrations_dir()).await?;
-        migrator.run(&pool).await?;
+        // Embedded so the built app has migrations (no migration files on disk in prod)
+        sqlx::migrate!("./migrations").run(&pool).await?;
 
         return Ok(Database { pool });
     }
