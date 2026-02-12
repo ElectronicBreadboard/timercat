@@ -1,6 +1,6 @@
 {
 	"name": "@repo/focuscat",
-	"version": "0.0.8",
+	"version": "0.0.9",
 	"private": true,
 	"description": "",
 	"keywords": [],
@@ -16,6 +16,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "tauri build",
+		"build:appstore": "tauri build --no-bundle --target universal-apple-darwin --config src-tauri/tauri.appstore.conf.json && tauri bundle --bundles app --target universal-apple-darwin --config src-tauri/tauri.appstore.conf.json",
 		"build:prod": "tauri build --config src-tauri/tauri.prod.conf.json",
 		"clean": "shx rm -rf target && shx rm -rf dist && shx rm -rf .tanstack && shx rm -rf .turbo && shx rm -rf node_modules",
 		"format": "prettier --write \"**/*.{ts,tsx,md,json,js,jsx}\"",

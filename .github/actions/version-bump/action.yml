@@ -61,6 +61,15 @@ runs:
           fs.writeFileSync(path, JSON.stringify(config, null, '\t') + '\n');
         "
         
+        # Update tauri.appstore.conf.json
+        node -e "
+          const fs = require('fs');
+          const path = '${{ inputs.app-directory }}/src-tauri/tauri.appstore.conf.json';
+          const config = JSON.parse(fs.readFileSync(path));
+          config.version = '$NEW_VERSION';
+          fs.writeFileSync(path, JSON.stringify(config, null, '\t') + '\n');
+        "
+        
         # Update Cargo.toml [package].version (first version line after [package], before next [section])
         CARGO_TOML="${{ inputs.app-directory }}/src-tauri/Cargo.toml"
         awk -v new="$NEW_VERSION" '
@@ -83,6 +92,7 @@ runs:
         git add ${{ inputs.app-directory }}/src-tauri/Cargo.toml
         git add ${{ inputs.app-directory }}/src-tauri/tauri.conf.json
         git add ${{ inputs.app-directory }}/src-tauri/tauri.prod.conf.json
+        git add ${{ inputs.app-directory }}/src-tauri/tauri.appstore.conf.json
         git commit -m "chore: bump ${{ inputs.app }} to v${{ steps.bump.outputs.version }}"
 
     - name: Create and push tag

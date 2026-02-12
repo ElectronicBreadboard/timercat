@@ -1139,7 +1139,7 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
 name = "focuscat"
-version = "0.0.1"
+version = "0.0.9"
 dependencies = [
  "chrono",
  "focuscat-macos",
