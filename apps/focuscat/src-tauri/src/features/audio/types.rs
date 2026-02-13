@@ -44,10 +44,10 @@ impl AudioState {
         return Self(Audio::new(app));
     }
 
-    /// Play a sound effect. Does nothing if audio is unavailable.
-    pub fn play(&self, id: SoundId) {
+    /// Play a sound effect at the given volume (0.0..=1.0). Does nothing if audio is unavailable.
+    pub fn play(&self, id: SoundId, volume: f32) {
         if let Some(audio) = &self.0 {
-            audio.play(id);
+            audio.play(id, volume);
         }
     }
 }

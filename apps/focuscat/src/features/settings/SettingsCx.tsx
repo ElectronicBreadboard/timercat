@@ -19,6 +19,10 @@ export class SettingsCx {
 		appearance: {
 			theme: 'auto'
 		},
+		audio: {
+			enabled: true,
+			volume: 0.6
+		},
 		debug: {
 			cat: false,
 			timerSpeed: 1

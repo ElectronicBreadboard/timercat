@@ -10,6 +10,7 @@ pub struct AppSettings {
     pub version: SettingsVersion,
     pub features: FeaturesSettings,
     pub appearance: AppearanceSettings,
+    pub audio: AudioSettings,
     pub debug: DebugSettings,
     pub timer: TimerSettings,
     pub goals: GoalSettings,
@@ -23,6 +24,7 @@ impl Default for AppSettings {
             version: SettingsVersion::current(),
             features: FeaturesSettings::default(),
             appearance: AppearanceSettings::default(),
+            audio: AudioSettings::default(),
             debug: DebugSettings::default(),
             timer: TimerSettings::default(),
             goals: GoalSettings::default(),
@@ -86,6 +88,23 @@ pub enum Theme {
     Dark,
     #[default]
     Auto,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AudioSettings {
+    pub enabled: bool,
+    /// Volume 0.0..=1.0 (linear scale)
+    pub volume: f32,
+}
+
+impl Default for AudioSettings {
+    fn default() -> Self {
+        return Self {
+            enabled: true,
+            volume: 0.6,
+        };
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]

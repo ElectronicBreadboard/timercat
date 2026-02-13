@@ -417,9 +417,14 @@ export type App = {
 id: string; bundleId: string; name: string | null; icon: string | null; color: string | null }
 export type AppDistribution = "direct" | "appStore"
 export type AppInfo = { version: string; stage: Stage; distribution: AppDistribution }
-export type AppSettings = { version: SettingsVersion; features: FeaturesSettings; appearance: AppearanceSettings; debug: DebugSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; cat: CatSettings }
+export type AppSettings = { version: SettingsVersion; features: FeaturesSettings; appearance: AppearanceSettings; audio: AudioSettings; debug: DebugSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; cat: CatSettings }
 export type AppSettingsChangedEvent = AppSettings
 export type AppearanceSettings = { theme: Theme }
+export type AudioSettings = { enabled: boolean; 
+/**
+ * Volume 0.0..=1.0 (linear scale)
+ */
+volume: number }
 /**
  * The target that was blocked.
  */

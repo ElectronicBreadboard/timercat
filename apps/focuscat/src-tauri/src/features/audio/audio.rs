@@ -1,5 +1,6 @@
 use super::types::{AudioState, SoundId};
 use crate::common::path::get_resource_path;
+use crate::features::settings::types::AppSettingsState;
 use rodio::{mixer::Mixer, Decoder, OutputStreamBuilder, Sink};
 use std::{collections::HashMap, io::Cursor, path::PathBuf, sync::Arc};
 use tauri::{App, AppHandle, Manager};
@@ -10,7 +11,6 @@ use tauri::{App, AppHandle, Manager};
 pub struct Audio {
     mixer: &'static Mixer,
     sounds: HashMap<SoundId, Arc<[u8]>>,
-    volume: f32,
 }
 
 impl Audio {
@@ -29,7 +29,6 @@ impl Audio {
         let mut audio = Self {
             mixer,
             sounds: HashMap::new(),
-            volume: 0.6,
         };
 
         audio.load_sounds(app.handle());
@@ -37,8 +36,8 @@ impl Audio {
         return Some(audio);
     }
 
-    /// Play a sound effect.
-    pub fn play(&self, id: SoundId) {
+    /// Play a sound effect at the given volume (0.0..=1.0).
+    pub fn play(&self, id: SoundId, volume: f32) {
         let bytes = match self.sounds.get(&id) {
             Some(b) => Arc::clone(b),
             None => {
@@ -48,7 +47,7 @@ impl Audio {
         };
 
         let sink = Sink::connect_new(self.mixer);
-        sink.set_volume(self.volume);
+        sink.set_volume(volume);
 
         let cursor = Cursor::new(bytes);
         match Decoder::new(cursor) {
@@ -96,11 +95,23 @@ impl Audio {
 
 /// Play a sound effect.
 ///
-/// Convenience function that retrieves AudioState from app and plays the sound.
-/// Does nothing if audio is unavailable.
+/// Reads audio settings from AppSettingsState; does nothing if audio is disabled.
+/// Does nothing if audio output is unavailable.
 pub fn play(app: &AppHandle, id: SoundId) {
+    let volume = {
+        let settings_state = match app.try_state::<AppSettingsState>() {
+            Some(s) => s,
+            None => return,
+        };
+        let settings = settings_state.lock().unwrap();
+        if !settings.audio.enabled {
+            return;
+        }
+        settings.audio.volume
+    };
+
     if let Some(state) = app.try_state::<AudioState>() {
-        state.play(id);
+        state.play(id, volume);
     }
 }
 
