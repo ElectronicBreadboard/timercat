@@ -27,6 +27,7 @@ export {
 	GripVertical as GripIcon,
 	HelpCircle as HelpIcon,
 	History as HistoryIcon,
+	Info as InfoIcon,
 	Minimize2 as MinimizeIcon,
 	Minus as MinusIcon,
 	Monitor as MonitorIcon,

@@ -25,6 +25,7 @@ import { Route as WindowSettingsFocusProfilesIndexRouteImport } from './routes/w
 import { Route as WindowSettingsDeveloperIndexRouteImport } from './routes/window.settings.developer/index'
 import { Route as WindowSettingsAppIndexRouteImport } from './routes/window.settings.app/index'
 import { Route as WindowSettingsActivityIndexRouteImport } from './routes/window.settings.activity/index'
+import { Route as WindowSettingsAboutIndexRouteImport } from './routes/window.settings.about/index'
 import { Route as WindowMainSplashIndexRouteImport } from './routes/window.main.splash/index'
 import { Route as WindowMainSetupIndexRouteImport } from './routes/window.main.setup/index'
 import { Route as WindowActivityOverviewIndexRouteImport } from './routes/window.activity.overview/index'
@@ -117,6 +118,12 @@ const WindowSettingsActivityIndexRoute =
     path: '/activity/',
     getParentRoute: () => WindowSettingsRouteRoute,
   } as any)
+const WindowSettingsAboutIndexRoute =
+  WindowSettingsAboutIndexRouteImport.update({
+    id: '/about/',
+    path: '/about/',
+    getParentRoute: () => WindowSettingsRouteRoute,
+  } as any)
 const WindowMainSplashIndexRoute = WindowMainSplashIndexRouteImport.update({
   id: '/splash/',
   path: '/splash/',
@@ -167,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/window/activity/overview/': typeof WindowActivityOverviewIndexRoute
   '/window/main/setup/': typeof WindowMainSetupIndexRoute
   '/window/main/splash/': typeof WindowMainSplashIndexRoute
+  '/window/settings/about/': typeof WindowSettingsAboutIndexRoute
   '/window/settings/activity/': typeof WindowSettingsActivityIndexRoute
   '/window/settings/app/': typeof WindowSettingsAppIndexRoute
   '/window/settings/developer/': typeof WindowSettingsDeveloperIndexRoute
@@ -186,6 +194,7 @@ export interface FileRoutesByTo {
   '/window/activity/overview': typeof WindowActivityOverviewIndexRoute
   '/window/main/setup': typeof WindowMainSetupIndexRoute
   '/window/main/splash': typeof WindowMainSplashIndexRoute
+  '/window/settings/about': typeof WindowSettingsAboutIndexRoute
   '/window/settings/activity': typeof WindowSettingsActivityIndexRoute
   '/window/settings/app': typeof WindowSettingsAppIndexRoute
   '/window/settings/developer': typeof WindowSettingsDeveloperIndexRoute
@@ -211,6 +220,7 @@ export interface FileRoutesById {
   '/window/activity/overview/': typeof WindowActivityOverviewIndexRoute
   '/window/main/setup/': typeof WindowMainSetupIndexRoute
   '/window/main/splash/': typeof WindowMainSplashIndexRoute
+  '/window/settings/about/': typeof WindowSettingsAboutIndexRoute
   '/window/settings/activity/': typeof WindowSettingsActivityIndexRoute
   '/window/settings/app/': typeof WindowSettingsAppIndexRoute
   '/window/settings/developer/': typeof WindowSettingsDeveloperIndexRoute
@@ -237,6 +247,7 @@ export interface FileRouteTypes {
     | '/window/activity/overview/'
     | '/window/main/setup/'
     | '/window/main/splash/'
+    | '/window/settings/about/'
     | '/window/settings/activity/'
     | '/window/settings/app/'
     | '/window/settings/developer/'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/window/activity/overview'
     | '/window/main/setup'
     | '/window/main/splash'
+    | '/window/settings/about'
     | '/window/settings/activity'
     | '/window/settings/app'
     | '/window/settings/developer'
@@ -280,6 +292,7 @@ export interface FileRouteTypes {
     | '/window/activity/overview/'
     | '/window/main/setup/'
     | '/window/main/splash/'
+    | '/window/settings/about/'
     | '/window/settings/activity/'
     | '/window/settings/app/'
     | '/window/settings/developer/'
@@ -412,6 +425,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WindowSettingsActivityIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
+    '/window/settings/about/': {
+      id: '/window/settings/about/'
+      path: '/about'
+      fullPath: '/window/settings/about/'
+      preLoaderRoute: typeof WindowSettingsAboutIndexRouteImport
+      parentRoute: typeof WindowSettingsRouteRoute
+    }
     '/window/main/splash/': {
       id: '/window/main/splash/'
       path: '/splash'
@@ -513,6 +533,7 @@ const WindowMainRouteRouteWithChildren = WindowMainRouteRoute._addFileChildren(
 
 interface WindowSettingsRouteRouteChildren {
   WindowSettingsIndexRoute: typeof WindowSettingsIndexRoute
+  WindowSettingsAboutIndexRoute: typeof WindowSettingsAboutIndexRoute
   WindowSettingsActivityIndexRoute: typeof WindowSettingsActivityIndexRoute
   WindowSettingsAppIndexRoute: typeof WindowSettingsAppIndexRoute
   WindowSettingsDeveloperIndexRoute: typeof WindowSettingsDeveloperIndexRoute
@@ -525,6 +546,7 @@ interface WindowSettingsRouteRouteChildren {
 
 const WindowSettingsRouteRouteChildren: WindowSettingsRouteRouteChildren = {
   WindowSettingsIndexRoute: WindowSettingsIndexRoute,
+  WindowSettingsAboutIndexRoute: WindowSettingsAboutIndexRoute,
   WindowSettingsActivityIndexRoute: WindowSettingsActivityIndexRoute,
   WindowSettingsAppIndexRoute: WindowSettingsAppIndexRoute,
   WindowSettingsDeveloperIndexRoute: WindowSettingsDeveloperIndexRoute,
