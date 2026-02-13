@@ -26,6 +26,11 @@ impl InputRunner {
 // MARK: - Listener
 
 fn run_listener(app: AppHandle) {
+    // Wait for input monitoring permission before starting rdev.
+    // Calling rdev::listen() without permission triggers a macOS permission popup,
+    // which we want to avoid. Poll until the user grants it in System Settings.
+    wait_for_permission();
+
     // Fix for Tauri: must call this when listening from non-main thread
     // See: https://github.com/Narsil/rdev/issues/165
     #[cfg(target_os = "macos")]
@@ -57,5 +62,14 @@ fn run_listener(app: AppHandle) {
 
     if let Err(e) = listen(callback) {
         eprintln!("[InputRunner] rdev listen error: {:?}", e);
+    }
+}
+
+// MARK: - Permission
+
+/// Polls until input monitoring permission is granted (checks every 2s).
+fn wait_for_permission() {
+    while !focuscat_macos::is_input_monitoring_enabled() {
+        thread::sleep(Duration::from_secs(2));
     }
 }
