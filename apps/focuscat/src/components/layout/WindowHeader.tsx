@@ -29,7 +29,16 @@ export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 					</Badge>
 				) : (
 					appInfo.version.startsWith('v0.') && (
-						<Badge className="ml-2 bg-purple-400/10 text-purple-400">BETA</Badge>
+						<Badge
+							className={cn(
+								'ml-2',
+								appInfo.distribution === 'appStore'
+									? 'bg-blue-400/10 text-blue-400'
+									: 'bg-purple-400/10 text-purple-400'
+							)}
+						>
+							BETA
+						</Badge>
 					)
 				))}
 			<div data-tauri-drag-region className="flex-1" />

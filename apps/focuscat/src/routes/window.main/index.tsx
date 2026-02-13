@@ -50,13 +50,23 @@ function RouteComponent() {
 
 	const handleRandomize = React.useCallback(() => {
 		const faces = catConfig.parts.face.available;
-		const hats = catConfig.parts.hat.available;
+		const hats: (TCatHat | null)[] = [...catConfig.parts.hat.available, null]; // Add null to allow for no hat
+		const currentFace = settings.cat.equippedFace;
+		const currentHat = settings.cat.equippedHat;
+
+		// Randomize face and hat until they are different from the current one
+		let nextFace: TCatFace = currentFace;
+		let nextHat: TCatHat | null = currentHat;
+		while (nextFace === currentFace && nextHat === currentHat) {
+			nextFace = faces[Math.floor(Math.random() * faces.length)] as TCatFace;
+			nextHat = hats[Math.floor(Math.random() * hats.length)] ?? null;
+		}
+
 		settingsCx.update({
 			cat: {
 				equippedFur: settings.cat.equippedFur,
-				equippedFace: faces[Math.floor(Math.random() * faces.length)] as TCatFace,
-				equippedHat:
-					Math.random() < 0.5 ? null : (hats[Math.floor(Math.random() * hats.length)] as TCatHat)
+				equippedFace: nextFace,
+				equippedHat: nextHat
 			}
 		});
 	}, [settingsCx, settings.cat]);

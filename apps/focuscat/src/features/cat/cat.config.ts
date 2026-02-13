@@ -17,11 +17,11 @@ export const catConfig = {
 			}
 		},
 		hat: {
-			available: ['banana', 'lil-duck', 'propeller-hat', 'heart'] as const,
+			available: ['banana', 'lil-duck', 'propeller-hat', 'heart', 'timer'] as const,
 			path: (hat: TCatHat) => getCatPath('hat', hat)
 		},
 		face: {
-			available: ['asia', 'cute', 'dead', 'harry-potter', 'pilot', 'pixel-cool'] as const,
+			available: ['asia', 'cute', 'dead', 'harry-potter', 'nerd', 'pilot', 'pixel-cool'] as const,
 			path: (face: TCatFace) => getCatPath('face', face)
 		},
 		hand: {

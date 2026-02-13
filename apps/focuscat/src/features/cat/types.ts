@@ -1,8 +1,8 @@
 export type TCatFur = 'white';
 
-export type TCatHat = 'banana' | 'lil-duck' | 'propeller-hat' | 'heart';
+export type TCatHat = 'banana' | 'lil-duck' | 'propeller-hat' | 'heart' | 'timer';
 
-export type TCatFace = 'asia' | 'cute' | 'dead' | 'harry-potter' | 'pilot' | 'pixel-cool';
+export type TCatFace = 'asia' | 'cute' | 'dead' | 'harry-potter' | 'nerd' | 'pilot' | 'pixel-cool';
 
 export type TCatHand = 'down' | 'up';
 
