@@ -9,7 +9,7 @@ inputs:
   working-directory:
     description: 'Working directory for Rust cache'
     required: false
-    default: 'apps/focuscat/src-tauri'
+    default: 'apps/focuscat-desktop/src-tauri'
 
 runs:
   using: composite

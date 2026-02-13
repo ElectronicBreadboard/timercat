@@ -20,7 +20,7 @@ jobs:
       - name: Run CI
         uses: ./.github/actions/ci
         with:
-          app: focuscat
+          app: focuscat-desktop
 
   check-deploy:
     name: 🔍 Check Deploy Marker
@@ -65,8 +65,8 @@ jobs:
         id: bump
         uses: ./.github/actions/version-bump
         with:
-          app: focuscat
-          app-directory: apps/focuscat
+          app: focuscat-desktop
+          app-directory: apps/focuscat-desktop
 
   build:
     name: 📦 Build ${{ matrix.target }}
@@ -105,8 +105,8 @@ jobs:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
-          app: focuscat
-          app-directory: apps/focuscat
+          app: focuscat-desktop
+          app-directory: apps/focuscat-desktop
           platform: ${{ matrix.platform }}
           target: ${{ matrix.target }}
           args: ${{ matrix.args }}

@@ -3,7 +3,7 @@ description: 'Bump patch version and create git tag'
 
 inputs:
   app:
-    description: 'App name (e.g., focuscat)'
+    description: 'App name (e.g., focuscat-desktop)'
     required: true
   app-directory:
     description: 'App directory path'

@@ -50,4 +50,5 @@ Tauri desktop apps for productivity and activity tracking.
 
 - `crates/mado/` - Window monitoring library (Swift + Rust FFI)
 - `apps/isshin/` - Isshin POC (activity tracker, reference implementation)
-- `apps/focuscat/` - Focuscat app (pomodoro + cat widget)
+- `apps/focuscat-desktop/` - Focuscat desktop app (pomodoro + cat widget)
+- `apps/focuscat-web/` - Focuscat website (focuscat.app)

@@ -1,5 +1,5 @@
 [package]
-name = "focuscat"
+name = "focuscat-desktop"
 version = "0.0.16"
 description = ""
 authors = { workspace = true }
