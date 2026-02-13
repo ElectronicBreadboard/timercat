@@ -77,7 +77,7 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	// MARK: - UI
 
 	return (
-		<div className={cn('flex flex-col items-center pb-4', className)} style={style}>
+		<div className={cn('flex flex-col items-center pb-8', className)} style={style}>
 			{settings.timer.timerMode === 'countdown' ? (
 				<CountdownTimerDial
 					cx={timerCx}
