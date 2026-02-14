@@ -4,6 +4,7 @@ use super::repository::{
 };
 use crate::common::url::extract_domain;
 use crate::environment::db::DatabaseState;
+use crate::environment::logger::{log_debug, log_error, log_info, log_warn};
 use crate::features::app::repository::{
     AppRepository, UpsertAppInput, UpsertWebsiteInput, WebsiteRepository,
 };
@@ -30,10 +31,11 @@ pub fn start_monitoring(app: AppHandle) {
     );
 
     std::thread::spawn(move || {
-        println!("[Window Monitor] Started");
+        log_info!("Window Monitor", "Started");
 
-        if let Err(e) = monitor.run() {
-            eprintln!("[Window Monitor] ERROR: {}", e);
+        match monitor.run() {
+            Ok(()) => log_warn!("Window Monitor", "Monitor exited unexpectedly"),
+            Err(e) => log_error!("Window Monitor", "Monitor failed: {}", e),
         }
     });
 }
@@ -104,10 +106,7 @@ impl WindowListener for WindowMonitorHandler {
                 let app = self.app.clone();
                 let active_app: Arc<TokioMutex<Option<ActiveApp>>> = Arc::clone(&self.active_app);
 
-                #[cfg(debug_assertions)]
-                {
-                    println!("\n[Window Monitor] 🔄 App Activated:\n{}", app_info);
-                }
+                log_debug!("Window Monitor", "App Activated:\n{}", app_info);
 
                 tauri::async_runtime::spawn(async move {
                     let mut active_app_guard = active_app.lock().await;
@@ -184,10 +183,7 @@ impl WindowListener for WindowMonitorHandler {
                     Arc::clone(&self.active_window);
                 let track_browser_urls = self.is_browser_tracking_enabled();
 
-                #[cfg(debug_assertions)]
-                {
-                    println!("\n[Window Monitor] 🪟 Window Changed:\n{}", window_info);
-                }
+                log_debug!("Window Monitor", "Window Changed:\n{}", window_info);
 
                 tauri::async_runtime::spawn(async move {
                     let mut active_window_guard = active_window.lock().await;
