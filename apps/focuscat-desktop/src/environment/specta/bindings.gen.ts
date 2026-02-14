@@ -189,7 +189,18 @@ async setTimerDuration(minutes: number) : Promise<Result<null, string>> {
 }
 },
 /**
- * Get window activities within a time range.
+ * Get current active app or window by querying the OS.
+ */
+async getCurrentActivity(params: GetCurrentActivityParams) : Promise<Result<CurrentActivityDto, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_current_activity", { params }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Get past window activities within a time range.
  */
 async getWindowActivities(params: GetWindowActivitiesParams) : Promise<Result<WindowActivityDto[], string>> {
     try {
@@ -377,6 +388,7 @@ async getBlockingViolation() : Promise<BlockingViolationDto | null> {
 export const events = __makeEvents__<{
 appSettingsChangedEvent: AppSettingsChangedEvent,
 blockingViolationEvent: BlockingViolationEvent,
+currentActivityEvent: CurrentActivityEvent,
 inputDetectedEvent: InputDetectedEvent,
 profileChangedEvent: ProfileChangedEvent,
 sessionChangedEvent: SessionChangedEvent,
@@ -385,6 +397,7 @@ timerUpdatedEvent: TimerUpdatedEvent
 }>({
 appSettingsChangedEvent: "app-settings-changed-event",
 blockingViolationEvent: "blocking-violation-event",
+currentActivityEvent: "current-activity-event",
 inputDetectedEvent: "input-detected-event",
 profileChangedEvent: "profile-changed-event",
 sessionChangedEvent: "session-changed-event",
@@ -416,6 +429,39 @@ export type App = {
  */
 id: string; bundleId: string; name: string | null; icon: string | null; color: string | null }
 export type AppDistribution = "direct" | "appStore"
+/**
+ * App icon with brand color.
+ */
+export type AppIcon = { 
+/**
+ * Icon as base64 PNG data URL
+ */
+dataUrl: string | null; 
+/**
+ * Brand color as hex string like "#5865F2"
+ */
+color: string | null }
+export type AppInfo = { 
+/**
+ * Process ID
+ */
+pid: number; 
+/**
+ * Application name (localized)
+ */
+name: string | null; 
+/**
+ * Bundle identifier (macOS)
+ */
+bundleId: string | null; 
+/**
+ * Path to the executable
+ */
+processPath: string | null; 
+/**
+ * App icon and brand color (only populated if `include_app_icon` is enabled)
+ */
+icon: AppIcon | null }
 export type AppInfo = { version: string; stage: Stage; distribution: AppDistribution }
 export type AppSettings = { version: SettingsVersion; features: FeaturesSettings; appearance: AppearanceSettings; audio: AudioSettings; developer: DeveloperSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; cat: CatSettings }
 export type AppSettingsChangedEvent = AppSettings
@@ -437,8 +483,28 @@ export type BlockingViolationDto = { profileId: number; profileName: string; pro
  * Event emitted when a blocking violation is detected (or cleared).
  */
 export type BlockingViolationEvent = BlockingViolationDto | null
+export type BrowserInfo = { 
+/**
+ * Current URL of the active tab.
+ */
+url: string | null; 
+/**
+ * Whether the window is in private/incognito mode.
+ * 
+ * - `None` if detection failed or not supported
+ * - `Some(true)` if private mode is active
+ * - `Some(false)` if private mode is not active
+ */
+isPrivate: boolean | null; 
+/**
+ * Website information (only populated if `include_website_info` is enabled in config)
+ */
+website: WebsiteInfo | null }
 export type CatSettings = { equippedFur: string; equippedFace: string; equippedHat: string | null }
 export type CountdownSettings = { durationMinutes: number }
+export type CurrentActivityDto = { appActivated: { app: AppInfo } } | { windowChanged: { window: WindowInfo } }
+export type CurrentActivityEvent = CurrentActivityDto
+export type CurrentActivityPollTarget = "app" | "window"
 export type DeveloperSettings = { cat: boolean; timerSpeed: number }
 /**
  * A profile eligible for session selection, with auto-selection flag.
@@ -459,6 +525,7 @@ export type FocusProfileRuleParams = { action: RuleAction; target: RuleTargetDto
  */
 export type FocusProfileScheduleDto = { id: number; mode: ScheduleMode; days: number[]; startTime: string; endTime: string }
 export type FocusProfileScheduleParams = { mode: ScheduleMode; days: number[]; startTime: string; endTime: string }
+export type GetCurrentActivityParams = { pollTarget: CurrentActivityPollTarget }
 export type GetWindowActivitiesParams = { startedAfter: number; startedBefore: number; limit: number | null }
 export type GoalSettings = { 
 /**
@@ -570,7 +637,58 @@ export type Website = {
  * Unique identifier (same as domain).
  */
 id: string; domain: string; name: string | null; icon: string | null; color: string | null }
+export type WebsiteInfo = { 
+/**
+ * Domain extracted from the browser URL (e.g., "github.com")
+ */
+domain: string; 
+/**
+ * Favicon as base64 PNG data URL (e.g., "data:image/png;base64,...")
+ */
+favicon: string | null; 
+/**
+ * Dominant color extracted from favicon as hex string (e.g., "#FF5733")
+ */
+color: string | null }
 export type WindowActivityDto = { appBundleId: string | null; appName: string | null; appIcon: string | null; appColor: string | null; websiteDomain: string | null; websiteName: string | null; websiteIcon: string | null; websiteColor: string | null; windowTitle: string | null; browserUrl: string | null; startedAt: number; endedAt: number }
+export type WindowBounds = { 
+/**
+ * X coordinate (left edge)
+ */
+x: number; 
+/**
+ * Y coordinate (top edge)
+ */
+y: number; 
+/**
+ * Window width
+ */
+width: number; 
+/**
+ * Window height
+ */
+height: number }
+export type WindowInfo = { 
+/**
+ * Window title
+ */
+title: string | null; 
+/**
+ * Platform-specific window identifier
+ */
+windowId: number | null; 
+/**
+ * Window position and size
+ */
+bounds: WindowBounds | null; 
+/**
+ * Application information
+ */
+app: AppInfo; 
+/**
+ * Browser information (only populated if `include_browser_info` is enabled in config)
+ */
+browser: BrowserInfo | null }
 
 /** tauri-specta globals **/
 

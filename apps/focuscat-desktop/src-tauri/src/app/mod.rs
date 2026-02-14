@@ -4,7 +4,9 @@ pub mod window;
 
 use crate::environment::db;
 use crate::features::{
-    activity_window, app as app_feature, audio, blocking,
+    activity_window,
+    activity_window::types::CurrentActivityEvent,
+    app as app_feature, audio, blocking,
     blocking::types::BlockingViolationEvent,
     focus_profile::{self, types::ProfileChangedEvent},
     input::{self, types::InputDetectedEvent},
@@ -52,6 +54,7 @@ pub fn run() {
             timer::commands::complete_timer,
             timer::commands::set_timer_duration,
             // Activity window commands
+            activity_window::commands::get_current_activity,
             activity_window::commands::get_window_activities,
             // Session commands
             session::commands::get_today_focus_seconds,
@@ -95,6 +98,8 @@ pub fn run() {
             BlockingViolationEvent,
             // Input events
             InputDetectedEvent,
+            // Activity window
+            CurrentActivityEvent,
         ]);
 
     #[cfg(debug_assertions)]

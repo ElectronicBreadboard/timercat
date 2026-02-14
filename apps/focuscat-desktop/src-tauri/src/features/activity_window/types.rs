@@ -1,4 +1,5 @@
-use serde::Serialize;
+use mado::{AppInfo as MadoAppInfo, WindowInfo as MadoWindowInfo};
+use serde::{Deserialize, Serialize};
 
 // MARK: - DTO
 
@@ -21,3 +22,16 @@ pub struct WindowActivityDto {
     pub started_at: f64,
     pub ended_at: f64,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub enum CurrentActivityDto {
+    AppActivated { app: MadoAppInfo },
+    WindowChanged { window: MadoWindowInfo },
+}
+
+// MARK: - Event
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, tauri_specta::Event)]
+#[serde(rename_all = "camelCase")]
+pub struct CurrentActivityEvent(pub CurrentActivityDto);

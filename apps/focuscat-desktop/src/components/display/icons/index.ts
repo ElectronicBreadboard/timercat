@@ -20,6 +20,7 @@ export {
 	ChevronLeft as ChevronLeftIcon,
 	ChevronRight as ChevronRightIcon,
 	Clock as ClockIcon,
+	Copy as CopyIcon,
 	Code as CodeIcon,
 	Coffee as CoffeeIcon,
 	Maximize2 as ExpandIcon,

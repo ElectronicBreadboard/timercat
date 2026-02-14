@@ -1,10 +1,49 @@
 use super::repository::{GetWindowActivitiesInput, WindowActivityRepository, WindowActivityRow};
-use super::types::WindowActivityDto;
+use super::types::{CurrentActivityDto, WindowActivityDto};
 use crate::environment::db::DatabaseState;
+use mado::QueryConfig;
 use serde::Deserialize;
 use tauri::State;
 
-/// Get window activities within a time range.
+/// Get current active app or window by querying the OS.
+#[tauri::command]
+#[specta::specta]
+pub fn get_current_activity(
+    params: GetCurrentActivityParams,
+) -> Result<CurrentActivityDto, String> {
+    let config = QueryConfig {
+        include_app_icon: true,
+        include_browser_info: true,
+        include_website_info: true,
+        ..QueryConfig::default()
+    };
+
+    match params.poll_target {
+        CurrentActivityPollTarget::App => {
+            let app = mado::get_active_app_with_config(config).map_err(|e| e.to_string())?;
+            return Ok(CurrentActivityDto::AppActivated { app });
+        }
+        CurrentActivityPollTarget::Window => {
+            let window = mado::get_active_window_with_config(config).map_err(|e| e.to_string())?;
+            return Ok(CurrentActivityDto::WindowChanged { window });
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct GetCurrentActivityParams {
+    pub poll_target: CurrentActivityPollTarget,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, specta::Type)]
+#[serde(rename_all = "lowercase")]
+pub enum CurrentActivityPollTarget {
+    App,
+    Window,
+}
+
+/// Get past window activities within a time range.
 #[tauri::command]
 #[specta::specta]
 pub async fn get_window_activities(

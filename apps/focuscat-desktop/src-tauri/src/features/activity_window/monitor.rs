@@ -2,6 +2,7 @@ use super::repository::{
     AppActivityRepository, InsertAppActivityInput, InsertWindowActivityInput,
     WindowActivityRepository,
 };
+use super::types::{CurrentActivityDto, CurrentActivityEvent};
 use crate::common::url::extract_domain;
 use crate::environment::db::DatabaseState;
 use crate::environment::logger::{log_debug, log_error, log_info, log_warn};
@@ -14,6 +15,7 @@ use chrono::Utc;
 use mado::{MonitorConfig, WindowEvent, WindowListener, WindowMonitor};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager};
+use tauri_specta::Event;
 use tokio::sync::Mutex as TokioMutex;
 
 // MARK: - Start Monitoring
@@ -83,6 +85,13 @@ impl WindowMonitorHandler {
             })
             .unwrap_or(false)
     }
+
+    fn is_developer_enabled(&self) -> bool {
+        self.app
+            .try_state::<AppSettingsState>()
+            .map(|state| state.lock().unwrap().features.developer)
+            .unwrap_or(false)
+    }
 }
 
 impl WindowListener for WindowMonitorHandler {
@@ -107,6 +116,13 @@ impl WindowListener for WindowMonitorHandler {
                 let active_app: Arc<TokioMutex<Option<ActiveApp>>> = Arc::clone(&self.active_app);
 
                 log_debug!("Window Monitor", "App Activated:\n{}", app_info);
+
+                if self.is_developer_enabled() {
+                    let _ = CurrentActivityEvent(CurrentActivityDto::AppActivated {
+                        app: app_info.clone(),
+                    })
+                    .emit(&self.app);
+                }
 
                 tauri::async_runtime::spawn(async move {
                     let mut active_app_guard = active_app.lock().await;
@@ -184,6 +200,13 @@ impl WindowListener for WindowMonitorHandler {
                 let track_browser_urls = self.is_browser_tracking_enabled();
 
                 log_debug!("Window Monitor", "Window Changed:\n{}", window_info);
+
+                if self.is_developer_enabled() {
+                    let _ = CurrentActivityEvent(CurrentActivityDto::WindowChanged {
+                        window: window_info.clone(),
+                    })
+                    .emit(&self.app);
+                }
 
                 tauri::async_runtime::spawn(async move {
                     let mut active_window_guard = active_window.lock().await;

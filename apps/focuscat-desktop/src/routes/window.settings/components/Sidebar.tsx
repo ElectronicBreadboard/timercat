@@ -68,6 +68,12 @@ export const Sidebar: React.FC<TSidebarProps> = (props) => {
 							disabled={isReadonly}
 						/>
 					)}
+					<SidebarItem
+						to="/window/settings/about"
+						icon={<InfoIcon size={16} />}
+						label="About"
+						disabled={isReadonly}
+					/>
 					{settings.features.developer && (
 						<SidebarItem
 							to="/window/settings/developer"
@@ -76,12 +82,6 @@ export const Sidebar: React.FC<TSidebarProps> = (props) => {
 							disabled={isReadonly}
 						/>
 					)}
-					<SidebarItem
-						to="/window/settings/about"
-						icon={<InfoIcon size={16} />}
-						label="About"
-						disabled={isReadonly}
-					/>
 				</ul>
 			</nav>
 			<div className="border-base-200 space-y-2 border-t p-3">
