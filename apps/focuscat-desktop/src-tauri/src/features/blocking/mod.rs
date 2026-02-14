@@ -21,7 +21,7 @@ use tokio::sync::Notify;
 use types::BlockerState;
 
 pub fn setup(app: &App) {
-    app.manage(BlockerState::new());
+    app.manage(BlockerState::new(app.handle().clone()));
 
     let notify = Arc::new(Notify::new());
 

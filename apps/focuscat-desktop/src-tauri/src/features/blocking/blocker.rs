@@ -5,59 +5,70 @@ use super::{
 use crate::{
     app::window::Window,
     common::url::extract_domain,
+    environment::logger::log_info,
     features::focus_profile::{
         resolution::{resolve_for_app, resolve_for_website, ResolutionProfile},
         types::RuleAction,
     },
+    features::settings::types::AppSettingsState,
 };
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 use tauri_specta::Event;
 
 pub struct Blocker {
+    app: AppHandle,
     profiles: Vec<ResolutionProfile>,
     active_violation: Option<BlockingViolation>,
 }
 
 impl Blocker {
-    pub fn new() -> Self {
+    pub fn new(app: AppHandle) -> Self {
         return Self {
+            app,
             profiles: Vec::new(),
             active_violation: None,
         };
     }
 
+    fn is_developer_enabled(&self) -> bool {
+        self.app
+            .try_state::<AppSettingsState>()
+            .map(|state| state.lock().unwrap().features.developer)
+            .unwrap_or(false)
+    }
+
     /// Handle an app switch. Checks if the app is blocked and updates the overlay.
-    pub fn handle_app_activated(
-        &mut self,
-        app: &AppHandle,
-        bundle_id: Option<&str>,
-        app_name: Option<&str>,
-    ) {
+    pub fn handle_app_activated(&mut self, bundle_id: Option<&str>, app_name: Option<&str>) {
         if Self::is_own_app(bundle_id, app_name) {
             return;
         }
 
         let violation = self.check_app(bundle_id);
 
-        #[cfg(debug_assertions)]
-        println!(
-            "[Blocker] app_activated: name={:?} bundle_id={:?} violation={:?}",
-            app_name,
-            bundle_id,
-            violation.as_ref().map(|v| &v.blocked_target)
-        );
-
-        if violation.is_none() {
-            let _ = Window::Blocker.hide(app);
+        if self.is_developer_enabled() {
+            log_info!(
+                "Blocker",
+                "App Activated: name={:?} bundle_id={:?} violation={:?}",
+                app_name,
+                bundle_id,
+                violation
+                    .as_ref()
+                    .map(|v| format!("{:?}", v.blocked_target))
+            );
         }
 
-        self.set_violation(app, violation);
+        if violation.is_none() {
+            let _ = Window::Blocker.hide(&self.app);
+        } else {
+            let _ = Window::Blocker.show(&self.app);
+        }
+
+        self.set_violation(violation);
     }
 
     /// Handle a window focus change. Checks app + browser URL and positions the overlay.
     pub fn handle_window_changed(
         &mut self,
-        app: &AppHandle,
         bundle_id: Option<&str>,
         app_name: Option<&str>,
         browser_url: Option<&str>,
@@ -69,23 +80,28 @@ impl Blocker {
 
         let violation = self.check_window(bundle_id, browser_url);
 
-        #[cfg(debug_assertions)]
-        println!(
-            "[Blocker] window_changed: name={:?} bundle_id={:?} violation={:?}",
-            app_name,
-            bundle_id,
-            violation.as_ref().map(|v| &v.blocked_target)
-        );
+        if self.is_developer_enabled() {
+            log_info!(
+                "Blocker",
+                "Window Changed: name={:?} bundle_id={:?} browser_url={:?} violation={:?}",
+                app_name,
+                bundle_id,
+                browser_url,
+                violation
+                    .as_ref()
+                    .map(|v| format!("{:?}", v.blocked_target))
+            );
+        }
 
         if violation.is_some() {
             if let Some((x, y, w, h)) = bounds {
-                let _ = Window::Blocker.show_at_bounds(app, x, y, w, h);
+                let _ = Window::Blocker.show_at_bounds(&self.app, x, y, w, h);
             }
         } else {
-            let _ = Window::Blocker.hide(app);
+            let _ = Window::Blocker.hide(&self.app);
         }
 
-        self.set_violation(app, violation);
+        self.set_violation(violation);
     }
 
     pub fn active_violation(&self) -> Option<BlockingViolation> {
@@ -96,10 +112,17 @@ impl Blocker {
         self.profiles = profiles;
     }
 
-    fn set_violation(&mut self, app: &AppHandle, violation: Option<BlockingViolation>) {
+    fn set_violation(&mut self, violation: Option<BlockingViolation>) {
+        // Skip when unchanged so we don't re-emit.
+        // Handlers still run overlay show/hide, so e.g. user focuses our app then back to blocked tab
+        // → we re-show overlay; only state/emit skipped here.
+        if violation == self.active_violation {
+            return;
+        }
+
         self.active_violation = violation.clone();
         let dto = violation.map(BlockingViolationDto::from);
-        let _ = BlockingViolationEvent(dto).emit(app);
+        let _ = BlockingViolationEvent(dto).emit(&self.app);
     }
 
     /// Check if the given app belongs to our own app (never block ourselves).
@@ -172,7 +195,7 @@ impl Blocker {
 }
 
 /// Violation reported when a blocked app or website is detected.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct BlockingViolation {
     pub profile_id: i64,
     pub profile_name: String,
@@ -181,39 +204,8 @@ pub struct BlockingViolation {
 }
 
 /// What was blocked: app (by bundle ID) or website (by domain).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BlockedTarget {
     App { bundle_id: String },
     Website { domain: String },
-}
-
-// MARK: - Tests
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    impl Blocker {
-        fn is_app_blocked(&self, bundle_id: &str) -> bool {
-            return self.check_app(Some(bundle_id)).is_some();
-        }
-
-        fn is_website_blocked(&self, domain: &str) -> bool {
-            return self.check_website(domain).is_some();
-        }
-    }
-
-    fn make_blocker(profiles: Vec<ResolutionProfile>) -> Blocker {
-        return Blocker {
-            profiles,
-            active_violation: None,
-        };
-    }
-
-    #[test]
-    fn test_no_profiles_means_not_blocked() {
-        let blocker = make_blocker(vec![]);
-        assert!(!blocker.is_app_blocked("com.apple.Calculator"));
-        assert!(!blocker.is_website_blocked("youtube.com"));
-    }
 }

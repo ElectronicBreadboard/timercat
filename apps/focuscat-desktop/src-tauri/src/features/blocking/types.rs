@@ -36,8 +36,8 @@ pub struct BlockingViolationEvent(pub Option<BlockingViolationDto>);
 pub struct BlockerState(Mutex<Blocker>);
 
 impl BlockerState {
-    pub fn new() -> Self {
-        return Self(Mutex::new(Blocker::new()));
+    pub fn new(app: tauri::AppHandle) -> Self {
+        return Self(Mutex::new(Blocker::new(app)));
     }
 }
 

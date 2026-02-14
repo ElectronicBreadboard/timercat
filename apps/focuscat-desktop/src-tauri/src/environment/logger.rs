@@ -1,16 +1,16 @@
 /// Debug-only logging. Compiles to nothing in release builds.
 /// Usage: `log_debug!("Window Monitor", "Event: {}", event)`
-// #[cfg(debug_assertions)]
+#[cfg(debug_assertions)]
 macro_rules! log_debug {
     ($tag:expr, $($arg:tt)*) => {
         eprintln!("[{}] {}", $tag, format!($($arg)*))
     };
 }
 
-// #[cfg(not(debug_assertions))]
-// macro_rules! log_debug {
-//     ($tag:expr, $($arg:tt)*) => {};
-// }
+#[cfg(not(debug_assertions))]
+macro_rules! log_debug {
+    ($tag:expr, $($arg:tt)*) => {};
+}
 
 /// Info-level logging. Always prints.
 /// Usage: `log_info!("Window Monitor", "Started")`

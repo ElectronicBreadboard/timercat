@@ -33,7 +33,7 @@ function RouteComponent() {
 		<div className="space-y-6">
 			<h1 className="text-base-900 text-xl font-semibold">Activity</h1>
 
-			{!isAppStore && accessibility.granted === false && (
+			{!isAppStore && !accessibility.granted && (
 				<Banner variant="warning">
 					<p className="text-sm font-medium">Accessibility permission required</p>
 					<p className="text-xs opacity-80">
@@ -49,39 +49,63 @@ function RouteComponent() {
 				</Banner>
 			)}
 
-			<SettingGroup title="Tracking">
-				<SettingItem
-					label="Track Windows"
-					description={
-						isAppStore
-							? 'Not available in App Store builds'
-							: 'Track individual window and tab changes'
-					}
-					descriptionClassName={isAppStore ? 'text-yellow-600' : undefined}
-					className={isAppStore ? 'bg-base-100' : undefined}
-				>
+			<SettingGroup title="App & Window">
+				<SettingItem label="Track apps" description="Record which apps you use">
 					<Switch
-						checked={isAppStore ? false : settings.activity.trackWindows}
-						onCheckedChange={(checked) => !isAppStore && updateActivity({ trackWindows: checked })}
+						checked={settings.activity.trackApps}
+						onCheckedChange={(checked) =>
+							updateActivity(
+								checked
+									? { trackApps: true }
+									: { trackApps: false, trackWindows: false, trackBrowser: false }
+							)
+						}
 						size="sm"
-						disabled={isAppStore}
 					/>
 				</SettingItem>
-				<SettingItem
-					label="Track Browser"
-					description={
-						isAppStore ? 'Not available in App Store builds' : 'Record visited URLs in browsers'
-					}
-					descriptionClassName={isAppStore ? 'text-yellow-600' : undefined}
-					className={isAppStore ? 'bg-base-100' : undefined}
-				>
-					<Switch
-						checked={isAppStore ? false : settings.activity.trackBrowser}
-						onCheckedChange={(checked) => !isAppStore && updateActivity({ trackBrowser: checked })}
-						size="sm"
-						disabled={isAppStore}
-					/>
-				</SettingItem>
+				{settings.activity.trackApps && (
+					<SettingItem
+						label="Track Windows"
+						description={
+							isAppStore
+								? 'Not available in App Store builds'
+								: 'Track individual window and tab changes'
+						}
+						descriptionClassName={isAppStore ? 'text-yellow-600' : undefined}
+						className={isAppStore ? 'bg-base-100' : undefined}
+					>
+						<Switch
+							checked={isAppStore ? false : settings.activity.trackWindows}
+							onCheckedChange={(checked) =>
+								!isAppStore &&
+								updateActivity(
+									checked ? { trackWindows: true } : { trackWindows: false, trackBrowser: false }
+								)
+							}
+							size="sm"
+							disabled={isAppStore}
+						/>
+					</SettingItem>
+				)}
+				{settings.activity.trackApps && settings.activity.trackWindows && (
+					<SettingItem
+						label="Track Browser"
+						description={
+							isAppStore ? 'Not available in App Store builds' : 'Record visited URLs in browsers'
+						}
+						descriptionClassName={isAppStore ? 'text-yellow-600' : undefined}
+						className={isAppStore ? 'bg-base-100' : undefined}
+					>
+						<Switch
+							checked={isAppStore ? false : settings.activity.trackBrowser}
+							onCheckedChange={(checked) =>
+								!isAppStore && updateActivity({ trackBrowser: checked })
+							}
+							size="sm"
+							disabled={isAppStore}
+						/>
+					</SettingItem>
+				)}
 			</SettingGroup>
 		</div>
 	);

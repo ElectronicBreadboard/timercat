@@ -204,6 +204,8 @@ impl Default for GoalSettings {
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ActivitySettings {
+    /// Whether to record app usage (app switches)
+    pub track_apps: bool,
     /// Whether to track window changes (not just app switches)
     pub track_windows: bool,
     /// Whether to track browser URLs
@@ -213,6 +215,7 @@ pub struct ActivitySettings {
 impl Default for ActivitySettings {
     fn default() -> Self {
         return Self {
+            track_apps: true,
             track_windows: !cfg!(feature = "app-store"),
             track_browser: !cfg!(feature = "app-store"),
         };

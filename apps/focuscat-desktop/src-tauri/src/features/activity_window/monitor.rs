@@ -5,14 +5,14 @@ use super::repository::{
 use super::types::{CurrentActivityDto, CurrentActivityEvent};
 use crate::common::url::extract_domain;
 use crate::environment::db::DatabaseState;
-use crate::environment::logger::{log_debug, log_error, log_info, log_warn};
+use crate::environment::logger::{log_error, log_info, log_warn};
 use crate::features::app::repository::{
     AppRepository, UpsertAppInput, UpsertWebsiteInput, WebsiteRepository,
 };
 use crate::features::blocking::types::BlockerState;
 use crate::features::settings::types::AppSettingsState;
 use chrono::Utc;
-use mado::{MonitorConfig, WindowEvent, WindowListener, WindowMonitor};
+use mado::{MonitorConfig, WindowEvent, WindowListener, WindowMonitor as MadoWindowMonitor};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager};
 use tauri_specta::Event;
@@ -21,8 +21,8 @@ use tokio::sync::Mutex as TokioMutex;
 // MARK: - Start Monitoring
 
 pub fn start_monitoring(app: AppHandle) {
-    let handler = WindowMonitorHandler::new(app.clone());
-    let monitor = WindowMonitor::with_config(
+    let handler = WindowMonitor::new(app.clone());
+    let monitor = MadoWindowMonitor::with_config(
         handler,
         MonitorConfig {
             include_app_icon: true,
@@ -42,15 +42,15 @@ pub fn start_monitoring(app: AppHandle) {
     });
 }
 
-// MARK: - Window Monitor Handler
+// MARK: - Window Monitor
 
-struct WindowMonitorHandler {
+struct WindowMonitor {
     app: AppHandle,
     active_app: Arc<TokioMutex<Option<ActiveApp>>>,
     active_window: Arc<TokioMutex<Option<ActiveWindow>>>,
 }
 
-impl WindowMonitorHandler {
+impl WindowMonitor {
     fn new(app: AppHandle) -> Self {
         return Self {
             app,
@@ -59,10 +59,17 @@ impl WindowMonitorHandler {
         };
     }
 
-    fn is_tracking_enabled(&self) -> bool {
+    fn can_track_windows() -> bool {
+        return !cfg!(feature = "app-store") && mado::is_accessibility_trusted();
+    }
+
+    fn is_app_tracking_enabled(&self) -> bool {
         self.app
             .try_state::<AppSettingsState>()
-            .map(|state| state.lock().unwrap().features.activity)
+            .map(|state| {
+                let settings = state.lock().unwrap();
+                settings.features.activity && settings.activity.track_apps
+            })
             .unwrap_or(false)
     }
 
@@ -71,7 +78,9 @@ impl WindowMonitorHandler {
             .try_state::<AppSettingsState>()
             .map(|state| {
                 let settings = state.lock().unwrap();
-                settings.features.activity && settings.activity.track_windows
+                settings.features.activity
+                    && settings.activity.track_apps
+                    && settings.activity.track_windows
             })
             .unwrap_or(false)
     }
@@ -81,7 +90,10 @@ impl WindowMonitorHandler {
             .try_state::<AppSettingsState>()
             .map(|state| {
                 let settings = state.lock().unwrap();
-                settings.features.activity && settings.activity.track_browser
+                settings.features.activity
+                    && settings.activity.track_apps
+                    && settings.activity.track_windows
+                    && settings.activity.track_browser
             })
             .unwrap_or(false)
     }
@@ -94,36 +106,37 @@ impl WindowMonitorHandler {
     }
 }
 
-impl WindowListener for WindowMonitorHandler {
+impl WindowListener for WindowMonitor {
     fn on_focus_change(&self, event: WindowEvent) {
         match event {
             WindowEvent::AppActivated { app: app_info } => {
-                if !self.is_window_tracking_enabled() {
+                // Only drive blocker from AppActivated when we can't track windows.
+                // Otherwise: AppActivated has no URL so blocker hides (app not blocked);
+                // WindowChanged then shows again (has URL, e.g. instagram blocked) → flicker.
+                if !Self::can_track_windows() {
                     if let Some(state) = self.app.try_state::<BlockerState>() {
                         state.lock().unwrap().handle_app_activated(
-                            &self.app,
                             app_info.bundle_id.as_deref(),
                             app_info.name.as_deref(),
                         );
                     }
                 }
 
-                if !self.is_tracking_enabled() {
+                if !self.is_app_tracking_enabled() {
                     return;
                 }
 
-                let app = self.app.clone();
                 let active_app: Arc<TokioMutex<Option<ActiveApp>>> = Arc::clone(&self.active_app);
 
-                log_debug!("Window Monitor", "App Activated:\n{}", app_info);
-
                 if self.is_developer_enabled() {
+                    log_info!("Window Monitor", "App Activated:\n{}", app_info);
                     let _ = CurrentActivityEvent(CurrentActivityDto::AppActivated {
                         app: app_info.clone(),
                     })
                     .emit(&self.app);
                 }
 
+                let app = self.app.clone();
                 tauri::async_runtime::spawn(async move {
                     let mut active_app_guard = active_app.lock().await;
                     let now = Utc::now().timestamp_millis();
@@ -182,7 +195,6 @@ impl WindowListener for WindowMonitorHandler {
                         .as_ref()
                         .map(|b| (b.x, b.y, b.width, b.height));
                     state.lock().unwrap().handle_window_changed(
-                        &self.app,
                         window_info.app.bundle_id.as_deref(),
                         window_info.app.name.as_deref(),
                         browser_url,
@@ -194,20 +206,19 @@ impl WindowListener for WindowMonitorHandler {
                     return;
                 }
 
-                let app = self.app.clone();
                 let active_window: Arc<TokioMutex<Option<ActiveWindow>>> =
                     Arc::clone(&self.active_window);
                 let track_browser_urls = self.is_browser_tracking_enabled();
 
-                log_debug!("Window Monitor", "Window Changed:\n{}", window_info);
-
                 if self.is_developer_enabled() {
+                    log_info!("Window Monitor", "Window Changed:\n{}", window_info);
                     let _ = CurrentActivityEvent(CurrentActivityDto::WindowChanged {
                         window: window_info.clone(),
                     })
                     .emit(&self.app);
                 }
 
+                let app = self.app.clone();
                 tauri::async_runtime::spawn(async move {
                     let mut active_window_guard = active_window.lock().await;
                     let now = Utc::now().timestamp_millis();

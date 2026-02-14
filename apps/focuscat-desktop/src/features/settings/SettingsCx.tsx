@@ -44,6 +44,7 @@ export class SettingsCx {
 			dailyGoalMinutes: 120
 		},
 		activity: {
+			trackApps: true,
 			trackWindows: true,
 			trackBrowser: true
 		},

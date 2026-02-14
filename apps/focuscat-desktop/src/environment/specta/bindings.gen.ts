@@ -413,6 +413,10 @@ timerUpdatedEvent: "timer-updated-event"
 
 export type ActivitySettings = { 
 /**
+ * Whether to record app usage (app switches)
+ */
+trackApps: boolean; 
+/**
  * Whether to track window changes (not just app switches)
  */
 trackWindows: boolean; 
