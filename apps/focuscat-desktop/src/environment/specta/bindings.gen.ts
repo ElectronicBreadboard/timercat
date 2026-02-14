@@ -5,7 +5,7 @@
 
 
 export const commands = {
-async getAppInfo() : Promise<AppInfo> {
+async getAppInfo() : Promise<AppInfoDto> {
     return await TAURI_INVOKE("get_app_info");
 },
 async showMainWindow() : Promise<Result<null, string>> {
@@ -462,7 +462,7 @@ processPath: string | null;
  * App icon and brand color (only populated if `include_app_icon` is enabled)
  */
 icon: AppIcon | null }
-export type AppInfo = { version: string; stage: Stage; distribution: AppDistribution }
+export type AppInfoDto = { version: string; stage: Stage; distribution: AppDistribution }
 export type AppSettings = { version: SettingsVersion; features: FeaturesSettings; appearance: AppearanceSettings; audio: AudioSettings; developer: DeveloperSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; cat: CatSettings }
 export type AppSettingsChangedEvent = AppSettings
 export type AppearanceSettings = { theme: Theme }

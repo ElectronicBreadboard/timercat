@@ -7,7 +7,7 @@ use specta::Type;
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_app_info() -> AppInfo {
+pub fn get_app_info() -> AppInfoDto {
     let base_version = env!("CARGO_PKG_VERSION");
     let (stage, suffix) = if cfg!(debug_assertions) {
         (Stage::Dev, "-dev")
@@ -15,7 +15,7 @@ pub fn get_app_info() -> AppInfo {
         (Stage::Prod, "")
     };
 
-    AppInfo {
+    AppInfoDto {
         version: format!("v{}{}", base_version, suffix),
         stage,
         distribution: AppConfig::distribution(),
@@ -24,7 +24,7 @@ pub fn get_app_info() -> AppInfo {
 
 #[derive(Serialize, Type)]
 #[serde(rename_all = "camelCase")]
-pub struct AppInfo {
+pub struct AppInfoDto {
     pub version: String,
     pub stage: Stage,
     pub distribution: AppDistribution,
