@@ -11,7 +11,7 @@ pub struct AppSettings {
     pub features: FeaturesSettings,
     pub appearance: AppearanceSettings,
     pub audio: AudioSettings,
-    pub debug: DebugSettings,
+    pub developer: DeveloperSettings,
     pub timer: TimerSettings,
     pub goals: GoalSettings,
     pub activity: ActivitySettings,
@@ -25,7 +25,7 @@ impl Default for AppSettings {
             features: FeaturesSettings::default(),
             appearance: AppearanceSettings::default(),
             audio: AudioSettings::default(),
-            debug: DebugSettings::default(),
+            developer: DeveloperSettings::default(),
             timer: TimerSettings::default(),
             goals: GoalSettings::default(),
             activity: ActivitySettings::default(),
@@ -60,7 +60,7 @@ pub struct FeaturesSettings {
     pub activity: bool,
     pub profiles: bool,
     pub cat_window: bool,
-    pub debug: bool,
+    pub developer: bool,
 }
 
 impl Default for FeaturesSettings {
@@ -70,7 +70,7 @@ impl Default for FeaturesSettings {
             activity: true,
             profiles: true,
             cat_window: !cfg!(feature = "app-store"),
-            debug: false,
+            developer: false,
         };
     }
 }
@@ -109,12 +109,12 @@ impl Default for AudioSettings {
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
-pub struct DebugSettings {
+pub struct DeveloperSettings {
     pub cat: bool,
     pub timer_speed: u32,
 }
 
-impl Default for DebugSettings {
+impl Default for DeveloperSettings {
     fn default() -> Self {
         return Self {
             cat: false,

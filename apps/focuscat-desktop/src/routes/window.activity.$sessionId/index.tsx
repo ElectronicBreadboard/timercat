@@ -119,10 +119,10 @@ function RouteComponent() {
 			{/* New Timeline */}
 			<SessionTimeline session={data.session} activities={data.activities} />
 
-			{/* Debug JSON */}
-			{settings.features.debug && (
+			{/* Developer data */}
+			{settings.features.developer && (
 				<div className="border-base-200 mt-4 border-t pt-4">
-					<div className="text-base-500 mb-2 text-xs font-medium">Debug Data</div>
+					<div className="text-base-500 mb-2 text-xs font-medium">Developer Data</div>
 					<pre className="bg-base-50 text-base-600 rounded p-3 text-xs break-all whitespace-pre-wrap">
 						{JSON.stringify(
 							data,

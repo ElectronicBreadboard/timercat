@@ -24,7 +24,7 @@ impl Timer {
             remaining_seconds: duration_seconds,
             overtime_seconds: 0,
             sessions_completed: 0,
-            speed: settings.debug.timer_speed,
+            speed: settings.developer.timer_speed,
             mode,
             session: None,
         };
@@ -32,7 +32,7 @@ impl Timer {
 
     pub fn apply_settings(&mut self, settings: &AppSettings) {
         self.mode = TimerMode::from_settings(settings);
-        self.speed = settings.debug.timer_speed;
+        self.speed = settings.developer.timer_speed;
     }
 
     /// First session in the queue.

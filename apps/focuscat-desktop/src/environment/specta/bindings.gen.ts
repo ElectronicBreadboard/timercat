@@ -417,7 +417,7 @@ export type App = {
 id: string; bundleId: string; name: string | null; icon: string | null; color: string | null }
 export type AppDistribution = "direct" | "appStore"
 export type AppInfo = { version: string; stage: Stage; distribution: AppDistribution }
-export type AppSettings = { version: SettingsVersion; features: FeaturesSettings; appearance: AppearanceSettings; audio: AudioSettings; debug: DebugSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; cat: CatSettings }
+export type AppSettings = { version: SettingsVersion; features: FeaturesSettings; appearance: AppearanceSettings; audio: AudioSettings; developer: DeveloperSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; cat: CatSettings }
 export type AppSettingsChangedEvent = AppSettings
 export type AppearanceSettings = { theme: Theme }
 export type AudioSettings = { enabled: boolean; 
@@ -439,12 +439,12 @@ export type BlockingViolationDto = { profileId: number; profileName: string; pro
 export type BlockingViolationEvent = BlockingViolationDto | null
 export type CatSettings = { equippedFur: string; equippedFace: string; equippedHat: string | null }
 export type CountdownSettings = { durationMinutes: number }
-export type DebugSettings = { cat: boolean; timerSpeed: number }
+export type DeveloperSettings = { cat: boolean; timerSpeed: number }
 /**
  * A profile eligible for session selection, with auto-selection flag.
  */
 export type EligibleProfileDto = { profile: FocusProfileDto; autoSelected: boolean }
-export type FeaturesSettings = { goals: boolean; activity: boolean; profiles: boolean; catWindow: boolean; debug: boolean }
+export type FeaturesSettings = { goals: boolean; activity: boolean; profiles: boolean; catWindow: boolean; developer: boolean }
 /**
  * Focus profile with its rules and schedules.
  */

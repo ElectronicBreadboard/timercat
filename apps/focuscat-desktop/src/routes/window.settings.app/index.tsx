@@ -163,8 +163,8 @@ function RouteComponent() {
 				</SettingItem>
 				<SettingItem label="Developer Mode" description="Show developer tools and debug info">
 					<Switch
-						checked={settings.features.debug}
-						onCheckedChange={(checked) => updateFeatures({ debug: checked })}
+						checked={settings.features.developer}
+						onCheckedChange={(checked) => updateFeatures({ developer: checked })}
 						size="sm"
 					/>
 				</SettingItem>

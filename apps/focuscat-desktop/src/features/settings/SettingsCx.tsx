@@ -14,7 +14,7 @@ export class SettingsCx {
 			activity: true,
 			profiles: true,
 			catWindow: true,
-			debug: false
+			developer: false
 		},
 		appearance: {
 			theme: 'auto'
@@ -23,7 +23,7 @@ export class SettingsCx {
 			enabled: true,
 			volume: 0.6
 		},
-		debug: {
+		developer: {
 			cat: false,
 			timerSpeed: 1
 		},

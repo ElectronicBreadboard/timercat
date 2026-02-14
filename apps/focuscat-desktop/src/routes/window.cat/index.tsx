@@ -98,7 +98,7 @@ function RouteComponent() {
 		<div
 			className={cn(
 				'flex h-screen flex-col items-center overflow-hidden',
-				settings.debug.cat && 'border border-red-500'
+				settings.developer.cat && 'border border-red-500'
 			)}
 		>
 			<Cat
@@ -106,14 +106,14 @@ function RouteComponent() {
 				face={settings.cat.equippedFace}
 				hat={settings.cat.equippedHat}
 				size={170}
-				className={cn('z-10', settings.debug.cat && 'border border-green-500')}
+				className={cn('z-10', settings.developer.cat && 'border border-green-500')}
 				onTap={handleCatTap}
 			/>
 
 			<div
 				className={cn(
 					'bg-base-100 flex items-center rounded-lg shadow-lg',
-					settings.debug.cat && 'border border-blue-500'
+					settings.developer.cat && 'border border-blue-500'
 				)}
 			>
 				{/* Drag Handle */}

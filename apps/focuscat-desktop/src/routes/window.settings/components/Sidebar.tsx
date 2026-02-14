@@ -68,7 +68,7 @@ export const Sidebar: React.FC<TSidebarProps> = (props) => {
 							disabled={isReadonly}
 						/>
 					)}
-					{settings.features.debug && (
+					{settings.features.developer && (
 						<SidebarItem
 							to="/window/settings/developer"
 							icon={<CodeIcon size={16} />}
