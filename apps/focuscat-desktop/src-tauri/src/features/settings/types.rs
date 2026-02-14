@@ -213,8 +213,8 @@ pub struct ActivitySettings {
 impl Default for ActivitySettings {
     fn default() -> Self {
         return Self {
-            track_windows: true,
-            track_browser: true,
+            track_windows: !cfg!(feature = "app-store"),
+            track_browser: !cfg!(feature = "app-store"),
         };
     }
 }

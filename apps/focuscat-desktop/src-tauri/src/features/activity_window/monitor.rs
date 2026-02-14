@@ -26,9 +26,9 @@ pub fn start_monitoring(app: AppHandle) {
         handler,
         MonitorConfig {
             include_app_icon: true,
-            include_browser_info: true,
-            include_website_info: false,
-            track_window_changes: true,
+            include_browser_info: !cfg!(feature = "app-store"),
+            include_website_info: false, // We only need the domain (not favicon/color) at this point, so we extract it ourselves to avoid overhead (like fetching the favicon)
+            track_window_changes: !cfg!(feature = "app-store"),
         },
     );
 

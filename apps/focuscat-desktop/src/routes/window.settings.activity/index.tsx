@@ -5,6 +5,7 @@ import { Banner, Switch } from '@/components';
 import { specta } from '@/environment';
 import { useAccessibilityPermission } from '@/features/permission';
 import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
+import { useAppInfo } from '@/hooks';
 
 export const Route = createFileRoute('/window/settings/activity/')({
 	component: RouteComponent
@@ -14,6 +15,8 @@ function RouteComponent() {
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 	const accessibility = useAccessibilityPermission();
+	const appInfo = useAppInfo();
+	const isAppStore = appInfo.distribution === 'appStore';
 
 	// MARK: - Actions
 
@@ -30,7 +33,7 @@ function RouteComponent() {
 		<div className="space-y-6">
 			<h1 className="text-base-900 text-xl font-semibold">Activity</h1>
 
-			{accessibility.granted === false && (
+			{!isAppStore && accessibility.granted === false && (
 				<Banner variant="warning">
 					<p className="text-sm font-medium">Accessibility permission required</p>
 					<p className="text-xs opacity-80">
@@ -47,18 +50,36 @@ function RouteComponent() {
 			)}
 
 			<SettingGroup title="Tracking">
-				<SettingItem label="Track Windows" description="Track individual window and tab changes">
+				<SettingItem
+					label="Track Windows"
+					description={
+						isAppStore
+							? 'Not available in App Store builds'
+							: 'Track individual window and tab changes'
+					}
+					descriptionClassName={isAppStore ? 'text-yellow-600' : undefined}
+					className={isAppStore ? 'bg-base-100' : undefined}
+				>
 					<Switch
-						checked={settings.activity.trackWindows}
-						onCheckedChange={(checked) => updateActivity({ trackWindows: checked })}
+						checked={isAppStore ? false : settings.activity.trackWindows}
+						onCheckedChange={(checked) => !isAppStore && updateActivity({ trackWindows: checked })}
 						size="sm"
+						disabled={isAppStore}
 					/>
 				</SettingItem>
-				<SettingItem label="Track Browser" description="Record visited URLs in browsers">
+				<SettingItem
+					label="Track Browser"
+					description={
+						isAppStore ? 'Not available in App Store builds' : 'Record visited URLs in browsers'
+					}
+					descriptionClassName={isAppStore ? 'text-yellow-600' : undefined}
+					className={isAppStore ? 'bg-base-100' : undefined}
+				>
 					<Switch
-						checked={settings.activity.trackBrowser}
-						onCheckedChange={(checked) => updateActivity({ trackBrowser: checked })}
+						checked={isAppStore ? false : settings.activity.trackBrowser}
+						onCheckedChange={(checked) => !isAppStore && updateActivity({ trackBrowser: checked })}
 						size="sm"
+						disabled={isAppStore}
 					/>
 				</SettingItem>
 			</SettingGroup>

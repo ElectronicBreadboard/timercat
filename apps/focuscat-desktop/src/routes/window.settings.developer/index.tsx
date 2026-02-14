@@ -112,11 +112,22 @@ function RouteComponent() {
 			</SettingGroup>
 
 			<SettingGroup title="Activity (polling)">
-				<p className="text-base-500 p-1 text-sm">
+				<div className="w-full">
+					{isPolling ? (
+						<span className="text-base-400 p-1 text-sm">Polling…</span>
+					) : polledActivity != null ? (
+						<JsonDisplay data={polledActivity} className="mt-2 max-h-80" />
+					) : pollError != null ? (
+						<div className="text-error p-1 font-mono text-sm">{pollError}</div>
+					) : (
+						<span className="text-base-400 p-1 text-sm">—</span>
+					)}
+				</div>
+				<p className="text-base-500 p-1 text-xs">
 					Click{' '}
 					<button
 						type="button"
-						className="hover:text-primary-600 text-primary-500 cursor-pointer text-sm underline"
+						className="hover:text-primary-600 text-primary-500 cursor-pointer underline"
 						onClick={() => schedulePoll('app')}
 					>
 						poll app
@@ -124,40 +135,33 @@ function RouteComponent() {
 					{' or '}
 					<button
 						type="button"
-						className="hover:text-primary-600 text-primary-500 cursor-pointer text-sm underline"
+						className="hover:text-primary-600 text-primary-500 cursor-pointer underline"
 						onClick={() => schedulePoll('window')}
 					>
 						poll window
 					</button>
 					, then switch app before the poll runs (2s).
 				</p>
-				{isPolling ? (
-					<span className="text-base-400 p-1 text-sm">Polling…</span>
-				) : polledActivity != null ? (
-					<JsonDisplay data={polledActivity} className="mt-2 max-h-80" />
-				) : pollError != null ? (
-					<div className="text-error p-1 font-mono text-sm">{pollError}</div>
-				) : (
-					<span className="text-base-400 p-1 text-sm">—</span>
-				)}
 			</SettingGroup>
 
 			<SettingGroup title="Activity (monitoring)">
-				<p className="text-base-500 p-1 text-sm">
+				<div className="w-full">
+					{!activityHistory.length || !showActivityHistory ? (
+						<span className="text-base-400 p-1 text-sm">—</span>
+					) : (
+						<JsonDisplay data={activityHistory} className="mt-2 max-h-80" />
+					)}
+				</div>
+				<p className="text-base-500 p-1 text-xs">
 					Window event history (newest first, max 10):{' '}
 					<button
 						type="button"
-						className="hover:text-primary-600 text-primary-500 cursor-pointer text-sm underline"
+						className="hover:text-primary-600 text-primary-500 cursor-pointer underline"
 						onClick={() => setShowActivityHistory((v) => !v)}
 					>
 						{showActivityHistory ? 'disable' : 'enable'}
 					</button>
 				</p>
-				{!activityHistory.length || !showActivityHistory ? (
-					<span className="text-base-400 p-1 text-sm">—</span>
-				) : (
-					<JsonDisplay data={activityHistory} className="mt-2 max-h-80" />
-				)}
 			</SettingGroup>
 		</div>
 	);

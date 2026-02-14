@@ -106,14 +106,16 @@ function RouteComponent() {
 			</SettingGroup>
 
 			<SettingGroup title="Permissions">
-				<SettingItem
-					variant="nav"
-					label="Accessibility"
-					description="Required for activity tracking"
-					onClick={accessibility.openSettings}
-				>
-					<PermissionBadge status={accessibility.granted} />
-				</SettingItem>
+				{!isAppStore && (
+					<SettingItem
+						variant="nav"
+						label="Accessibility"
+						description="Required for activity tracking"
+						onClick={accessibility.openSettings}
+					>
+						<PermissionBadge status={accessibility.granted} />
+					</SettingItem>
+				)}
 				<SettingItem
 					variant="nav"
 					label="Input Monitoring"

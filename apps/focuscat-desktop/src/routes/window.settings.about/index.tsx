@@ -44,11 +44,7 @@ function RouteComponent() {
 			</SettingGroup>
 
 			<SettingGroup>
-				<SettingItem
-					variant="link"
-					label="Privacy Policy"
-					href={appConfig.help.legal.privacy}
-				/>
+				<SettingItem variant="link" label="Privacy Policy" href={appConfig.help.legal.privacy} />
 				<SettingItem variant="link" label="Terms of Use" href={appConfig.help.legal.terms} />
 			</SettingGroup>
 
