@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { openUrl } from '@tauri-apps/plugin-opener';
+import { appConfig } from '@/environment';
 import { SettingGroup, SettingItem } from '@/features/settings';
 import { useAppInfo } from '@/hooks';
 
@@ -14,24 +14,47 @@ function RouteComponent() {
 		<div className="space-y-6">
 			<h1 className="text-base-900 text-xl font-semibold">About</h1>
 
-			<SettingGroup title="Links">
+			<SettingGroup>
+				<SettingItem variant="link" label="Feedback" href={appConfig.help.mailto('Feedback')} />
 				<SettingItem
-					variant="external-link"
+					variant="link"
+					label="Request a Feature"
+					href={appConfig.help.mailto('Feature Request')}
+				/>
+				<SettingItem
+					variant="link"
+					label="Report a Bug"
+					href={appConfig.help.mailto('Bug Report')}
+				/>
+			</SettingGroup>
+
+			<SettingGroup>
+				<SettingItem
+					variant="link"
 					label="Website"
 					description="focuscat.app"
-					onClick={() => openUrl('https://focuscat.app')}
+					href={appConfig.distribution.website}
 				/>
 				<SettingItem
-					variant="external-link"
-					label="Privacy Policy"
-					description="How we handle your data"
-					onClick={() => openUrl('https://focuscat.app/legal/privacy')}
+					variant="link"
+					label="GitHub"
+					description="github.com/builder-group/isshin"
+					href={appConfig.distribution.github}
 				/>
+			</SettingGroup>
+
+			<SettingGroup>
+				<SettingItem
+					variant="link"
+					label="Privacy Policy"
+					href={appConfig.help.legal.privacy}
+				/>
+				<SettingItem variant="link" label="Terms of Use" href={appConfig.help.legal.terms} />
 			</SettingGroup>
 
 			<div className="text-base-400 space-y-1 text-center text-xs">
 				<p>Focuscat {appInfo.version}</p>
-				<p>builder.group</p>
+				<p>© {new Date().getFullYear()} builder.group</p>
 			</div>
 		</div>
 	);

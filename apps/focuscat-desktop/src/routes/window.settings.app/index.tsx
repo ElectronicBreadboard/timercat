@@ -107,7 +107,7 @@ function RouteComponent() {
 
 			<SettingGroup title="Permissions">
 				<SettingItem
-					variant="link"
+					variant="nav"
 					label="Accessibility"
 					description="Required for activity tracking"
 					onClick={accessibility.openSettings}
@@ -115,7 +115,7 @@ function RouteComponent() {
 					<PermissionBadge status={accessibility.granted} />
 				</SettingItem>
 				<SettingItem
-					variant="link"
+					variant="nav"
 					label="Input Monitoring"
 					description="Required for idle detection"
 					onClick={inputMonitoring.openSettings}

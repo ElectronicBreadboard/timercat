@@ -81,7 +81,7 @@ function RouteComponent() {
 
 			<SettingGroup title="App">
 				<SettingItem
-					variant="link"
+					variant="nav"
 					label="Data Directory"
 					description="Open app data folder in Finder"
 					onClick={() => specta.commands.openDataDirectory()}
@@ -92,7 +92,7 @@ function RouteComponent() {
 
 			<SettingGroup title="Timer">
 				<SettingItem
-					variant="button"
+					variant="action"
 					label="Timer Speed"
 					description="Speed up timer for testing"
 					onClick={cycleTimerSpeed}

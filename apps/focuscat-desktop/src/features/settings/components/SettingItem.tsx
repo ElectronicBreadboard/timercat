@@ -1,24 +1,21 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { openUrl } from '@tauri-apps/plugin-opener';
+import { cva } from 'class-variance-authority';
 import React from 'react';
 import { ArrowUpRightIcon, ChevronRightIcon } from '@/components';
 import { cn } from '@/lib';
+
+const interactiveStyles = [
+	'transition-colors duration-100 hover:bg-base-100',
+	'outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset'
+];
 
 const settingItemVariants = cva('flex w-full items-center justify-between px-4 py-3 text-left', {
 	variants: {
 		variant: {
 			static: '',
-			button: [
-				'transition-colors duration-100 hover:bg-base-100',
-				'outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset'
-			],
-			link: [
-				'transition-colors duration-100 hover:bg-base-100',
-				'outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset'
-			],
-			'external-link': [
-				'transition-colors duration-100 hover:bg-base-100',
-				'outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset'
-			]
+			link: interactiveStyles,
+			nav: interactiveStyles,
+			action: interactiveStyles
 		}
 	},
 	defaultVariants: {
@@ -28,15 +25,13 @@ const settingItemVariants = cva('flex w-full items-center justify-between px-4 p
 
 export const SettingItem: React.FC<TSettingItemProps> = (props) => {
 	const {
+		variant = 'static',
 		label,
 		description,
 		descriptionClassName,
-		variant = 'static',
-		onClick,
 		children,
 		className
 	} = props;
-	const isInteractive = variant === 'button' || variant === 'link' || variant === 'external-link';
 
 	const content = (
 		<>
@@ -48,17 +43,29 @@ export const SettingItem: React.FC<TSettingItemProps> = (props) => {
 			</div>
 			<div className="flex shrink-0 items-center gap-2">
 				{children}
-				{variant === 'link' && <ChevronRightIcon className="text-base-400 size-4" />}
-				{variant === 'external-link' && <ArrowUpRightIcon className="text-base-400 size-4" />}
+				{variant === 'link' && <ArrowUpRightIcon className="text-base-400 size-4" />}
+				{variant === 'nav' && <ChevronRightIcon className="text-base-400 size-4" />}
 			</div>
 		</>
 	);
 
-	if (isInteractive) {
+	if (props.variant === 'link') {
 		return (
 			<button
 				type="button"
-				onClick={onClick}
+				onClick={() => openUrl(props.href)}
+				className={cn(settingItemVariants({ variant }), className)}
+			>
+				{content}
+			</button>
+		);
+	}
+
+	if (props.variant === 'nav' || props.variant === 'action') {
+		return (
+			<button
+				type="button"
+				onClick={props.onClick}
 				className={cn(settingItemVariants({ variant }), className)}
 			>
 				{content}
@@ -69,11 +76,16 @@ export const SettingItem: React.FC<TSettingItemProps> = (props) => {
 	return <div className={cn(settingItemVariants({ variant }), className)}>{content}</div>;
 };
 
-export interface TSettingItemProps extends VariantProps<typeof settingItemVariants> {
+export type TSettingItemProps =
+	| (TSettingItemBase & { variant?: 'static'; href?: never; onClick?: never })
+	| (TSettingItemBase & { variant: 'link'; href: string; onClick?: never })
+	| (TSettingItemBase & { variant: 'nav'; onClick: () => void; href?: never })
+	| (TSettingItemBase & { variant: 'action'; onClick: () => void; href?: never });
+
+interface TSettingItemBase {
 	label: string;
 	description?: string;
 	descriptionClassName?: string;
-	onClick?: () => void;
 	children?: React.ReactNode;
 	className?: string;
 }
