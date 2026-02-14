@@ -44,6 +44,8 @@ final class WindowMonitor: NSObject {
     private var lastWindowId: UInt32?
     private var lastWindowTitle: String?
 
+    private var keepAliveSource: CFRunLoopSource?
+
     init(
         callback: @escaping WindowEventCallback,
         trackWindowChanges: Bool,
@@ -64,9 +66,9 @@ final class WindowMonitor: NSObject {
     func start() {
         guard !isRunning else { return }
         isRunning = true
-        // Capture current thread's run loop (monitor thread)
         monitorRunLoop = CFRunLoopGetCurrent()
 
+        setupRunLoopKeepAlive()
         setupAppActivationObserver()
 
         // Observe initial app
@@ -74,8 +76,10 @@ final class WindowMonitor: NSObject {
             handleAppActivation(app: app, pid: app.processIdentifier)
         }
 
-        // Run loop blocks forever until CFRunLoopStop() is called from stop()
+        // Note: Blocks until CFRunLoopStop() is called from stop()
         CFRunLoopRun()
+
+        Log.warn("Monitor run loop exited")
     }
 
     func stop() {
@@ -83,6 +87,7 @@ final class WindowMonitor: NSObject {
         isRunning = false
 
         stopWindowPolling()
+        removeRunLoopKeepAlive()
         cleanupAccessibilityObservers()
 
         if let observer = notificationObserver {
@@ -94,6 +99,47 @@ final class WindowMonitor: NSObject {
             CFRunLoopStop(runLoop)
         }
         monitorRunLoop = nil
+    }
+
+    // MARK: - Run Loop Keep-Alive
+
+    /// Dummy source that keeps CFRunLoopRun() from exiting (zero CPU wakeups).
+    ///
+    /// Why we need it:
+    /// CFRunLoopRun() exits immediately when no sources or timers are registered.
+    /// The only source we add is the AXObserver, but that's skipped when
+    /// `trackWindowChanges=false` (e.g. sandboxed builds). NSWorkspace notifications
+    /// are forwarded via CFRunLoopPerformBlock, which doesn't count as a source.
+    /// Without this, the monitor thread exits immediately.
+    ///
+    /// https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html
+    private func setupRunLoopKeepAlive() {
+        guard let runLoop = monitorRunLoop else { return }
+
+        var context = CFRunLoopSourceContext(
+            version: 0,
+            info: nil,
+            retain: nil,
+            release: nil,
+            copyDescription: nil,
+            equal: nil,
+            hash: nil,
+            schedule: nil,
+            cancel: nil,
+            perform: { _ in }
+        )
+
+        if let source = CFRunLoopSourceCreate(kCFAllocatorDefault, 0, &context) {
+            keepAliveSource = source
+            CFRunLoopAddSource(runLoop, source, .defaultMode)
+        }
+    }
+
+    private func removeRunLoopKeepAlive() {
+        if let source = keepAliveSource, let runLoop = monitorRunLoop {
+            CFRunLoopRemoveSource(runLoop, source, .defaultMode)
+            keepAliveSource = nil
+        }
     }
 
     // MARK: - App Activation
@@ -162,7 +208,7 @@ final class WindowMonitor: NSObject {
         guard AXObserverCreate(pid, axCallback, &observer) == .success,
             let observer = observer
         else {
-            Log.debug("Failed to create AXObserver for PID \(pid)")
+            Log.warn("Failed to create AXObserver for PID \(pid)")
             return
         }
 

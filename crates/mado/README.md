@@ -222,6 +222,33 @@ Uses Swift via [swift-rs](https://github.com/Brendonovich/swift-rs) for native A
 
 Some apps (especially when launched from Dock) activate before their window appears. We use exponential backoff polling (200ms → 400ms → 800ms → 1.6s capped, max ~30s total) to catch delayed windows.
 
+## 🔒 App Sandbox (Mac App Store)
+
+macOS App Sandbox restricts cross-process access, which affects mado's capabilities:
+
+| Feature                                           | Sandboxed | Unsandboxed |
+| ------------------------------------------------- | --------- | ----------- |
+| App activation tracking (`NSWorkspace`)           | Works     | Works       |
+| Window title/focus tracking (`Accessibility API`) | Blocked   | Works       |
+| Browser URL extraction (`Accessibility API`)      | Blocked   | Works       |
+| Window bounds (`CoreGraphics`)                    | Blocked   | Works       |
+| App icon/installed apps                           | Works     | Works       |
+
+**Why:** The Accessibility API (`AXUIElement`, `AXObserver`) requires cross-process access to read other apps' UI state. The App Sandbox prevents this. `AXObserverCreate` may succeed, but notifications are never delivered for other processes.
+
+**Recommended config for sandboxed builds:**
+
+```rust
+let config = MonitorConfig {
+    track_window_changes: false, // AX observers won't work
+    include_browser_info: false, // URL extraction uses AX API
+    include_app_icon: true,      // Works fine in sandbox
+    include_website_info: false,
+};
+```
+
+With this config, the monitor only emits `AppActivated` events (via `NSWorkspace.didActivateApplicationNotification`), which works in sandbox. `WindowChanged` events are not emitted.
+
 ## 💡 Resources / References
 
 - [swift-rs](https://github.com/Brendonovich/swift-rs) - Rust ↔ Swift FFI

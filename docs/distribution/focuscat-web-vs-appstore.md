@@ -50,7 +50,7 @@ The cat widget is a transparent overlay that sits on top of other windows. Tauri
 | Signing           | Developer ID (notarized) | Apple Distribution         |
 | Sandbox           | No                       | Yes (`Entitlements.plist`) |
 | `macOSPrivateApi` | `true`                   | `false`                    |
-| Build command     | `pnpm build`             | `pnpm build:appstore`     |
+| Build command     | `pnpm build`             | `pnpm build:appstore`      |
 | Distribution      | GitHub Releases (CI)     | Manual upload via `altool` |
 
 ## Feature gating
@@ -68,9 +68,9 @@ The Tauri config handles the rest: `tauri.appstore.conf.json` overrides `macOSPr
 
 Both versions use the same bundle ID, but macOS stores data in different locations:
 
-|           | Path                                                                                                       |
-| --------- | ---------------------------------------------------------------------------------------------------------- |
-| Web       | `~/Library/Application Support/com.buildergroup.focuscat/`                                                 |
+|           | Path                                                                                                         |
+| --------- | ------------------------------------------------------------------------------------------------------------ |
+| Web       | `~/Library/Application Support/com.buildergroup.focuscat/`                                                   |
 | App Store | `~/Library/Containers/com.buildergroup.focuscat/Data/Library/Application Support/com.buildergroup.focuscat/` |
 
 This is automatic. Sandboxed apps get a [container directory](https://developer.apple.com/documentation/security/migrating-your-app-s-files-to-its-app-sandbox-container) at `~/Library/Containers/<bundle-id>/` where macOS redirects standard path-finding APIs. The code uses the same paths. macOS handles the redirection. If a user switches between versions, their data does not carry over automatically.
