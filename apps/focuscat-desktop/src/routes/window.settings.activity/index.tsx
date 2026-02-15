@@ -50,7 +50,7 @@ function RouteComponent() {
 			)}
 
 			<SettingGroup title="App & Window">
-				<SettingItem label="Track apps" description="Record which apps you use">
+				<SettingItem label="Track Apps" description="Record which apps you use">
 					<Switch
 						checked={settings.activity.trackApps}
 						onCheckedChange={(checked) =>

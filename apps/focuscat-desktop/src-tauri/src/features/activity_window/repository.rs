@@ -25,6 +25,52 @@ impl AppActivityRepository {
 
         return Ok(sqlx::Row::get(&result, 0));
     }
+
+    /// Get app activities that overlap with a time range.
+    pub async fn get(
+        pool: &SqlitePool,
+        input: &GetAppActivitiesInput,
+    ) -> Result<Vec<AppActivityRow>, sqlx::Error> {
+        let limit = input.limit.unwrap_or(1000);
+
+        // Fetch activities that overlap with the time range:
+        // Activity started before range ends AND activity ended after range starts
+        let rows = sqlx::query(
+            r#"
+            SELECT
+                a.bundle_id as app_bundle_id,
+                a.name as app_name,
+                a.icon as app_icon,
+                a.color as app_color,
+                aa.started_at,
+                aa.ended_at
+            FROM activity_app aa
+            JOIN app a ON a.id = aa.app_id
+            WHERE aa.started_at < ? AND aa.ended_at > ?
+            ORDER BY aa.started_at DESC
+            LIMIT ?
+            "#,
+        )
+        .bind(input.started_before)
+        .bind(input.started_after)
+        .bind(limit)
+        .fetch_all(pool)
+        .await?;
+
+        let activities = rows
+            .into_iter()
+            .map(|row| AppActivityRow {
+                app_bundle_id: row.get("app_bundle_id"),
+                app_name: row.get("app_name"),
+                app_icon: row.get("app_icon"),
+                app_color: row.get("app_color"),
+                started_at: row.get("started_at"),
+                ended_at: row.get("ended_at"),
+            })
+            .collect();
+
+        return Ok(activities);
+    }
 }
 
 pub struct InsertAppActivityInput {
@@ -151,10 +197,25 @@ impl WindowActivityRepository {
     }
 }
 
+pub struct GetAppActivitiesInput {
+    pub started_after: i64,
+    pub started_before: i64,
+    pub limit: Option<i64>,
+}
+
 pub struct GetWindowActivitiesInput {
     pub started_after: i64,
     pub started_before: i64,
     pub limit: Option<i64>,
+}
+
+pub struct AppActivityRow {
+    pub app_bundle_id: Option<String>,
+    pub app_name: Option<String>,
+    pub app_icon: Option<String>,
+    pub app_color: Option<String>,
+    pub started_at: i64,
+    pub ended_at: i64,
 }
 
 pub struct WindowActivityRow {

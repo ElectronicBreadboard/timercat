@@ -200,7 +200,8 @@ async getCurrentActivity(params: GetCurrentActivityParams) : Promise<Result<Curr
 }
 },
 /**
- * Get past window activities within a time range.
+ * Get past activities within a time range.
+ * Returns window-level activities if available, otherwise falls back to app-level activities.
  */
 async getWindowActivities(params: GetWindowActivitiesParams) : Promise<Result<WindowActivityDto[], string>> {
     try {
