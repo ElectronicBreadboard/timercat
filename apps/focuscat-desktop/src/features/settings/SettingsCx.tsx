@@ -33,7 +33,8 @@ export class SettingsCx {
 				workDurationMinutes: 25,
 				shortBreakMinutes: 5,
 				longBreakMinutes: 15,
-				sessionsBeforeLongBreak: 4
+				sessionsBeforeLongBreak: 4,
+				autoAdvance: false
 			},
 			countdown: {
 				durationMinutes: 25
