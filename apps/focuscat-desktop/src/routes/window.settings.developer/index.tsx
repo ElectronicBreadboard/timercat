@@ -4,7 +4,7 @@ import React from 'react';
 import { FolderOpenIcon, JsonDisplay, Switch } from '@/components';
 import { specta } from '@/environment';
 import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
-import { useCurrentActivityHistory } from '@/hooks';
+import { useCurrentActivityHistory, useOnInputDetected } from '@/hooks';
 import { toTuple } from '@/lib';
 
 export const Route = createFileRoute('/window/settings/developer/')({
@@ -24,6 +24,10 @@ function RouteComponent() {
 	const [pollError, setPollError] = React.useState<string | null>(null);
 	const [isPolling, setIsPolling] = React.useState(false);
 	const pollTimeoutRef = React.useRef<number | null>(null);
+
+	const keyboardDotRef = React.useRef<HTMLSpanElement>(null);
+	const mouseDotRef = React.useRef<HTMLSpanElement>(null);
+	const inputFlashTimeoutRef = React.useRef<number | null>(null);
 
 	// MARK: - Actions
 
@@ -63,12 +67,53 @@ function RouteComponent() {
 		}, 2000);
 	}, []);
 
+	const flashDot = React.useCallback((el: HTMLSpanElement | null, color: string) => {
+		if (el == null) {
+			return;
+		}
+		el.style.backgroundColor = color;
+		el.style.boxShadow = `0 0 8px ${color}`;
+	}, []);
+
+	const clearDot = React.useCallback((el: HTMLSpanElement | null) => {
+		if (el == null) {
+			return;
+		}
+		el.style.backgroundColor = '';
+		el.style.boxShadow = '';
+	}, []);
+
 	// MARK: - Effects
+
+	useOnInputDetected(
+		React.useCallback(
+			(inputType: specta.InputType) => {
+				if (inputFlashTimeoutRef.current != null) {
+					window.clearTimeout(inputFlashTimeoutRef.current);
+				}
+				clearDot(keyboardDotRef.current);
+				clearDot(mouseDotRef.current);
+				if (inputType === 'keyboard') {
+					flashDot(keyboardDotRef.current, 'var(--color-info)');
+				} else {
+					flashDot(mouseDotRef.current, 'var(--color-accent)');
+				}
+				inputFlashTimeoutRef.current = window.setTimeout(() => {
+					inputFlashTimeoutRef.current = null;
+					clearDot(inputType === 'keyboard' ? keyboardDotRef.current : mouseDotRef.current);
+				}, 80);
+			},
+			[flashDot, clearDot]
+		)
+	);
 
 	React.useEffect(() => {
 		return () => {
 			if (pollTimeoutRef.current != null) {
 				window.clearTimeout(pollTimeoutRef.current);
+			}
+			if (inputFlashTimeoutRef.current != null) {
+				window.clearTimeout(inputFlashTimeoutRef.current);
 			}
 		};
 	}, []);
@@ -161,6 +206,28 @@ function RouteComponent() {
 					>
 						{showActivityHistory ? 'disable' : 'enable'}
 					</button>
+				</p>
+			</SettingGroup>
+
+			<SettingGroup title="Input">
+				<div className="w-full px-3 py-2">
+					<span className="text-base-600 inline-flex items-center gap-2 text-sm">
+						<span
+							ref={keyboardDotRef}
+							className="bg-base-200 inline-block h-2 w-2 shrink-0 rounded-full"
+							aria-hidden
+						/>
+						Keyboard
+						<span
+							ref={mouseDotRef}
+							className="bg-base-200 inline-block h-2 w-2 shrink-0 rounded-full"
+							aria-hidden
+						/>
+						Mouse
+					</span>
+				</div>
+				<p className="text-base-500 p-1 text-xs">
+					Lights flash when keyboard or mouse input is detected.
 				</p>
 			</SettingGroup>
 		</div>
