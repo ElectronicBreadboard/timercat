@@ -12,6 +12,7 @@ export const appConfig = {
 	},
 	distribution: {
 		website: 'https://focuscat.app',
-		github: 'https://github.com/builder-group/isshin'
+		github: 'https://github.com/builder-group/isshin',
+		githubReleases: 'https://github.com/builder-group/isshin/releases'
 	}
 } as const;
