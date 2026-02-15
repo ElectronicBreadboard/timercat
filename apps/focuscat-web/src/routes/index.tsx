@@ -2,13 +2,26 @@ import { createFileRoute } from '@tanstack/react-router';
 import React from 'react';
 import { AppleIcon, GithubIcon, SimpleLogoIcon } from '@/components';
 import { appConfig } from '@/environment';
+import { useDetectPlatform } from '@/hooks';
+import { fetchLatestRelease } from '@/lib';
 
 export const Route = createFileRoute('/')({
+	loader: () => fetchLatestRelease('builder-group/isshin'),
 	component: RouteComponent
 });
 
 function RouteComponent() {
+	const { downloadLinks } = Route.useLoaderData();
 	const { github, githubReleases } = appConfig.distribution;
+
+	const { platform, isIntel } = useDetectPlatform();
+	const downloadUrl = React.useMemo(() => {
+		if (platform !== 'macos') {
+			return null;
+		}
+		return isIntel ? downloadLinks.macIntel : downloadLinks.macArm;
+	}, [platform, isIntel, downloadLinks]);
+
 	const tags = React.useMemo(
 		() => [
 			'Offline-first',
@@ -43,24 +56,37 @@ function RouteComponent() {
 						Focus timer with a cat <br className="hidden sm:block" />
 						companion for <AppleIcon className="xs:size-10 mb-5 inline-block size-8 md:size-12" />
 					</h1>
-					<div className="mb-16 flex flex-wrap items-center justify-center gap-3 sm:mb-20">
+					<div className="mb-16 flex flex-col items-center gap-2 sm:mb-20">
+						<div className="flex flex-wrap items-center justify-center gap-3">
+							<a
+								href={downloadUrl ?? githubReleases}
+								{...(downloadUrl != null ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
+								className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-base font-medium transition-opacity ${
+									downloadUrl != null
+										? 'bg-base-950 text-base-0 hover:opacity-90'
+										: 'bg-base-200 text-base-400 cursor-not-allowed'
+								}`}
+							>
+								<AppleIcon className="size-5" />
+								{downloadUrl != null ? 'Download for Mac' : 'macOS only'}
+							</a>
+							<a
+								href={github}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="border-base-200 bg-base-0 inline-flex items-center justify-center gap-2 rounded-xl border px-5 py-2.5 text-base font-medium transition-opacity hover:opacity-90"
+							>
+								<GithubIcon className="size-5" />
+								View on GitHub
+							</a>
+						</div>
 						<a
 							href={githubReleases}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="bg-base-950 text-base-0 inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-base font-medium transition-opacity hover:opacity-90"
+							className="text-base-600 mt-4 text-sm underline transition-opacity hover:opacity-80"
 						>
-							<AppleIcon className="size-5" />
-							Download for Mac
-						</a>
-						<a
-							href={github}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="border-base-200 bg-base-0 inline-flex items-center justify-center gap-2 rounded-xl border px-5 py-2.5 text-base font-medium transition-opacity hover:opacity-90"
-						>
-							<GithubIcon className="size-5" />
-							View on GitHub
+							More download options
 						</a>
 					</div>
 				</div>
