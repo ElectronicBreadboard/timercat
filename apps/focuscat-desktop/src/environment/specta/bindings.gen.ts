@@ -545,7 +545,7 @@ export type InputDetectedEvent = InputType
  * Type of input event detected.
  */
 export type InputType = "keyboard" | "mouse"
-export type PomodoroSettings = { workDurationMinutes: number; shortBreakMinutes: number; longBreakMinutes: number; sessionsBeforeLongBreak: number }
+export type PomodoroSettings = { workDurationMinutes: number; shortBreakMinutes: number; longBreakMinutes: number; sessionsBeforeLongBreak: number; autoAdvance: boolean }
 /**
  * Preview of resolved rules for a session setup.
  */

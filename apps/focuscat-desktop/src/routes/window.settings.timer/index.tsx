@@ -111,22 +111,38 @@ function RouteComponent() {
 
 			<SettingGroup title="Sessions">
 				{settings.timer.timerMode === 'pomodoro' && (
-					<SettingItem
-						label="Sessions Before Long Break"
-						description="Work sessions before a long break"
-					>
-						<NumberField
-							value={settings.timer.pomodoro.sessionsBeforeLongBreak}
-							min={1}
-							max={10}
-							size="sm"
-							onChange={(v) =>
-								updateTimer({
-									pomodoro: { ...settings.timer.pomodoro, sessionsBeforeLongBreak: v }
-								})
-							}
-						/>
-					</SettingItem>
+					<>
+						<SettingItem
+							label="Sessions Before Long Break"
+							description="Work sessions before a long break"
+						>
+							<NumberField
+								value={settings.timer.pomodoro.sessionsBeforeLongBreak}
+								min={1}
+								max={10}
+								size="sm"
+								onChange={(v) =>
+									updateTimer({
+										pomodoro: { ...settings.timer.pomodoro, sessionsBeforeLongBreak: v }
+									})
+								}
+							/>
+						</SettingItem>
+						<SettingItem
+							label="Auto-advance"
+							description="Go to next phase automatically when timer ends (no overtime)"
+						>
+							<Switch
+								checked={settings.timer.pomodoro.autoAdvance ?? false}
+								onCheckedChange={(checked) =>
+									updateTimer({
+										pomodoro: { ...settings.timer.pomodoro, autoAdvance: checked }
+									})
+								}
+								size="sm"
+							/>
+						</SettingItem>
+					</>
 				)}
 				<SettingItem
 					label="Show Session Setup"

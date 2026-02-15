@@ -159,6 +159,7 @@ pub struct PomodoroSettings {
     pub short_break_minutes: u32,
     pub long_break_minutes: u32,
     pub sessions_before_long_break: u32,
+    pub auto_advance: bool,
 }
 
 impl Default for PomodoroSettings {
@@ -168,6 +169,7 @@ impl Default for PomodoroSettings {
             short_break_minutes: 5,
             long_break_minutes: 15,
             sessions_before_long_break: 4,
+            auto_advance: false,
         };
     }
 }

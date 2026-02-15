@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router';
 import { useFeatureState, useListener } from 'feature-react/state';
 import React from 'react';
 import { Badge } from '@/components';
@@ -12,6 +13,7 @@ import { TimeDisplay } from './TimeDisplay';
 
 export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	const { onTick, className, style } = props;
+	const navigate = useNavigate();
 	const timerCx = useTimerCx();
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
@@ -20,6 +22,7 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	const [previewMinutes, setPreviewMinutes] = React.useState<number | null>(null);
 	const lastPreviewMinute = React.useRef<number | null>(null);
 	const lastCountdownSecond = React.useRef<number | null>(null);
+	const prevOvertimeSeconds = React.useRef(0);
 
 	// MARK: - Actions
 
@@ -52,6 +55,27 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 			lastTimerMode.current = settings.timer.timerMode;
 		}
 	}, [settings.timer.timerMode, timerCx]);
+
+	// Auto-advance: when timer hits 0 in Pomodoro and setting is on, advance to next phase
+	useListener(
+		timerCx.$overtimeSeconds,
+		({ value: overtimeSeconds }) => {
+			const prev = prevOvertimeSeconds.current;
+			prevOvertimeSeconds.current = overtimeSeconds;
+			if (prev === 0 && overtimeSeconds === 1) {
+				const s = settingsCx.$appSettings.get();
+				if (s.timer.timerMode === 'pomodoro' && s.timer.pomodoro.autoAdvance) {
+					const isBreak = !timerCx.$sessionType.get().endsWith(':work');
+					if (s.timer.showSessionSetup && isBreak) {
+						navigate({ to: '/window/main/setup', search: { advance: true } });
+					} else {
+						timerCx.advance();
+					}
+				}
+			}
+		},
+		[timerCx, settingsCx, navigate]
+	);
 
 	// Countdown tick handler - fires every second when running
 	useListener(
