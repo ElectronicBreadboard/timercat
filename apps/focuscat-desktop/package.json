@@ -31,8 +31,8 @@
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.2.0",
-		"@tanstack/react-router": "^1.159.5",
-		"@tanstack/react-router-devtools": "^1.159.5",
+		"@tanstack/react-router": "^1.160.0",
+		"@tanstack/react-router-devtools": "^1.160.0",
 		"@tauri-apps/api": "^2.10.1",
 		"@tauri-apps/plugin-opener": "^2.5.3",
 		"@tauri-apps/plugin-os": "^2.3.2",
@@ -45,14 +45,14 @@
 		"motion": "^12.34.0",
 		"react": "^19.2.4",
 		"react-dom": "^19.2.4",
-		"tailwind-merge": "^3.4.0",
+		"tailwind-merge": "^3.4.1",
 		"tuple-result": "^0.0.11",
 		"validation-adapter": "^0.0.27"
 	},
 	"devDependencies": {
 		"@blgc/config": "^0.0.40",
 		"@tailwindcss/vite": "^4.1.18",
-		"@tanstack/router-plugin": "^1.159.5",
+		"@tanstack/router-plugin": "^1.160.0",
 		"@tauri-apps/cli": "^2.10.0",
 		"@types/node": "^25.2.3",
 		"@types/react": "^19.2.14",

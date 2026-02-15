@@ -42,6 +42,15 @@ We're building focus tools that actually work. No willpower battles. No manual s
 
 ### <img src="./.github/assets/focuscat_logo.svg" width="24" height="24" style="vertical-align: middle; margin-bottom: 2px;" /> FocusCat
 
+<p>
+  <a href="https://github.com/builder-group/isshin/releases">
+    <img src="https://img.shields.io/github/downloads/builder-group/isshin/total?style=flat&color=blue" alt="Downloads" />
+  </a>
+  <a href="https://github.com/builder-group/isshin/releases/latest">
+    <img src="https://img.shields.io/github/v/release/builder-group/isshin?style=flat" alt="Release" />
+  </a>
+</p>
+
 **Free macOS app. Coming soon.**
 
 Pomodoro timer with a cat companion that reacts to your work. Configure your cycles, block apps during focus time. Enforces breaks so you actually take them.
