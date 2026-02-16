@@ -3,5 +3,14 @@
 	"productName": "Focuscat",
 	"version": "0.0.26",
 	"mainBinaryName": "Focuscat",
-	"identifier": "com.buildergroup.focuscat"
+	"identifier": "com.buildergroup.focuscat",
+	"bundle": {
+		"createUpdaterArtifacts": true
+	},
+	"plugins": {
+		"updater": {
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI3OUNEMUUwRUE1MUQyRTEKUldUaDBsSHE0TkdjdDBKRTdXYUsrM1pxQUNubyttWUxkenRYMGRQUDB4R3NqeGp1b1F0Tm5jL3gK",
+			"endpoints": ["https://github.com/builder-group/isshin/releases/latest/download/latest.json"]
+		}
+	}
 }

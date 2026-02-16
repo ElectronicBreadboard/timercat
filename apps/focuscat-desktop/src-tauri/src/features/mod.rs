@@ -8,3 +8,4 @@ pub mod permission;
 pub mod session;
 pub mod settings;
 pub mod timer;
+pub mod updater;

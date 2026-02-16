@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAppInfo, usePlatform } from '@/hooks';
+import { useAppInfo, usePlatform, useUpdateChecker } from '@/hooks';
 import { cn } from '@/lib';
 import { Badge } from '../display';
 
@@ -7,6 +7,7 @@ export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 	const { title, children, className, showBadge = true } = props;
 	const platform = usePlatform();
 	const appInfo = useAppInfo();
+	const { updateAvailable, installing, install } = useUpdateChecker();
 
 	return (
 		<header
@@ -41,6 +42,19 @@ export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 						</Badge>
 					)
 				))}
+			{updateAvailable && (
+				<Badge
+					className={cn(
+						'ml-2 cursor-pointer',
+						installing
+							? 'bg-amber-400/10 text-amber-400'
+							: 'bg-green-400/10 text-green-400 hover:bg-green-400/20'
+					)}
+					onClick={!installing ? () => void install() : undefined}
+				>
+					{installing ? 'UPDATING...' : 'UPDATE'}
+				</Badge>
+			)}
 			<div data-tauri-drag-region className="flex-1" />
 			{children != null && <div className="flex items-center gap-1 pr-1">{children}</div>}
 		</header>

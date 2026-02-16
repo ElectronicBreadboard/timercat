@@ -79,6 +79,8 @@ runs:
         APPLE_PASSWORD: ${{ env.APPLE_PASSWORD }}
         APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
         APPLE_TEAM_ID: ${{ env.APPLE_TEAM_ID }}
+        TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_SIGNING_PRIVATE_KEY }}
+        TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       run: |
         if [ "${{ inputs.config }}" = "prod" ]; then
           pnpm tauri build ${{ inputs.args }} --config src-tauri/tauri.prod.conf.json

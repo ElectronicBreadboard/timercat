@@ -136,6 +136,12 @@ pub fn hide_blocker_window(app: tauri::AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 #[specta::specta]
+pub fn restart_app(app: tauri::AppHandle) {
+    app.restart();
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn quit_app(app: tauri::AppHandle) {
     app.exit(0);
 }

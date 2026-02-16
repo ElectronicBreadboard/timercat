@@ -6,6 +6,8 @@ export async function fetchLatestRelease(repo: string): Promise<TReleaseInfo> {
 		return CACHE.data;
 	}
 
+	// /releases/latest only returns non-prerelease, non-draft releases.
+	// Pre-releases (from e.g. develop CI) won't appear here until promoted to a full release.
 	const response = await fetch(`https://api.github.com/repos/${repo}/releases/latest`, {
 		headers: { Accept: 'application/vnd.github.v3+json' }
 	});
@@ -38,17 +40,23 @@ function matchAssetUrl(assets: TGitHubRelease['assets']): Partial<TDownloadLinks
 
 	for (const { name: rawName, browser_download_url: url } of assets) {
 		const name = rawName.toLowerCase();
-		if (name.endsWith('.sig') || name.endsWith('.txt')) {
+
+		// Skip updater artifacts and signatures
+		if (
+			name.endsWith('.sig') ||
+			name.endsWith('.txt') ||
+			name.endsWith('.json') ||
+			name.endsWith('.app.tar.gz')
+		) {
 			continue;
 		}
 
-		const isMacDmg = name.endsWith('.dmg') || name.endsWith('.app.tar.gz');
 		const isArm = name.includes('aarch64') || name.includes('arm64');
 		const isX86 = name.includes('x64') || name.includes('x86_64');
 
-		if (isMacDmg && isArm) {
+		if (name.endsWith('.dmg') && isArm) {
 			links.macArm = url;
-		} else if (isMacDmg && isX86) {
+		} else if (name.endsWith('.dmg') && isX86) {
 			links.macIntel = url;
 		} else if (name.endsWith('.msi')) {
 			links.windows = url;

@@ -96,8 +96,19 @@ async hideBlockerWindow() : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async restartApp() : Promise<void> {
+    await TAURI_INVOKE("restart_app");
+},
 async quitApp() : Promise<void> {
     await TAURI_INVOKE("quit_app");
+},
+async installUpdate() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("install_update") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 },
 async getSettings() : Promise<AppSettings> {
     return await TAURI_INVOKE("get_settings");
@@ -394,7 +405,8 @@ inputDetectedEvent: InputDetectedEvent,
 profileChangedEvent: ProfileChangedEvent,
 sessionChangedEvent: SessionChangedEvent,
 sessionCompletedEvent: SessionCompletedEvent,
-timerUpdatedEvent: TimerUpdatedEvent
+timerUpdatedEvent: TimerUpdatedEvent,
+updateAvailableEvent: UpdateAvailableEvent
 }>({
 appSettingsChangedEvent: "app-settings-changed-event",
 blockingViolationEvent: "blocking-violation-event",
@@ -403,7 +415,8 @@ inputDetectedEvent: "input-detected-event",
 profileChangedEvent: "profile-changed-event",
 sessionChangedEvent: "session-changed-event",
 sessionCompletedEvent: "session-completed-event",
-timerUpdatedEvent: "timer-updated-event"
+timerUpdatedEvent: "timer-updated-event",
+updateAvailableEvent: "update-available-event"
 })
 
 /** user-defined constants **/
@@ -634,6 +647,8 @@ export type TimerSettings = { timerMode: TimerModeEnum; pomodoro: PomodoroSettin
 showSessionSetup: boolean }
 export type TimerStatus = "idle" | "running" | "paused"
 export type TimerUpdatedEvent = TimerDto
+export type UpdateAvailableEvent = UpdateInfo
+export type UpdateInfo = { version: string; currentVersion: string }
 /**
  * A website identified by domain.
  */

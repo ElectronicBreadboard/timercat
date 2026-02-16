@@ -17,6 +17,8 @@ use crate::features::{
     },
     settings::{self, types::AppSettingsChangedEvent},
     timer::{self, types::TimerUpdatedEvent},
+    updater,
+    updater::types::UpdateAvailableEvent,
 };
 use specta_typescript::Typescript;
 use tauri_specta::{collect_commands, collect_events, Builder};
@@ -38,7 +40,10 @@ pub fn run() {
             commands::hide_settings_window,
             commands::hide_activity_window,
             commands::hide_blocker_window,
+            commands::restart_app,
             commands::quit_app,
+            // Updater commands
+            updater::commands::install_update,
             // Settings commands
             settings::commands::get_settings,
             settings::commands::set_settings,
@@ -100,6 +105,8 @@ pub fn run() {
             InputDetectedEvent,
             // Activity window
             CurrentActivityEvent,
+            // Updater
+            UpdateAvailableEvent,
         ]);
 
     #[cfg(debug_assertions)]
@@ -110,9 +117,16 @@ pub fn run() {
         eprintln!("Skipping TypeScript bindings export: {}", e);
     }
 
-    tauri::Builder::default()
+    let mut tauri_builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_os::init());
+
+    #[cfg(all(desktop, not(feature = "app-store")))]
+    {
+        tauri_builder = tauri_builder.plugin(tauri_plugin_updater::Builder::new().build());
+    }
+
+    tauri_builder
         .invoke_handler(builder.invoke_handler())
         .setup(move |app| {
             // https://docs.rs/tauri-specta/2.0.0-rc.21/tauri_specta/index.html
@@ -130,6 +144,8 @@ pub fn run() {
             app_feature::setup(app);
             #[cfg(target_os = "macos")]
             tray::setup(app);
+            #[cfg(all(desktop, not(feature = "app-store")))]
+            updater::setup(app.handle());
 
             // Show main window on startup
             let _ = window::Window::Main.show(app.handle());

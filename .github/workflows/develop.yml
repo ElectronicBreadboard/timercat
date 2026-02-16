@@ -104,6 +104,8 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           app: focuscat-desktop
           app-directory: apps/focuscat-desktop
@@ -111,6 +113,29 @@ jobs:
           target: ${{ matrix.target }}
           args: ${{ matrix.args }}
           config: prod
+
+      - name: Determine arch suffix
+        id: arch
+        shell: bash
+        run: |
+          if [[ "${{ matrix.target }}" == "aarch64-apple-darwin" ]]; then
+            echo "suffix=aarch64" >> $GITHUB_OUTPUT
+          elif [[ "${{ matrix.target }}" == "x86_64-apple-darwin" ]]; then
+            echo "suffix=x64" >> $GITHUB_OUTPUT
+          else
+            echo "suffix=${{ matrix.target }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Rename updater artifacts with arch suffix
+        shell: bash
+        run: |
+          BUNDLE_DIR="target/${{ matrix.target }}/release/bundle/macos"
+          if [ -f "$BUNDLE_DIR/Focuscat.app.tar.gz" ]; then
+            cp "$BUNDLE_DIR/Focuscat.app.tar.gz" "$BUNDLE_DIR/Focuscat_${{ steps.arch.outputs.suffix }}.app.tar.gz"
+          fi
+          if [ -f "$BUNDLE_DIR/Focuscat.app.tar.gz.sig" ]; then
+            cp "$BUNDLE_DIR/Focuscat.app.tar.gz.sig" "$BUNDLE_DIR/Focuscat_${{ steps.arch.outputs.suffix }}.app.tar.gz.sig"
+          fi
 
       - name: Upload artifacts to release
         uses: softprops/action-gh-release@v2
@@ -128,5 +153,54 @@ jobs:
           prerelease: true
           files: |
             target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-            target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz
+            target/${{ matrix.target }}/release/bundle/macos/Focuscat_${{ steps.arch.outputs.suffix }}.app.tar.gz
+            target/${{ matrix.target }}/release/bundle/macos/Focuscat_${{ steps.arch.outputs.suffix }}.app.tar.gz.sig
+          fail_on_unmatched_files: false
+
+  updater-json:
+    name: 📋 Generate Updater JSON
+    runs-on: ubuntu-latest
+    needs: [version-bump, build]
+    permissions:
+      contents: write
+    steps:
+      - name: Generate latest.json
+        shell: bash
+        env:
+          VERSION: ${{ needs.version-bump.outputs.version }}
+          TAG: ${{ needs.version-bump.outputs.tag }}
+        run: |
+          REPO="builder-group/isshin"
+          BASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
+
+          # Download signature files from the release (retry up to 3 times with delay)
+          for arch in aarch64 x64; do
+            for attempt in 1 2 3; do
+              if curl -sfL "${BASE_URL}/Focuscat_${arch}.app.tar.gz.sig" -o "sig_${arch}.txt"; then
+                echo "✅ Downloaded sig for ${arch}"
+                break
+              fi
+              echo "⏳ Attempt ${attempt}/3 failed for ${arch} sig, retrying in 10s..."
+              sleep 10
+            done
+          done
+
+          SIG_AARCH64=$(cat sig_aarch64.txt 2>/dev/null || echo "")
+          SIG_X64=$(cat sig_x64.txt 2>/dev/null || echo "")
+          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          printf '{"version":"%s","pub_date":"%s","platforms":{"darwin-aarch64":{"signature":"%s","url":"%s"},"darwin-x86_64":{"signature":"%s","url":"%s"}}}' \
+            "${VERSION}" \
+            "${PUB_DATE}" \
+            "${SIG_AARCH64}" \
+            "${BASE_URL}/Focuscat_aarch64.app.tar.gz" \
+            "${SIG_X64}" \
+            "${BASE_URL}/Focuscat_x64.app.tar.gz" \
+            > latest.json
+
+      - name: Upload latest.json to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.version-bump.outputs.tag }}
+          files: latest.json
           fail_on_unmatched_files: false

@@ -91,20 +91,23 @@ Settings → Actions → General → Workflow permissions → "Read and write pe
 
 Settings → Secrets and variables → Actions:
 
-| Secret                       | Value                                                               |
-| ---------------------------- | ------------------------------------------------------------------- |
-| `APPLE_CERTIFICATE`          | Base64-encoded Developer ID .p12                                    |
-| `APPLE_CERTIFICATE_PASSWORD` | Certificate password                                                |
-| `APPLE_ID`                   | Apple ID email                                                      |
-| `APPLE_PASSWORD`             | App-specific password                                               |
-| `APPLE_SIGNING_IDENTITY`     | Must be `Developer ID Application: Name (TEAM_ID)` for notarization |
-| `APPLE_TEAM_ID`              | Team ID (10 chars)                                                  |
+| Secret                               | Value                                                               |
+| ------------------------------------ | ------------------------------------------------------------------- |
+| `APPLE_CERTIFICATE`                  | Base64-encoded Developer ID .p12                                    |
+| `APPLE_CERTIFICATE_PASSWORD`         | Certificate password                                                |
+| `APPLE_ID`                           | Apple ID email                                                      |
+| `APPLE_PASSWORD`                     | App-specific password                                               |
+| `APPLE_SIGNING_IDENTITY`             | Must be `Developer ID Application: Name (TEAM_ID)` for notarization |
+| `APPLE_TEAM_ID`                      | Team ID (10 chars)                                                  |
+| `TAURI_SIGNING_PRIVATE_KEY`          | Contents of `~/.tauri/focuscat.key` (updater signing)               |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Password used during key generation                                 |
 
 See [`.secrets.template`](.secrets.template).
 
 **How to get secrets:**
 
 - [Tauri macOS Code Signing Guide](https://v2.tauri.app/distribute/sign/macos/)
+- [Tauri Updater: Signing Updates](https://v2.tauri.app/plugin/updater/#signing-updates) 
 
 ## Local Testing
 
