@@ -6,7 +6,7 @@ import { useDetectPlatform } from '@/hooks';
 import { fetchLatestRelease } from '@/lib';
 
 export const Route = createFileRoute('/')({
-	loader: () => fetchLatestRelease('builder-group/isshin'),
+	loader: () => fetchLatestRelease(),
 	component: RouteComponent
 });
 

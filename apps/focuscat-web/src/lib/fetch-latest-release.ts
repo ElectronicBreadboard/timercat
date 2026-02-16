@@ -1,14 +1,16 @@
+import { appConfig } from '@/environment';
+
 let CACHE: { data: TReleaseInfo; timestamp: number } | null = null;
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
-export async function fetchLatestRelease(repo: string): Promise<TReleaseInfo> {
+export async function fetchLatestRelease(): Promise<TReleaseInfo> {
 	if (CACHE != null && Date.now() - CACHE.timestamp < CACHE_TTL_MS) {
 		return CACHE.data;
 	}
 
 	// /releases/latest only returns non-prerelease, non-draft releases.
 	// Pre-releases (from e.g. develop CI) won't appear here until promoted to a full release.
-	const response = await fetch(`https://api.github.com/repos/${repo}/releases/latest`, {
+	const response = await fetch(`${appConfig.githubApi}/releases/latest`, {
 		headers: { Accept: 'application/vnd.github.v3+json' }
 	});
 	if (!response.ok) {
