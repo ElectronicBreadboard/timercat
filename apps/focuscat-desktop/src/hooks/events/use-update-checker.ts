@@ -5,29 +5,12 @@ import { useAppInfo } from '../use-app-info';
 
 export function useUpdateChecker(): TUpdateChecker {
 	const appInfo = useAppInfo();
-	const [updateAvailable, setUpdateAvailable] = React.useState(false);
+
+	const [updateInfo, setUpdateInfo] = React.useState<TUpdateInfoWithUrgency | null>(null);
 	const [installing, setInstalling] = React.useState(false);
 
-	React.useEffect(() => {
-		if (appInfo.stage !== 'prod' || appInfo.distribution !== 'direct') {
-			return;
-		}
-
-		let unlisten: (() => void) | undefined;
-
-		specta.events.updateAvailableEvent
-			.listen(() => {
-				setUpdateAvailable(true);
-			})
-			.then((fn) => {
-				unlisten = fn;
-			});
-
-		return () => unlisten?.();
-	}, [appInfo]);
-
 	const install = React.useCallback(async () => {
-		if (!updateAvailable) {
+		if (updateInfo == null) {
 			return;
 		}
 
@@ -37,13 +20,62 @@ export function useUpdateChecker(): TUpdateChecker {
 			console.error('Failed to install update:', err);
 			setInstalling(false);
 		}
-	}, [updateAvailable]);
+	}, [updateInfo]);
 
-	return { updateAvailable, installing, install };
+	React.useEffect(() => {
+		if (appInfo.stage !== 'prod' || appInfo.distribution !== 'direct') {
+			return;
+		}
+
+		let unlisten: (() => void) | undefined;
+
+		specta.events.updateAvailableEvent
+			.listen((event) => {
+				setUpdateInfo({ ...event.payload, urgency: computeUrgency(event.payload) });
+			})
+			.then((fn) => {
+				unlisten = fn;
+			});
+
+		return () => unlisten?.();
+	}, [appInfo]);
+
+	return {
+		updateAvailable: updateInfo != null,
+		updateInfo,
+		installing,
+		install
+	} as TUpdateChecker;
 }
 
-export interface TUpdateChecker {
-	updateAvailable: boolean;
+export type TUpdateChecker = {
 	installing: boolean;
 	install: () => Promise<void>;
+} & (
+	| { updateAvailable: true; updateInfo: TUpdateInfoWithUrgency }
+	| { updateAvailable: false; updateInfo: null }
+);
+
+export type TUpdateInfoWithUrgency = specta.UpdateInfo & { urgency: TUpdateUrgency };
+
+export type TUpdateUrgency = 'normal' | 'warning' | 'urgent';
+
+/** Gray: 1–2 patch behind. Yellow: more patch or 1 minor. Red: major or many patch/minor. */
+function computeUrgency(info: specta.UpdateInfo): TUpdateUrgency {
+	if (info.majorBehind > 0) {
+		return 'urgent';
+	}
+	if (info.minorBehind >= 2) {
+		return 'urgent';
+	}
+	if (info.minorBehind > 0) {
+		return 'warning';
+	}
+	if (info.patchBehind <= 2) {
+		return 'normal';
+	}
+	if (info.patchBehind <= 5) {
+		return 'warning';
+	}
+	return 'urgent';
 }

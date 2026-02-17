@@ -7,7 +7,11 @@ export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 	const { title, children, className, showBadge = true } = props;
 	const platform = usePlatform();
 	const appInfo = useAppInfo();
-	const { updateAvailable, installing, install } = useUpdateChecker();
+	const { updateAvailable, updateInfo, installing, install } = useUpdateChecker();
+
+	const handleUpdateClick = React.useCallback(() => {
+		void install();
+	}, [install]);
 
 	return (
 		<header
@@ -44,15 +48,19 @@ export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 				))}
 			{updateAvailable && (
 				<Badge
-					className={cn(
-						'ml-2 cursor-pointer',
+					variant={
 						installing
-							? 'bg-amber-400/10 text-amber-400'
-							: 'bg-green-400/10 text-green-400 hover:bg-green-400/20'
-					)}
-					onClick={!installing ? () => void install() : undefined}
+							? 'neutral'
+							: updateInfo.urgency === 'warning'
+								? 'warning'
+								: updateInfo.urgency === 'urgent'
+									? 'error'
+									: 'neutral'
+					}
+					className={cn('ml-2', !installing && 'cursor-pointer hover:opacity-80')}
+					onClick={installing ? undefined : handleUpdateClick}
 				>
-					{installing ? 'UPDATING...' : 'UPDATE'}
+					{installing ? 'Updating...' : 'UPDATE'}
 				</Badge>
 			)}
 			<div data-tauri-drag-region className="flex-1" />

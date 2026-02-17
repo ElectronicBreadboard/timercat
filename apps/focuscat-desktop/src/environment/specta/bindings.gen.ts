@@ -649,7 +649,11 @@ showSessionSetup: boolean }
 export type TimerStatus = "idle" | "running" | "paused"
 export type TimerUpdatedEvent = TimerDto
 export type UpdateAvailableEvent = UpdateInfo
-export type UpdateInfo = { version: string; currentVersion: string }
+export type UpdateInfo = { version: string; currentVersion: string; 
+/**
+ * Semver parts we are behind (e.g. 1.2.3 → 2.0.0 gives 1, 0, 0).
+ */
+majorBehind: number; minorBehind: number; patchBehind: number }
 /**
  * A website identified by domain.
  */
