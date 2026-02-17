@@ -31,7 +31,11 @@ Create `[domain].rs` (e.g., `timer.rs`, `session.rs`) when you have business log
 
 ### mod.rs
 
+Start with a one-line doc comment describing what this feature does. This is the entry point — it should tell you the scope at a glance.
+
 ```rust
+//! Manages shopping cart: add/remove items, compute totals, apply discounts.
+
 pub mod commands;
 pub mod repository;
 pub mod types;

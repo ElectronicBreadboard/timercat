@@ -107,7 +107,7 @@ See [`.secrets.template`](.secrets.template).
 **How to get secrets:**
 
 - [Tauri macOS Code Signing Guide](https://v2.tauri.app/distribute/sign/macos/)
-- [Tauri Updater: Signing Updates](https://v2.tauri.app/plugin/updater/#signing-updates) 
+- [Tauri Updater: Signing Updates](https://v2.tauri.app/plugin/updater/#signing-updates)
 
 ## Local Testing
 
