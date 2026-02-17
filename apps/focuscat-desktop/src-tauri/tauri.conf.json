@@ -12,9 +12,7 @@
 	},
 	"app": {
 		"macOSPrivateApi": true,
-		"security": {
-			"csp": null
-		}
+		"security": { "csp": null }
 	},
 	"bundle": {
 		"active": true,
@@ -26,8 +24,6 @@
 			"icons/icon.icns",
 			"icons/icon.ico"
 		],
-		"resources": [
-			"resources/**/*"
-		]
+		"resources": ["resources/**/*"]
 	}
 }

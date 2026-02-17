@@ -121,7 +121,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_os::init());
 
-    #[cfg(all(desktop, not(feature = "app-store")))]
+    #[cfg(all(desktop, not(feature = "app-store"), not(debug_assertions)))]
     {
         tauri_builder = tauri_builder.plugin(tauri_plugin_updater::Builder::new().build());
     }
@@ -144,7 +144,7 @@ pub fn run() {
             app_feature::setup(app);
             #[cfg(target_os = "macos")]
             tray::setup(app);
-            #[cfg(all(desktop, not(feature = "app-store")))]
+            #[cfg(all(desktop, not(feature = "app-store"), not(debug_assertions)))]
             updater::setup(app.handle());
 
             // Show main window on startup
