@@ -60,6 +60,12 @@ pub enum SearchableItem {
         website: Website,
         keywords: Vec<String>,
     },
+    Group {
+        name: String,
+        apps: Vec<App>,
+        websites: Vec<Website>,
+        keywords: Vec<String>,
+    },
 }
 
 impl SearchableItem {
@@ -93,6 +99,7 @@ impl SearchableItem {
         match self {
             Self::App { app, .. } => app.name.as_deref().unwrap_or(&app.bundle_id),
             Self::Website { website, .. } => website.name.as_deref().unwrap_or(&website.domain),
+            Self::Group { name, .. } => name,
         }
     }
 
@@ -101,6 +108,7 @@ impl SearchableItem {
         match self {
             Self::App { app, .. } => &app.bundle_id,
             Self::Website { website, .. } => &website.domain,
+            Self::Group { name, .. } => name,
         }
     }
 
@@ -109,6 +117,7 @@ impl SearchableItem {
         match self {
             Self::App { keywords, .. } => keywords,
             Self::Website { keywords, .. } => keywords,
+            Self::Group { keywords, .. } => keywords,
         }
     }
 }
@@ -132,6 +141,22 @@ pub enum SearchResultDto {
         website: Website,
         score: u32,
     },
+    #[serde(rename = "group")]
+    Group {
+        name: String,
+        icon: Option<String>,
+        members: Vec<GroupMemberDto>,
+        score: u32,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(tag = "type", rename_all = "camelCase")]
+pub enum GroupMemberDto {
+    #[serde(rename = "app")]
+    App { app: App },
+    #[serde(rename = "website")]
+    Website { website: Website },
 }
 
 // MARK: - State

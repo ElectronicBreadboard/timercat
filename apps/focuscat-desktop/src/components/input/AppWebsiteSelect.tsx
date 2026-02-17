@@ -17,51 +17,54 @@ export const AppWebsiteSelect: React.FC<TAppWebsiteSelectProps> = (props) => {
 		className
 	} = props;
 
-	const handleSearch = React.useCallback(
-		async (query: string): Promise<TSelectedItem[]> => {
-			const [areSearchResultsOk, , searchResults] = toTuple(
-				await specta.commands.search({
-					query,
-					includeApps,
-					includeWebsites,
-					includeIcons: true,
-					limit: 20
-				})
-			);
-
-			if (areSearchResultsOk) {
-				return searchResults.map((result): TSelectedItem => {
-					switch (result.type) {
-						case 'app':
-							return {
-								id: result.app.id,
-								type: 'app',
-								bundleId: result.app.bundleId,
-								name: result.app.name,
-								icon: result.app.icon,
-								color: result.app.color
-							};
-						case 'website':
-							return {
-								id: result.website.id,
-								type: 'website',
-								domain: result.website.domain,
-								name: result.website.name,
-								icon: result.website.icon,
-								color: result.website.color
-							};
-					}
-				});
-			}
-			return [];
-		},
-		[includeApps, includeWebsites]
-	);
-
-	const cx = useMultiSelect({
+	const cx = useMultiSelect<TSearchResultItem>({
 		value,
-		onChange,
-		onSearch: handleSearch,
+		onChange: onChange as (items: TSearchResultItem[]) => void,
+		onSearch: React.useCallback(
+			async (query: string): Promise<TSearchResultItem[]> => {
+				const [areSearchResultsOk, , searchResults] = toTuple(
+					await specta.commands.search({
+						query,
+						includeApps,
+						includeWebsites,
+						includeIcons: true,
+						limit: 20
+					})
+				);
+
+				if (areSearchResultsOk) {
+					return searchResults.map((result): TSearchResultItem => {
+						switch (result.type) {
+							case 'app':
+								return mapApp(result.app);
+							case 'website':
+								return mapWebsite(result.website);
+							case 'group':
+								return {
+									id: `group:${result.name}`,
+									type: 'group',
+									name: result.name,
+									icon: result.icon,
+									members: result.members.map((m): TSelectedItem => {
+										switch (m.type) {
+											case 'app':
+												return mapApp(m.app);
+											case 'website':
+												return mapWebsite(m.website);
+										}
+									})
+								};
+						}
+					});
+				}
+				return [];
+			},
+			[includeApps, includeWebsites]
+		),
+		// Groups are resolved into individual items, so onChange only ever receives array of items (not groups)
+		resolveItem: React.useCallback((item: TSearchResultItem): TSearchResultItem[] | null => {
+			return item.type === 'group' ? item.members : null;
+		}, []),
 		filterSelected: false,
 		emptyResults: value
 	});
@@ -86,6 +89,18 @@ export interface TAppWebsiteSelectProps {
 	className?: string;
 }
 
+type TSearchResultItem = TGroupResult | TSelectedItem;
+
+interface TGroupResult {
+	id: string;
+	type: 'group';
+	name: string;
+	icon?: string | null;
+	members: TSelectedItem[];
+}
+
+export type TSelectedItem = TSelectedApp | TSelectedWebsite;
+
 export type TSelectedApp = {
 	id: string;
 	type: 'app';
@@ -103,8 +118,6 @@ export type TSelectedWebsite = {
 	icon?: string | null;
 	color?: string | null;
 };
-
-export type TSelectedItem = TSelectedApp | TSelectedWebsite;
 
 const InputArea: React.FC<TInputAreaProps> = (props) => {
 	const {
@@ -135,7 +148,7 @@ const InputArea: React.FC<TInputAreaProps> = (props) => {
 };
 
 interface TInputAreaProps {
-	cx: MultiSelectCx<TSelectedItem>;
+	cx: MultiSelectCx<TSearchResultItem>;
 	value: TSelectedItem[];
 	placeholder?: string;
 	defaultHeight?: number;
@@ -182,7 +195,7 @@ const PopupArea = React.memo<TPopupAreaProps>(function PopupArea({ cx, popupSide
 });
 
 interface TPopupAreaProps {
-	cx: MultiSelectCx<TSelectedItem>;
+	cx: MultiSelectCx<TSearchResultItem>;
 	popupSide?: 'top' | 'bottom';
 }
 
@@ -225,7 +238,6 @@ const ResultItem: React.FC<TResultItemProps> = (props) => {
 	const { cx, result, index } = props;
 
 	const { selected, 'data-highlighted': highlighted, ...ariaProps } = cx.useItemProps(index);
-
 	const displayName = React.useMemo(() => getItemDisplayName(result), [result]);
 
 	return (
@@ -233,7 +245,12 @@ const ResultItem: React.FC<TResultItemProps> = (props) => {
 			{...ariaProps}
 			className={cn(
 				'flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-(--color-base-900)',
-				highlighted && (result.type === 'app' ? 'bg-blue-500/10' : 'bg-violet-500/10')
+				highlighted &&
+					(result.type === 'group'
+						? 'bg-amber-500/10'
+						: result.type === 'app'
+							? 'bg-blue-500/10'
+							: 'bg-violet-500/10')
 			)}
 			onClick={() => cx.toggle(result)}
 			onMouseDown={(e) => e.preventDefault()}
@@ -248,11 +265,13 @@ const ResultItem: React.FC<TResultItemProps> = (props) => {
 					</span>
 				)}
 				<Badge
-					className={cn(
-						result.type === 'app'
-							? 'bg-blue-500/20 text-blue-600 dark:text-blue-400'
-							: 'bg-violet-500/20 text-violet-600 dark:text-violet-400'
-					)}
+					className={
+						result.type === 'group'
+							? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+							: result.type === 'app'
+								? 'bg-blue-500/20 text-blue-600 dark:text-blue-400'
+								: 'bg-violet-500/20 text-violet-600 dark:text-violet-400'
+					}
 				>
 					{result.type}
 				</Badge>
@@ -262,8 +281,8 @@ const ResultItem: React.FC<TResultItemProps> = (props) => {
 };
 
 interface TResultItemProps {
-	cx: MultiSelectCx<TSelectedItem>;
-	result: TSelectedItem;
+	cx: MultiSelectCx<TSearchResultItem>;
+	result: TSearchResultItem;
 	index: number;
 }
 
@@ -286,25 +305,67 @@ const ItemIcon: React.FC<TItemIconProps> = (props) => {
 		<div
 			className={cn(
 				'flex shrink-0 items-center justify-center rounded-sm',
-				item.type === 'app' ? 'bg-blue-200 text-blue-600' : 'bg-violet-200 text-violet-600'
+				item.type === 'group'
+					? 'bg-amber-200 text-amber-600'
+					: item.type === 'app'
+						? 'bg-blue-200 text-blue-600'
+						: 'bg-violet-200 text-violet-600'
 			)}
 			style={{ width: size, height: size }}
 		>
-			<span className="text-[10px] font-medium">{item.type === 'app' ? 'A' : 'W'}</span>
+			<span className="text-[10px] font-medium">
+				{item.type === 'group' ? 'G' : item.type === 'app' ? 'A' : 'W'}
+			</span>
 		</div>
 	);
 };
 
 interface TItemIconProps {
-	item: TSelectedItem;
+	item: TSelectedItem | TGroupResult;
 	size?: number;
 }
 
-function getItemDisplayName(item: TSelectedItem): string {
+function getItemDisplayName(item: TSearchResultItem): string {
 	switch (item.type) {
 		case 'app':
 			return item.name ?? item.bundleId;
 		case 'website':
 			return item.name ?? item.domain;
+		case 'group':
+			return item.name;
 	}
+}
+
+function mapApp(app: {
+	id: string;
+	bundleId: string;
+	name: string | null;
+	icon: string | null;
+	color: string | null;
+}): TSelectedApp {
+	return {
+		id: app.id,
+		type: 'app',
+		bundleId: app.bundleId,
+		name: app.name,
+		icon: app.icon,
+		color: app.color
+	};
+}
+
+function mapWebsite(website: {
+	id: string;
+	domain: string;
+	name: string | null;
+	icon: string | null;
+	color: string | null;
+}): TSelectedWebsite {
+	return {
+		id: website.id,
+		type: 'website',
+		domain: website.domain,
+		name: website.name,
+		icon: website.icon,
+		color: website.color
+	};
 }

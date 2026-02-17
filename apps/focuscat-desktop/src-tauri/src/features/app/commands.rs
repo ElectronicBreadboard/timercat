@@ -1,4 +1,4 @@
-use super::types::{AppSearchState, SearchResultDto, SearchableItem};
+use super::types::{AppSearchState, GroupMemberDto, SearchResultDto, SearchableItem};
 use serde::Deserialize;
 use tauri::State;
 
@@ -65,6 +65,25 @@ impl From<(SearchableItem, u32)> for SearchResultDto {
         match item {
             SearchableItem::App { app, .. } => Self::App { app, score },
             SearchableItem::Website { website, .. } => Self::Website { website, score },
+            SearchableItem::Group {
+                name,
+                websites,
+                apps,
+                ..
+            } => {
+                let icon = websites.first().and_then(|w| w.icon.clone());
+                let members = websites
+                    .into_iter()
+                    .map(|w| GroupMemberDto::Website { website: w })
+                    .chain(apps.into_iter().map(|a| GroupMemberDto::App { app: a }))
+                    .collect();
+                return Self::Group {
+                    name,
+                    icon,
+                    members,
+                    score,
+                };
+            }
         }
     }
 }

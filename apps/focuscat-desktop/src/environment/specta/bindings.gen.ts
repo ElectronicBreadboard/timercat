@@ -550,6 +550,7 @@ export type GoalSettings = {
  * Daily focus goal in minutes (default: 120 = 2h)
  */
 dailyGoalMinutes: number }
+export type GroupMemberDto = { type: "app"; app: App } | { type: "website"; website: Website }
 /**
  * Event emitted when user input is detected (throttled).
  */
@@ -612,7 +613,7 @@ includeIcons?: boolean;
  * Maximum results (default: 20)
  */
 limit: number | null }
-export type SearchResultDto = { type: "app"; app: App; score: number } | { type: "website"; website: Website; score: number }
+export type SearchResultDto = { type: "app"; app: App; score: number } | { type: "website"; website: Website; score: number } | { type: "group"; name: string; icon: string | null; members: GroupMemberDto[]; score: number }
 /**
  * Event emitted when session state changes (started, completed, cancelled).
  */

@@ -56,6 +56,11 @@ fn get_best_score(
         }
     }
 
+    // Group boost: groups are higher-value results since they capture multiple items
+    if matches!(item, SearchableItem::Group { .. }) && best_score > 0 {
+        best_score = (best_score as f32 * 1.3) as u32;
+    }
+
     return best_score;
 }
 

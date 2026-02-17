@@ -6,6 +6,7 @@ export class MultiSelectCx<GItem extends { id: string }> {
 	private _value: GItem[] = [];
 	private _onChange: (items: GItem[]) => void = () => {};
 	private _onSearch: (query: string) => Promise<GItem[]> = async () => [];
+	private _resolveItem?: (item: GItem) => GItem[] | null;
 	private _debounceMs = 200;
 	private _filterSelected = true;
 	private _disabled = false;
@@ -60,6 +61,7 @@ export class MultiSelectCx<GItem extends { id: string }> {
 		this._value = options.value;
 		this._onChange = options.onChange;
 		this._onSearch = options.onSearch;
+		this._resolveItem = options.resolveItem;
 		this._debounceMs = options.debounceMs ?? 200;
 		this._filterSelected = options.filterSelected ?? true;
 		this._disabled = options.disabled ?? false;
@@ -114,11 +116,24 @@ export class MultiSelectCx<GItem extends { id: string }> {
 	};
 
 	public toggle = (item: GItem): void => {
-		const exists = this._value.some((v) => v.id === item.id);
-		if (exists) {
-			this._onChange(this._value.filter((v) => v.id !== item.id));
+		const resolved = this._resolveItem?.(item);
+		if (resolved != null) {
+			const allSelected = resolved.every((r) => this._value.some((v) => v.id === r.id));
+			if (allSelected) {
+				const ids = new Set(resolved.map((r) => r.id));
+				this._onChange(this._value.filter((v) => !ids.has(v.id)));
+			} else {
+				const existing = new Set(this._value.map((v) => v.id));
+				const toAdd = resolved.filter((r) => !existing.has(r.id));
+				this._onChange([...this._value, ...toAdd]);
+			}
 		} else {
-			this._onChange([...this._value, item]);
+			const exists = this._value.some((v) => v.id === item.id);
+			if (exists) {
+				this._onChange(this._value.filter((v) => v.id !== item.id));
+			} else {
+				this._onChange([...this._value, item]);
+			}
 		}
 		this.resetSearchState();
 		this.inputRef.current?.focus();
@@ -211,7 +226,7 @@ export class MultiSelectCx<GItem extends { id: string }> {
 			'role': 'option' as const,
 			'aria-selected': index === highlightedIndex,
 			'data-highlighted': index === highlightedIndex || undefined,
-			'selected': item != null && this._value.some((v) => v.id === item.id),
+			'selected': this.isSelected(item),
 			// Only update highlight when cursor physically moves, not when DOM scrolls beneath it
 			'onPointerMove': (e: React.PointerEvent) => {
 				const lastPos = this._lastMousePos;
@@ -228,6 +243,17 @@ export class MultiSelectCx<GItem extends { id: string }> {
 				}
 			}
 		};
+	}
+
+	private isSelected(item: GItem | undefined): boolean {
+		if (item == null) {
+			return false;
+		}
+		const resolved = this._resolveItem?.(item);
+		if (resolved != null) {
+			return resolved.every((r) => this._value.some((v) => v.id === r.id));
+		}
+		return this._value.some((v) => v.id === item.id);
 	}
 
 	// Search
@@ -442,6 +468,8 @@ export interface TMultiSelectCxOptions<GItem extends { id: string }> {
 	onChange: (items: GItem[]) => void;
 	/** Async function to search for items (should be memoized with useCallback) */
 	onSearch: (query: string) => Promise<GItem[]>;
+	/** Resolve a compound item into its sub-items for toggle/selected. Return null for default. */
+	resolveItem?: (item: GItem) => GItem[] | null;
 	/** Debounce delay in milliseconds (default: 200) */
 	debounceMs?: number;
 	/** Whether to filter out already-selected items from results (default: true) */
