@@ -2,10 +2,16 @@ use super::{
     persistence,
     types::{AppSettings, AppSettingsChangedEvent, AppSettingsState},
 };
-use crate::common::path::get_app_data_dir;
-use crate::environment::configs::app::{AppConfig, AppDistribution};
-use crate::features::timer::timer::TimerStatus;
-use crate::features::timer::types::{TimerDto, TimerState, TimerUpdatedEvent};
+use crate::{
+    common::path::get_app_data_dir,
+    features::{
+        autostart,
+        timer::{
+            timer::TimerStatus,
+            types::{TimerDto, TimerState, TimerUpdatedEvent},
+        },
+    },
+};
 use std::process::Command;
 use tauri::{AppHandle, Manager, State};
 use tauri_specta::Event;
@@ -23,11 +29,7 @@ pub fn set_settings(
     state: State<'_, AppSettingsState>,
     settings: AppSettings,
 ) -> Result<(), String> {
-    // Force cat_window off in App Store builds
-    let mut settings = settings;
-    if AppConfig::distribution() == AppDistribution::AppStore {
-        settings.features.cat_window = false;
-    }
+    let prev_launch_at_login = state.lock().unwrap().launch_at_login;
 
     // Update in-memory state
     *state.lock().unwrap() = settings.clone();
@@ -35,7 +37,12 @@ pub fn set_settings(
     // Persist to disk
     persistence::save_settings(&app, &settings)?;
 
-    // Sync idle timer with new settings
+    // Apply new autostart setting
+    if prev_launch_at_login != settings.launch_at_login {
+        autostart::apply(&app, settings.launch_at_login);
+    }
+
+    // Apply new timer settings (if idle)
     if let Some(timer_state) = app.try_state::<TimerState>() {
         let mut timer = timer_state.lock().unwrap();
         if timer.status == TimerStatus::Idle {

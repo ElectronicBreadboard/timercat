@@ -6,7 +6,7 @@ use crate::environment::db;
 use crate::features::{
     activity_window,
     activity_window::types::CurrentActivityEvent,
-    app as app_feature, audio, blocking,
+    app as app_feature, audio, autostart, blocking,
     blocking::types::BlockingViolationEvent,
     focus_profile::{self, types::ProfileChangedEvent},
     input::{self, types::InputDetectedEvent},
@@ -15,12 +15,17 @@ use crate::features::{
         self,
         types::{SessionChangedEvent, SessionCompletedEvent},
     },
-    settings::{self, types::AppSettingsChangedEvent},
+    settings::{
+        self,
+        types::{AppSettingsChangedEvent, AppSettingsState},
+    },
     timer::{self, types::TimerUpdatedEvent},
     updater,
     updater::types::UpdateAvailableEvent,
 };
 use specta_typescript::Typescript;
+use tauri::Manager;
+use tauri_plugin_autostart::MacosLauncher;
 use tauri_specta::{collect_commands, collect_events, Builder};
 
 pub fn run() {
@@ -117,14 +122,15 @@ pub fn run() {
         eprintln!("Skipping TypeScript bindings export: {}", e);
     }
 
-    let mut tauri_builder = tauri::Builder::default()
+    let tauri_builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_os::init());
-
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            None,
+        ));
     #[cfg(all(desktop, not(feature = "app-store"), not(debug_assertions)))]
-    {
-        tauri_builder = tauri_builder.plugin(tauri_plugin_updater::Builder::new().build());
-    }
+    let tauri_builder = tauri_builder.plugin(tauri_plugin_updater::Builder::new().build());
 
     tauri_builder
         .invoke_handler(builder.invoke_handler())
@@ -146,6 +152,12 @@ pub fn run() {
             tray::setup(app);
             #[cfg(all(desktop, not(feature = "app-store"), not(debug_assertions)))]
             updater::setup(app.handle());
+
+            // Apply autostart settings on startup
+            if let Some(state) = app.try_state::<AppSettingsState>() {
+                let enabled = state.lock().unwrap().launch_at_login;
+                autostart::apply(app.handle(), enabled);
+            }
 
             // Show main window on startup
             let _ = window::Window::Main.show(app.handle());

@@ -9,6 +9,7 @@ export class SettingsCx {
 
 	public readonly $appSettings = createState<TAppSettings>({
 		version: '0.0.1',
+		launchAtLogin: true,
 		features: {
 			goals: true,
 			activity: true,

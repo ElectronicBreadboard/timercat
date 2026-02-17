@@ -52,7 +52,7 @@ function RouteComponent() {
 		<div className="space-y-6">
 			<h1 className="text-base-900 text-xl font-semibold">App</h1>
 
-			<SettingGroup title="Appearance">
+			<SettingGroup title="General">
 				<SettingItem label="Theme" description="Choose your preferred color scheme">
 					<ToggleGroup
 						value={settings.appearance.theme}
@@ -69,6 +69,13 @@ function RouteComponent() {
 							<MoonIcon size={14} />
 						</ToggleGroup.Item>
 					</ToggleGroup>
+				</SettingItem>
+				<SettingItem label="Launch at login" description="Start Focuscat when you log in">
+					<Switch
+						checked={settings.launchAtLogin}
+						onCheckedChange={(checked) => settingsCx.update({ launchAtLogin: checked })}
+						size="sm"
+					/>
 				</SettingItem>
 			</SettingGroup>
 

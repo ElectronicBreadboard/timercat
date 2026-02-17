@@ -180,7 +180,6 @@ impl SessionType {
             _ => None,
         };
     }
-
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
