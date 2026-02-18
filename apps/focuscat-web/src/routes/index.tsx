@@ -93,7 +93,7 @@ function RouteComponent() {
 
 				<div className="animate-fade-in-delay flex justify-center px-4 opacity-0 sm:px-6">
 					<img
-						src="/screenshot-timer.png"
+						src="/illustrations/screenshot/screenshot-timer.png"
 						alt="FocusCat timer view"
 						className="border-base-200 max-h-[420px] w-auto max-w-[260px] shrink-0 rounded-2xl border object-contain shadow-2xl"
 					/>
