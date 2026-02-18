@@ -1,2 +1,1 @@
-export * from './display';
-export * from './input';
+export const hello = 'hello';
