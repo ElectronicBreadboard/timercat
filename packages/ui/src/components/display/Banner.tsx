@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import React from 'react';
-import { AlertIcon } from '@/components';
 import { cn } from '@/lib';
+import { AlertIcon } from './icons';
 
 const bannerVariants = cva('flex w-full items-start gap-3 rounded-lg border p-3 text-left', {
 	variants: {
