@@ -1,10 +1,9 @@
+import { Badge, cn } from '@repo/ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useFeatureState, useListener } from 'feature-react/state';
 import React from 'react';
-import { Badge } from '@/components';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
-import { cn } from '@/lib';
 import { CountdownTimerActions } from './CountdownTimerActions';
 import { CountdownTimerDial } from './CountdownTimerDial';
 import { PomodoroTimerActions } from './PomodoroTimerActions';

@@ -1,9 +1,9 @@
+import { AppWindowIcon, CodeIcon, formatTimeOfDayAmPm } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import React from 'react';
 import { unwrapOr } from 'tuple-result';
-import { AppWindowIcon, CodeIcon } from '@/components';
 import { specta } from '@/environment';
-import { formatTimeOfDayAmPm, toTuple } from '@/lib';
+import { toTuple } from '@/lib';
 import { SessionTimeline } from '../window.activity.$sessionId/components';
 import { UsageSection, type TUsageEntry } from './components';
 

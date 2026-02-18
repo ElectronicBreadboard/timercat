@@ -1,7 +1,7 @@
+import { IconButton, ShuffleIcon } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { IconButton, ShuffleIcon } from '@/components';
 import { specta } from '@/environment';
 import { Cat, catConfig, TCatFace, TCatHat, type TCatRef } from '@/features/cat';
 import { useSettingsCx } from '@/features/settings';

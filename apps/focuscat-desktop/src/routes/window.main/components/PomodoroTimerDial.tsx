@@ -1,6 +1,6 @@
+import { TriangleRightIcon } from '@repo/ui';
 import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
-import { TriangleRightIcon } from '@/components';
 import { type TimerCx } from '@/features/timer';
 import { SessionWheel } from './SessionWheel';
 import { TimeDial } from './TimeDial';

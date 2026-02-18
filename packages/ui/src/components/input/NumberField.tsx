@@ -1,8 +1,8 @@
 import { NumberField as BaseNumberField } from '@base-ui/react/number-field';
 import { cva, type VariantProps } from 'class-variance-authority';
 import React from 'react';
-import { MinusIcon, PlusIcon } from '@/components/display';
 import { cn } from '@/lib';
+import { MinusIcon, PlusIcon } from '../display';
 
 export const NumberField: React.FC<TNumberFieldProps> = (props) => {
 	const { value, onChange, min, max, step = 1, disabled = false, size, className } = props;

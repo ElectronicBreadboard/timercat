@@ -1,10 +1,9 @@
+import { Button, CheckIcon, cn, IconButton, PauseIcon, PlayIcon, XIcon } from '@repo/ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { Button, CheckIcon, IconButton, PauseIcon, PlayIcon, XIcon } from '@/components';
 import { useSettingsCx } from '@/features/settings';
 import { type TimerCx } from '@/features/timer';
-import { cn } from '@/lib';
 
 export const CountdownTimerActions: React.FC<TProps> = (props) => {
 	const { cx, className } = props;

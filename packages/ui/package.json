@@ -41,7 +41,7 @@
 		"watch:css": "shx cp ./src/styles/theme.css ./dist/theme.css && npx @tailwindcss/cli -i ./src/styles/tailwind.css -o ./dist/tailwind.css --watch"
 	},
 	"dependencies": {
-		"@base-ui-components/react": "1.0.0-rc.0",
+		"@base-ui/react": "^1.2.0",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"lucide-react": "^0.574.0",

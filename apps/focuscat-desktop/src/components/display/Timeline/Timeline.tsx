@@ -1,7 +1,7 @@
+import { cn } from '@repo/ui';
 import { useSubscriber } from 'feature-react/state';
 import React from 'react';
 import { useBoundingRectObserver } from '@/hooks';
-import { cn } from '@/lib';
 import type { TimelineCx } from './TimelineCx';
 
 export const Timeline: React.FC<TTimelineProps> = (props) => {

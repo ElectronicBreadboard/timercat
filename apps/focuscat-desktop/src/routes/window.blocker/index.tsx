@@ -1,11 +1,11 @@
+import { Badge, hexToRgba } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { Badge, WindowHeader } from '@/components';
+import { WindowHeader } from '@/components';
 import { specta } from '@/environment';
 import { Cat } from '@/features/cat';
 import { useSettingsCx } from '@/features/settings';
-import { hexToRgba } from '@/lib';
 
 export const Route = createFileRoute('/window/blocker/')({
 	component: RouteComponent

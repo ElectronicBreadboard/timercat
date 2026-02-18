@@ -1,10 +1,9 @@
+import { cn, Input, Switch, ToggleGroup } from '@repo/ui';
 import { type TForm } from 'feature-form';
 import { useCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { Input, Switch, ToggleGroup } from '@/components';
 import { type specta } from '@/environment';
 import { SettingGroup, SettingItem } from '@/features/settings';
-import { cn } from '@/lib';
 import { type TFocusProfileFormData } from '../FocusProfileCx';
 
 export const ScheduleSettingGroup: React.FC<TScheduleSettingGroupProps> = (props) => {

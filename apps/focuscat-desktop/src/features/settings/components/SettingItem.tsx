@@ -1,8 +1,7 @@
+import { ArrowUpRightIcon, ChevronRightIcon, cn } from '@repo/ui';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { cva } from 'class-variance-authority';
 import React from 'react';
-import { ArrowUpRightIcon, ChevronRightIcon } from '@/components';
-import { cn } from '@/lib';
 
 const interactiveStyles = [
 	'transition-colors duration-100 hover:bg-base-100',

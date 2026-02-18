@@ -1,7 +1,8 @@
+import { formatDuration, formatRelativeDate } from '@repo/ui';
 import React from 'react';
 import { specta } from '@/environment';
 import { useOnSessionComplete } from '@/hooks';
-import { formatDuration, formatRelativeDate, toTuple } from '@/lib';
+import { toTuple } from '@/lib';
 
 export const LastSessionView: React.FC = () => {
 	const [lastSession, setLastSession] = React.useState<specta.SessionDetailDto | null>(null);

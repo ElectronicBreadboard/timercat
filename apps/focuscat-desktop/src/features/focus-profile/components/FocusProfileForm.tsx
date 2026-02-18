@@ -1,10 +1,9 @@
+import { CheckIcon, cn, Input } from '@repo/ui';
 import { type TFormFieldStatusValue } from 'feature-form';
 import { useForm } from 'feature-react/form';
 import { useCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { CheckIcon, Input } from '@/components';
 import { SettingGroup, SettingItem } from '@/features/settings';
-import { cn } from '@/lib';
 import { useFocusProfileCx } from '../FocusProfileCx';
 import { RuleSettingGroup } from './RuleSettingGroup';
 import { ScheduleSettingGroup } from './ScheduleSettingGroup';

@@ -1,9 +1,9 @@
+import { cn, TooltipProvider } from '@repo/ui';
 import { useFeatureState } from 'feature-react/state';
 import React, { useCallback } from 'react';
-import { Timeline, TimelineAxis, TooltipProvider } from '@/components';
+import { Timeline, TimelineAxis } from '@/components';
 import type { specta } from '@/environment';
 import { useMemoCleanup } from '@/hooks';
-import { cn } from '@/lib';
 import { ActivityRow } from './ActivityRow';
 import { SessionEventMarkers, SessionEventPeriodOverlays } from './SessionEventIndicators';
 import { SessionTimelineCx } from './SessionTimelineCx';

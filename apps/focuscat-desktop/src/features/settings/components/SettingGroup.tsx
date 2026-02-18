@@ -1,5 +1,5 @@
+import { cn } from '@repo/ui';
 import React from 'react';
-import { cn } from '@/lib';
 
 export const SettingGroup: React.FC<TSettingGroupProps> = (props) => {
 	const { title, children, className } = props;

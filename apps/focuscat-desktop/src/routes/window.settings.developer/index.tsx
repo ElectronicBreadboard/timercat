@@ -1,7 +1,8 @@
+import { FolderOpenIcon, Switch } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { FolderOpenIcon, JsonDisplay, Switch } from '@/components';
+import { JsonDisplay } from '@/components';
 import { specta } from '@/environment';
 import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
 import { useCurrentActivityHistory, useOnInputDetected } from '@/hooks';

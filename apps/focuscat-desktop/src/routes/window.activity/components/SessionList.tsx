@@ -1,8 +1,7 @@
+import { ClockIcon, cn } from '@repo/ui';
 import { Link, useParams } from '@tanstack/react-router';
 import React from 'react';
-import { ClockIcon } from '@/components';
 import { specta } from '@/environment';
-import { cn } from '@/lib';
 import { SessionListItem } from './SessionListItem';
 
 export const SessionList: React.FC<TSessionListProps> = (props) => {

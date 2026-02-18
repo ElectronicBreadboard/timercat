@@ -1,6 +1,6 @@
+import { TriangleDownIcon } from '@repo/ui';
 import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
-import { TriangleDownIcon } from '@/components';
 import { type TimerCx } from '@/features/timer';
 import { useWindUpTick } from '../hooks';
 import { TimeWheel } from './TimeWheel';

@@ -1,7 +1,7 @@
+import { ChevronRightIcon, ClockIcon, IconButton, PlusIcon } from '@repo/ui';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { ChevronRightIcon, ClockIcon, IconButton, PlusIcon } from '@/components';
 import { specta } from '@/environment';
 import { useFocusProfileCx } from '@/features/focus-profile';
 import { SettingGroup } from '@/features/settings';

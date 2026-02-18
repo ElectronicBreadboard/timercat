@@ -1,6 +1,5 @@
+import { formatDuration, Meter } from '@repo/ui';
 import React from 'react';
-import { Meter } from '@/components';
-import { formatDuration } from '@/lib';
 
 export const UsageSection: React.FC<TUsageSectionProps> = (props) => {
 	const { title, entries, fallbackIcon } = props;

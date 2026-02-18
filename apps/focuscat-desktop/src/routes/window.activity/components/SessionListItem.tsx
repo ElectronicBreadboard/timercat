@@ -1,8 +1,7 @@
+import { BriefcaseIcon, cn, CoffeeIcon, formatDuration, formatTimeOfDayAmPm } from '@repo/ui';
 import { Link, useParams } from '@tanstack/react-router';
 import React from 'react';
-import { BriefcaseIcon, CoffeeIcon } from '@/components';
 import { specta } from '@/environment';
-import { cn, formatDuration, formatTimeOfDayAmPm } from '@/lib';
 
 export const SessionListItem: React.FC<TSessionListItemProps> = (props) => {
 	const { session } = props;

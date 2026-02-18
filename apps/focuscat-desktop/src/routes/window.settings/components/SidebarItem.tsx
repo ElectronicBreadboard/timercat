@@ -1,6 +1,6 @@
+import { cn } from '@repo/ui';
 import { Link, useLocation } from '@tanstack/react-router';
 import React from 'react';
-import { cn } from '@/lib';
 
 export const SidebarItem: React.FC<TSidebarItemProps> = (props) => {
 	const { to, icon, label, disabled } = props;

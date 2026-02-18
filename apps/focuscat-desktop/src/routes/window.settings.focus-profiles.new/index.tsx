@@ -1,9 +1,9 @@
+import { Button } from '@repo/ui';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { hasFormChanged } from 'feature-form';
 import { useForm } from 'feature-react/form';
 import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { Button } from '@/components';
 import { FocusProfileForm, useFocusProfileCx } from '@/features/focus-profile';
 
 export const Route = createFileRoute('/window/settings/focus-profiles/new/')({

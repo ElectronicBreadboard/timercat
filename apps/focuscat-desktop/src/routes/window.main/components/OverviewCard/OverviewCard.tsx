@@ -1,8 +1,7 @@
+import { cn, TriangleLeftIcon, TriangleRightIcon } from '@repo/ui';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { TriangleLeftIcon, TriangleRightIcon } from '@/components';
 import { useSettingsCx } from '@/features/settings';
-import { cn } from '@/lib';
 import { ActiveProfilesView } from './ActiveProfilesView';
 import { FocusGoalView } from './FocusGoalView';
 import { LastSessionView } from './LastSessionView';

@@ -1,6 +1,6 @@
+import { TooltipProvider } from '@repo/ui';
 import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
-import { TooltipProvider } from '@/components';
 import { ActivityRowCx } from './ActivityRowCx';
 import { AppBlock, WindowGroupBlock } from './components';
 import type { TActivityBlock } from './types';

@@ -1,7 +1,6 @@
+import { Badge, cn } from '@repo/ui';
 import React from 'react';
 import { useAppInfo, usePlatform, useUpdateChecker } from '@/hooks';
-import { cn } from '@/lib';
-import { Badge } from '../display';
 
 export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 	const { title, children, className, showBadge = true } = props;

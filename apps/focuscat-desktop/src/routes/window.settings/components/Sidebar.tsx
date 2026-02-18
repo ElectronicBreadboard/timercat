@@ -1,6 +1,3 @@
-import { useLocation } from '@tanstack/react-router';
-import { useFeatureState } from 'feature-react/state';
-import React from 'react';
 import {
 	ActivityIcon,
 	AppWindowIcon,
@@ -10,7 +7,10 @@ import {
 	TagIcon,
 	TargetIcon,
 	TimerIcon
-} from '@/components';
+} from '@repo/ui';
+import { useLocation } from '@tanstack/react-router';
+import { useFeatureState } from 'feature-react/state';
+import React from 'react';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
 import { useAppInfo } from '@/hooks';

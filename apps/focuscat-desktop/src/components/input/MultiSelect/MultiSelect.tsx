@@ -1,7 +1,7 @@
 import { Popover } from '@base-ui/react/popover';
+import { cn } from '@repo/ui';
 import { cva, type VariantProps } from 'class-variance-authority';
 import React from 'react';
-import { cn } from '@/lib';
 
 /** Root wrapper that manages popup open state via base-ui Popover */
 const Root: React.FC<TMultiSelectRootProps> = (props) => {
