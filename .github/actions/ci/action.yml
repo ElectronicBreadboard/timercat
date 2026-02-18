@@ -14,7 +14,7 @@ runs:
 
     - name: Build workspace dependencies
       shell: bash
-      run: pnpm exec turbo run build --filter=@repo/${{ inputs.app }}^
+      run: pnpm exec turbo run build --filter='@repo/${{ inputs.app }}^...'
 
     - name: Lint
       shell: bash

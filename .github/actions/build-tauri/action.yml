@@ -37,7 +37,7 @@ runs:
 
     - name: Build workspace dependencies
       shell: bash
-      run: pnpm exec turbo run build --filter=@repo/${{ inputs.app }}^
+      run: pnpm exec turbo run build --filter='@repo/${{ inputs.app }}^...'
 
     - name: Install system dependencies (Ubuntu)
       if: runner.os == 'Linux'
