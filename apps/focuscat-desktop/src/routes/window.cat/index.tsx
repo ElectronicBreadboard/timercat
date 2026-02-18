@@ -1,6 +1,7 @@
 import { Button } from '@base-ui/react/button';
 import {
 	BriefcaseIcon,
+	Cat,
 	cn,
 	CoffeeIcon,
 	ExpandIcon,
@@ -8,14 +9,14 @@ import {
 	GripIcon,
 	PauseIcon,
 	PlayIcon,
-	SkipForwardIcon
+	SkipForwardIcon,
+	type TCatRef
 } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { specta } from '@/environment';
-import { Cat, type TCatRef } from '@repo/ui';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
 import { useOnInputDetected } from '@/hooks';

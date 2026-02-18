@@ -1,6 +1,5 @@
 import React from 'react';
-import { specta } from '@/environment';
-import { type SoundId } from '@/environment/specta/bindings.gen';
+import { TTimerCx } from './TimerCx';
 
 /**
  * Plays wind-up tick sounds on value changes using a sliding window.
@@ -8,7 +7,7 @@ import { type SoundId } from '@/environment/specta/bindings.gen';
  * The window's position slides based on drag speed — slow drags use
  * lower variants (1-5), fast drags shift to higher variants (7-11).
  */
-export function useWindUpTick(options: TWindUpTickOptions = {}) {
+export function useWindUpTick(cx: TTimerCx, options: TWindUpTickOptions = {}) {
 	const { tickCount = 11, windowSize = 5, throttleMs = 30, slowMs = 200 } = options;
 
 	const prevValueRef = React.useRef<number | null>(null);
@@ -37,14 +36,14 @@ export function useWindUpTick(options: TWindUpTickOptions = {}) {
 					cycleIndexRef.current = (cycleIndexRef.current + direction + windowSize) % windowSize;
 
 					const index = windowStart + cycleIndexRef.current;
-					const id = `wind-up-tick-${index + 1}` as SoundId;
-					specta.commands.playSound(id);
+					const id = `wind-up-tick-${index + 1}`;
+					cx.playSound?.(id);
 					lastPlayTimeRef.current = now;
 				}
 			}
 			prevValueRef.current = value;
 		},
-		[tickCount, windowSize, throttleMs, slowMs]
+		[cx, tickCount, windowSize, throttleMs, slowMs]
 	);
 
 	return { reset, tick };

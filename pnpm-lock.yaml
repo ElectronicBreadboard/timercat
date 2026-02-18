@@ -220,9 +220,18 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      feature-react:
+        specifier: ^0.0.67
+        version: 0.0.67(react@19.2.4)
+      feature-state:
+        specifier: ^0.0.65
+        version: 0.0.65
       lucide-react:
         specifier: ^0.574.0
         version: 0.574.0(react@19.2.4)
+      motion:
+        specifier: ^12.34.1
+        version: 12.34.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       tailwind-merge:
         specifier: ^3.4.1
         version: 3.4.1

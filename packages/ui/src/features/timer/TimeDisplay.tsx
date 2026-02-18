@@ -1,7 +1,7 @@
-import { cn, formatTime, formatTimeOfDay } from '@repo/ui';
 import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
-import { type TimerCx } from '@/features/timer';
+import { cn, formatTime, formatTimeOfDay } from '../../lib';
+import { type TTimerCx } from './TimerCx';
 
 export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 	const { cx, previewMinutes, className } = props;
@@ -78,7 +78,7 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 };
 
 interface TTimeDisplayProps {
-	cx: TimerCx;
+	cx: TTimerCx;
 	previewMinutes: number | null;
 	className?: string;
 }

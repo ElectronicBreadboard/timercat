@@ -1,6 +1,6 @@
-import { cn } from '@repo/ui';
 import { animate, motion, useMotionValue } from 'motion/react';
 import React from 'react';
+import { cn } from '../../lib';
 
 export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
 	const { value, windowSize = 10, sessionsBeforeLongBreak = 4, itemHeight = 28, className } = props;

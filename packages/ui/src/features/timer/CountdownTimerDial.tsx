@@ -1,6 +1,6 @@
 import React from 'react';
-import { type TimerCx } from '@/features/timer';
 import { TimeDial } from './TimeDial';
+import { type TTimerCx } from './TimerCx';
 
 export const CountdownTimerDial: React.FC<TProps> = (props) => {
 	const { cx, previewMinutes, onPreviewChange } = props;
@@ -17,7 +17,7 @@ export const CountdownTimerDial: React.FC<TProps> = (props) => {
 };
 
 interface TProps {
-	cx: TimerCx;
+	cx: TTimerCx;
 	previewMinutes: number | null;
 	onPreviewChange?: (minutes: number | null) => void;
 }

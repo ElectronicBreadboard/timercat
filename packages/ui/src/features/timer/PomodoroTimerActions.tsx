@@ -1,25 +1,20 @@
+import { useCombinedCompute } from 'feature-react/state';
+import React from 'react';
 import {
 	BriefcaseIcon,
 	Button,
 	CheckIcon,
-	cn,
 	CoffeeIcon,
 	IconButton,
 	PauseIcon,
 	PlayIcon,
 	XIcon
-} from '@repo/ui';
-import { useNavigate } from '@tanstack/react-router';
-import { useCombinedCompute, useFeatureState } from 'feature-react/state';
-import React from 'react';
-import { useSettingsCx } from '@/features/settings';
-import { type TimerCx } from '@/features/timer';
+} from '../../components';
+import { cn } from '../../lib';
+import { type TTimerCx } from './TimerCx';
 
 export const PomodoroTimerActions: React.FC<TProps> = (props) => {
 	const { cx, className } = props;
-	const navigate = useNavigate();
-	const settingsCx = useSettingsCx();
-	const settings = useFeatureState(settingsCx.$appSettings);
 
 	const { status, isBreak, isOvertime } = useCombinedCompute(
 		[cx.$status, cx.$sessionType, cx.$overtimeSeconds] as const,
@@ -39,20 +34,8 @@ export const PomodoroTimerActions: React.FC<TProps> = (props) => {
 		center: TActionSlot | null;
 		right: TActionSlot | null;
 	} => {
-		const handleStart = () => {
-			if (!settings.timer.showSessionSetup) {
-				cx.start();
-			} else {
-				navigate({ to: '/window/main/setup', search: { advance: false } });
-			}
-		};
-		const handleAdvance = (openSetupFirst?: boolean) => {
-			if (openSetupFirst) {
-				navigate({ to: '/window/main/setup', search: { advance: true } });
-			} else {
-				cx.advance();
-			}
-		};
+		const handleStart = () => cx.start();
+		const handleAdvance = () => cx.advance();
 		const handlePause = () => cx.pause();
 		const handleResume = () => cx.resume();
 		const handleComplete = () => cx.complete();
@@ -74,7 +57,7 @@ export const PomodoroTimerActions: React.FC<TProps> = (props) => {
 				center: {
 					type: 'icon',
 					icon: isBreak ? <BriefcaseIcon size={24} /> : <CoffeeIcon size={24} />,
-					onClick: () => handleAdvance(isBreak && settings.timer.showSessionSetup)
+					onClick: handleAdvance
 				},
 				right: {
 					type: 'icon',
@@ -100,10 +83,10 @@ export const PomodoroTimerActions: React.FC<TProps> = (props) => {
 			right: {
 				type: 'icon',
 				icon: isBreak ? <BriefcaseIcon size={18} /> : <CoffeeIcon size={18} />,
-				onClick: () => handleAdvance(isBreak && settings.timer.showSessionSetup)
+				onClick: handleAdvance
 			}
 		};
-	}, [status, isBreak, isOvertime, settings.timer.showSessionSetup, cx, navigate]);
+	}, [status, isBreak, isOvertime, cx]);
 
 	function renderSlot(action: TActionSlot | null, slot: 'left' | 'center' | 'right') {
 		if (!action || action.type === 'none') {
@@ -150,7 +133,7 @@ export const PomodoroTimerActions: React.FC<TProps> = (props) => {
 };
 
 interface TProps {
-	cx: TimerCx;
+	cx: TTimerCx;
 	className?: string;
 }
 

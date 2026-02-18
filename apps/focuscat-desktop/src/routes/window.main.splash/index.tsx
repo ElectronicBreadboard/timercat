@@ -1,7 +1,7 @@
+import { Cat, catConfig, type TCatFace, type TCatHat, type TCatRef } from '@repo/ui';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import React from 'react';
 import { WindowHeader } from '@/components';
-import { Cat, catConfig, type TCatFace, type TCatHat, type TCatRef } from '@repo/ui';
 
 export const Route = createFileRoute('/window/main/splash/')({
 	component: RouteComponent

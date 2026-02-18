@@ -1,9 +1,9 @@
-import { TriangleRightIcon } from '@repo/ui';
 import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
-import { type TimerCx } from '@/features/timer';
+import { TriangleRightIcon } from '../../components';
 import { SessionWheel } from './SessionWheel';
 import { TimeDial } from './TimeDial';
+import { type TTimerCx } from './TimerCx';
 
 export const PomodoroTimerDial: React.FC<TProps> = (props) => {
 	const { cx, previewMinutes, sessionsBeforeLongBreak, onPreviewChange } = props;
@@ -70,7 +70,7 @@ export const PomodoroTimerDial: React.FC<TProps> = (props) => {
 };
 
 interface TProps {
-	cx: TimerCx;
+	cx: TTimerCx;
 	previewMinutes: number | null;
 	sessionsBeforeLongBreak: number;
 	onPreviewChange?: (minutes: number | null) => void;

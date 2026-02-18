@@ -1,15 +1,15 @@
-import { TriangleDownIcon } from '@repo/ui';
 import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
-import { type TimerCx } from '@/features/timer';
-import { useWindUpTick } from '../hooks';
+import { TriangleDownIcon } from '../../components';
+import { type TTimerCx } from './TimerCx';
 import { TimeWheel } from './TimeWheel';
+import { useWindUpTick } from './useWindUpTick';
 
 export const TimeDial: React.FC<TTimeDialProps> = (props) => {
 	const { cx, previewMinutes, onPreviewChange } = props;
 
 	const wasRunningRef = React.useRef(false);
-	const windUpTick = useWindUpTick();
+	const windUpTick = useWindUpTick(cx);
 
 	const { value, smooth } = useCombinedCompute(
 		[cx.$status, cx.$remainingSeconds] as const,
@@ -88,7 +88,7 @@ export const TimeDial: React.FC<TTimeDialProps> = (props) => {
 };
 
 interface TTimeDialProps {
-	cx: TimerCx;
+	cx: TTimerCx;
 	previewMinutes: number | null;
 	onPreviewChange?: (minutes: number | null) => void;
 }

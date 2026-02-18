@@ -1,27 +1,30 @@
-import { Badge, cn } from '@repo/ui';
-import { useNavigate } from '@tanstack/react-router';
 import { useFeatureState, useListener } from 'feature-react/state';
 import React from 'react';
-import { useSettingsCx } from '@/features/settings';
-import { useTimerCx } from '@/features/timer';
+import { Badge } from '../../components';
+import { cn } from '../../lib';
 import { CountdownTimerActions } from './CountdownTimerActions';
 import { CountdownTimerDial } from './CountdownTimerDial';
 import { PomodoroTimerActions } from './PomodoroTimerActions';
 import { PomodoroTimerDial } from './PomodoroTimerDial';
 import { TimeDisplay } from './TimeDisplay';
+import { type TTimerCx } from './TimerCx';
 
 export const TimerView: React.FC<TTimerViewProps> = (props) => {
-	const { onTick, className, style } = props;
-	const navigate = useNavigate();
-	const timerCx = useTimerCx();
-	const settingsCx = useSettingsCx();
-	const settings = useFeatureState(settingsCx.$appSettings);
-	const speed = useFeatureState(timerCx.$speed);
+	const {
+		cx,
+		timerMode,
+		sessionsBeforeLongBreak = 4,
+		showDevSpeed = false,
+		onTick,
+		className,
+		style
+	} = props;
+	const speed = useFeatureState(cx.$speed);
 
 	const [previewMinutes, setPreviewMinutes] = React.useState<number | null>(null);
 	const lastPreviewMinute = React.useRef<number | null>(null);
 	const lastCountdownSecond = React.useRef<number | null>(null);
-	const prevOvertimeSeconds = React.useRef(0);
+	const lastTimerMode = React.useRef(timerMode);
 
 	// MARK: - Actions
 
@@ -47,40 +50,18 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	// MARK: - Effects
 
 	// Reset timer when mode changes
-	const lastTimerMode = React.useRef(settings.timer.timerMode);
 	React.useEffect(() => {
-		if (lastTimerMode.current !== settings.timer.timerMode) {
-			timerCx.reset();
-			lastTimerMode.current = settings.timer.timerMode;
+		if (lastTimerMode.current !== timerMode) {
+			cx.reset();
+			lastTimerMode.current = timerMode;
 		}
-	}, [settings.timer.timerMode, timerCx]);
-
-	// Auto-advance: when timer hits 0 in Pomodoro and setting is on, advance to next phase
-	useListener(
-		timerCx.$overtimeSeconds,
-		({ value: overtimeSeconds }) => {
-			const prev = prevOvertimeSeconds.current;
-			prevOvertimeSeconds.current = overtimeSeconds;
-			if (prev === 0 && overtimeSeconds === 1) {
-				const s = settingsCx.$appSettings.get();
-				if (s.timer.timerMode === 'pomodoro' && s.timer.pomodoro.autoAdvance) {
-					const isBreak = !timerCx.$sessionType.get().endsWith(':work');
-					if (s.timer.showSessionSetup && isBreak) {
-						navigate({ to: '/window/main/setup', search: { advance: true } });
-					} else {
-						timerCx.advance();
-					}
-				}
-			}
-		},
-		[timerCx, settingsCx, navigate]
-	);
+	}, [timerMode, cx]);
 
 	// Countdown tick handler - fires every second when running
 	useListener(
-		timerCx.$remainingSeconds,
+		cx.$remainingSeconds,
 		({ value: remainingSeconds }) => {
-			const status = timerCx.$status.get();
+			const status = cx.$status.get();
 
 			if (previewMinutes == null && status === 'running') {
 				if (
@@ -101,39 +82,43 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 
 	return (
 		<div className={cn('flex flex-col items-center pb-8', className)} style={style}>
-			{settings.timer.timerMode === 'countdown' ? (
+			{timerMode === 'countdown' ? (
 				<CountdownTimerDial
-					cx={timerCx}
+					cx={cx}
 					previewMinutes={previewMinutes}
 					onPreviewChange={handlePreviewChange}
 				/>
 			) : (
 				<PomodoroTimerDial
-					cx={timerCx}
+					cx={cx}
 					previewMinutes={previewMinutes}
-					sessionsBeforeLongBreak={settings.timer.pomodoro.sessionsBeforeLongBreak}
+					sessionsBeforeLongBreak={sessionsBeforeLongBreak}
 					onPreviewChange={handlePreviewChange}
 				/>
 			)}
 
-			<TimeDisplay cx={timerCx} previewMinutes={previewMinutes} className="mt-4" />
+			<TimeDisplay cx={cx} previewMinutes={previewMinutes} className="mt-4" />
 
-			{settings.features.developer && speed > 1 && (
+			{showDevSpeed && speed > 1 && (
 				<Badge variant="warning" className="mt-1 font-mono">
 					{speed}x
 				</Badge>
 			)}
 
-			{settings.timer.timerMode === 'countdown' ? (
-				<CountdownTimerActions cx={timerCx} className="mt-auto" />
+			{timerMode === 'countdown' ? (
+				<CountdownTimerActions cx={cx} className="mt-auto" />
 			) : (
-				<PomodoroTimerActions cx={timerCx} className="mt-auto" />
+				<PomodoroTimerActions cx={cx} className="mt-auto" />
 			)}
 		</div>
 	);
 };
 
 interface TTimerViewProps {
+	cx: TTimerCx;
+	timerMode: 'countdown' | 'pomodoro';
+	sessionsBeforeLongBreak?: number;
+	showDevSpeed?: boolean;
 	/** Fires every second when running, every minute boundary when previewing */
 	onTick?: (isPreviewing: boolean) => void;
 	className?: string;

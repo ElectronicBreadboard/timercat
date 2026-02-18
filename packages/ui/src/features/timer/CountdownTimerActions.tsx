@@ -1,15 +1,11 @@
-import { Button, CheckIcon, cn, IconButton, PauseIcon, PlayIcon, XIcon } from '@repo/ui';
-import { useNavigate } from '@tanstack/react-router';
-import { useCombinedCompute, useFeatureState } from 'feature-react/state';
+import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
-import { useSettingsCx } from '@/features/settings';
-import { type TimerCx } from '@/features/timer';
+import { Button, CheckIcon, IconButton, PauseIcon, PlayIcon, XIcon } from '../../components';
+import { cn } from '../../lib';
+import { type TTimerCx } from './TimerCx';
 
 export const CountdownTimerActions: React.FC<TProps> = (props) => {
 	const { cx, className } = props;
-	const navigate = useNavigate();
-	const settingsCx = useSettingsCx();
-	const settings = useFeatureState(settingsCx.$appSettings);
 
 	const { status, isOvertime } = useCombinedCompute(
 		[cx.$status, cx.$overtimeSeconds] as const,
@@ -24,13 +20,7 @@ export const CountdownTimerActions: React.FC<TProps> = (props) => {
 		center: TActionSlot | null;
 		right: TActionSlot | null;
 	} => {
-		const handleStart = () => {
-			if (!settings.timer.showSessionSetup) {
-				cx.start();
-			} else {
-				navigate({ to: '/window/main/setup', search: { advance: false } });
-			}
-		};
+		const handleStart = () => cx.start();
 		const handlePause = () => cx.pause();
 		const handleResume = () => cx.resume();
 		const handleComplete = () => cx.complete();
@@ -73,7 +63,7 @@ export const CountdownTimerActions: React.FC<TProps> = (props) => {
 			center: { type: 'icon', icon: <PlayIcon size={24} />, onClick: handleResume },
 			right: null
 		};
-	}, [status, isOvertime, settings.timer.showSessionSetup, cx, navigate]);
+	}, [status, isOvertime, cx]);
 
 	function renderSlot(action: TActionSlot | null, slot: 'left' | 'center' | 'right') {
 		if (!action || action.type === 'none') {
@@ -120,7 +110,7 @@ export const CountdownTimerActions: React.FC<TProps> = (props) => {
 };
 
 interface TProps {
-	cx: TimerCx;
+	cx: TTimerCx;
 	className?: string;
 }
 
