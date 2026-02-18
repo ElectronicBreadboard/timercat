@@ -1,5 +1,5 @@
-import { cn } from '@repo/ui';
 import React from 'react';
+import { cn } from '@/lib';
 import { catConfig } from './cat.config';
 import { TCatFace, TCatFur, TCatHand, TCatHat } from './types';
 

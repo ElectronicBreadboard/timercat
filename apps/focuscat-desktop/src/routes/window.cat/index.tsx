@@ -15,7 +15,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { specta } from '@/environment';
-import { Cat, type TCatRef } from '@/features/cat';
+import { Cat, type TCatRef } from '@repo/ui';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
 import { useOnInputDetected } from '@/hooks';

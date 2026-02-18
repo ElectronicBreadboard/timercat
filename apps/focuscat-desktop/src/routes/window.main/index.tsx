@@ -3,7 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { specta } from '@/environment';
-import { Cat, catConfig, TCatFace, TCatHat, type TCatRef } from '@/features/cat';
+import { Cat, catConfig, TCatFace, TCatHat, type TCatRef } from '@repo/ui';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
 import { Navbar, OverviewCard, TimerView } from './components';

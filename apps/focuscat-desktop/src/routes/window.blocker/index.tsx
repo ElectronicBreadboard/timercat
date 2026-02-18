@@ -4,7 +4,7 @@ import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { WindowHeader } from '@/components';
 import { specta } from '@/environment';
-import { Cat } from '@/features/cat';
+import { Cat } from '@repo/ui';
 import { useSettingsCx } from '@/features/settings';
 
 export const Route = createFileRoute('/window/blocker/')({
