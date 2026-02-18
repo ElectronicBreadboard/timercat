@@ -1,5 +1,6 @@
 import { createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
+import { Analytics } from '@vercel/analytics/react';
 import React from 'react';
 import styles from '../styles.css?url';
 
@@ -51,6 +52,7 @@ function RootDocument(props: { children: React.ReactNode }) {
 				{children}
 				<TanStackRouterDevtools position="bottom-right" />
 				<Scripts />
+				<Analytics />
 			</body>
 		</html>
 	);
