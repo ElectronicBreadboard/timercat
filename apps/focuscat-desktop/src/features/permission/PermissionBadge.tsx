@@ -1,5 +1,5 @@
+import { AlertIcon, Badge, CheckCircleIcon, HelpIcon } from '@repo/ui';
 import React from 'react';
-import { AlertIcon, Badge, CheckCircleIcon, HelpIcon } from '@/components';
 
 export const PermissionBadge: React.FC<TPermissionBadgeProps> = (props) => {
 	const { status } = props;

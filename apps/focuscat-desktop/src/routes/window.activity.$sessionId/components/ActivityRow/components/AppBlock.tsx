@@ -1,6 +1,5 @@
+import { cn, formatDuration, isColorDark, Tooltip } from '@repo/ui';
 import React from 'react';
-import { Tooltip } from '@/components';
-import { cn, formatDuration, isColorDark } from '@/lib';
 import type { ActivityRowCx } from '../ActivityRowCx';
 import { useBlockStyle, useVisibleRangeStyle } from '../hooks';
 import type { TAppBlock } from '../types';

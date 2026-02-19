@@ -1,11 +1,11 @@
+import { BriefcaseIcon, cn, CoffeeIcon, formatDuration, formatTimeOfDayAmPm } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { unwrapOr } from 'tuple-result';
-import { BriefcaseIcon, CoffeeIcon } from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
-import { cn, formatDuration, formatTimeOfDayAmPm, toTuple } from '@/lib';
+import { toTuple } from '@/lib';
 import { SessionTimeline } from './components';
 
 export const Route = createFileRoute('/window/activity/$sessionId/')({

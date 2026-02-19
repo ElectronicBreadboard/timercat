@@ -1,6 +1,7 @@
+import { SketchArrowIcon } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import React from 'react';
-import { AppleIcon, GithubIcon, SimpleLogoIcon } from '@/components';
+import { AppDemo, AppleIcon, GithubIcon, SimpleLogoIcon } from '@/components';
 import { appConfig } from '@/environment';
 import { useDetectPlatform } from '@/hooks';
 import { fetchLatestRelease } from '@/lib';
@@ -91,12 +92,12 @@ function RouteComponent() {
 					</div>
 				</div>
 
-				<div className="animate-fade-in-delay flex justify-center px-4 opacity-0 sm:px-6">
-					<img
-						src="/screenshot-timer.png"
-						alt="FocusCat timer view"
-						className="border-base-200 max-h-[420px] w-auto max-w-[260px] shrink-0 rounded-2xl border object-contain shadow-2xl"
-					/>
+				<div className="animate-fade-in-delay relative flex justify-center px-4 pt-24 opacity-0 sm:px-6 sm:pt-8">
+					<div className="absolute right-0 bottom-130 flex flex-col items-center justify-center gap-2 text-[#525866] sm:-right-16 sm:bottom-120">
+						<p className="font-handwritten text-center text-2xl font-bold">Try yourself</p>
+						<SketchArrowIcon className="h-12 w-12 scale-x-[-1] rotate-180" />
+					</div>
+					<AppDemo />
 				</div>
 
 				<div className="animate-fade-in-delay mt-16 flex w-full max-w-[840px] flex-col px-8 text-left opacity-0 sm:mt-20 sm:text-center">

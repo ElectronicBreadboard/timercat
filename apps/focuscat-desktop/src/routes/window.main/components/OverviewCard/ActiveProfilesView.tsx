@@ -1,8 +1,8 @@
+import { Badge, hexToRgba } from '@repo/ui';
 import React from 'react';
-import { Badge } from '@/components';
 import { specta } from '@/environment';
 import { useOnSessionComplete } from '@/hooks';
-import { hexToRgba, toTuple } from '@/lib';
+import { toTuple } from '@/lib';
 
 export const ActiveProfilesView: React.FC = () => {
 	const [profiles, setProfiles] = React.useState<specta.FocusProfileDto[]>([]);

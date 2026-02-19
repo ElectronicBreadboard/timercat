@@ -1,6 +1,6 @@
+import { Badge } from '@repo/ui';
 import { cva } from 'class-variance-authority';
 import React from 'react';
-import { Badge } from '@/components';
 import { specta } from '@/environment';
 
 export const TargetTag: React.FC<TTargetTagProps> = (props) => {

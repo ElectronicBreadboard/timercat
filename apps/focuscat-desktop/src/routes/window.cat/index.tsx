@@ -1,23 +1,25 @@
 import { Button } from '@base-ui/react/button';
+import {
+	BriefcaseIcon,
+	Cat,
+	cn,
+	CoffeeIcon,
+	ExpandIcon,
+	formatTime,
+	GripIcon,
+	PauseIcon,
+	PlayIcon,
+	SkipForwardIcon,
+	type TCatRef
+} from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
-import {
-	BriefcaseIcon,
-	CoffeeIcon,
-	ExpandIcon,
-	GripIcon,
-	PauseIcon,
-	PlayIcon,
-	SkipForwardIcon
-} from '@/components';
 import { specta } from '@/environment';
-import { Cat, type TCatRef } from '@/features/cat';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
 import { useOnInputDetected } from '@/hooks';
-import { cn, formatTime } from '@/lib';
 
 export const Route = createFileRoute('/window/cat/')({
 	component: RouteComponent

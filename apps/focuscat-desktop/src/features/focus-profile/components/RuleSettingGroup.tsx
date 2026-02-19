@@ -1,7 +1,8 @@
+import { Switch, ToggleGroup } from '@repo/ui';
 import { type TForm } from 'feature-form';
 import { useCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { AppWebsiteSelect, Switch, ToggleGroup } from '@/components';
+import { AppWebsiteSelect } from '@/components';
 import { type specta } from '@/environment';
 import { SettingGroup, SettingItem } from '@/features/settings';
 import { type TFocusProfileFormData } from '../FocusProfileCx';

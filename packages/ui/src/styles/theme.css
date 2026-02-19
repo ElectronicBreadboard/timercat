@@ -1,47 +1,52 @@
-/* Design Philosophy
- * 
- * Traditional Japanese aesthetic meets modern SaaS
- * - Mostly square/rectilinear layouts (Japanese interior structure)
- * - Focus elements (primary buttons, CTAs) are completely round
- * - Colors: Natural, grounded, non-distracting (warm beige to neutral gray)
- * 
- * Reference: https://tailwindcss.com/docs/theme#default-theme-variable-reference
- * Based on: https://daisyui.com/theme-generator
- */
 @theme {
-	/* https://fonts.google.com/specimen/Inter */
+	/* Zinc-based neutral scale (light mode) */
+	--color-base-0: #ffffff;
+	--color-base-50: #fafafa;
+	--color-base-100: #f4f4f5;
+	--color-base-200: #e4e4e7;
+	--color-base-300: #d4d4d8;
+	--color-base-400: #a1a1aa;
+	--color-base-500: #71717a;
+	--color-base-600: #52525b;
+	--color-base-700: #3f3f46;
+	--color-base-800: #27272a;
+	--color-base-900: #18181b;
+	--color-base-950: #09090b;
+
+	/* Semantic colors */
+	--color-primary: #3b82f6;
+	--color-primary-content: #ffffff;
+	--color-secondary: #8b5cf6;
+	--color-secondary-content: #ffffff;
+	--color-accent: #f97316;
+	--color-accent-content: #ffffff;
+	--color-info: #0ea5e9;
+	--color-info-content: #ffffff;
+	--color-success: #22c55e;
+	--color-success-content: #ffffff;
+	--color-warning: #eab308;
+	--color-warning-content: #18181b;
+	--color-error: #ef4444;
+	--color-error-content: #ffffff;
+
+	/* Fonts */
 	--font-sans: 'Inter', system-ui, sans-serif;
-	/* https://www.fontshare.com/fonts/erode */
 	--font-serif: 'Erode', serif;
+	--font-handwritten: 'Caveat', cursive;
+}
 
-	/* Based on tints.dev (Value: #F3F0E8; Hue: 0; Saturation: -5) */
-	--color-base-0: oklch(1 0 0);
-	--color-base-50: oklch(0.98 0.003 85);
-	--color-base-100: oklch(0.95 0.004 85);
-	--color-base-200: oklch(0.9 0.005 85);
-	--color-base-300: oklch(0.82 0.006 85);
-	--color-base-400: oklch(0.74 0.007 85);
-	--color-base-500: oklch(0.65 0.008 85);
-	--color-base-600: oklch(0.56 0.009 85);
-	--color-base-700: oklch(0.48 0.01 85);
-	--color-base-800: oklch(0.4 0.011 85);
-	--color-base-900: oklch(0.32 0.012 85);
-	--color-base-950: oklch(0.25 0.01 85);
-	--color-base-content: oklch(0.25 0.01 85);
-	--color-base-content: oklch(0.26 0.001 35);
-
-	--color-primary: oklch(0.26 0.001 35);
-	--color-primary-content: oklch(0.974 0.002 67.9);
-	--color-secondary: oklch(0.55 0.25 250);
-	--color-secondary-content: oklch(0.974 0.002 67.9);
-	--color-accent: oklch(0.7 0.22 35);
-	--color-accent-content: oklch(0.974 0.002 67.9);
-	--color-info: oklch(0.65 0.12 240);
-	--color-info-content: oklch(0.26 0.001 35);
-	--color-success: oklch(0.65 0.12 140);
-	--color-success-content: oklch(0.26 0.001 35);
-	--color-warning: oklch(0.75 0.12 75);
-	--color-warning-content: oklch(0.26 0.001 35);
-	--color-error: oklch(0.65 0.12 25);
-	--color-error-content: oklch(0.974 0.002 67.9);
+/* Dark mode */
+.dark {
+	--color-base-0: #09090b;
+	--color-base-50: #18181b;
+	--color-base-100: #27272a;
+	--color-base-200: #3f3f46;
+	--color-base-300: #52525b;
+	--color-base-400: #71717a;
+	--color-base-500: #a1a1aa;
+	--color-base-600: #d4d4d8;
+	--color-base-700: #e4e4e7;
+	--color-base-800: #f4f4f5;
+	--color-base-900: #fafafa;
+	--color-base-950: #ffffff;
 }

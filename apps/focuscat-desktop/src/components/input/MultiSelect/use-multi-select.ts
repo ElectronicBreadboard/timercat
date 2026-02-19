@@ -1,5 +1,5 @@
+import { useMemoCleanup } from '@repo/ui';
 import React from 'react';
-import { useMemoCleanup } from '@/hooks';
 import { MultiSelectCx, type TMultiSelectCxOptions } from './MultiSelectCx';
 
 export function useMultiSelect<GItem extends { id: string }>(

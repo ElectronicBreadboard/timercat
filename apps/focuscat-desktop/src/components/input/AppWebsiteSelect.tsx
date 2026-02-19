@@ -1,8 +1,8 @@
+import { Badge, CheckIcon, cn, XIcon } from '@repo/ui';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { Badge, CheckIcon, XIcon } from '@/components';
 import { specta } from '@/environment';
-import { cn, toTuple } from '@/lib';
+import { toTuple } from '@/lib';
 import { MultiSelect, useMultiSelect, type MultiSelectCx } from './MultiSelect';
 
 /** Multi-select input for apps/websites, similar to Notion's tag selector. */

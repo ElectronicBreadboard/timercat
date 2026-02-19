@@ -1,7 +1,6 @@
+import { formatDuration, Tooltip } from '@repo/ui';
 import { useListener } from 'feature-react/state';
 import React from 'react';
-import { Tooltip } from '@/components';
-import { formatDuration } from '@/lib';
 import type { SessionTimelineCx, TEventMarker, TEventPeriod } from './SessionTimelineCx';
 
 // MARK: - Event Period Overlays

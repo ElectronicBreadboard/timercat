@@ -1,0 +1,10 @@
+- `timer-tick.mp3`
+  - https://pixabay.com/sound-effects/film-special-effects-clock-ticking-down-376897/
+- `timer-complete.mp3`
+  - https://pixabay.com/sound-effects/film-special-effects-success-fanfare-trumpets-6185/
+- `timer-wind-up.mp3` / `timer-wind-up-tick-[x].mp3`
+  - https://pixabay.com/de/sound-effects/film-spezialeffekte-wind-up2-106350/
+- `cat-meow.mp3`
+  - https://pixabay.com/sound-effects/nature-cat-meow-8-fx-306184/
+- `ui-click.mp3`
+  - https://pixabay.com/sound-effects/film-special-effects-mouse-click-290204/

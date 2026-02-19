@@ -1,7 +1,6 @@
+import { cn, PlusIcon, Popover } from '@repo/ui';
 import React from 'react';
-import { PlusIcon, Popover } from '@/components';
 import { specta } from '@/environment';
-import { cn } from '@/lib';
 
 export const AddProfileButton: React.FC<TAddProfileButtonProps> = (props) => {
 	const { profiles, onAdd } = props;

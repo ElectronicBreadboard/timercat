@@ -1,7 +1,7 @@
+import { Banner, Switch } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { Banner, Switch } from '@/components';
 import { specta } from '@/environment';
 import { useAccessibilityPermission } from '@/features/permission';
 import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';

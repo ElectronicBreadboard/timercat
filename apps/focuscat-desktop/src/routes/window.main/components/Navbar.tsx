@@ -1,5 +1,6 @@
+import { HistoryIcon, IconButton, MinimizeIcon, SettingsIcon } from '@repo/ui';
 import React from 'react';
-import { HistoryIcon, IconButton, MinimizeIcon, SettingsIcon, WindowHeader } from '@/components';
+import { WindowHeader } from '@/components';
 
 export const Navbar: React.FC<TNavbarProps> = (props) => {
 	const {

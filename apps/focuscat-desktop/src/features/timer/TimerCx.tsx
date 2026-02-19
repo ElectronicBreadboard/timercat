@@ -1,13 +1,18 @@
+import { TimerCxProvider as BaseTimerCxProvider, useMemoCleanup, type TTimerCx } from '@repo/ui';
+import { useNavigate } from '@tanstack/react-router';
 import { createState } from 'feature-state';
 import React from 'react';
 import { specta } from '@/environment';
-import { useMemoCleanup } from '@/hooks';
+import { type SoundId } from '@/environment/specta/bindings.gen';
+import { useSettingsCx, type SettingsCx } from '@/features/settings';
 import { toTuple } from '@/lib';
 
-export class TimerCx {
+export class TimerCx implements TTimerCx {
 	private _unlisten?: () => void;
+	private readonly _settingsCx: SettingsCx;
+	private readonly _navigate: ReturnType<typeof useNavigate>;
 
-	public readonly $status = createState<specta.TimerStatus>('idle');
+	public readonly $status = createState<'idle' | 'running' | 'paused'>('idle');
 	public readonly $sessionType = createState('pomodoro:work');
 	public readonly $remainingSeconds = createState(0);
 	public readonly $totalSeconds = createState(0);
@@ -16,7 +21,9 @@ export class TimerCx {
 	public readonly $speed = createState(1);
 	public readonly $startTime = createState<Date | null>(null);
 
-	constructor() {
+	constructor(settingsCx: SettingsCx, navigate: ReturnType<typeof useNavigate>) {
+		this._settingsCx = settingsCx;
+		this._navigate = navigate;
 		this.init();
 	}
 
@@ -45,7 +52,8 @@ export class TimerCx {
 		if (this.$totalSeconds.get() !== timer.totalSeconds) {
 			this.$totalSeconds.set(timer.totalSeconds);
 		}
-		if (this.$overtimeSeconds.get() !== timer.overtimeSeconds) {
+		const prevOvertime = this.$overtimeSeconds.get();
+		if (prevOvertime !== timer.overtimeSeconds) {
 			this.$overtimeSeconds.set(timer.overtimeSeconds);
 		}
 		if (this.$sessionsCompleted.get() !== timer.sessionsCompleted) {
@@ -54,11 +62,24 @@ export class TimerCx {
 		if (this.$speed.get() !== timer.speed) {
 			this.$speed.set(timer.speed);
 		}
+
+		// Auto-advance on overtime start (0 → >0)
+		if (prevOvertime === 0 && timer.overtimeSeconds > 0) {
+			const s = this._settingsCx.$appSettings.get();
+			if (s.timer.timerMode === 'pomodoro' && s.timer.pomodoro.autoAdvance) {
+				this.advance();
+			}
+		}
 	}
 
 	// Timer commands
 
 	public async start(intention?: string, profileIds?: number[]): Promise<void> {
+		const s = this._settingsCx.$appSettings.get();
+		if (s.timer.showSessionSetup && intention == null && profileIds == null) {
+			this._navigate({ to: '/window/main/setup', search: { advance: false } });
+			return;
+		}
 		const [ok, , err] = toTuple(
 			await specta.commands.startTimer(intention ?? null, profileIds ?? null)
 		);
@@ -95,6 +116,12 @@ export class TimerCx {
 	}
 
 	public async advance(intention?: string, profileIds?: number[]): Promise<void> {
+		const s = this._settingsCx.$appSettings.get();
+		const isBreak = !this.$sessionType.get().endsWith(':work');
+		if (s.timer.showSessionSetup && isBreak && intention == null && profileIds == null) {
+			this._navigate({ to: '/window/main/setup', search: { advance: true } });
+			return;
+		}
 		const [ok, , err] = toTuple(
 			await specta.commands.advanceTimer(intention ?? null, profileIds ?? null)
 		);
@@ -120,23 +147,20 @@ export class TimerCx {
 			console.error('Failed to set timer duration:', err);
 		}
 	}
+
+	public playSound(id: string): void {
+		specta.commands.playSound(id as SoundId);
+	}
 }
 
-const ReactTimerCx = React.createContext<TimerCx | null>(null);
-
 export const TimerCxProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+	const navigate = useNavigate();
+	const settingsCx = useSettingsCx();
+
 	const cx = useMemoCleanup(() => {
-		const timerCx = new TimerCx();
+		const timerCx = new TimerCx(settingsCx, navigate);
 		return [timerCx, () => timerCx.unmount()];
 	}, []);
 
-	return <ReactTimerCx.Provider value={cx}>{children}</ReactTimerCx.Provider>;
+	return <BaseTimerCxProvider value={cx}>{children}</BaseTimerCxProvider>;
 };
-
-export function useTimerCx(): TimerCx {
-	const cx = React.useContext(ReactTimerCx);
-	if (cx == null) {
-		throw new Error('useTimerCx must be used within a TimerCxProvider');
-	}
-	return cx;
-}

@@ -1,12 +1,20 @@
+import {
+	Cat,
+	catConfig,
+	IconButton,
+	ShuffleIcon,
+	TCatFace,
+	TCatHat,
+	TimerView,
+	type TCatRef
+} from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { IconButton, ShuffleIcon } from '@/components';
 import { specta } from '@/environment';
-import { Cat, catConfig, TCatFace, TCatHat, type TCatRef } from '@/features/cat';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
-import { Navbar, OverviewCard, TimerView } from './components';
+import { Navbar, OverviewCard } from './components';
 
 export const Route = createFileRoute('/window/main/')({
 	component: RouteComponent
@@ -114,7 +122,14 @@ function RouteComponent() {
 			</div>
 
 			{/* Timer */}
-			<TimerView onTick={handleTick} className="flex-1" />
+			<TimerView
+				cx={timerCx}
+				timerMode={settings.timer.timerMode}
+				sessionsBeforeLongBreak={settings.timer.pomodoro.sessionsBeforeLongBreak}
+				showDevSpeed={settings.features.developer}
+				onTick={handleTick}
+				className="flex-1"
+			/>
 		</div>
 	);
 }

@@ -1,6 +1,5 @@
+import { Badge, CalendarIcon, cn, hexToRgba, XIcon } from '@repo/ui';
 import React from 'react';
-import { Badge, CalendarIcon, XIcon } from '@/components';
-import { cn, hexToRgba } from '@/lib';
 
 export const ProfileTag: React.FC<TProfileTagProps> = (props) => {
 	const { name, color, variant, onProfileClick } = props;

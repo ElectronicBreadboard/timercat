@@ -1,6 +1,5 @@
+import { CheckIcon, cn, CopyIcon, IconButton } from '@repo/ui';
 import React from 'react';
-import { CheckIcon, CopyIcon, IconButton } from '@/components';
-import { cn } from '@/lib';
 
 export const JsonDisplay: React.FC<TJsonDisplayProps> = (props) => {
 	const { data, className } = props;

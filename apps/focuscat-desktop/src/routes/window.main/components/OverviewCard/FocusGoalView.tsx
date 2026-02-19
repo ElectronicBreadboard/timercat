@@ -1,9 +1,10 @@
+import { formatDuration } from '@repo/ui';
 import { useCompute } from 'feature-react/state';
 import React from 'react';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
 import { useOnSessionComplete } from '@/hooks';
-import { formatDuration, toTuple } from '@/lib';
+import { toTuple } from '@/lib';
 
 export const FocusGoalView: React.FC = () => {
 	const [focusSeconds, setFocusSeconds] = React.useState(0);

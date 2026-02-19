@@ -1,7 +1,7 @@
+import { MonitorIcon, MoonIcon, Slider, SunIcon, Switch, ToggleGroup } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { MonitorIcon, MoonIcon, Slider, SunIcon, Switch, ToggleGroup } from '@/components';
 import { specta } from '@/environment';
 import {
 	PermissionBadge,

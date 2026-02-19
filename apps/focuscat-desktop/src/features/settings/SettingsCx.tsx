@@ -1,8 +1,7 @@
+import { useMemoCleanup, type TCatFace, type TCatFur, type TCatHat } from '@repo/ui';
 import { createState } from 'feature-state';
 import React from 'react';
 import { specta } from '@/environment';
-import { type TCatFace, type TCatFur, type TCatHat } from '@/features/cat';
-import { useMemoCleanup } from '@/hooks';
 
 export class SettingsCx {
 	private _unlisten?: () => void;
