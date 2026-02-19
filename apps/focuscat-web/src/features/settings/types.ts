@@ -12,6 +12,7 @@ export interface TAppSettings {
 			longBreakMinutes: number;
 			sessionsBeforeLongBreak: number;
 			autoAdvance: boolean;
+			autoAdvanceCountdownSeconds: number;
 		};
 	};
 	cat: {

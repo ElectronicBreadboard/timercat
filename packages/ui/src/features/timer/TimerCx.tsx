@@ -8,6 +8,7 @@ export interface TTimerCx {
 	readonly $remainingSeconds: TState<number, []>;
 	readonly $totalSeconds: TState<number, []>;
 	readonly $overtimeSeconds: TState<number, []>;
+	readonly $autoAdvanceCountdownSeconds: TState<number | null, []>;
 	readonly $sessionsCompleted: TState<number, []>;
 	readonly $speed: TState<number, []>;
 	readonly $startTime: TState<Date | null, []>;

@@ -1,10 +1,11 @@
-import { useCombinedCompute } from 'feature-react/state';
+import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { cn, formatTime, formatTimeOfDay } from '../../lib';
 import { type TTimerCx } from './TimerCx';
 
 export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 	const { cx, previewMinutes, className } = props;
+	const autoAdvanceCountdownSeconds = useFeatureState(cx.$autoAdvanceCountdownSeconds);
 
 	const { isOvertime, displaySeconds, displayStartTime, displayEndTime } = useCombinedCompute(
 		[cx.$status, cx.$remainingSeconds, cx.$overtimeSeconds, cx.$startTime] as const,
@@ -58,8 +59,14 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 					<p className="text-base-900 font-mono text-3xl font-light tracking-wider">
 						{formatTime(totalWorked)}
 					</p>
-					{/* Overtime */}
-					<p className="text-warning text-sm">+{formatTime(overtimeSeconds)} overtime</p>
+					{/* Auto-advance countdown or overtime */}
+					{autoAdvanceCountdownSeconds != null ? (
+						<p className="text-secondary text-sm">
+							Auto advance in {formatTime(autoAdvanceCountdownSeconds)}
+						</p>
+					) : (
+						<p className="text-warning text-sm">+{formatTime(overtimeSeconds)} overtime</p>
+					)}
 				</>
 			) : (
 				<>

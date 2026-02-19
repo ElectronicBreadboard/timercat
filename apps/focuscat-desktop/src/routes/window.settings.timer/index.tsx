@@ -130,7 +130,7 @@ function RouteComponent() {
 						</SettingItem>
 						<SettingItem
 							label="Auto-advance"
-							description="Go to next phase automatically when timer ends (no overtime)"
+							description="Go to next phase automatically when timer ends (countdown then advance)"
 						>
 							<Switch
 								checked={settings.timer.pomodoro.autoAdvance ?? false}
@@ -142,6 +142,28 @@ function RouteComponent() {
 								size="sm"
 							/>
 						</SettingItem>
+						{settings.timer.pomodoro.autoAdvance && (
+							<SettingItem
+								label="Auto-advance countdown"
+								description="Seconds to show “Auto advance in N” before going to next phase"
+							>
+								<NumberField
+									value={settings.timer.pomodoro.autoAdvanceCountdownSeconds}
+									min={5}
+									max={30}
+									step={5}
+									size="sm"
+									onChange={(v) =>
+										updateTimer({
+											pomodoro: {
+												...settings.timer.pomodoro,
+												autoAdvanceCountdownSeconds: v
+											}
+										})
+									}
+								/>
+							</SettingItem>
+						)}
 					</>
 				)}
 				<SettingItem

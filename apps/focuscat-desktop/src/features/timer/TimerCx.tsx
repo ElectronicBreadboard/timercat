@@ -17,6 +17,7 @@ export class TimerCx implements TTimerCx {
 	public readonly $remainingSeconds = createState(0);
 	public readonly $totalSeconds = createState(0);
 	public readonly $overtimeSeconds = createState(0);
+	public readonly $autoAdvanceCountdownSeconds = createState<number | null>(null);
 	public readonly $sessionsCompleted = createState(0);
 	public readonly $speed = createState(1);
 	public readonly $startTime = createState<Date | null>(null);
@@ -63,12 +64,19 @@ export class TimerCx implements TTimerCx {
 			this.$speed.set(timer.speed);
 		}
 
-		// Auto-advance on overtime start (0 → >0)
-		if (prevOvertime === 0 && timer.overtimeSeconds > 0) {
-			const s = this._settingsCx.$appSettings.get();
-			if (s.timer.timerMode === 'pomodoro' && s.timer.pomodoro.autoAdvance) {
+		// Sync countdown for display; advance once when secondsLeft crosses from >0 to ≤0
+		const s = this._settingsCx.$appSettings.get();
+		const pomodoro = s.timer.pomodoro;
+		if (s.timer.timerMode === 'pomodoro' && pomodoro.autoAdvance && timer.overtimeSeconds > 0) {
+			const threshold = pomodoro.autoAdvanceCountdownSeconds;
+			const secondsLeft = threshold - timer.overtimeSeconds;
+			const prevSecondsLeft = threshold - prevOvertime;
+			this.$autoAdvanceCountdownSeconds.set(secondsLeft <= 0 ? null : secondsLeft);
+			if (prevSecondsLeft > 0 && secondsLeft <= 0) {
 				this.advance();
 			}
+		} else {
+			this.$autoAdvanceCountdownSeconds.set(null);
 		}
 	}
 

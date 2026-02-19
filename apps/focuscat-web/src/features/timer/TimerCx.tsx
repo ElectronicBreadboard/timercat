@@ -13,6 +13,7 @@ export class TimerCx implements TTimerCx {
 	public readonly $remainingSeconds: ReturnType<typeof createState<number>>;
 	public readonly $totalSeconds: ReturnType<typeof createState<number>>;
 	public readonly $overtimeSeconds = createState(0);
+	public readonly $autoAdvanceCountdownSeconds = createState<number | null>(null);
 	public readonly $sessionsCompleted = createState(0);
 	public readonly $speed = createState(1);
 	public readonly $startTime = createState<Date | null>(null);
@@ -55,6 +56,7 @@ export class TimerCx implements TTimerCx {
 		this.$status.set('idle');
 		this.$startTime.set(null);
 		this.$overtimeSeconds.set(0);
+		this.$autoAdvanceCountdownSeconds.set(null);
 
 		// Reset to the current session type's duration
 		const duration = this.getDurationForSessionType(this.$sessionType.get());
@@ -81,6 +83,7 @@ export class TimerCx implements TTimerCx {
 		this.$totalSeconds.set(duration);
 		this.$remainingSeconds.set(duration);
 		this.$overtimeSeconds.set(0);
+		this.$autoAdvanceCountdownSeconds.set(null);
 
 		// Start the next session
 		this.$status.set('running');
@@ -98,6 +101,7 @@ export class TimerCx implements TTimerCx {
 		this.$status.set('idle');
 		this.$startTime.set(null);
 		this.$overtimeSeconds.set(0);
+		this.$autoAdvanceCountdownSeconds.set(null);
 
 		const duration = this.getDurationForSessionType(this.$sessionType.get());
 		this.$totalSeconds.set(duration);
@@ -157,13 +161,22 @@ export class TimerCx implements TTimerCx {
 			this.playSound('tick');
 		}
 
-		// Play complete sound and auto-advance when entering overtime
+		// Play complete sound when entering overtime
 		if (!wasInOvertime && this.$overtimeSeconds.get() > 0) {
 			this.playSound('complete');
+		}
 
-			if (this._settingsCx.$appSettings.get().timer.pomodoro.autoAdvance) {
+		// Auto-advance when overtime reaches threshold
+		const overtimeSeconds = this.$overtimeSeconds.get();
+		const pomodoro = this._settingsCx.$appSettings.get().timer.pomodoro;
+		if (overtimeSeconds > 0 && pomodoro.autoAdvance) {
+			const secondsLeft = pomodoro.autoAdvanceCountdownSeconds - overtimeSeconds;
+			this.$autoAdvanceCountdownSeconds.set(secondsLeft <= 0 ? null : secondsLeft);
+			if (secondsLeft <= 0) {
 				this.advance();
 			}
+		} else {
+			this.$autoAdvanceCountdownSeconds.set(null);
 		}
 	}
 
