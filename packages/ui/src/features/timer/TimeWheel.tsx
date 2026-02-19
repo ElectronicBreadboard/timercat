@@ -104,7 +104,7 @@ export const TimeWheel: React.FC<TTimeWheelProps> = (props) => {
 	return (
 		<div
 			className={cn(
-				'relative h-20 w-full cursor-grab overflow-hidden select-none active:cursor-grabbing',
+				'relative h-20 w-full cursor-grab touch-pan-y overflow-hidden select-none active:cursor-grabbing',
 				className
 			)}
 			onPointerDown={handlePointerDown}

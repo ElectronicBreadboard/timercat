@@ -92,8 +92,8 @@ function RouteComponent() {
 					</div>
 				</div>
 
-				<div className="animate-fade-in-delay relative flex justify-center px-4 opacity-0 sm:px-6">
-					<div className="absolute -right-16 bottom-120 flex flex-col items-center justify-center gap-2 text-[#525866]">
+				<div className="animate-fade-in-delay relative flex justify-center px-4 pt-24 opacity-0 sm:px-6 sm:pt-8">
+					<div className="absolute right-0 bottom-130 flex flex-col items-center justify-center gap-2 text-[#525866] sm:-right-16 sm:bottom-120">
 						<p className="font-handwritten text-center text-2xl font-bold">Try yourself</p>
 						<SketchArrowIcon className="h-12 w-12 scale-x-[-1] rotate-180" />
 					</div>
