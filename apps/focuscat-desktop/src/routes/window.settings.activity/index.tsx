@@ -2,9 +2,14 @@ import { Banner, Switch } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { specta } from '@/environment';
+import { appConfig, specta } from '@/environment';
 import { useAccessibilityPermission } from '@/features/permission';
-import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
+import {
+	SettingGroup,
+	SettingItem,
+	SettingItemWarnDescription,
+	useSettingsCx
+} from '@/features/settings';
 import { useAppInfo } from '@/hooks';
 
 export const Route = createFileRoute('/window/settings/activity/')({
@@ -67,12 +72,16 @@ function RouteComponent() {
 					<SettingItem
 						label="Track Windows"
 						description={
-							isAppStore
-								? 'Not available in App Store builds'
-								: 'Track individual window and tab changes'
+							isAppStore ? (
+								<SettingItemWarnDescription
+									text="Not available in App Store builds"
+									url={appConfig.distribution.docsAppStore}
+								/>
+							) : (
+								'Track individual window and tab changes'
+							)
 						}
-						descriptionClassName={isAppStore ? 'text-yellow-600' : undefined}
-						className={isAppStore ? 'bg-base-100' : undefined}
+						disabled={isAppStore}
 					>
 						<Switch
 							checked={isAppStore ? false : settings.activity.trackWindows}
@@ -91,10 +100,16 @@ function RouteComponent() {
 					<SettingItem
 						label="Track Browser"
 						description={
-							isAppStore ? 'Not available in App Store builds' : 'Record visited URLs in browsers'
+							isAppStore ? (
+								<SettingItemWarnDescription
+									text="Not available in App Store builds"
+									url={appConfig.distribution.docsAppStore}
+								/>
+							) : (
+								'Record visited URLs in browsers'
+							)
 						}
-						descriptionClassName={isAppStore ? 'text-yellow-600' : undefined}
-						className={isAppStore ? 'bg-base-100' : undefined}
+						disabled={isAppStore}
 					>
 						<Switch
 							checked={isAppStore ? false : settings.activity.trackBrowser}

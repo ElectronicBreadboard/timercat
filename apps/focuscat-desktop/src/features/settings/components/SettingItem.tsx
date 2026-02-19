@@ -1,4 +1,4 @@
-import { ArrowUpRightIcon, ChevronRightIcon, cn } from '@repo/ui';
+import { ArrowUpRightIcon, ChevronRightIcon, cn, InfoIcon } from '@repo/ui';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { cva } from 'class-variance-authority';
 import React from 'react';
@@ -28,6 +28,7 @@ export const SettingItem: React.FC<TSettingItemProps> = (props) => {
 		label,
 		description,
 		descriptionClassName,
+		disabled = false,
 		children,
 		className
 	} = props;
@@ -48,13 +49,11 @@ export const SettingItem: React.FC<TSettingItemProps> = (props) => {
 		</>
 	);
 
+	const rootClassName = cn(settingItemVariants({ variant }), disabled && 'bg-base-100', className);
+
 	if (props.variant === 'link') {
 		return (
-			<button
-				type="button"
-				onClick={() => openUrl(props.href)}
-				className={cn(settingItemVariants({ variant }), className)}
-			>
+			<button type="button" onClick={() => openUrl(props.href)} className={rootClassName}>
 				{content}
 			</button>
 		);
@@ -62,17 +61,13 @@ export const SettingItem: React.FC<TSettingItemProps> = (props) => {
 
 	if (props.variant === 'nav' || props.variant === 'action') {
 		return (
-			<button
-				type="button"
-				onClick={props.onClick}
-				className={cn(settingItemVariants({ variant }), className)}
-			>
+			<button type="button" onClick={props.onClick} className={rootClassName}>
 				{content}
 			</button>
 		);
 	}
 
-	return <div className={cn(settingItemVariants({ variant }), className)}>{content}</div>;
+	return <div className={rootClassName}>{content}</div>;
 };
 
 export type TSettingItemProps =
@@ -83,8 +78,45 @@ export type TSettingItemProps =
 
 interface TSettingItemBase {
 	label: string;
-	description?: string;
+	description?: React.ReactNode;
 	descriptionClassName?: string;
+	disabled?: boolean;
 	children?: React.ReactNode;
+	className?: string;
+}
+
+// MARK: - SettingItemWarnDescription
+
+export const SettingItemWarnDescription: React.FC<TSettingItemWarnDescriptionProps> = (props) => {
+	const { text, url, className } = props;
+
+	return (
+		<span className={cn('text-yellow-600', className)}>
+			{text}
+			{url != null && (
+				<>
+					{' '}
+					<a
+						href={url}
+						target="_blank"
+						rel="noopener noreferrer"
+						onClick={(e) => {
+							e.preventDefault();
+							openUrl(url);
+						}}
+						className="inline-flex items-center align-bottom"
+						aria-label="Learn more"
+					>
+						<InfoIcon className="size-3.5 shrink-0" />
+					</a>
+				</>
+			)}
+		</span>
+	);
+};
+
+export interface TSettingItemWarnDescriptionProps {
+	text: string;
+	url?: string;
 	className?: string;
 }

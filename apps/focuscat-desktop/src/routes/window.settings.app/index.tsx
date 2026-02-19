@@ -2,13 +2,18 @@ import { MonitorIcon, MoonIcon, Slider, SunIcon, Switch, ToggleGroup } from '@re
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { specta } from '@/environment';
+import { appConfig, specta } from '@/environment';
 import {
 	PermissionBadge,
 	useAccessibilityPermission,
 	useInputMonitoringPermission
 } from '@/features/permission';
-import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
+import {
+	SettingGroup,
+	SettingItem,
+	SettingItemWarnDescription,
+	useSettingsCx
+} from '@/features/settings';
 import { useAppInfo } from '@/hooks';
 
 export const Route = createFileRoute('/window/settings/app/')({
@@ -112,8 +117,8 @@ function RouteComponent() {
 				)}
 			</SettingGroup>
 
-			<SettingGroup title="Permissions">
-				{!isAppStore && (
+			{!isAppStore && (
+				<SettingGroup title="Permissions">
 					<SettingItem
 						variant="nav"
 						label="Accessibility"
@@ -122,8 +127,6 @@ function RouteComponent() {
 					>
 						<PermissionBadge status={accessibility.granted} />
 					</SettingItem>
-				)}
-				{!isAppStore && (
 					<SettingItem
 						variant="nav"
 						label="Input Monitoring"
@@ -132,8 +135,8 @@ function RouteComponent() {
 					>
 						<PermissionBadge status={inputMonitoring.granted} />
 					</SettingItem>
-				)}
-			</SettingGroup>
+				</SettingGroup>
+			)}
 
 			<SettingGroup title="Features">
 				<SettingItem label="Focus Goals" description="Track daily focus time targets">
@@ -160,10 +163,16 @@ function RouteComponent() {
 				<SettingItem
 					label="Cat Widget"
 					description={
-						isAppStore ? 'Not available in App Store builds' : 'Floating cat companion window'
+						isAppStore ? (
+							<SettingItemWarnDescription
+								text="Not available in App Store builds"
+								url={appConfig.distribution.docsAppStore}
+							/>
+						) : (
+							'Floating cat companion window'
+						)
 					}
-					descriptionClassName={isAppStore ? 'text-yellow-600' : undefined}
-					className={isAppStore ? 'bg-base-100' : undefined}
+					disabled={isAppStore}
 				>
 					<Switch
 						checked={isAppStore ? false : settings.features.catWindow}
