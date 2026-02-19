@@ -64,7 +64,7 @@ export class TimerCx implements TTimerCx {
 			this.$speed.set(timer.speed);
 		}
 
-		// Sync countdown for display; advance once when secondsLeft crosses from >0 to ≤0
+		// Auto-advance when overtime reaches threshold
 		const s = this._settingsCx.$appSettings.get();
 		const pomodoro = s.timer.pomodoro;
 		if (s.timer.timerMode === 'pomodoro' && pomodoro.autoAdvance && timer.overtimeSeconds > 0) {
