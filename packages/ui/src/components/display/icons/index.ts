@@ -1,4 +1,5 @@
 // Custom Icons
+export * from './SketchArrowIcon';
 export * from './TriangleDownIcon';
 export * from './TriangleLeftIcon';
 export * from './TriangleRightIcon';
@@ -20,9 +21,9 @@ export {
 	ChevronLeft as ChevronLeftIcon,
 	ChevronRight as ChevronRightIcon,
 	Clock as ClockIcon,
-	Copy as CopyIcon,
 	Code as CodeIcon,
 	Coffee as CoffeeIcon,
+	Copy as CopyIcon,
 	Maximize2 as ExpandIcon,
 	FolderOpen as FolderOpenIcon,
 	GripVertical as GripIcon,

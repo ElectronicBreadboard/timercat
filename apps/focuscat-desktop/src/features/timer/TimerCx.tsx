@@ -1,11 +1,10 @@
-import { TimerCxProvider as BaseTimerCxProvider, type TTimerCx } from '@repo/ui';
+import { TimerCxProvider as BaseTimerCxProvider, useMemoCleanup, type TTimerCx } from '@repo/ui';
 import { useNavigate } from '@tanstack/react-router';
 import { createState } from 'feature-state';
 import React from 'react';
 import { specta } from '@/environment';
 import { type SoundId } from '@/environment/specta/bindings.gen';
 import { useSettingsCx, type SettingsCx } from '@/features/settings';
-import { useMemoCleanup } from '@/hooks';
 import { toTuple } from '@/lib';
 
 export class TimerCx implements TTimerCx {

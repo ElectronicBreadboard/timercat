@@ -28,6 +28,11 @@
 	--color-warning-content: #18181b;
 	--color-error: #ef4444;
 	--color-error-content: #ffffff;
+
+	/* Fonts */
+	--font-sans: 'Inter', system-ui, sans-serif;
+	--font-serif: 'Erode', serif;
+	--font-handwritten: 'Caveat', cursive;
 }
 
 /* Dark mode */

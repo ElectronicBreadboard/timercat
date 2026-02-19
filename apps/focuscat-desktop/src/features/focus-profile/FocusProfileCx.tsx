@@ -1,3 +1,4 @@
+import { useMemoCleanup } from '@repo/ui';
 import {
 	bitwiseFlag,
 	createForm,
@@ -10,7 +11,6 @@ import React from 'react';
 import { createValidator } from 'validation-adapter';
 import { type TSelectedItem } from '@/components';
 import { specta } from '@/environment';
-import { useMemoCleanup } from '@/hooks';
 import { toTuple } from '@/lib';
 
 export class FocusProfileCx {
