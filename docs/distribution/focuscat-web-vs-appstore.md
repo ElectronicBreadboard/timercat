@@ -4,22 +4,24 @@ What's different between the two distribution channels, and why.
 
 ## Why two versions?
 
-The Mac App Store has two restrictions that limit Focuscat's functionality:
+The Mac App Store has three restrictions that limit Focuscat's functionality:
 
 1. **[App Sandbox](https://developer.apple.com/documentation/security/app-sandbox) (required)**. Sandboxed apps cannot access other processes. This blocks cross-process Accessibility API calls, which Focuscat uses for window title tracking.
 2. **No private APIs ([guideline 2.5.1](https://developer.apple.com/app-store/review/guidelines/#software-requirements))**. Apple rejects apps that use non-public APIs. Tauri's `macOSPrivateApi` option (needed for transparent/overlay windows) enables a [transparent background API](https://v2.tauri.app/reference/config/) that counts as private API usage, so the cat widget can't be included.
+3. **Input Monitoring for non-accessibility ([guideline 2.4.5](https://developer.apple.com/app-store/review/guidelines/#performance))**. Apps may not use Input Monitoring to read keystrokes for non-accessibility purposes. Focuscat uses it for idle detection (e.g. AFK) and cat reaction to keypress, so the App Store build does not use it.
 
 The web version has neither restriction, so it can offer full functionality.
 
 ## Feature comparison
 
-| Feature                                         | Web                 | App Store       |
-| ----------------------------------------------- | ------------------- | --------------- |
-| Pomodoro timer                                  | Yes                 | Yes             |
-| App activity tracking (which app is active)     | Yes                 | Yes             |
-| Window title tracking (what's open in each app) | Yes                 | No              |
-| Cat widget (transparent overlay)                | Yes                 | No              |
-| Auto-updates                                    | Yes (Tauri updater) | Yes (App Store) |
+| Feature                                            | Web                 | App Store       |
+| -------------------------------------------------- | ------------------- | --------------- |
+| Pomodoro timer                                     | Yes                 | Yes             |
+| App activity tracking (which app is active)        | Yes                 | Yes             |
+| Window title tracking (what's open in each app)    | Yes                 | No              |
+| Idle detection & cat reaction to keypress (global) | Yes                 | No              |
+| Cat widget (transparent overlay)                   | Yes                 | No              |
+| Auto-updates                                       | Yes (Tauri updater) | Yes (App Store) |
 
 ## Why certain features are disabled
 
@@ -36,6 +38,10 @@ We have not found an alternative API that provides window titles from a sandboxe
 - **No special entitlement** for cross-process Accessibility in sandboxed apps that we could find.
 
 **App-level tracking still works** because it uses `NSWorkspace.didActivateApplicationNotification`, which only tells you which app activated. No cross-process access needed.
+
+### Input Monitoring
+
+The direct build uses [rdev](https://github.com/Narsil/rdev) to listen to global keyboard and mouse events (Input Monitoring permission) for idle detection and cat reaction to keypress. [Guideline 2.4.5](https://developer.apple.com/app-store/review/guidelines/#performance) forbids using it for non-accessibility purposes, so the App Store build does not start the input listener and the permission row is hidden in settings.
 
 ### Cat widget
 

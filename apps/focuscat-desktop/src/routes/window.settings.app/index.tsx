@@ -123,14 +123,16 @@ function RouteComponent() {
 						<PermissionBadge status={accessibility.granted} />
 					</SettingItem>
 				)}
-				<SettingItem
-					variant="nav"
-					label="Input Monitoring"
-					description="Required for idle detection"
-					onClick={inputMonitoring.openSettings}
-				>
-					<PermissionBadge status={inputMonitoring.granted} />
-				</SettingItem>
+				{!isAppStore && (
+					<SettingItem
+						variant="nav"
+						label="Input Monitoring"
+						description="Required for idle detection"
+						onClick={inputMonitoring.openSettings}
+					>
+						<PermissionBadge status={inputMonitoring.granted} />
+					</SettingItem>
+				)}
 			</SettingGroup>
 
 			<SettingGroup title="Features">
