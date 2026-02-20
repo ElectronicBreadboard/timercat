@@ -6,15 +6,18 @@ import React from 'react';
 export class WindowCx {
 	public readonly $focusedId = createState<TWindowId | null>(null);
 
+	public readonly containerRef = React.createRef<HTMLDivElement>();
+	public readonly $containerRect = createState<TContainerRect>({ width: 0, height: 0 });
+
 	public readonly windows = {
 		main: withLocalStorage(
 			createState<TWindow>({
 				id: 'main',
 				trafficLights: { close: false, minimize: false, maximize: false },
-				size: { width: 300, height: 500 },
+				bounds: { size: { width: 300, height: 500 }, position: null },
 				isOpen: true,
-				position: null,
-				zIndex: 10
+				zIndex: 10,
+				boundsBeforeMaximize: null
 			}),
 			'focuscat-window-main'
 		),
@@ -22,10 +25,10 @@ export class WindowCx {
 			createState<TWindow>({
 				id: 'settings',
 				trafficLights: { close: true, minimize: true, maximize: true },
-				size: { width: 600, height: 450 },
+				bounds: { size: { width: 600, height: 450 }, position: null },
 				isOpen: false,
-				position: null,
-				zIndex: 11
+				zIndex: 11,
+				boundsBeforeMaximize: null
 			}),
 			'focuscat-window-settings'
 		)
@@ -74,7 +77,26 @@ export class WindowCx {
 	}
 
 	public maximize(id: TWindowId): void {
-		// TODO
+		const prev = this.windows[id].get();
+		const bounds = prev.boundsBeforeMaximize;
+		if (bounds != null) {
+			this.windows[id].set((p) => ({
+				...p,
+				boundsBeforeMaximize: null,
+				bounds
+			}));
+			return;
+		}
+		const el = this.containerRef.current;
+		const rect = el != null ? el.getBoundingClientRect() : this.$containerRect.get();
+		this.windows[id].set((p) => ({
+			...p,
+			boundsBeforeMaximize: p.bounds,
+			bounds: {
+				size: { width: rect.width, height: rect.height },
+				position: { x: 0, y: 0 }
+			}
+		}));
 	}
 
 	public bringToFront(id: TWindowId): void {
@@ -90,7 +112,10 @@ export class WindowCx {
 	}
 
 	public setPosition(id: TWindowId, x: number, y: number): void {
-		this.windows[id].set((prev) => ({ ...prev, position: { x, y } }));
+		this.windows[id].set((prev) => ({
+			...prev,
+			bounds: { ...prev.bounds, position: { x, y } }
+		}));
 	}
 
 	private _maxZ(): number {
@@ -98,7 +123,10 @@ export class WindowCx {
 	}
 }
 
-export type TWindowId = 'main' | 'settings';
+export interface TContainerRect {
+	width: number;
+	height: number;
+}
 
 export interface TWindow {
 	id: TWindowId;
@@ -107,11 +135,18 @@ export interface TWindow {
 		minimize: boolean;
 		maximize: boolean;
 	};
-	size: { width: number; height: number };
+	bounds: TBounds;
 	isOpen: boolean;
-	position: { x: number; y: number } | null; // null = auto-centered on first render
 	zIndex: number;
+	boundsBeforeMaximize: TBounds | null;
 }
+
+export type TWindowId = 'main' | 'settings';
+
+export type TBounds = {
+	size: { width: number; height: number };
+	position: { x: number; y: number } | null; // null = auto-centered on first render
+};
 
 // MARK: - React Context
 

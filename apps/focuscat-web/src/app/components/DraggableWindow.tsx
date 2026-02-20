@@ -2,7 +2,7 @@ import { cn, MinusIcon, XIcon } from '@repo/ui';
 import { useCompute, useListener } from 'feature-react/state';
 import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
-import type { TWindow, TWindowId, WindowCx } from '@/features/window';
+import type { TBounds, TWindow, TWindowId, WindowCx } from '@/features/window';
 
 export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 	const { windowId, windowCx, children } = props;
@@ -10,6 +10,7 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 
 	const isOpen = useCompute($window, ({ value }) => value.isOpen);
 	const trafficLights = useCompute($window, ({ value }) => value.trafficLights);
+	const isMaximized = useCompute($window, ({ value }) => value.boundsBeforeMaximize != null);
 	const isFocused = useCompute(
 		windowCx.$focusedId,
 		({ value: focusedId }) => focusedId === windowId,
@@ -17,30 +18,27 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 	);
 
 	const windowRef = React.useRef<HTMLDivElement>(null);
-	const layoutRef = React.useRef<Pick<TWindow, 'position' | 'size' | 'zIndex'> | null>(null);
+	const layoutRef = React.useRef<Pick<TWindow, 'bounds' | 'zIndex'> | null>(null);
 	const isDragging = React.useRef(false);
 	const dragStart = React.useRef({ pointerX: 0, pointerY: 0, windowX: 0, windowY: 0 });
 
 	// MARK: - Actions
 
-	const applyLayout = React.useCallback(
-		(el: HTMLElement, w: Pick<TWindow, 'position' | 'size' | 'zIndex'>) => {
-			el.style.position = 'absolute';
-			el.style.width = `${w.size.width}px`;
-			el.style.height = `${w.size.height}px`;
-			el.style.zIndex = String(w.zIndex);
-			if (w.position == null) {
-				el.style.top = '50%';
-				el.style.left = '50%';
-				el.style.transform = 'translate(-50%, -50%)';
-			} else {
-				el.style.top = `${w.position.y}px`;
-				el.style.left = `${w.position.x}px`;
-				el.style.transform = '';
-			}
-		},
-		[]
-	);
+	const applyLayout = React.useCallback((el: HTMLElement, bounds: TBounds, zIndex: number) => {
+		el.style.position = 'absolute';
+		el.style.width = `${bounds.size.width}px`;
+		el.style.height = `${bounds.size.height}px`;
+		el.style.zIndex = String(zIndex);
+		if (bounds.position == null) {
+			el.style.top = '50%';
+			el.style.left = '50%';
+			el.style.transform = 'translate(-50%, -50%)';
+		} else {
+			el.style.top = `${bounds.position.y}px`;
+			el.style.left = `${bounds.position.x}px`;
+			el.style.transform = '';
+		}
+	}, []);
 
 	const handleWindowPointerDown = React.useCallback(
 		(e: React.PointerEvent<HTMLDivElement>) => {
@@ -48,7 +46,7 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 
 			windowCx.bringToFront(windowId);
 
-			// Ignore clicks on non-draggable regions or form elements
+			// Ignore pointer events on non-draggable regions or form elements
 			if (
 				target.closest('[data-drag-region]') == null ||
 				target.closest('button, a, input, select, textarea') != null
@@ -56,16 +54,21 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 				return;
 			}
 
+			// Ignore pointer events on maximized windows
+			if (isMaximized) {
+				return;
+			}
+
 			const rect = windowRef.current?.getBoundingClientRect();
 			const layout = layoutRef.current;
-			const windowX = layout?.position?.x ?? rect?.left ?? 0;
-			const windowY = layout?.position?.y ?? rect?.top ?? 0;
+			const windowX = layout?.bounds?.position?.x ?? rect?.left ?? 0;
+			const windowY = layout?.bounds?.position?.y ?? rect?.top ?? 0;
 
 			e.currentTarget.setPointerCapture(e.pointerId);
 			isDragging.current = true;
 			dragStart.current = { pointerX: e.clientX, pointerY: e.clientY, windowX, windowY };
 		},
-		[windowCx, windowId]
+		[isMaximized, windowCx, windowId]
 	);
 
 	const handleWindowPointerMove = React.useCallback(
@@ -120,8 +123,8 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 			// Update layout as soon as the ref is set
 			if (el != null) {
 				const w = $window.get();
-				applyLayout(el, w);
-				layoutRef.current = { position: w.position, size: w.size, zIndex: w.zIndex };
+				applyLayout(el, w.bounds, w.zIndex);
+				layoutRef.current = { bounds: w.bounds, zIndex: w.zIndex };
 			}
 		},
 		[$window, applyLayout]
@@ -133,10 +136,8 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 		$window,
 		({ value }) => {
 			const el = windowRef.current;
-			if (el != null) {
-				applyLayout(el, value);
-			}
-			layoutRef.current = { position: value.position, size: value.size, zIndex: value.zIndex };
+			if (el != null) applyLayout(el, value.bounds, value.zIndex);
+			layoutRef.current = { bounds: value.bounds, zIndex: value.zIndex };
 		},
 		[$window]
 	);
@@ -154,7 +155,7 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 					animate={{ opacity: 1, scale: 1 }}
 					exit={{ opacity: 0, scale: 0.95 }}
 					transition={{ duration: 0.15, ease: 'easeOut' }}
-					className="overflow-hidden rounded-lg shadow-2xl"
+					className={cn('overflow-hidden shadow-2xl', !isMaximized && 'rounded-xl')}
 					onPointerDown={handleWindowPointerDown}
 					onPointerMove={handleWindowPointerMove}
 					onPointerUp={handleWindowPointerUp}
@@ -181,7 +182,7 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 						)}
 
 						{/* Minimize */}
-						{trafficLights.minimize ? (
+						{trafficLights.minimize && !isMaximized ? (
 							<button
 								className={cn(
 									'relative flex size-[12px] cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FFBD2E]',

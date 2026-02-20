@@ -1,3 +1,4 @@
+import { useBoundingRectObserver } from '@repo/ui';
 import React from 'react';
 import { useWindowCx, WindowCxProvider } from '@/features/window';
 import { DraggableWindow } from './components';
@@ -6,6 +7,8 @@ import { SettingsWindow } from './windows/settings';
 
 const AppInner: React.FC = () => {
 	const windowCx = useWindowCx();
+
+	// MARK: - Actions
 
 	const handleBackgroundClick = React.useCallback(
 		(e: React.MouseEvent<HTMLDivElement>) => {
@@ -16,8 +19,25 @@ const AppInner: React.FC = () => {
 		[windowCx]
 	);
 
+	// MARK: - Effects
+
+	useBoundingRectObserver(
+		windowCx.containerRef,
+		{ width: 0, height: 0 },
+		(rect) => {
+			windowCx.$containerRect.set({
+				width: rect.width ?? 0,
+				height: rect.height ?? 0
+			});
+		},
+		[windowCx]
+	);
+
+	// MARK: - UI
+
 	return (
 		<div
+			ref={windowCx.containerRef}
 			className="relative h-screen w-screen overflow-hidden bg-blue-950"
 			onClick={handleBackgroundClick}
 		>
