@@ -1,11 +1,11 @@
 import { useBoundingRectObserver } from '@repo/ui';
 import React from 'react';
-import { useWindowCx, WindowCxProvider } from '@/features/window';
+import { useWindowCx } from '@/features/window';
 import { DraggableWindow } from './components';
 import { MainWindow } from './windows/main';
 import { SettingsWindow } from './windows/settings';
 
-const AppInner: React.FC = () => {
+export const App: React.FC = () => {
 	const windowCx = useWindowCx();
 
 	// MARK: - Actions
@@ -51,13 +51,5 @@ const AppInner: React.FC = () => {
 				<SettingsWindow />
 			</DraggableWindow>
 		</div>
-	);
-};
-
-export const App: React.FC = () => {
-	return (
-		<WindowCxProvider>
-			<AppInner />
-		</WindowCxProvider>
 	);
 };

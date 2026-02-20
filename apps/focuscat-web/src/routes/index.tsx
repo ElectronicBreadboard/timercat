@@ -99,7 +99,7 @@ function RouteComponent() {
 						<SketchArrowIcon className="h-12 w-12 scale-x-[-1] rotate-180" />
 					</div>
 					<div className="border-base-200 overflow-hidden rounded-2xl border shadow-2xl">
-						<MainWindow className="h-[500px]" standalone />
+						<MainWindow className="h-[500px] w-[300px]" standalone />
 					</div>
 				</div>
 

@@ -74,7 +74,7 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 
 	return (
 		<div className={cn('bg-base-0 flex flex-col', className)}>
-			<WindowHeader badge="WEB" showTrafficLights={standalone}>
+			<WindowHeader badge="WEB" decorativeTrafficLights={standalone}>
 				{onOpenSettings != null && (
 					<IconButton
 						variant="bare"
@@ -127,8 +127,7 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 
 interface TMainWindowProps {
 	className?: string;
-	/** Callback to open settings window. When omitted (e.g. landing page), settings button is hidden. */
 	onOpenSettings?: () => void;
-	/** Standalone mode: used outside of DraggableWindow (landing page preview). Shows decorative traffic lights. */
+	/** Rendered outside app chrome (e.g. landing page); uses decorative traffic lights. */
 	standalone?: boolean;
 }
