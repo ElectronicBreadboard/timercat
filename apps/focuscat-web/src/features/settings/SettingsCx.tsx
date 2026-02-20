@@ -1,11 +1,11 @@
 import { useMemoCleanup } from '@repo/ui';
-import { withLocalStorage } from 'feature-react';
 import { createState } from 'feature-state';
 import React from 'react';
+import { TVersionedMigrationConfig, withVersionedLocalStorage } from '@/lib';
 import { type TAppSettings } from './types';
 
 export class SettingsCx {
-	public readonly $appSettings = withLocalStorage(
+	public readonly $appSettings = withVersionedLocalStorage(
 		createState<TAppSettings>({
 			version: '0.0.1',
 			features: {
@@ -47,7 +47,8 @@ export class SettingsCx {
 				equippedHat: null
 			}
 		}),
-		'focuscat-app-settings'
+		'focuscat-app-settings',
+		settingsMigrationConfig
 	);
 
 	public mount(): void {
@@ -64,6 +65,11 @@ export class SettingsCx {
 		this.$appSettings.set(updated);
 	}
 }
+
+const settingsMigrationConfig: TVersionedMigrationConfig<TAppSettings> = {
+	latestVersion: '0.0.1',
+	migrations: {}
+};
 
 // MARK: - React Context
 

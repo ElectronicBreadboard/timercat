@@ -1,7 +1,7 @@
 import { useMemoCleanup } from '@repo/ui';
-import { withLocalStorage } from 'feature-react';
 import { createState } from 'feature-state';
 import React from 'react';
+import { TVersionedMigrationConfig, withVersionedLocalStorage } from '@/lib';
 
 export class WindowCx {
 	public readonly $focusedId = createState<TWindowId | null>(null);
@@ -10,8 +10,9 @@ export class WindowCx {
 	public readonly $containerRect = createState<TContainerRect>({ width: 0, height: 0 });
 
 	public readonly windows = {
-		main: withLocalStorage(
+		main: withVersionedLocalStorage(
 			createState<TWindow>({
+				version: '0.0.1',
 				id: 'main',
 				trafficLights: { close: false, minimize: false, maximize: false },
 				bounds: { size: { width: 300, height: 500 }, position: null },
@@ -19,10 +20,12 @@ export class WindowCx {
 				zIndex: 10,
 				boundsBeforeMaximize: null
 			}),
-			'focuscat-window-main'
+			'focuscat-window-main',
+			windowMigrationConfig
 		),
-		settings: withLocalStorage(
+		settings: withVersionedLocalStorage(
 			createState<TWindow>({
+				version: '0.0.1',
 				id: 'settings',
 				trafficLights: { close: true, minimize: true, maximize: true },
 				bounds: { size: { width: 600, height: 450 }, position: null },
@@ -30,7 +33,8 @@ export class WindowCx {
 				zIndex: 11,
 				boundsBeforeMaximize: null
 			}),
-			'focuscat-window-settings'
+			'focuscat-window-settings',
+			windowMigrationConfig
 		)
 	} as const;
 
@@ -123,12 +127,18 @@ export class WindowCx {
 	}
 }
 
+const windowMigrationConfig: TVersionedMigrationConfig<TWindow> = {
+	latestVersion: '0.0.1',
+	migrations: {}
+};
+
 export interface TContainerRect {
 	width: number;
 	height: number;
 }
 
 export interface TWindow {
+	version: '0.0.1';
 	id: TWindowId;
 	trafficLights: {
 		close: boolean;
@@ -143,10 +153,11 @@ export interface TWindow {
 
 export type TWindowId = 'main' | 'settings';
 
-export type TBounds = {
+export interface TBounds {
 	size: { width: number; height: number };
-	position: { x: number; y: number } | null; // null = auto-centered on first render
-};
+	/** null = auto-centered on first render */
+	position: { x: number; y: number } | null;
+}
 
 // MARK: - React Context
 
