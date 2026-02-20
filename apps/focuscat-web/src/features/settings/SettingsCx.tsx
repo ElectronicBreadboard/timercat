@@ -9,7 +9,9 @@ export class SettingsCx {
 		createState<TAppSettings>({
 			version: '0.0.1',
 			features: {
-				goals: true
+				goals: true,
+				catWindow: true,
+				developer: false
 			},
 			appearance: {
 				theme: 'auto'
@@ -17,6 +19,10 @@ export class SettingsCx {
 			audio: {
 				enabled: true,
 				volume: 0.6
+			},
+			developer: {
+				cat: false,
+				timerSpeed: 1
 			},
 			timer: {
 				timerMode: 'pomodoro',

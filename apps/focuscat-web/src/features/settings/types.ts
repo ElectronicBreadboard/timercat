@@ -4,6 +4,8 @@ export interface TAppSettings {
 	version: '0.0.1';
 	features: {
 		goals: boolean;
+		catWindow: boolean;
+		developer: boolean;
 	};
 	appearance: {
 		theme: TTheme;
@@ -11,6 +13,10 @@ export interface TAppSettings {
 	audio: {
 		enabled: boolean;
 		volume: number;
+	};
+	developer: {
+		cat: boolean;
+		timerSpeed: number;
 	};
 	timer: {
 		timerMode: 'pomodoro' | 'countdown';
