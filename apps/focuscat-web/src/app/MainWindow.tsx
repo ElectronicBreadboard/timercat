@@ -1,9 +1,8 @@
 import {
 	Cat,
 	catConfig,
-	HistoryIcon,
+	cn,
 	IconButton,
-	SettingsIcon,
 	ShuffleIcon,
 	TimerView,
 	useTimerCx,
@@ -13,28 +12,20 @@ import {
 } from '@repo/ui';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { SettingsCxProvider, useSettingsCx } from '@/features/settings';
-import { TimerCxProvider } from '@/features/timer';
+import { useSettingsCx } from '@/features/settings';
+import { Navbar, OverviewCard } from './components';
 
-export const AppDemo: React.FC = () => {
-	return (
-		<SettingsCxProvider>
-			<TimerCxProvider>
-				<AppDemoInner />
-			</TimerCxProvider>
-		</SettingsCxProvider>
-	);
-};
-
-const AppDemoInner: React.FC = () => {
+export const MainWindow: React.FC<TMainWindowProps> = (props) => {
+	const { className, trafficLights = false } = props;
 	const catRef = React.useRef<TCatRef>(null);
-	const settingsCx = useSettingsCx();
-	const cx = useTimerCx();
 
-	const timerStatus = useFeatureState(cx.$status);
+	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 
-	// Top section sizing (mirrors desktop)
+	const timerCx = useTimerCx();
+	const timerStatus = useFeatureState(timerCx.$status);
+
+	// Top section (Stats + Cat): width is half of 300px window, height lets cat overflow into timer wheel
 	const topSection = React.useMemo(() => {
 		const width = 150;
 		const scaledBodyOffset = catConfig.baseBodyBottomOffset * (width / catConfig.baseSize);
@@ -72,44 +63,24 @@ const AppDemoInner: React.FC = () => {
 	}, [settingsCx, settings.cat]);
 
 	const handleCatTap = React.useCallback(() => {
-		cx.playSound?.('meow');
+		timerCx.playSound?.('meow'); // TODO: Add audio feature
 		return timerStatus === 'running' ? { mode: 'both' as const } : undefined;
-	}, [timerStatus, cx]);
+	}, [timerStatus]);
 
 	// MARK: - UI
 
 	return (
-		<div className="bg-base-0 border-base-200 flex h-[500px] w-[300px] flex-col overflow-hidden rounded-2xl border shadow-2xl">
-			{/* Window header */}
-			<header className="bg-base-50 border-base-200 flex h-8 shrink-0 items-center border-b pl-3">
-				<div className="flex items-center gap-1.5">
-					<div className="size-2.5 rounded-full bg-[#FF5F57]" />
-					<div className="size-2.5 rounded-full bg-[#FFBD2E]" />
-					<div className="size-2.5 rounded-full bg-[#28C840]" />
-				</div>
-				<div className="flex-1" />
-				<div className="flex items-center gap-1 pr-1">
-					<div className="text-base-400 flex size-7 items-center justify-center">
-						<HistoryIcon size={16} />
-					</div>
-					<div className="text-base-400 flex size-7 items-center justify-center">
-						<SettingsIcon size={16} />
-					</div>
-				</div>
-			</header>
+		<div className={cn('bg-base-0 flex w-[300px] flex-col', className)}>
+			<Navbar trafficLights={trafficLights} />
 
-			{/* Top section: Overview placeholder + Cat */}
+			{/* Top section: Overview + Cat */}
 			<div className="flex shrink-0" style={{ height: topSection.height }}>
-				<div className="border-base-200 flex w-1/2 flex-col border-r px-3 pt-2 pb-3">
-					<p className="text-base-400 text-[10px] font-medium tracking-wider uppercase">
-						Focus Goal
-					</p>
-					<p className="text-base-800 mt-1.5 text-xs leading-snug">Building focuscat</p>
+				<div className="border-base-200 w-1/2 border-r">
+					<OverviewCard className="size-full" />
 				</div>
 				<div className="relative z-30 w-1/2 overflow-visible">
 					<Cat
 						ref={catRef}
-						fur={settings.cat.equippedFur}
 						face={settings.cat.equippedFace}
 						hat={settings.cat.equippedHat}
 						size={topSection.width}
@@ -129,8 +100,8 @@ const AppDemoInner: React.FC = () => {
 
 			{/* Timer */}
 			<TimerView
-				cx={cx}
-				timerMode="pomodoro"
+				cx={timerCx}
+				timerMode={settings.timer.timerMode}
 				sessionsBeforeLongBreak={settings.timer.pomodoro.sessionsBeforeLongBreak}
 				onTick={handleTick}
 				className="flex-1"
@@ -138,3 +109,8 @@ const AppDemoInner: React.FC = () => {
 		</div>
 	);
 };
+
+interface TMainWindowProps {
+	className?: string;
+	trafficLights?: boolean;
+}

@@ -7,11 +7,15 @@ import { type TAppSettings } from './types';
 export class SettingsCx {
 	public readonly $appSettings = withLocalStorage(
 		createState<TAppSettings>({
+			features: {
+				goals: true
+			},
 			audio: {
 				enabled: true,
 				volume: 0.6
 			},
 			timer: {
+				timerMode: 'pomodoro',
 				pomodoro: {
 					workDurationMinutes: 25,
 					shortBreakMinutes: 5,
@@ -19,7 +23,13 @@ export class SettingsCx {
 					sessionsBeforeLongBreak: 4,
 					autoAdvance: false,
 					autoAdvanceCountdownSeconds: 5
+				},
+				countdown: {
+					durationMinutes: 25
 				}
+			},
+			goals: {
+				dailyGoalMinutes: 120
 			},
 			cat: {
 				equippedFur: 'white',

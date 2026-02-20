@@ -2,11 +2,13 @@ import { TimerCxProvider as BaseTimerCxProvider, useMemoCleanup, type TTimerCx }
 import { createState } from 'feature-state';
 import React from 'react';
 import { audioConfig, TSoundId } from '@/environment';
+import { useSessionCx, type SessionCx } from '@/features/session';
 import { useSettingsCx, type SettingsCx } from '@/features/settings';
 
 export class TimerCx implements TTimerCx {
 	private _interval: ReturnType<typeof setInterval> | null = null;
 	private readonly _settingsCx: SettingsCx;
+	private readonly _sessionCx: SessionCx;
 
 	public readonly $status = createState<'idle' | 'running' | 'paused'>('idle');
 	public readonly $sessionType = createState('pomodoro:work');
@@ -18,8 +20,9 @@ export class TimerCx implements TTimerCx {
 	public readonly $speed = createState(1);
 	public readonly $startTime = createState<Date | null>(null);
 
-	constructor(settingsCx: SettingsCx) {
+	constructor(settingsCx: SettingsCx, sessionCx: SessionCx) {
 		this._settingsCx = settingsCx;
+		this._sessionCx = sessionCx;
 		const workSeconds = settingsCx.$appSettings.get().timer.pomodoro.workDurationMinutes * 60;
 		this.$remainingSeconds = createState(workSeconds);
 		this.$totalSeconds = createState(workSeconds);
@@ -70,8 +73,9 @@ export class TimerCx implements TTimerCx {
 		const currentType = this.$sessionType.get();
 		const isWork = currentType === 'pomodoro:work';
 
-		// Increment sessions completed when advancing from a work session
+		// Record completed work session before resetting state
 		if (isWork) {
+			this._sessionCx.recordWorkSession(this.getElapsedSeconds());
 			this.$sessionsCompleted.set(this.$sessionsCompleted.get() + 1);
 		}
 
@@ -94,6 +98,7 @@ export class TimerCx implements TTimerCx {
 	public async complete(): Promise<void> {
 		const isWork = this.$sessionType.get() === 'pomodoro:work';
 		if (isWork) {
+			this._sessionCx.recordWorkSession(this.getElapsedSeconds());
 			this.$sessionsCompleted.set(this.$sessionsCompleted.get() + 1);
 		}
 
@@ -183,16 +188,18 @@ export class TimerCx implements TTimerCx {
 	private getNextSessionType(): string {
 		const currentType = this.$sessionType.get();
 		if (currentType !== 'pomodoro:work') {
-			// After any break, go back to work
 			return 'pomodoro:work';
 		}
-		// After work, determine break type
 		const completed = this.$sessionsCompleted.get();
 		const { sessionsBeforeLongBreak } = this._settingsCx.$appSettings.get().timer.pomodoro;
 		if (completed > 0 && completed % sessionsBeforeLongBreak === 0) {
 			return 'pomodoro:long_break';
 		}
 		return 'pomodoro:short_break';
+	}
+
+	private getElapsedSeconds(): number {
+		return this.$totalSeconds.get() - this.$remainingSeconds.get() + this.$overtimeSeconds.get();
 	}
 
 	private getDurationForSessionType(sessionType: string): number {
@@ -211,9 +218,10 @@ export class TimerCx implements TTimerCx {
 
 export const TimerCxProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 	const settingsCx = useSettingsCx();
+	const sessionCx = useSessionCx();
 
 	const cx = useMemoCleanup(() => {
-		const timerCx = new TimerCx(settingsCx);
+		const timerCx = new TimerCx(settingsCx, sessionCx);
 		return [timerCx, () => timerCx.dispose()];
 	}, []);
 
