@@ -41,7 +41,7 @@ export class SettingsCx {
 				equippedHat: null
 			}
 		}),
-		'focuscat-settings'
+		'focuscat-app-settings'
 	);
 
 	public mount(): void {
