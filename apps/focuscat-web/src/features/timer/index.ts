@@ -1,1 +1,1 @@
-export { TimerCx, TimerCxProvider } from './TimerCx';
+export * from './TimerCx';

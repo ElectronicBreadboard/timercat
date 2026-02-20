@@ -1,7 +1,5 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
-import { SessionCxProvider } from '@/features/session';
-import { SettingsCxProvider } from '@/features/settings';
-import { TimerCxProvider } from '@/features/timer';
+import { AppCxProvider } from '@/app';
 
 export const Route = createFileRoute('/app')({
 	component: LayoutComponent
@@ -9,12 +7,8 @@ export const Route = createFileRoute('/app')({
 
 function LayoutComponent() {
 	return (
-		<SettingsCxProvider>
-			<SessionCxProvider>
-				<TimerCxProvider>
-					<Outlet />
-				</TimerCxProvider>
-			</SessionCxProvider>
-		</SettingsCxProvider>
+		<AppCxProvider>
+			<Outlet />
+		</AppCxProvider>
 	);
 }

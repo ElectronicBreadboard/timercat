@@ -1,12 +1,9 @@
 import { SketchArrowIcon } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import React from 'react';
-import { MainWindow } from '@/app';
+import { AppCxProvider, MainWindow } from '@/app';
 import { AppleIcon, GithubIcon, SimpleLogoIcon } from '@/components';
 import { appConfig } from '@/environment';
-import { SessionCxProvider } from '@/features/session';
-import { SettingsCxProvider } from '@/features/settings';
-import { TimerCxProvider } from '@/features/timer';
 import { useDetectPlatform } from '@/hooks';
 import { fetchLatestRelease } from '@/lib';
 
@@ -145,14 +142,10 @@ function RouteComponent() {
 
 const AppDemo: React.FC = () => {
 	return (
-		<SettingsCxProvider>
-			<SessionCxProvider>
-				<TimerCxProvider>
-					<div className="border-base-200 overflow-hidden rounded-2xl border shadow-2xl">
-						<MainWindow className="h-[500px]" trafficLights />
-					</div>
-				</TimerCxProvider>
-			</SessionCxProvider>
-		</SettingsCxProvider>
+		<AppCxProvider>
+			<div className="border-base-200 overflow-hidden rounded-2xl border shadow-2xl">
+				<MainWindow className="h-[500px]" trafficLights />
+			</div>
+		</AppCxProvider>
 	);
 };

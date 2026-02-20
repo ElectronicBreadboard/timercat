@@ -12,6 +12,7 @@ import {
 } from '@repo/ui';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
+import { useAudioCx } from '@/features/audio';
 import { useSettingsCx } from '@/features/settings';
 import { Navbar, OverviewCard } from './components';
 
@@ -24,6 +25,8 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 
 	const timerCx = useTimerCx();
 	const timerStatus = useFeatureState(timerCx.$status);
+
+	const audioCx = useAudioCx();
 
 	// Top section (Stats + Cat): width is half of 300px window, height lets cat overflow into timer wheel
 	const topSection = React.useMemo(() => {
@@ -63,9 +66,9 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 	}, [settingsCx, settings.cat]);
 
 	const handleCatTap = React.useCallback(() => {
-		timerCx.playSound?.('meow'); // TODO: Add audio feature
+		audioCx.playSound('meow');
 		return timerStatus === 'running' ? { mode: 'both' as const } : undefined;
-	}, [timerStatus]);
+	}, [audioCx, timerStatus]);
 
 	// MARK: - UI
 
