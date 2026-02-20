@@ -36,6 +36,12 @@ export const Route = createRootRoute({
 				href: 'https://api.fontshare.com/v2/css?f[]=erode@1,2&display=swap'
 			},
 			{ rel: 'stylesheet', href: styles }
+		],
+		scripts: [
+			// Apply theme before paint to prevent flash (focuscat-settings.appearance.theme)
+			{
+				children: `(function(){var theme='auto';try{var s=localStorage.getItem('focuscat-settings');if(s){var j=JSON.parse(s);theme=(j.appearance&&j.appearance.theme)||'auto';}}catch(e){}var dark=theme==='dark'||(theme==='auto'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',dark);})();`
+			}
 		]
 	}),
 	shellComponent: RootDocument
