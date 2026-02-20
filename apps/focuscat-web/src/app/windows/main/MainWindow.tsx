@@ -3,6 +3,7 @@ import {
 	catConfig,
 	cn,
 	IconButton,
+	SettingsIcon,
 	ShuffleIcon,
 	TimerView,
 	useTimerCx,
@@ -12,12 +13,12 @@ import {
 } from '@repo/ui';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
+import { OverviewCard, WindowHeader } from '@/app';
 import { useAudioCx } from '@/features/audio';
 import { useSettingsCx } from '@/features/settings';
-import { Navbar, OverviewCard } from './components';
 
 export const MainWindow: React.FC<TMainWindowProps> = (props) => {
-	const { className, trafficLights = false } = props;
+	const { className, onOpenSettings, standalone = false } = props;
 	const catRef = React.useRef<TCatRef>(null);
 
 	const settingsCx = useSettingsCx();
@@ -44,11 +45,10 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 
 	const handleRandomize = React.useCallback(() => {
 		const faces = catConfig.parts.face.available;
-		const hats: (TCatHat | null)[] = [...catConfig.parts.hat.available, null]; // Add null to allow for no hat
+		const hats: (TCatHat | null)[] = [...catConfig.parts.hat.available, null];
 		const currentFace = settings.cat.equippedFace;
 		const currentHat = settings.cat.equippedHat;
 
-		// Randomize face and hat until they are different from the current one
 		let nextFace: TCatFace = currentFace;
 		let nextHat: TCatHat | null = currentHat;
 		while (nextFace === currentFace && nextHat === currentHat) {
@@ -73,8 +73,20 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 	// MARK: - UI
 
 	return (
-		<div className={cn('bg-base-0 flex w-[300px] flex-col', className)}>
-			<Navbar trafficLights={trafficLights} />
+		<div className={cn('bg-base-0 flex flex-col', className)}>
+			<WindowHeader badge="WEB" showTrafficLights={standalone}>
+				{onOpenSettings != null && (
+					<IconButton
+						variant="bare"
+						size="sm"
+						aria-label="Open settings"
+						className="size-7"
+						onClick={onOpenSettings}
+					>
+						<SettingsIcon size={16} />
+					</IconButton>
+				)}
+			</WindowHeader>
 
 			{/* Top section: Overview + Cat */}
 			<div className="flex shrink-0" style={{ height: topSection.height }}>
@@ -115,5 +127,8 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 
 interface TMainWindowProps {
 	className?: string;
-	trafficLights?: boolean;
+	/** Callback to open settings window. When omitted (e.g. landing page), settings button is hidden. */
+	onOpenSettings?: () => void;
+	/** Standalone mode: used outside of DraggableWindow (landing page preview). Shows decorative traffic lights. */
+	standalone?: boolean;
 }

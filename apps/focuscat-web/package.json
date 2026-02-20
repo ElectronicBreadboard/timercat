@@ -35,6 +35,7 @@
 		"feature-react": "^0.0.67",
 		"feature-state": "^0.0.65",
 		"lucide-react": "^0.574.0",
+		"motion": "^12.0.0",
 		"react": "^19.2.4",
 		"react-dom": "^19.2.4",
 		"tailwind-merge": "^3.4.1",

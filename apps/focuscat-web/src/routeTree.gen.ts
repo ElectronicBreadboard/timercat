@@ -26,9 +26,9 @@ const HelpIndexRoute = HelpIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppRouteRoute,
+  id: '/app/',
+  path: '/app/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LegalTermsIndexRoute = LegalTermsIndexRouteImport.update({
   id: '/legal/terms/',
@@ -79,6 +79,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppIndexRoute: typeof AppIndexRoute
   HelpIndexRoute: typeof HelpIndexRoute
   LegalPrivacyIndexRoute: typeof LegalPrivacyIndexRoute
   LegalTermsIndexRoute: typeof LegalTermsIndexRoute
@@ -102,10 +103,10 @@ declare module '@tanstack/react-router' {
     }
     '/app/': {
       id: '/app/'
-      path: '/'
+      path: '/app'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof AppRouteRoute
+      parentRoute: typeof rootRouteImport
     }
     '/legal/terms/': {
       id: '/legal/terms/'
@@ -126,6 +127,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppIndexRoute: AppIndexRoute,
   HelpIndexRoute: HelpIndexRoute,
   LegalPrivacyIndexRoute: LegalPrivacyIndexRoute,
   LegalTermsIndexRoute: LegalTermsIndexRoute,
