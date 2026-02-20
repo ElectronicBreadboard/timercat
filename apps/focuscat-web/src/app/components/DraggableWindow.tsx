@@ -1,15 +1,15 @@
 import { cn, MinusIcon, XIcon } from '@repo/ui';
-import { useCompute, useFeatureState } from 'feature-react/state';
+import { useCompute, useListener } from 'feature-react/state';
 import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
-import type { TWindowId, WindowCx } from '@/features/windows';
+import type { TWindow, TWindowId, WindowCx } from '@/features/window';
 
 export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 	const { windowId, windowCx, children } = props;
+	const $window = windowCx.windows[windowId];
 
-	const { trafficLights, size, isOpen, position, zIndex } = useFeatureState(
-		windowCx.windows[windowId]
-	);
+	const isOpen = useCompute($window, ({ value }) => value.isOpen);
+	const trafficLights = useCompute($window, ({ value }) => value.trafficLights);
 	const isFocused = useCompute(
 		windowCx.$focusedId,
 		({ value: focusedId }) => focusedId === windowId,
@@ -17,10 +17,30 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 	);
 
 	const windowRef = React.useRef<HTMLDivElement>(null);
+	const layoutRef = React.useRef<Pick<TWindow, 'position' | 'size' | 'zIndex'> | null>(null);
 	const isDragging = React.useRef(false);
 	const dragStart = React.useRef({ pointerX: 0, pointerY: 0, windowX: 0, windowY: 0 });
 
 	// MARK: - Actions
+
+	const applyLayout = React.useCallback(
+		(el: HTMLElement, w: Pick<TWindow, 'position' | 'size' | 'zIndex'>) => {
+			el.style.position = 'absolute';
+			el.style.width = `${w.size.width}px`;
+			el.style.height = `${w.size.height}px`;
+			el.style.zIndex = String(w.zIndex);
+			if (w.position == null) {
+				el.style.top = '50%';
+				el.style.left = '50%';
+				el.style.transform = 'translate(-50%, -50%)';
+			} else {
+				el.style.top = `${w.position.y}px`;
+				el.style.left = `${w.position.x}px`;
+				el.style.transform = '';
+			}
+		},
+		[]
+	);
 
 	const handleWindowPointerDown = React.useCallback(
 		(e: React.PointerEvent<HTMLDivElement>) => {
@@ -37,14 +57,15 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 			}
 
 			const rect = windowRef.current?.getBoundingClientRect();
-			const windowX = position?.x ?? rect?.left ?? 0;
-			const windowY = position?.y ?? rect?.top ?? 0;
+			const layout = layoutRef.current;
+			const windowX = layout?.position?.x ?? rect?.left ?? 0;
+			const windowY = layout?.position?.y ?? rect?.top ?? 0;
 
 			e.currentTarget.setPointerCapture(e.pointerId);
 			isDragging.current = true;
 			dragStart.current = { pointerX: e.clientX, pointerY: e.clientY, windowX, windowY };
 		},
-		[position, windowCx, windowId]
+		[windowCx, windowId]
 	);
 
 	const handleWindowPointerMove = React.useCallback(
@@ -92,32 +113,43 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 		[windowCx, windowId]
 	);
 
+	const setWindowRef = React.useCallback(
+		(el: HTMLDivElement | null) => {
+			windowRef.current = el;
+
+			// Update layout as soon as the ref is set
+			if (el != null) {
+				const w = $window.get();
+				applyLayout(el, w);
+				layoutRef.current = { position: w.position, size: w.size, zIndex: w.zIndex };
+			}
+		},
+		[$window, applyLayout]
+	);
+
+	// MARK: - Effects
+
+	useListener(
+		$window,
+		({ value }) => {
+			const el = windowRef.current;
+			if (el != null) {
+				applyLayout(el, value);
+			}
+			layoutRef.current = { position: value.position, size: value.size, zIndex: value.zIndex };
+		},
+		[$window]
+	);
+
 	// MARK: - UI
 
 	return (
 		<AnimatePresence>
 			{isOpen && (
 				<motion.div
-					ref={windowRef}
+					ref={setWindowRef}
 					data-window
-					style={{
-						width: size.width,
-						height: size.height,
-						...(position == null
-							? {
-									position: 'absolute',
-									top: '50%',
-									left: '50%',
-									transform: 'translate(-50%, -50%)',
-									zIndex
-								}
-							: {
-									position: 'absolute',
-									top: position.y,
-									left: position.x,
-									zIndex
-								})
-					}}
+					style={{}}
 					initial={{ opacity: 0, scale: 0.95 }}
 					animate={{ opacity: 1, scale: 1 }}
 					exit={{ opacity: 0, scale: 0.95 }}
