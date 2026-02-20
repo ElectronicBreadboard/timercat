@@ -7,8 +7,12 @@ import { type TAppSettings } from './types';
 export class SettingsCx {
 	public readonly $appSettings = withLocalStorage(
 		createState<TAppSettings>({
+			version: '0.0.1',
 			features: {
 				goals: true
+			},
+			appearance: {
+				theme: 'auto'
 			},
 			audio: {
 				enabled: true,

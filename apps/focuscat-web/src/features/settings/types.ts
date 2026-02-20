@@ -1,8 +1,12 @@
 import type { TCatFace, TCatFur, TCatHat } from '@repo/ui';
 
 export interface TAppSettings {
+	version: '0.0.1';
 	features: {
 		goals: boolean;
+	};
+	appearance: {
+		theme: TTheme;
 	};
 	audio: {
 		enabled: boolean;
@@ -31,3 +35,5 @@ export interface TAppSettings {
 		equippedHat: TCatHat | null;
 	};
 }
+
+export type TTheme = 'light' | 'dark' | 'auto';

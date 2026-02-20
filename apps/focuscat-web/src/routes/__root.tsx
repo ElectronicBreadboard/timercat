@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import { Analytics } from '@vercel/analytics/react';
 import React from 'react';
+import { AppProvider } from '@/app';
 import styles from '../styles.css?url';
 
 export const Route = createRootRoute({
@@ -44,12 +45,12 @@ function RootDocument(props: { children: React.ReactNode }) {
 	const { children } = props;
 
 	return (
-		<html data-theme="light">
+		<html>
 			<head>
 				<HeadContent />
 			</head>
-			<body className="font-sans">
-				{children}
+			<body className="bg-base-0 text-base-950 font-sans">
+				<AppProvider>{children}</AppProvider>
 				<TanStackRouterDevtools position="bottom-right" />
 				<Scripts />
 				<Analytics />

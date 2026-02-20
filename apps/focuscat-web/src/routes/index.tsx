@@ -1,7 +1,7 @@
 import { SketchArrowIcon } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import React from 'react';
-import { AppCxProvider, MainWindow } from '@/app';
+import { MainWindow } from '@/app';
 import { AppleIcon, GithubIcon, SimpleLogoIcon } from '@/components';
 import { appConfig } from '@/environment';
 import { useDetectPlatform } from '@/hooks';
@@ -40,7 +40,7 @@ function RouteComponent() {
 	// MARK: - UI
 
 	return (
-		<div className="text-base-950 flex min-h-screen flex-col items-center">
+		<div className="flex min-h-screen flex-col items-center">
 			<main className="flex w-full flex-col items-center px-8 pt-24 pb-9 sm:pt-28">
 				<div className="animate-fade-in flex w-full max-w-3xl flex-col items-center text-center opacity-0">
 					<img
@@ -76,7 +76,7 @@ function RouteComponent() {
 								href={github}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="border-base-200 bg-base-0 inline-flex items-center justify-center gap-2 rounded-xl border px-5 py-2.5 text-base font-medium transition-opacity hover:opacity-90"
+								className="border-base-200 bg-base-50 inline-flex items-center justify-center gap-2 rounded-xl border px-5 py-2.5 text-base font-medium transition-opacity hover:opacity-90"
 							>
 								<GithubIcon className="size-5" />
 								View on GitHub
@@ -94,11 +94,13 @@ function RouteComponent() {
 				</div>
 
 				<div className="animate-fade-in-delay relative flex justify-center px-4 pt-24 opacity-0 sm:px-6 sm:pt-8">
-					<div className="absolute right-0 bottom-130 flex flex-col items-center justify-center gap-2 text-[#525866] sm:-right-16 sm:bottom-120">
+					<div className="text-base-500 absolute right-0 bottom-130 flex flex-col items-center justify-center gap-2 sm:-right-16 sm:bottom-120">
 						<p className="font-handwritten text-center text-2xl font-bold">Try yourself</p>
 						<SketchArrowIcon className="h-12 w-12 scale-x-[-1] rotate-180" />
 					</div>
-					<AppDemo />
+					<div className="border-base-200 overflow-hidden rounded-2xl border shadow-2xl">
+						<MainWindow className="h-[500px]" trafficLights />
+					</div>
 				</div>
 
 				<div className="animate-fade-in-delay mt-16 flex w-full max-w-[840px] flex-col px-8 text-left opacity-0 sm:mt-20 sm:text-center">
@@ -139,13 +141,3 @@ function RouteComponent() {
 		</div>
 	);
 }
-
-const AppDemo: React.FC = () => {
-	return (
-		<AppCxProvider>
-			<div className="border-base-200 overflow-hidden rounded-2xl border shadow-2xl">
-				<MainWindow className="h-[500px]" trafficLights />
-			</div>
-		</AppCxProvider>
-	);
-};
