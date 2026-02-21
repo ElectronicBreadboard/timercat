@@ -1,5 +1,5 @@
 import { TimerCxProvider as BaseTimerCxProvider, useMemoCleanup, type TTimerCx } from '@repo/ui';
-import { createState } from 'feature-state';
+import { createState, TState } from 'feature-state';
 import React from 'react';
 import { TSoundId, useAudioCx, type AudioCx } from '@/features/audio';
 import { useSessionCx, type SessionCx } from '@/features/session';
@@ -7,27 +7,49 @@ import { useSettingsCx, type SettingsCx } from '@/features/settings';
 
 export class TimerCx implements TTimerCx {
 	private _interval: ReturnType<typeof setInterval> | null = null;
+	private readonly _unlisteners: (() => void)[] = [];
 	private readonly _settingsCx: SettingsCx;
 	private readonly _sessionCx: SessionCx;
 	private readonly _audioCx: AudioCx;
 
 	public readonly $status = createState<'idle' | 'running' | 'paused'>('idle');
 	public readonly $sessionType = createState('pomodoro:work');
-	public readonly $remainingSeconds: ReturnType<typeof createState<number>>;
-	public readonly $totalSeconds: ReturnType<typeof createState<number>>;
+	public readonly $remainingSeconds: TState<number, []>;
+	public readonly $totalSeconds: TState<number, []>;
 	public readonly $overtimeSeconds = createState(0);
 	public readonly $autoAdvanceCountdownSeconds = createState<number | null>(null);
 	public readonly $sessionsCompleted = createState(0);
-	public readonly $speed = createState(1);
+	public readonly $speed: TState<number, []>;
 	public readonly $startTime = createState<Date | null>(null);
 
 	constructor(settingsCx: SettingsCx, sessionCx: SessionCx, audioCx: AudioCx) {
 		this._settingsCx = settingsCx;
 		this._sessionCx = sessionCx;
 		this._audioCx = audioCx;
-		const workSeconds = settingsCx.$appSettings.get().timer.pomodoro.workDurationMinutes * 60;
+		const app = settingsCx.$appSettings.get();
+		const workSeconds = app.timer.pomodoro.workDurationMinutes * 60;
 		this.$remainingSeconds = createState(workSeconds);
 		this.$totalSeconds = createState(workSeconds);
+		this.$speed = createState(Math.max(1, app.developer.timerSpeed));
+
+		this._unlisteners.push(
+			settingsCx.$appSettings.listen(() => {
+				const speed = Math.max(1, this._settingsCx.$appSettings.get().developer.timerSpeed);
+				this.$speed.set(speed);
+				if (this.$status.get() === 'running') {
+					this.clearInterval();
+					this.startInterval();
+				}
+			})
+		);
+	}
+
+	public unmount(): void {
+		this.clearInterval();
+		for (const unlisten of this._unlisteners) {
+			unlisten();
+		}
+		this._unlisteners.length = 0;
 	}
 
 	public async start(): Promise<void> {
@@ -128,10 +150,6 @@ export class TimerCx implements TTimerCx {
 		this._audioCx.playSound(id as TSoundId);
 	}
 
-	public dispose(): void {
-		this.clearInterval();
-	}
-
 	private startInterval(): void {
 		this.clearInterval();
 		const intervalMs = 1000 / this.$speed.get();
@@ -217,7 +235,7 @@ export const TimerCxProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
 	const cx = useMemoCleanup(() => {
 		const timerCx = new TimerCx(settingsCx, sessionCx, audioCx);
-		return [timerCx, () => timerCx.dispose()];
+		return [timerCx, () => timerCx.unmount()];
 	}, []);
 
 	return <BaseTimerCxProvider value={cx}>{children}</BaseTimerCxProvider>;
