@@ -118,6 +118,7 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 				cx={timerCx}
 				timerMode={settings.timer.timerMode}
 				sessionsBeforeLongBreak={settings.timer.pomodoro.sessionsBeforeLongBreak}
+				showDevSpeed={settings.features.developer}
 				onTick={handleTick}
 				className="flex-1"
 			/>

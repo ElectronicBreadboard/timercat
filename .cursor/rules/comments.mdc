@@ -125,6 +125,21 @@ if (current == null || current.id !== id) {
 ### Session Rationale
 Never document design choices that only matter during the current refactor. "Type-safe; no string formatting" or "we use enum instead of string" add noise once the change is done.
 
+❌ Bad (documents what's NOT there):
+```typescript
+// No visibility listener needed; handled by the timer loop
+```
+
+❌ Bad (only relevant during this refactor):
+```typescript
+// Changed from string to enum for type safety
+```
+
+✅ Good (explains what exists and why):
+```typescript
+// Uses setInterval rather than RAF because RAF pauses when the tab is hidden.
+```
+
 ### Em Dashes
 Never use em dashes (—) in comments. Use commas, semicolons, or plain sentences instead.
 

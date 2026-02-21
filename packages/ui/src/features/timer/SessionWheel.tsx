@@ -1,28 +1,65 @@
+import { useCombinedCompute } from 'feature-react/state';
 import { animate, motion, useMotionValue } from 'motion/react';
 import React from 'react';
 import { cn } from '../../lib';
+import { type TTimerCx } from './TimerCx';
 
 export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
-	const { value, windowSize = 10, sessionsBeforeLongBreak = 4, itemHeight = 28, className } = props;
+	const { cx, windowSize = 10, sessionsBeforeLongBreak = 4, itemHeight = 28, className } = props;
 
 	const y = useMotionValue(0);
+
+	const { value, isRunning } = useCombinedCompute(
+		[
+			cx.$status,
+			cx.$sessionType,
+			cx.$remainingSeconds,
+			cx.$totalSeconds,
+			cx.$sessionsCompleted
+		] as const,
+		([
+			{ value: status = 'idle' },
+			{ value: sessionType = 'pomodoro:work' },
+			{ value: remainingSeconds = 0 },
+			{ value: totalSeconds = 0 },
+			{ value: sessionsCompleted = 0 }
+		]) => {
+			if (status === 'idle') {
+				return { value: 0, isRunning: false };
+			}
+			const phaseProgress = totalSeconds > 0 ? (totalSeconds - remainingSeconds) / totalSeconds : 0;
+			const value = sessionType.endsWith(':work')
+				? sessionsCompleted + phaseProgress * 0.5
+				: sessionsCompleted - 0.5 + phaseProgress * 0.5;
+			return { value, isRunning: status === 'running' };
+		},
+		[],
+		{ isEqual: (a, b) => a.value === b.value && a.isRunning === b.isRunning }
+	);
+
+	// Only recalculate items when whole session number changes
+	const sessionFloor = Math.floor(value);
 	const items = React.useMemo(() => {
-		const center = Math.floor(value);
-		const start = Math.max(0, center - windowSize);
-		const end = center + windowSize;
+		const start = Math.max(0, sessionFloor - windowSize);
+		const end = sessionFloor + windowSize;
 		const result: number[] = [];
 		for (let i = start; i <= end; i++) {
 			result.push(i);
 		}
 		return result;
-	}, [value, windowSize]);
+	}, [sessionFloor, windowSize]);
 
 	// MARK: - Effects
 
 	React.useEffect(() => {
 		const targetY = value * itemHeight;
-		animate(y, targetY, { type: 'spring', stiffness: 300, damping: 30 });
-	}, [value, y, itemHeight]);
+		if (isRunning) {
+			// 1-second linear tween bridges consecutive 1Hz ticks for smooth continuous scroll
+			animate(y, targetY, { duration: 1, ease: 'linear' });
+		} else {
+			animate(y, targetY, { type: 'spring', stiffness: 300, damping: 30 });
+		}
+	}, [value, y, itemHeight, isRunning]);
 
 	// MARK: - UI
 
@@ -47,7 +84,7 @@ export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
 };
 
 interface TSessionWheelProps {
-	value: number;
+	cx: TTimerCx;
 	windowSize?: number;
 	sessionsBeforeLongBreak?: number;
 	itemHeight?: number;

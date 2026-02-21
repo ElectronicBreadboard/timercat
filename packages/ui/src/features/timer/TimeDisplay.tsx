@@ -32,7 +32,7 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 		{
 			isEqual: (a, b) =>
 				a.isOvertime === b.isOvertime &&
-				Math.floor(a.displaySeconds) === Math.floor(b.displaySeconds) &&
+				a.displaySeconds === b.displaySeconds &&
 				a.displayStartTime.getTime() === b.displayStartTime.getTime() &&
 				Math.floor(a.displayEndTime.getTime() / 1000) ===
 					Math.floor(b.displayEndTime.getTime() / 1000)
@@ -46,9 +46,7 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 		}),
 		[],
 		{
-			isEqual: (a, b) =>
-				Math.floor(a.totalWorked) === Math.floor(b.totalWorked) &&
-				Math.floor(a.overtimeSeconds) === Math.floor(b.overtimeSeconds)
+			isEqual: (a, b) => a.totalWorked === b.totalWorked && a.overtimeSeconds === b.overtimeSeconds
 		}
 	);
 

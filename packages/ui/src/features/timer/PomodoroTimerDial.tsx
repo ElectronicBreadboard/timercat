@@ -1,4 +1,3 @@
-import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
 import { TriangleRightIcon } from '../../components';
 import { SessionWheel } from './SessionWheel';
@@ -7,33 +6,6 @@ import { type TTimerCx } from './TimerCx';
 
 export const PomodoroTimerDial: React.FC<TProps> = (props) => {
 	const { cx, previewMinutes, sessionsBeforeLongBreak, onPreviewChange } = props;
-
-	const sessionProgress = useCombinedCompute(
-		[
-			cx.$status,
-			cx.$sessionType,
-			cx.$remainingSeconds,
-			cx.$totalSeconds,
-			cx.$sessionsCompleted
-		] as const,
-		([
-			{ value: status = 'idle' },
-			{ value: sessionType = 'pomodoro:work' },
-			{ value: remainingSeconds = 0 },
-			{ value: totalSeconds = 0 },
-			{ value: sessionsCompleted = 0 }
-		]) => {
-			if (status === 'idle') {
-				return 0;
-			}
-
-			// Session progress: each session spans 0→1, split into work (0→0.5) and break (0.5→1.0)
-			const phaseProgress = totalSeconds > 0 ? (totalSeconds - remainingSeconds) / totalSeconds : 0;
-			return sessionType.endsWith(':work')
-				? sessionsCompleted + phaseProgress * 0.5
-				: sessionsCompleted - 0.5 + phaseProgress * 0.5;
-		}
-	);
 
 	// MARK: - UI
 
@@ -49,7 +21,7 @@ export const PomodoroTimerDial: React.FC<TProps> = (props) => {
 
 			{/* Session wheel */}
 			<div className="relative mr-2">
-				<SessionWheel value={sessionProgress} sessionsBeforeLongBreak={sessionsBeforeLongBreak} />
+				<SessionWheel cx={cx} sessionsBeforeLongBreak={sessionsBeforeLongBreak} />
 
 				{/* Edge fades */}
 				<div className="from-base-0 pointer-events-none absolute inset-x-0 top-px z-10 h-6 bg-linear-to-b to-transparent" />
