@@ -53,8 +53,10 @@ export const Sidebar: React.FC<TSidebarProps> = (props) => {
 				<Button
 					variant="default"
 					size="sm"
-					className="border-purple-500 bg-transparent text-purple-600 hover:bg-purple-500/10 focus-visible:ring-purple-500 w-full"
-					render={<a href={appConfig.distribution.website} target="_blank" rel="noopener noreferrer" />}
+					className="w-full border-purple-500/30 bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 focus-visible:ring-purple-500 active:bg-purple-500/30"
+					render={
+						<a href={appConfig.distribution.website} target="_blank" rel="noopener noreferrer" />
+					}
 					nativeButton={false}
 				>
 					Get Focuscat

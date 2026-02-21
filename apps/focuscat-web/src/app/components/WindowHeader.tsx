@@ -2,7 +2,7 @@ import { Badge, cn } from '@repo/ui';
 import React from 'react';
 
 export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
-	const { badge, title, decorativeTrafficLights = false, children, className } = props;
+	const { title, showBadge = true, decorativeTrafficLights = false, children, className } = props;
 
 	return (
 		<header
@@ -20,22 +20,21 @@ export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 					<div className="size-[12px] rounded-full bg-[#28C840] ring-1 ring-black/20" />
 				</div>
 			)}
-
-			{badge != null && <Badge className="bg-purple-400/10 text-purple-400">{badge}</Badge>}
-
-			{title != null && <span className="text-base-400 text-xs font-medium">{title}</span>}
-
+			{title != null && (
+				<span data-tauri-drag-region className="text-base-600 ml-2 text-sm font-semibold">
+					{title}
+				</span>
+			)}
+			{showBadge && <Badge className="ml-2 bg-purple-400/10 text-purple-400">WEB</Badge>}
 			<div data-drag-region className="flex-1" />
-
 			{children != null && <div className="flex items-center gap-1 pr-1">{children}</div>}
 		</header>
 	);
 };
 
 export interface TWindowHeaderProps {
-	badge?: string;
 	title?: string;
-	/** Show non-interactive traffic lights (e.g. on landing page when not using DraggableWindow). */
+	showBadge?: boolean;
 	decorativeTrafficLights?: boolean;
 	children?: React.ReactNode;
 	className?: string;

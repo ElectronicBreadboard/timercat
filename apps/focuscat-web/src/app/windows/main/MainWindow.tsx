@@ -74,7 +74,7 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 
 	return (
 		<div className={cn('bg-base-0 flex flex-col', className)}>
-			<WindowHeader badge="WEB" decorativeTrafficLights={standalone}>
+			<WindowHeader decorativeTrafficLights={standalone}>
 				{onOpenSettings != null && (
 					<IconButton
 						variant="bare"

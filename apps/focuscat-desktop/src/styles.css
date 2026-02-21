@@ -10,30 +10,6 @@
 		text-rendering: optimizeLegibility;
 	}
 
-	/* Scrollbar styling */
-	* {
-		scrollbar-color: var(--color-base-300) var(--color-base-50);
-		scrollbar-width: thin;
-	}
-
-	*::-webkit-scrollbar {
-		width: 6px;
-		height: 6px;
-	}
-
-	*::-webkit-scrollbar-track {
-		background-color: var(--color-base-50);
-	}
-
-	*::-webkit-scrollbar-thumb {
-		border-radius: 3px;
-		background-color: var(--color-base-300);
-	}
-
-	*::-webkit-scrollbar-thumb:hover {
-		background-color: var(--color-base-400);
-	}
-
 	/* Tauri WebView doesn't seem to paint the native resizer icon, so we mimic it with a gradient */
 	*::-webkit-resizer {
 		background: linear-gradient(

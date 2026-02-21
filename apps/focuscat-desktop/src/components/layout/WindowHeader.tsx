@@ -3,7 +3,7 @@ import React from 'react';
 import { useAppInfo, usePlatform, useUpdateChecker } from '@/hooks';
 
 export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
-	const { title, children, className, showBadge = true } = props;
+	const { title, showBadge = true, children, className } = props;
 	const platform = usePlatform();
 	const appInfo = useAppInfo();
 	const { updateAvailable, updateInfo, installing, install } = useUpdateChecker();
@@ -62,7 +62,7 @@ export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 
 export interface TWindowHeaderProps {
 	title?: string;
+	showBadge?: boolean;
 	children?: React.ReactNode;
 	className?: string;
-	showBadge?: boolean;
 }
