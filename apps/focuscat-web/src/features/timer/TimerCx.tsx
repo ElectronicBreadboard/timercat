@@ -120,8 +120,7 @@ export class TimerCx implements TTimerCx {
 		this.stopLoop();
 
 		const currentType = this.$sessionType.get();
-		const isWork = currentType === 'pomodoro:work';
-		if (isWork) {
+		if (currentType === 'pomodoro:work') {
 			this._sessionCx.recordWorkSession(this.getElapsedSeconds());
 			this.$sessionsCompleted.set(this.$sessionsCompleted.get() + 1);
 		}
@@ -141,8 +140,7 @@ export class TimerCx implements TTimerCx {
 	}
 
 	public async complete(): Promise<void> {
-		const isWork = this.$sessionType.get() === 'pomodoro:work';
-		if (isWork) {
+		if (this.$sessionType.get() === 'pomodoro:work') {
 			this._sessionCx.recordWorkSession(this.getElapsedSeconds());
 		}
 
@@ -252,8 +250,7 @@ export class TimerCx implements TTimerCx {
 	// MARK: - Helpers
 
 	private getNextSessionType(): string {
-		const currentType = this.$sessionType.get();
-		if (currentType !== 'pomodoro:work') {
+		if (this.$sessionType.get() !== 'pomodoro:work') {
 			return 'pomodoro:work';
 		}
 
