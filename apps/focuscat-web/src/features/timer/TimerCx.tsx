@@ -13,6 +13,9 @@ import { useSettingsCx, type SettingsCx } from '@/features/settings';
 export class TimerCx implements TTimerCx {
 	private readonly _unlisteners: (() => void)[] = [];
 
+	// Note: Uses setInterval rather than RAF because RAF pauses when the tab is hidden
+	// and computes state from Date.now rather than performance.now because performance.now
+	// freezes during device sleep, so the timer self-corrects for throttling and sleep on every tick.
 	private _interval: ReturnType<typeof setInterval> | null = null;
 	private _remainingAtStart = 0;
 	private _startedAt = 0;
@@ -109,6 +112,8 @@ export class TimerCx implements TTimerCx {
 		this.$startTime.set(null);
 		this.$overtimeSeconds.set(0);
 		this.$autoAdvanceCountdownSeconds.set(null);
+		this.$sessionType.set('pomodoro:work');
+		this.$sessionsCompleted.set(0);
 
 		const duration = this.getDurationForSessionType(this.$sessionType.get());
 		this.$totalSeconds.set(duration);
@@ -192,10 +197,6 @@ export class TimerCx implements TTimerCx {
 	}
 
 	// MARK: - Timer loop
-	//
-	// Note: Uses setInterval rather than RAF because RAF pauses when the tab is hidden
-	// and computes state from Date.now rather than performance.now because performance.now
-	// freezes during device sleep, so the timer self-corrects for throttling and sleep on every tick.
 
 	private startLoop(): void {
 		this.stopLoop();
