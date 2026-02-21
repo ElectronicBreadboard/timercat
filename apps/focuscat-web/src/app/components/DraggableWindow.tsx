@@ -155,7 +155,7 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 					animate={{ opacity: 1, scale: 1 }}
 					exit={{ opacity: 0, scale: 0.95 }}
 					transition={{ duration: 0.15, ease: 'easeOut' }}
-					className={cn('overflow-hidden shadow-2xl', !isMaximized && 'rounded-xl')}
+					className={cn('overflow-hidden shadow-2xl', !isMaximized && 'rounded-2xl')}
 					onPointerDown={handleWindowPointerDown}
 					onPointerMove={handleWindowPointerMove}
 					onPointerUp={handleWindowPointerUp}

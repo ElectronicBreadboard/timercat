@@ -38,7 +38,7 @@ export const App: React.FC = () => {
 	return (
 		<div
 			ref={windowCx.containerRef}
-			className="relative h-screen w-screen overflow-hidden bg-blue-950"
+			className="bg-primary relative h-screen w-screen overflow-hidden"
 			onClick={handleBackgroundClick}
 		>
 			{/* Main window */}
