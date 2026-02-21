@@ -180,9 +180,15 @@ importers:
       tailwind-merge:
         specifier: ^3.4.1
         version: 3.4.1
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
+      valibot:
+        specifier: ^1.2.0
+        version: 1.2.0(typescript@5.9.3)
+      validatenv:
+        specifier: ^0.0.43
+        version: 0.0.43
+      validation-adapters:
+        specifier: ^0.0.37
+        version: 0.0.37
     devDependencies:
       '@mdx-js/rollup':
         specifier: ^3.1.1
@@ -3857,8 +3863,22 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
+  valibot@1.2.0:
+    resolution: {integrity: sha512-mm1rxUsmOxzrwnX5arGS+U4T25RdvpPjPN4yR0u9pUBov9+zGVtO84tif1eY4r6zWxVxu3KzIyknJy3rxfRZZg==}
+    peerDependencies:
+      typescript: '>=5'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  validatenv@0.0.43:
+    resolution: {integrity: sha512-621xtdJ57o+jUm48lN1yqgOKhk+1V2AMkgI1L+T3RJG85URvjcGjJqLyQsmQrpLesMFc5P8kSRzc+6e3dU1obg==}
+
   validation-adapter@0.0.27:
     resolution: {integrity: sha512-SLpuicOfjmkY6rrqmytnynPfOmK7iVa8INA8a6JZqwNsvTjgmAw+/2ixia/+NPIEY7E1mX4am6wK6m+OoO6thA==}
+
+  validation-adapters@0.0.37:
+    resolution: {integrity: sha512-vTsNFsARfWOnCaFvVrEtnjACKAI+7cTYF46xsbnkz+lFnhDKXkl/HTxnbnNFuxnG1s9rAVwhl62hAp3jBFjq5A==}
 
   vfile-message@4.0.3:
     resolution: {integrity: sha512-QTHzsGd1EhbZs4AsQ20JX1rC3cOlt/IWJruk893DfLRr57lcnOeMaWG4K0JrRta4mIJZKth2Au3mM3u03/JWKw==}
@@ -7912,9 +7932,22 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
+  valibot@1.2.0(typescript@5.9.3):
+    optionalDependencies:
+      typescript: 5.9.3
+
+  validatenv@0.0.43:
+    dependencies:
+      '@blgc/utils': 0.0.61
+      validation-adapter: 0.0.27
+
   validation-adapter@0.0.27:
     dependencies:
       '@blgc/utils': 0.0.61
+
+  validation-adapters@0.0.37:
+    dependencies:
+      validation-adapter: 0.0.27
 
   vfile-message@4.0.3:
     dependencies:

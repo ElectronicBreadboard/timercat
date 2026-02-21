@@ -11,6 +11,9 @@ export default defineConfig(async () => ({
 	server: {
 		port: 3000
 	},
+	define: {
+		['import.meta.env.PACKAGE_VERSION']: validateAndStringify('npm_package_version')
+	},
 	plugins: [
 		tsConfigPaths({
 			projects: ['./tsconfig.json']
@@ -24,3 +27,23 @@ export default defineConfig(async () => ({
 		tailwindcss()
 	]
 }));
+
+/**
+ * Validate and stringify env var for Vite's `define` option
+ * - Production: Fail hard if missing (prevent corrupted builds)
+ * - Development: Allow empty string (warn but continue)
+ */
+function validateAndStringify(key: string): string {
+	const value = process.env[key];
+	if (!value?.length) {
+		// Production builds must have all env vars
+		const isProd = process.env['CI'] || process.env['DOCKER'];
+		if (isProd) {
+			throw new Error(`${key} is required for production builds`);
+		}
+		// Local dev: warn and continue with empty string
+		console.warn(`[vite.config.ts] Warning: ${key} is not set`);
+		return JSON.stringify('');
+	}
+	return JSON.stringify(value);
+}

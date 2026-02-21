@@ -1,0 +1,168 @@
+import { NumberField, Switch, ToggleGroup } from '@repo/ui';
+import { useFeatureState } from 'feature-react/state';
+import React from 'react';
+import { SettingGroup, SettingItem, useSettingsCx, type TAppSettings } from '@/features/settings';
+
+export const TimerPanel: React.FC = () => {
+	const settingsCx = useSettingsCx();
+	const settings = useFeatureState(settingsCx.$appSettings);
+
+	// MARK: - Actions
+
+	const updateTimer = React.useCallback(
+		(updates: Partial<TAppSettings['timer']>) => {
+			settingsCx.update({ timer: { ...settings.timer, ...updates } });
+		},
+		[settingsCx, settings.timer]
+	);
+
+	// MARK: - UI
+
+	return (
+		<div className="space-y-6">
+			<h1 className="text-base-900 text-xl font-semibold">Timer</h1>
+
+			<SettingGroup title="Mode">
+				<SettingItem label="Timer Mode" description="Choose timer behavior">
+					<ToggleGroup
+						value={settings.timer.timerMode}
+						onValueChange={(v) =>
+							updateTimer({ timerMode: v as TAppSettings['timer']['timerMode'] })
+						}
+						size="sm"
+					>
+						<ToggleGroup.Item value="pomodoro" className="w-auto px-3 text-xs font-medium">
+							Pomodoro
+						</ToggleGroup.Item>
+						<ToggleGroup.Item value="countdown" className="w-auto px-3 text-xs font-medium">
+							Countdown
+						</ToggleGroup.Item>
+					</ToggleGroup>
+				</SettingItem>
+			</SettingGroup>
+
+			<SettingGroup title="Durations">
+				{settings.timer.timerMode === 'countdown' ? (
+					<SettingItem label="Duration" description="Minutes for countdown">
+						<NumberField
+							value={settings.timer.countdown.durationMinutes}
+							min={1}
+							max={120}
+							step={5}
+							size="sm"
+							onChange={(v) =>
+								updateTimer({
+									countdown: { ...settings.timer.countdown, durationMinutes: v }
+								})
+							}
+						/>
+					</SettingItem>
+				) : (
+					<>
+						<SettingItem label="Work Duration" description="Minutes per work session">
+							<NumberField
+								value={settings.timer.pomodoro.workDurationMinutes}
+								min={5}
+								max={120}
+								step={5}
+								size="sm"
+								onChange={(v) =>
+									updateTimer({
+										pomodoro: { ...settings.timer.pomodoro, workDurationMinutes: v }
+									})
+								}
+							/>
+						</SettingItem>
+						<SettingItem label="Short Break" description="Minutes for short breaks">
+							<NumberField
+								value={settings.timer.pomodoro.shortBreakMinutes}
+								min={5}
+								max={60}
+								step={5}
+								size="sm"
+								onChange={(v) =>
+									updateTimer({
+										pomodoro: { ...settings.timer.pomodoro, shortBreakMinutes: v }
+									})
+								}
+							/>
+						</SettingItem>
+						<SettingItem label="Long Break" description="Minutes for long breaks">
+							<NumberField
+								value={settings.timer.pomodoro.longBreakMinutes}
+								min={5}
+								max={60}
+								step={5}
+								size="sm"
+								onChange={(v) =>
+									updateTimer({
+										pomodoro: { ...settings.timer.pomodoro, longBreakMinutes: v }
+									})
+								}
+							/>
+						</SettingItem>
+					</>
+				)}
+			</SettingGroup>
+
+			<SettingGroup title="Sessions">
+				{settings.timer.timerMode === 'pomodoro' && (
+					<>
+						<SettingItem
+							label="Sessions Before Long Break"
+							description="Work sessions before a long break"
+						>
+							<NumberField
+								value={settings.timer.pomodoro.sessionsBeforeLongBreak}
+								min={1}
+								max={10}
+								size="sm"
+								onChange={(v) =>
+									updateTimer({
+										pomodoro: { ...settings.timer.pomodoro, sessionsBeforeLongBreak: v }
+									})
+								}
+							/>
+						</SettingItem>
+						<SettingItem
+							label="Auto-advance"
+							description="Go to next phase automatically when timer ends (countdown then advance)"
+						>
+							<Switch
+								checked={settings.timer.pomodoro.autoAdvance ?? false}
+								onCheckedChange={(checked) =>
+									updateTimer({
+										pomodoro: { ...settings.timer.pomodoro, autoAdvance: checked }
+									})
+								}
+								size="sm"
+							/>
+						</SettingItem>
+						{settings.timer.pomodoro.autoAdvance && (
+							<SettingItem
+								label="Auto-advance countdown"
+								description={'Seconds to show "Auto advance in N" before going to next phase'}
+							>
+								<NumberField
+									value={settings.timer.pomodoro.autoAdvanceCountdownSeconds}
+									min={5}
+									max={30}
+									step={5}
+									size="sm"
+									onChange={(v) =>
+										updateTimer({
+											pomodoro: {
+												...settings.timer.pomodoro,
+												autoAdvanceCountdownSeconds: v
+											}
+										})
+									}
+								/>
+							</SettingItem>
+						)}
+					</>
+				)}
+			</SettingGroup>
+		</div>
+	);
+};
