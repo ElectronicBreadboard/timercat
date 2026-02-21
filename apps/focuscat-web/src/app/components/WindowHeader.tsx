@@ -14,10 +14,10 @@ export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 			)}
 		>
 			{decorativeTrafficLights && (
-				<div className="mr-2 flex items-center gap-[8px]">
-					<div className="size-[12px] rounded-full bg-[#FF5F57] ring-1 ring-black/20" />
-					<div className="size-[12px] rounded-full bg-[#FFBD2E] ring-1 ring-black/20" />
-					<div className="size-[12px] rounded-full bg-[#28C840] ring-1 ring-black/20" />
+				<div className="flex items-center gap-[10px]">
+					<div className="size-[14px] rounded-full bg-[#FF5F57] ring-1 ring-black/20" />
+					<div className="size-[14px] rounded-full bg-[#FFBD2E] ring-1 ring-black/20" />
+					<div className="size-[14px] rounded-full bg-[#28C840] ring-1 ring-black/20" />
 				</div>
 			)}
 			{title != null && (

@@ -161,12 +161,12 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 					onPointerUp={handleWindowPointerUp}
 				>
 					{/* Traffic lights */}
-					<div className="group absolute top-0 left-0 z-10 flex h-8 items-center gap-[8px] pl-2">
+					<div className="group absolute top-0 left-0 z-10 flex h-8 items-center gap-[10px] pl-2">
 						{/* Close */}
 						{trafficLights.close ? (
 							<button
 								className={cn(
-									'relative flex size-[12px] cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FF5F57]',
+									'relative flex size-[14px] cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FF5F57]',
 									isFocused ? 'bg-[#FF5F57]' : 'bg-base-200'
 								)}
 								onClick={handleClose}
@@ -178,14 +178,14 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 								/>
 							</button>
 						) : (
-							<div className="bg-base-200 size-[12px] rounded-full ring-1 ring-black/20" />
+							<div className="bg-base-200 size-[14px] rounded-full ring-1 ring-black/20" />
 						)}
 
 						{/* Minimize */}
 						{trafficLights.minimize && !isMaximized ? (
 							<button
 								className={cn(
-									'relative flex size-[12px] cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FFBD2E]',
+									'relative flex size-[14px] cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FFBD2E]',
 									isFocused ? 'bg-[#FFBD2E]' : 'bg-base-200'
 								)}
 								onClick={handleMinimize}
@@ -197,20 +197,20 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 								/>
 							</button>
 						) : (
-							<div className="bg-base-200 size-[12px] rounded-full ring-1 ring-black/20" />
+							<div className="bg-base-200 size-[14px] rounded-full ring-1 ring-black/20" />
 						)}
 
 						{/* Maximize */}
 						{trafficLights.maximize ? (
 							<button
 								className={cn(
-									'size-[12px] cursor-default rounded-full ring-1 ring-black/20 group-hover:bg-[#28C840]',
+									'size-[14px] cursor-default rounded-full ring-1 ring-black/20 group-hover:bg-[#28C840]',
 									isFocused ? 'bg-[#28C840]' : 'bg-base-200'
 								)}
 								onClick={handleMaximize}
 							/>
 						) : (
-							<div className="bg-base-200 size-[12px] rounded-full ring-1 ring-black/20" />
+							<div className="bg-base-200 size-[14px] rounded-full ring-1 ring-black/20" />
 						)}
 					</div>
 
