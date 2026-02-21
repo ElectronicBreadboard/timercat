@@ -1,4 +1,9 @@
-import { TimerCxProvider as BaseTimerCxProvider, useMemoCleanup, type TTimerCx } from '@repo/ui';
+import {
+	TimerCxProvider as BaseTimerCxProvider,
+	formatTime,
+	useMemoCleanup,
+	type TTimerCx
+} from '@repo/ui';
 import { createState, TState } from 'feature-state';
 import React from 'react';
 import { TSoundId, useAudioCx, type AudioCx } from '@/features/audio';
@@ -6,8 +11,14 @@ import { useSessionCx, type SessionCx } from '@/features/session';
 import { useSettingsCx, type SettingsCx } from '@/features/settings';
 
 export class TimerCx implements TTimerCx {
-	private _interval: ReturnType<typeof setInterval> | null = null;
 	private readonly _unlisteners: (() => void)[] = [];
+
+	// RAF drives smooth 60fps updates in the foreground.
+	// A 1Hz interval handles background tabs where RAF pauses; enough to fire sounds and keep state current.
+	// A Web Worker would be more reliable but adds file + postMessage overhead.
+	private _loop: TRafLoop | null = null; // null = loop is stopped
+	private _backgroundInterval: ReturnType<typeof setInterval> | null = null;
+
 	private readonly _settingsCx: SettingsCx;
 	private readonly _sessionCx: SessionCx;
 	private readonly _audioCx: AudioCx;
@@ -26,6 +37,7 @@ export class TimerCx implements TTimerCx {
 		this._settingsCx = settingsCx;
 		this._sessionCx = sessionCx;
 		this._audioCx = audioCx;
+
 		const app = settingsCx.$appSettings.get();
 		const workSeconds = app.timer.pomodoro.workDurationMinutes * 60;
 		this.$remainingSeconds = createState(workSeconds);
@@ -34,23 +46,42 @@ export class TimerCx implements TTimerCx {
 
 		this._unlisteners.push(
 			settingsCx.$appSettings.listen(() => {
-				const speed = Math.max(1, this._settingsCx.$appSettings.get().developer.timerSpeed);
-				this.$speed.set(speed);
-				if (this.$status.get() === 'running') {
-					this.clearInterval();
-					this.startInterval();
+				const settings = this._settingsCx.$appSettings.get();
+				const newSpeed = Math.max(1, settings.developer.timerSpeed);
+				const oldSpeed = this.$speed.get();
+				this.$speed.set(newSpeed);
+
+				// Re-anchor when speed changes so the elapsed-time calc stays correct
+				if (newSpeed !== oldSpeed && this.$status.get() === 'running') {
+					this.stopLoop();
+					this.startLoop();
+				}
+
+				// Sync duration when idle so pomo setting changes are reflected immediately
+				if (this.$status.get() === 'idle') {
+					const duration = this.getDurationForSessionType(this.$sessionType.get());
+					this.$totalSeconds.set(duration);
+					this.$remainingSeconds.set(duration);
 				}
 			})
 		);
 	}
 
+	public mount(): void {
+		document.addEventListener('visibilitychange', this._handleVisibilityChange);
+	}
+
 	public unmount(): void {
-		this.clearInterval();
+		document.removeEventListener('visibilitychange', this._handleVisibilityChange);
+		this.stopLoop();
 		for (const unlisten of this._unlisteners) {
 			unlisten();
 		}
 		this._unlisteners.length = 0;
+		document.title = 'FocusCat';
 	}
+
+	// MARK: - Timer commands
 
 	public async start(): Promise<void> {
 		if (this.$status.get() !== 'idle') {
@@ -58,7 +89,7 @@ export class TimerCx implements TTimerCx {
 		}
 		this.$status.set('running');
 		this.$startTime.set(new Date());
-		this.startInterval();
+		this.startLoop();
 	}
 
 	public async pause(): Promise<void> {
@@ -66,7 +97,8 @@ export class TimerCx implements TTimerCx {
 			return;
 		}
 		this.$status.set('paused');
-		this.clearInterval();
+		this.stopLoop();
+		this._updateDocumentTitle();
 	}
 
 	public async resume(): Promise<void> {
@@ -75,35 +107,32 @@ export class TimerCx implements TTimerCx {
 		}
 		this.$status.set('running');
 		this.$startTime.set(new Date());
-		this.startInterval();
+		this.startLoop();
 	}
 
 	public async reset(): Promise<void> {
-		this.clearInterval();
+		this.stopLoop();
 		this.$status.set('idle');
 		this.$startTime.set(null);
 		this.$overtimeSeconds.set(0);
 		this.$autoAdvanceCountdownSeconds.set(null);
 
-		// Reset to the current session type's duration
 		const duration = this.getDurationForSessionType(this.$sessionType.get());
 		this.$totalSeconds.set(duration);
 		this.$remainingSeconds.set(duration);
+		this._updateDocumentTitle();
 	}
 
 	public async advance(): Promise<void> {
-		this.clearInterval();
+		this.stopLoop();
 
 		const currentType = this.$sessionType.get();
 		const isWork = currentType === 'pomodoro:work';
-
-		// Record completed work session before resetting state
 		if (isWork) {
 			this._sessionCx.recordWorkSession(this.getElapsedSeconds());
 			this.$sessionsCompleted.set(this.$sessionsCompleted.get() + 1);
 		}
 
-		// Determine next session type
 		const nextType = this.getNextSessionType();
 		this.$sessionType.set(nextType);
 
@@ -113,10 +142,9 @@ export class TimerCx implements TTimerCx {
 		this.$overtimeSeconds.set(0);
 		this.$autoAdvanceCountdownSeconds.set(null);
 
-		// Start the next session
 		this.$status.set('running');
 		this.$startTime.set(new Date());
-		this.startInterval();
+		this.startLoop();
 	}
 
 	public async complete(): Promise<void> {
@@ -126,7 +154,7 @@ export class TimerCx implements TTimerCx {
 			this.$sessionsCompleted.set(this.$sessionsCompleted.get() + 1);
 		}
 
-		this.clearInterval();
+		this.stopLoop();
 		this.$status.set('idle');
 		this.$startTime.set(null);
 		this.$overtimeSeconds.set(0);
@@ -135,6 +163,7 @@ export class TimerCx implements TTimerCx {
 		const duration = this.getDurationForSessionType(this.$sessionType.get());
 		this.$totalSeconds.set(duration);
 		this.$remainingSeconds.set(duration);
+		this._updateDocumentTitle();
 	}
 
 	public async setDuration(minutes: number): Promise<void> {
@@ -150,64 +179,144 @@ export class TimerCx implements TTimerCx {
 		this._audioCx.playSound(id as TSoundId);
 	}
 
-	private startInterval(): void {
-		this.clearInterval();
-		const intervalMs = 1000 / this.$speed.get();
-		this._interval = setInterval(() => this.tick(), intervalMs);
-	}
-
-	private clearInterval(): void {
-		if (this._interval != null) {
-			clearInterval(this._interval);
-			this._interval = null;
-		}
-	}
-
-	private tick(): void {
+	private _updateDocumentTitle(): void {
+		const status = this.$status.get();
 		const remaining = this.$remainingSeconds.get();
-		const wasInOvertime = this.$overtimeSeconds.get() > 0;
+		const overtime = this.$overtimeSeconds.get();
 
-		if (remaining > 0) {
-			this.$remainingSeconds.set(remaining - 1);
+		let newTitle: string;
+		if (status === 'idle') {
+			newTitle = 'FocusCat';
+		} else if (remaining === 0 && overtime > 0) {
+			newTitle = `+${formatTime(overtime)} • FocusCat`;
 		} else {
-			this.$overtimeSeconds.set(this.$overtimeSeconds.get() + 1);
+			const prefix = status === 'paused' ? '⏸ ' : '';
+			newTitle = `${prefix}${formatTime(remaining)} • FocusCat`;
 		}
 
-		// Play tick sound each second (only at 1x speed, matching desktop behavior)
-		if (this.$speed.get() === 1) {
-			this.playSound('tick');
+		if (document.title !== newTitle) {
+			document.title = newTitle;
+		}
+	}
+
+	// MARK: - RAF loop
+
+	private startLoop(): void {
+		this.stopLoop();
+		this._loop = {
+			rafId: requestAnimationFrame(this._frame),
+			anchorTime: Date.now(),
+			anchorRemaining: this.$remainingSeconds.get(),
+			anchorOvertime: this.$overtimeSeconds.get(),
+			wasInOvertime: this.$overtimeSeconds.get() > 0,
+			tickedCount: 0
+		};
+		// 1Hz interval keeps state ticking in background tabs (RAF pauses when hidden)
+		this._backgroundInterval = setInterval(() => {
+			if (document.visibilityState !== 'visible') {
+				this._tick(false);
+			}
+		}, 1000);
+	}
+
+	private stopLoop(): void {
+		if (this._loop?.rafId != null) {
+			cancelAnimationFrame(this._loop.rafId);
+		}
+		this._loop = null;
+		if (this._backgroundInterval != null) {
+			clearInterval(this._backgroundInterval);
+			this._backgroundInterval = null;
+		}
+	}
+
+	// Sets rafId = null before ticking so we can detect if advance() restarted the loop.
+	// If rafId is still null after _tick, no restart happened and we schedule the next frame.
+	private readonly _frame = (): void => {
+		if (this._loop == null) {
+			return;
+		}
+		this._loop.rafId = null;
+		this._tick(true);
+		if (this._loop != null && this._loop.rafId == null) {
+			this._loop.rafId = requestAnimationFrame(this._frame);
+		}
+	};
+
+	// RAF pauses in background tabs; sync state the moment the tab returns
+	private readonly _handleVisibilityChange = (): void => {
+		if (document.visibilityState !== 'visible' || this.$status.get() !== 'running') {
+			return;
+		}
+		this._tick(false); // no tick sounds on catch-up; complete sound still plays
+	};
+
+	private _tick(playTickSound: boolean): void {
+		if (this._loop == null) {
+			return;
 		}
 
-		// Play complete sound when entering overtime
-		if (!wasInOvertime && this.$overtimeSeconds.get() > 0) {
+		const speed = this.$speed.get();
+		const elapsed = ((Date.now() - this._loop.anchorTime) / 1000) * speed;
+
+		let newRemaining: number;
+		let newOvertime: number;
+		if (this._loop.anchorRemaining - elapsed > 0) {
+			newRemaining = this._loop.anchorRemaining - elapsed;
+			newOvertime = this._loop.anchorOvertime;
+		} else {
+			newRemaining = 0;
+			newOvertime = this._loop.anchorOvertime + (elapsed - this._loop.anchorRemaining);
+		}
+
+		// Whole elapsed-seconds since anchor avoids a spurious tick on the very first frame
+		if (playTickSound && speed === 1 && newRemaining > 0) {
+			const elapsedWholeSecs = Math.floor(elapsed);
+			if (elapsedWholeSecs > this._loop.tickedCount) {
+				this._loop.tickedCount = elapsedWholeSecs;
+				this.playSound('tick');
+			}
+		}
+
+		const isEnteringOvertime = newRemaining === 0 && newOvertime > 0 && !this._loop.wasInOvertime;
+		if (isEnteringOvertime) {
 			this.playSound('complete');
+			this._loop.wasInOvertime = true;
 		}
 
-		// Auto-advance when overtime reaches threshold
-		const overtimeSeconds = this.$overtimeSeconds.get();
+		this.$remainingSeconds.set(newRemaining);
+		this.$overtimeSeconds.set(newOvertime);
+		this._updateDocumentTitle();
+
+		// Auto-advance
 		const pomodoro = this._settingsCx.$appSettings.get().timer.pomodoro;
-		if (overtimeSeconds > 0 && pomodoro.autoAdvance) {
-			const secondsLeft = pomodoro.autoAdvanceCountdownSeconds - overtimeSeconds;
-			this.$autoAdvanceCountdownSeconds.set(secondsLeft <= 0 ? null : secondsLeft);
+		const overtimeWhole = Math.floor(newOvertime);
+		const shouldCountdown = overtimeWhole > 0 && pomodoro.autoAdvance;
+
+		if (shouldCountdown) {
+			const secondsLeft = pomodoro.autoAdvanceCountdownSeconds - overtimeWhole;
+			this.$autoAdvanceCountdownSeconds.set(secondsLeft > 0 ? secondsLeft : null);
 			if (secondsLeft <= 0) {
-				this.advance();
+				void this.advance(); // advance() calls startLoop() internally
+				return;
 			}
 		} else {
 			this.$autoAdvanceCountdownSeconds.set(null);
 		}
 	}
 
+	// MARK: - Helpers
+
 	private getNextSessionType(): string {
 		const currentType = this.$sessionType.get();
 		if (currentType !== 'pomodoro:work') {
 			return 'pomodoro:work';
 		}
+
 		const completed = this.$sessionsCompleted.get();
 		const { sessionsBeforeLongBreak } = this._settingsCx.$appSettings.get().timer.pomodoro;
-		if (completed > 0 && completed % sessionsBeforeLongBreak === 0) {
-			return 'pomodoro:long_break';
-		}
-		return 'pomodoro:short_break';
+		const isDueForLongBreak = completed > 0 && completed % sessionsBeforeLongBreak === 0;
+		return isDueForLongBreak ? 'pomodoro:long_break' : 'pomodoro:short_break';
 	}
 
 	private getElapsedSeconds(): number {
@@ -228,6 +337,15 @@ export class TimerCx implements TTimerCx {
 	}
 }
 
+interface TRafLoop {
+	rafId: number | null;
+	anchorTime: number; // Date.now() when loop started; advances through device sleep, unlike performance.now()
+	anchorRemaining: number; // remainingSeconds at that point
+	anchorOvertime: number; // overtimeSeconds at that point
+	wasInOvertime: boolean; // prevents the complete sound from replaying on every tick after overtime starts
+	tickedCount: number; // whole elapsed timer-seconds since anchor (for tick sound)
+}
+
 export const TimerCxProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 	const settingsCx = useSettingsCx();
 	const sessionCx = useSessionCx();
@@ -237,6 +355,10 @@ export const TimerCxProvider: React.FC<{ children: React.ReactNode }> = ({ child
 		const timerCx = new TimerCx(settingsCx, sessionCx, audioCx);
 		return [timerCx, () => timerCx.unmount()];
 	}, []);
+
+	React.useEffect(() => {
+		cx.mount();
+	}, [cx]);
 
 	return <BaseTimerCxProvider value={cx}>{children}</BaseTimerCxProvider>;
 };

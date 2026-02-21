@@ -125,6 +125,9 @@ if (current == null || current.id !== id) {
 ### Session Rationale
 Never document design choices that only matter during the current refactor. "Type-safe; no string formatting" or "we use enum instead of string" add noise once the change is done.
 
+### Em Dashes
+Never use em dashes (—) in comments. Use commas, semicolons, or plain sentences instead.
+
 ### Type Information
 Never restate what types already document.
 

@@ -89,10 +89,8 @@ export const TimeWheel: React.FC<TTimeWheelProps> = (props) => {
 
 		stopAnimation();
 
-		const targetX = -(value - min) * itemWidth;
-
 		if (smooth) {
-			animationRef.current = animate(x, targetX, { type: 'spring', stiffness: 500, damping: 50 });
+			x.set(-(value - min) * itemWidth);
 		} else {
 			const snappedX = -Math.round(value - min) * itemWidth;
 			animationRef.current = animate(x, snappedX, { type: 'spring', stiffness: 300, damping: 30 });
