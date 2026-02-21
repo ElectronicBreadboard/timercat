@@ -161,7 +161,7 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 					onPointerUp={handleWindowPointerUp}
 				>
 					{/* Traffic lights */}
-					<div className="group absolute top-0 left-0 z-10 flex h-8 items-center gap-[6px] pl-2">
+					<div className="group absolute top-0 left-0 z-10 flex h-8 items-center gap-[8px] pl-2">
 						{/* Close */}
 						{trafficLights.close ? (
 							<button

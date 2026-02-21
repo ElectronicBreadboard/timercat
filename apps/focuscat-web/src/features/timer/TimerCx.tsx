@@ -13,9 +13,6 @@ import { useSettingsCx, type SettingsCx } from '@/features/settings';
 export class TimerCx implements TTimerCx {
 	private readonly _unlisteners: (() => void)[] = [];
 
-	// Note: Uses setInterval rather than RAF because RAF pauses when the tab is hidden
-	// and computes state from Date.now rather than performance.now because performance.now
-	// freezes during device sleep, so the timer self-corrects for throttling and sleep on every tick.
 	private _interval: ReturnType<typeof setInterval> | null = null;
 	private _remainingAtStart = 0;
 	private _startedAt = 0;
@@ -197,6 +194,9 @@ export class TimerCx implements TTimerCx {
 	}
 
 	// MARK: - Timer loop
+	//
+	// Note: Using setInterval (not e.g. RAF) so the timer keeps ticking when the tab is in the background.
+	// Each tick derives remaining/overtime from Date.now so we self-correct after throttling or sleep.
 
 	private startLoop(): void {
 		this.stopLoop();
