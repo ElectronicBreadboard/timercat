@@ -2,6 +2,7 @@ import { useBoundingRectObserver } from '@repo/ui';
 import React from 'react';
 import { useWindowCx } from '@/features/window';
 import { DraggableWindow } from './components';
+import { CatWindow } from './windows/cat';
 import { MainWindow } from './windows/main';
 import { SettingsWindow } from './windows/settings';
 
@@ -43,7 +44,23 @@ export const App: React.FC = () => {
 		>
 			{/* Main window */}
 			<DraggableWindow windowId="main" windowCx={windowCx}>
-				<MainWindow className="h-[500px]" onOpenSettings={() => windowCx.open('settings')} />
+				<MainWindow
+					onOpenSettings={() => windowCx.open('settings')}
+					onMinimize={() => {
+						windowCx.open('cat');
+						windowCx.close('main');
+					}}
+				/>
+			</DraggableWindow>
+
+			{/* Cat window */}
+			<DraggableWindow windowId="cat" windowCx={windowCx} transparent>
+				<CatWindow
+					onExpand={() => {
+						windowCx.open('main');
+						windowCx.close('cat');
+					}}
+				/>
 			</DraggableWindow>
 
 			{/* Settings window */}

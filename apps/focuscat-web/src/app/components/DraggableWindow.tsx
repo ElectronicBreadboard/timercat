@@ -5,7 +5,7 @@ import React from 'react';
 import type { TBounds, TWindow, TWindowId, WindowCx } from '@/features/window';
 
 export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
-	const { windowId, windowCx, children } = props;
+	const { windowId, windowCx, transparent = false, children } = props;
 	const $window = windowCx.windows[windowId];
 
 	const isOpen = useCompute($window, ({ value }) => value.isOpen);
@@ -155,64 +155,70 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 					animate={{ opacity: 1, scale: 1 }}
 					exit={{ opacity: 0, scale: 0.95 }}
 					transition={{ duration: 0.15, ease: 'easeOut' }}
-					className={cn('overflow-hidden shadow-2xl', !isMaximized && 'rounded-2xl')}
+					className={cn(
+						'overflow-hidden',
+						transparent ? 'bg-transparent shadow-none' : 'shadow-2xl',
+						!transparent && !isMaximized && 'rounded-2xl'
+					)}
 					onPointerDown={handleWindowPointerDown}
 					onPointerMove={handleWindowPointerMove}
 					onPointerUp={handleWindowPointerUp}
 				>
 					{/* Traffic lights */}
-					<div className="group absolute top-0 left-0 z-10 flex h-8 items-center gap-[10px] pl-2">
-						{/* Close */}
-						{trafficLights.close ? (
-							<button
-								className={cn(
-									'relative flex size-[14px] cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FF5F57]',
-									isFocused ? 'bg-[#FF5F57]' : 'bg-base-200'
-								)}
-								onClick={handleClose}
-							>
-								<XIcon
-									size={8}
-									strokeWidth={6}
-									className="hidden text-[#4c0000]/60 group-hover:block"
-								/>
-							</button>
-						) : (
-							<div className="bg-base-200 size-[14px] rounded-full ring-1 ring-black/20" />
-						)}
+					{!transparent && (
+						<div className="group absolute top-0 left-0 z-10 flex h-8 items-center gap-[10px] pl-2">
+							{/* Close */}
+							{trafficLights.close ? (
+								<button
+									className={cn(
+										'relative flex size-[14px] cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FF5F57]',
+										isFocused ? 'bg-[#FF5F57]' : 'bg-base-200'
+									)}
+									onClick={handleClose}
+								>
+									<XIcon
+										size={8}
+										strokeWidth={6}
+										className="hidden text-[#4c0000]/60 group-hover:block"
+									/>
+								</button>
+							) : (
+								<div className="bg-base-200 size-[14px] rounded-full ring-1 ring-black/20" />
+							)}
 
-						{/* Minimize */}
-						{trafficLights.minimize && !isMaximized ? (
-							<button
-								className={cn(
-									'relative flex size-[14px] cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FFBD2E]',
-									isFocused ? 'bg-[#FFBD2E]' : 'bg-base-200'
-								)}
-								onClick={handleMinimize}
-							>
-								<MinusIcon
-									size={8}
-									strokeWidth={6}
-									className="hidden text-[#5a3500]/60 group-hover:block"
-								/>
-							</button>
-						) : (
-							<div className="bg-base-200 size-[14px] rounded-full ring-1 ring-black/20" />
-						)}
+							{/* Minimize */}
+							{trafficLights.minimize && !isMaximized ? (
+								<button
+									className={cn(
+										'relative flex size-[14px] cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FFBD2E]',
+										isFocused ? 'bg-[#FFBD2E]' : 'bg-base-200'
+									)}
+									onClick={handleMinimize}
+								>
+									<MinusIcon
+										size={8}
+										strokeWidth={6}
+										className="hidden text-[#5a3500]/60 group-hover:block"
+									/>
+								</button>
+							) : (
+								<div className="bg-base-200 size-[14px] rounded-full ring-1 ring-black/20" />
+							)}
 
-						{/* Maximize */}
-						{trafficLights.maximize ? (
-							<button
-								className={cn(
-									'size-[14px] cursor-default rounded-full ring-1 ring-black/20 group-hover:bg-[#28C840]',
-									isFocused ? 'bg-[#28C840]' : 'bg-base-200'
-								)}
-								onClick={handleMaximize}
-							/>
-						) : (
-							<div className="bg-base-200 size-[14px] rounded-full ring-1 ring-black/20" />
-						)}
-					</div>
+							{/* Maximize */}
+							{trafficLights.maximize ? (
+								<button
+									className={cn(
+										'size-[14px] cursor-default rounded-full ring-1 ring-black/20 group-hover:bg-[#28C840]',
+										isFocused ? 'bg-[#28C840]' : 'bg-base-200'
+									)}
+									onClick={handleMaximize}
+								/>
+							) : (
+								<div className="bg-base-200 size-[14px] rounded-full ring-1 ring-black/20" />
+							)}
+						</div>
+					)}
 
 					{children}
 				</motion.div>
@@ -224,5 +230,6 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 export interface TDraggableWindowProps {
 	windowId: TWindowId;
 	windowCx: WindowCx;
+	transparent?: boolean;
 	children: React.ReactNode;
 }

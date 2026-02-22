@@ -3,6 +3,7 @@ import {
 	catConfig,
 	cn,
 	IconButton,
+	MinimizeIcon,
 	SettingsIcon,
 	ShuffleIcon,
 	TimerView,
@@ -18,7 +19,7 @@ import { useAudioCx } from '@/features/audio';
 import { useSettingsCx } from '@/features/settings';
 
 export const MainWindow: React.FC<TMainWindowProps> = (props) => {
-	const { className, onOpenSettings, standalone = false } = props;
+	const { className, onOpenSettings, onMinimize, standalone = false } = props;
 	const catRef = React.useRef<TCatRef>(null);
 
 	const settingsCx = useSettingsCx();
@@ -73,9 +74,20 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 	// MARK: - UI
 
 	return (
-		<div className={cn('bg-base-0 flex flex-col', className)}>
+		<div className={cn('bg-base-0 flex h-full flex-col', className)}>
 			<WindowHeader decorativeTrafficLights={standalone}>
-				{onOpenSettings != null && (
+				{settings.features.catWindow && onMinimize != null ? (
+					<IconButton
+						variant="bare"
+						size="sm"
+						aria-label="Minimize to cat widget"
+						className="size-7"
+						onClick={onMinimize}
+					>
+						<MinimizeIcon size={16} />
+					</IconButton>
+				) : null}
+				{onOpenSettings != null ? (
 					<IconButton
 						variant="bare"
 						size="sm"
@@ -85,7 +97,7 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 					>
 						<SettingsIcon size={16} />
 					</IconButton>
-				)}
+				) : null}
 			</WindowHeader>
 
 			{/* Top section: Overview + Cat */}
@@ -129,6 +141,6 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 interface TMainWindowProps {
 	className?: string;
 	onOpenSettings?: () => void;
-	/** Rendered outside app chrome (e.g. landing page); uses decorative traffic lights. */
+	onMinimize?: () => void;
 	standalone?: boolean;
 }

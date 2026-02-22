@@ -35,6 +35,19 @@ export class WindowCx {
 			}),
 			'focuscat-window-settings',
 			windowMigrationConfig
+		),
+		cat: withVersionedLocalStorage(
+			createState<TWindow>({
+				version: '0.0.1',
+				id: 'cat',
+				trafficLights: { close: false, minimize: false, maximize: false },
+				bounds: { size: { width: 170, height: 170 }, position: null },
+				isOpen: false,
+				zIndex: 12,
+				boundsBeforeMaximize: null
+			}),
+			'focuscat-window-cat',
+			windowMigrationConfig
 		)
 	} as const;
 
@@ -60,9 +73,14 @@ export class WindowCx {
 		const maxZ = this._maxZ();
 		this.windows[id].set((prev) => ({ ...prev, isOpen: true, zIndex: maxZ + 1 }));
 
-		// Close main window when settings is opened
 		if (id === 'settings') {
 			this.windows.main.set((prev) => ({ ...prev, isOpen: false }));
+		}
+		if (id === 'cat') {
+			this.windows.main.set((prev) => ({ ...prev, isOpen: false }));
+		}
+		if (id === 'main') {
+			this.windows.cat.set((prev) => ({ ...prev, isOpen: false }));
 		}
 	}
 
@@ -151,7 +169,7 @@ export interface TWindow {
 	boundsBeforeMaximize: TBounds | null;
 }
 
-export type TWindowId = 'main' | 'settings';
+export type TWindowId = 'main' | 'settings' | 'cat';
 
 export interface TBounds {
 	size: { width: number; height: number };

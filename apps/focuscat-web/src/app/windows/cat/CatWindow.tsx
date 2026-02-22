@@ -10,25 +10,20 @@ import {
 	PauseIcon,
 	PlayIcon,
 	SkipForwardIcon,
+	useTimerCx,
 	type TCatRef
 } from '@repo/ui';
-import { createFileRoute } from '@tanstack/react-router';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { specta } from '@/environment';
+import { useAudioCx } from '@/features/audio';
 import { useSettingsCx } from '@/features/settings';
-import { useTimerCx } from '@/features/timer';
-import { useOnInputDetected } from '@/hooks';
 
-export const Route = createFileRoute('/window/cat/')({
-	component: RouteComponent
-});
-
-function RouteComponent() {
+export const CatWindow: React.FC<TCatWindowProps> = (props) => {
+	const { onExpand } = props;
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 	const timerCx = useTimerCx();
+	const audioCx = useAudioCx();
 	const catRef = React.useRef<TCatRef>(null);
 
 	const { isBreak, isOvertime, isRunning, isPaused, displayTime } = useCombinedCompute(
@@ -66,10 +61,9 @@ function RouteComponent() {
 
 	// MARK: - Actions
 
-	const handleExpand = React.useCallback(async () => {
-		await specta.commands.showMainWindow();
-		await specta.commands.hideCatWindow();
-	}, []);
+	const handleExpand = React.useCallback(() => {
+		onExpand();
+	}, [onExpand]);
 
 	const handlePauseResume = React.useCallback(async () => {
 		if (isRunning) {
@@ -86,19 +80,15 @@ function RouteComponent() {
 	}, [timerCx]);
 
 	const handleCatTap = React.useCallback(() => {
-		specta.commands.playSound('meow');
-	}, []);
-
-	// MARK: - Effects
-
-	useOnInputDetected(React.useCallback(() => catRef.current?.tap({ cooldown: 0 }), []));
+		audioCx.playSound('meow');
+	}, [audioCx]);
 
 	// MARK: - UI
 
 	return (
 		<div
 			className={cn(
-				'flex h-screen flex-col items-center overflow-hidden',
+				'flex h-full flex-col items-center overflow-hidden',
 				settings.developer.cat && 'border border-red-500'
 			)}
 		>
@@ -119,12 +109,8 @@ function RouteComponent() {
 			>
 				{/* Drag Handle */}
 				<div
+					data-drag-region
 					className="flex cursor-grab items-center px-2 py-2 active:cursor-grabbing"
-					onPointerDown={(e) => {
-						if (e.button === 0) {
-							getCurrentWindow().startDragging();
-						}
-					}}
 				>
 					<GripIcon size={14} className="text-base-500" />
 				</div>
@@ -174,4 +160,8 @@ function RouteComponent() {
 			</div>
 		</div>
 	);
+};
+
+export interface TCatWindowProps {
+	onExpand: () => void;
 }
