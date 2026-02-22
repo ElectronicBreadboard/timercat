@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HelpIndexRouteImport } from './routes/help/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
+import { Route as SitesPomodorocatIndexRouteImport } from './routes/sites.pomodorocat/index'
 import { Route as LegalTermsIndexRouteImport } from './routes/legal.terms/index'
 import { Route as LegalPrivacyIndexRouteImport } from './routes/legal.privacy/index'
 
@@ -28,6 +29,11 @@ const HelpIndexRoute = HelpIndexRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/app/',
   path: '/app/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitesPomodorocatIndexRoute = SitesPomodorocatIndexRouteImport.update({
+  id: '/sites/pomodorocat/',
+  path: '/sites/pomodorocat/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LegalTermsIndexRoute = LegalTermsIndexRouteImport.update({
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/help/': typeof HelpIndexRoute
   '/legal/privacy/': typeof LegalPrivacyIndexRoute
   '/legal/terms/': typeof LegalTermsIndexRoute
+  '/sites/pomodorocat/': typeof SitesPomodorocatIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/help': typeof HelpIndexRoute
   '/legal/privacy': typeof LegalPrivacyIndexRoute
   '/legal/terms': typeof LegalTermsIndexRoute
+  '/sites/pomodorocat': typeof SitesPomodorocatIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,12 +70,25 @@ export interface FileRoutesById {
   '/help/': typeof HelpIndexRoute
   '/legal/privacy/': typeof LegalPrivacyIndexRoute
   '/legal/terms/': typeof LegalTermsIndexRoute
+  '/sites/pomodorocat/': typeof SitesPomodorocatIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app/' | '/help/' | '/legal/privacy/' | '/legal/terms/'
+  fullPaths:
+    | '/'
+    | '/app/'
+    | '/help/'
+    | '/legal/privacy/'
+    | '/legal/terms/'
+    | '/sites/pomodorocat/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/help' | '/legal/privacy' | '/legal/terms'
+  to:
+    | '/'
+    | '/app'
+    | '/help'
+    | '/legal/privacy'
+    | '/legal/terms'
+    | '/sites/pomodorocat'
   id:
     | '__root__'
     | '/'
@@ -75,6 +96,7 @@ export interface FileRouteTypes {
     | '/help/'
     | '/legal/privacy/'
     | '/legal/terms/'
+    | '/sites/pomodorocat/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -83,6 +105,7 @@ export interface RootRouteChildren {
   HelpIndexRoute: typeof HelpIndexRoute
   LegalPrivacyIndexRoute: typeof LegalPrivacyIndexRoute
   LegalTermsIndexRoute: typeof LegalTermsIndexRoute
+  SitesPomodorocatIndexRoute: typeof SitesPomodorocatIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -108,6 +131,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sites/pomodorocat/': {
+      id: '/sites/pomodorocat/'
+      path: '/sites/pomodorocat'
+      fullPath: '/sites/pomodorocat/'
+      preLoaderRoute: typeof SitesPomodorocatIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/legal/terms/': {
       id: '/legal/terms/'
       path: '/legal/terms'
@@ -131,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   HelpIndexRoute: HelpIndexRoute,
   LegalPrivacyIndexRoute: LegalPrivacyIndexRoute,
   LegalTermsIndexRoute: LegalTermsIndexRoute,
+  SitesPomodorocatIndexRoute: SitesPomodorocatIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
