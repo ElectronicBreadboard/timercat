@@ -57,6 +57,11 @@
 		-moz-osx-font-smoothing: grayscale;
 		text-rendering: optimizeLegibility;
 	}
+
+	/* Prevent browser scroll/pan from intercepting touch drags on window handles */
+	[data-drag-region] {
+		touch-action: none;
+	}
 }
 
 @layer utilities {

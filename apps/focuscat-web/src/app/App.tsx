@@ -1,4 +1,5 @@
 import { useBoundingRectObserver } from '@repo/ui';
+import { useCompute } from 'feature-react/state';
 import React from 'react';
 import { useWindowCx } from '@/features/window';
 import { DraggableWindow, Fireflies } from './components';
@@ -8,6 +9,9 @@ import { SettingsWindow } from './windows/settings';
 
 export const App: React.FC = () => {
 	const windowCx = useWindowCx();
+	const fireflyCount = useCompute(windowCx.$breakpoint, ({ value: breakpoint }) =>
+		breakpoint === 'sm' ? 5 : breakpoint === 'md' ? 10 : 18
+	);
 
 	// MARK: - Actions
 
@@ -26,10 +30,7 @@ export const App: React.FC = () => {
 		windowCx.containerRef,
 		{ width: 0, height: 0 },
 		(rect) => {
-			windowCx.$containerRect.set({
-				width: rect.width ?? 0,
-				height: rect.height ?? 0
-			});
+			windowCx.setContainerRect(rect.width ?? 0, rect.height ?? 0);
 		},
 		[windowCx]
 	);
@@ -39,14 +40,14 @@ export const App: React.FC = () => {
 	return (
 		<div
 			ref={windowCx.containerRef}
-			className="relative h-screen w-screen overflow-hidden bg-[url('/illustrations/backgrounds/japanese-lofi.png')] bg-cover bg-center bg-no-repeat"
+			className="relative h-dvh w-screen overflow-hidden bg-[url('/illustrations/backgrounds/japanese-lofi.png')] bg-cover bg-center bg-no-repeat"
 			onClick={handleBackgroundClick}
 		>
-			<Fireflies />
+			<Fireflies count={fireflyCount} />
 
 			{/* Spotify playlist (bottom-left) */}
 			<div
-				className="absolute bottom-4 left-4 z-10 overflow-hidden rounded-xl shadow-lg"
+				className="absolute bottom-4 left-4 z-10 hidden overflow-hidden rounded-xl shadow-lg sm:block"
 				data-window
 			>
 				<iframe

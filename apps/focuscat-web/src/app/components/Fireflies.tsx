@@ -2,6 +2,7 @@ import React from 'react';
 
 export const Fireflies: React.FC<TFirefliesProps> = (props) => {
 	const {
+		count,
 		variants = [
 			{ left: '10%', top: '20%', dx: '30px', dy: '-25px', duration: 5, delay: 0 },
 			{ left: '25%', top: '60%', dx: '-20px', dy: '-40px', duration: 6, delay: 1 },
@@ -24,11 +25,16 @@ export const Fireflies: React.FC<TFirefliesProps> = (props) => {
 		]
 	} = props;
 
+	const visible = React.useMemo(
+		() => (count != null ? variants.slice(0, count) : variants),
+		[count, variants]
+	);
+
 	return (
 		<div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
-			{variants.map((v, i) => (
+			{visible.map((v, i) => (
 				<div
-					key={i}
+					key={`${v.left}-${v.top}-${v.duration}-${i}`}
 					className="animate-firefly absolute h-2 w-2 rounded-full bg-amber-200/95 shadow-[0_0_10px_4px_rgba(253,230,138,0.85),0_0_24px_10px_rgba(253,230,138,0.5),0_0_40px_16px_rgba(254,243,199,0.3)]"
 					style={
 						{
@@ -46,7 +52,8 @@ export const Fireflies: React.FC<TFirefliesProps> = (props) => {
 	);
 };
 
-interface TFirefliesProps {
+export interface TFirefliesProps {
+	count?: number;
 	variants?: TFireflyVariant[];
 }
 

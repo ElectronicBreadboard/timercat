@@ -21,11 +21,7 @@ export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 				className
 			)}
 		>
-			{title != null && (
-				<span data-tauri-drag-region className="text-base-600 ml-2 text-sm font-semibold">
-					{title}
-				</span>
-			)}
+			{title != null && <span className="text-base-600 ml-2 text-sm font-semibold">{title}</span>}
 			{showBadge &&
 				(appInfo.stage === 'dev' ? (
 					<Badge variant="warning" className="ml-2">

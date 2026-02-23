@@ -19,7 +19,7 @@ import { useAudioCx } from '@/features/audio';
 import { useSettingsCx } from '@/features/settings';
 
 export const MainWindow: React.FC<TMainWindowProps> = (props) => {
-	const { className, onOpenSettings, onMinimize, standalone = false } = props;
+	const { decorative = false, onOpenSettings, onMinimize, className } = props;
 	const catRef = React.useRef<TCatRef>(null);
 
 	const settingsCx = useSettingsCx();
@@ -75,27 +75,20 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 
 	return (
 		<div className={cn('bg-base-0 flex h-full flex-col', className)}>
-			<WindowHeader decorativeTrafficLights={standalone}>
+			<WindowHeader decorative={decorative}>
 				{settings.features.catWindow && onMinimize != null ? (
 					<IconButton
 						variant="bare"
 						size="sm"
 						aria-label="Minimize to cat widget"
-						className="size-7"
 						onClick={onMinimize}
 					>
-						<MinimizeIcon size={16} />
+						<MinimizeIcon className={cn(decorative ? 'size-4' : 'size-5 sm:size-4')} />
 					</IconButton>
 				) : null}
 				{onOpenSettings != null ? (
-					<IconButton
-						variant="bare"
-						size="sm"
-						aria-label="Open settings"
-						className="size-7"
-						onClick={onOpenSettings}
-					>
-						<SettingsIcon size={16} />
+					<IconButton variant="bare" size="sm" aria-label="Open settings" onClick={onOpenSettings}>
+						<SettingsIcon className={cn(decorative ? 'size-4' : 'size-5 sm:size-4')} />
 					</IconButton>
 				) : null}
 			</WindowHeader>
@@ -139,8 +132,8 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 };
 
 interface TMainWindowProps {
-	className?: string;
+	decorative?: boolean;
 	onOpenSettings?: () => void;
 	onMinimize?: () => void;
-	standalone?: boolean;
+	className?: string;
 }

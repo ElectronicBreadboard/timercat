@@ -150,7 +150,6 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 				<motion.div
 					ref={setWindowRef}
 					data-window
-					style={{}}
 					initial={{ opacity: 0, scale: 0.95 }}
 					animate={{ opacity: 1, scale: 1 }}
 					exit={{ opacity: 0, scale: 0.95 }}
@@ -166,12 +165,12 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 				>
 					{/* Traffic lights */}
 					{!transparent && (
-						<div className="group absolute top-0 left-0 z-10 flex h-8 items-center gap-[10px] pl-2">
+						<div className="group absolute top-0 left-0 z-10 flex h-11 items-center gap-4 pl-3 sm:h-8 sm:gap-[10px] sm:pl-2">
 							{/* Close */}
 							{trafficLights.close ? (
 								<button
 									className={cn(
-										'relative flex size-[14px] cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FF5F57]',
+										'relative flex size-[18px] cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FF5F57] sm:size-[14px]',
 										isFocused ? 'bg-[#FF5F57]' : 'bg-base-200'
 									)}
 									onClick={handleClose}
@@ -183,14 +182,14 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 									/>
 								</button>
 							) : (
-								<div className="bg-base-200 size-[14px] rounded-full ring-1 ring-black/20" />
+								<div className="bg-base-200 size-[18px] rounded-full ring-1 ring-black/20 sm:size-[14px]" />
 							)}
 
 							{/* Minimize */}
 							{trafficLights.minimize && !isMaximized ? (
 								<button
 									className={cn(
-										'relative flex size-[14px] cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FFBD2E]',
+										'relative flex size-[18px] cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FFBD2E] sm:size-[14px]',
 										isFocused ? 'bg-[#FFBD2E]' : 'bg-base-200'
 									)}
 									onClick={handleMinimize}
@@ -202,20 +201,21 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 									/>
 								</button>
 							) : (
-								<div className="bg-base-200 size-[14px] rounded-full ring-1 ring-black/20" />
+								<div className="bg-base-200 size-[18px] rounded-full ring-1 ring-black/20 sm:size-[14px]" />
 							)}
 
 							{/* Maximize */}
 							{trafficLights.maximize ? (
 								<button
 									className={cn(
-										'size-[14px] cursor-default rounded-full ring-1 ring-black/20 group-hover:bg-[#28C840]',
+										'size-[18px] cursor-default rounded-full ring-1 ring-black/20 group-hover:bg-[#28C840] sm:size-[14px]',
 										isFocused ? 'bg-[#28C840]' : 'bg-base-200'
 									)}
+									aria-label={isMaximized ? 'Restore window' : 'Maximize window'}
 									onClick={handleMaximize}
 								/>
 							) : (
-								<div className="bg-base-200 size-[14px] rounded-full ring-1 ring-black/20" />
+								<div className="bg-base-200 size-[18px] rounded-full ring-1 ring-black/20 sm:size-[14px]" />
 							)}
 						</div>
 					)}
