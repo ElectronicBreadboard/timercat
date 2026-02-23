@@ -88,15 +88,6 @@ export class WindowCx {
 		const maxZ = this._maxZ();
 		this.windows[id].set((prev) => ({ ...prev, isOpen: true, zIndex: maxZ + 1 }));
 		WindowCx._windowConfig[id].onOpen?.(this);
-
-		// Auto-maximize on narrow (sm) if this window supports it
-		if (
-			WindowCx._windowConfig[id].canMaximize &&
-			this.$breakpoint.get() === 'sm' &&
-			this.windows[id].get().boundsBeforeMaximize == null
-		) {
-			this.maximize(id);
-		}
 	}
 
 	public close(id: TWindowId): void {
@@ -143,6 +134,10 @@ export class WindowCx {
 
 		const el = this.containerRef.current;
 		const rect = el != null ? el.getBoundingClientRect() : this.$containerRect.get();
+		if (rect.width <= 0 || rect.height <= 0) {
+			return;
+		}
+
 		this.windows[id].set((p) => ({
 			...p,
 			boundsBeforeMaximize: p.bounds,
@@ -182,22 +177,18 @@ export class WindowCx {
 		this.$breakpoint.set(breakpoint);
 
 		if (prev !== 'sm' && breakpoint === 'sm') {
-			// Entering narrow (sm): maximize open maximizable windows + enable maximize button for all
+			// Entering narrow (sm): show maximize button for maximizable windows (no auto-fullscreen)
 			for (const id of Object.keys(this.windows) as TWindowId[]) {
 				if (!WindowCx._windowConfig[id].canMaximize) {
 					continue;
 				}
-				const w = this.windows[id].get();
 				this.windows[id].set((p) => ({
 					...p,
 					trafficLights: { ...p.trafficLights, maximize: true }
 				}));
-				if (w.isOpen && w.boundsBeforeMaximize == null) {
-					this.maximize(id);
-				}
 			}
 		} else if (prev === 'sm' && breakpoint !== 'sm') {
-			// Leaving narrow (sm): restore all windows to default traffic lights + un-maximize
+			// Leaving narrow (sm): restore traffic lights and un-maximize any maximized windows
 			for (const id of Object.keys(this.windows) as TWindowId[]) {
 				const w = this.windows[id].get();
 				this.windows[id].set((p) => ({
@@ -211,17 +202,21 @@ export class WindowCx {
 		}
 	}
 
-	private _clampWindowPositions(containerWidth: number, containerHeight: number): void {
+	private _clampWindowPositions(
+		containerWidth: number,
+		containerHeight: number,
+		clampPadding = 8
+	): void {
 		for (const win of Object.values(this.windows)) {
 			const w = win.get();
 			if (w.bounds.position == null) {
 				continue;
 			}
 
-			const maxX = Math.max(0, containerWidth - w.bounds.size.width);
-			const maxY = Math.max(0, containerHeight - w.bounds.size.height);
-			const x = Math.max(0, Math.min(w.bounds.position.x, maxX));
-			const y = Math.max(0, Math.min(w.bounds.position.y, maxY));
+			const maxX = Math.max(clampPadding, containerWidth - w.bounds.size.width - clampPadding);
+			const maxY = Math.max(clampPadding, containerHeight - w.bounds.size.height - clampPadding);
+			const x = Math.max(clampPadding, Math.min(w.bounds.position.x, maxX));
+			const y = Math.max(clampPadding, Math.min(w.bounds.position.y, maxY));
 			if (x !== w.bounds.position.x || y !== w.bounds.position.y) {
 				win.set((prev) => ({ ...prev, bounds: { ...prev.bounds, position: { x, y } } }));
 			}

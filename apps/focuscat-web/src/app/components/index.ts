@@ -4,4 +4,5 @@ export * from './Fireflies';
 export * from './Navbar';
 export * from './OverviewCard';
 export * from './ThemeProvider';
+export * from './WindowCanvas';
 export * from './WindowHeader';
