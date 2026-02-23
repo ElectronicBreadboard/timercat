@@ -1,5 +1,6 @@
 export * from './AppProvider';
 export * from './DraggableWindow';
+export * from './Fireflies';
 export * from './Navbar';
 export * from './OverviewCard';
 export * from './ThemeProvider';

@@ -1,7 +1,7 @@
 import { useBoundingRectObserver } from '@repo/ui';
 import React from 'react';
 import { useWindowCx } from '@/features/window';
-import { DraggableWindow } from './components';
+import { DraggableWindow, Fireflies } from './components';
 import { CatWindow } from './windows/cat';
 import { MainWindow } from './windows/main';
 import { SettingsWindow } from './windows/settings';
@@ -39,9 +39,11 @@ export const App: React.FC = () => {
 	return (
 		<div
 			ref={windowCx.containerRef}
-			className="bg-primary relative h-screen w-screen overflow-hidden"
+			className="relative h-screen w-screen overflow-hidden bg-[url('/illustrations/backgrounds/japanese-lofi.png')] bg-cover bg-center bg-no-repeat"
 			onClick={handleBackgroundClick}
 		>
+			<Fireflies />
+
 			{/* Main window */}
 			<DraggableWindow windowId="main" windowCx={windowCx}>
 				<MainWindow
