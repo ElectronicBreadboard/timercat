@@ -1,3 +1,4 @@
+import contentCollections from '@content-collections/vite';
 import mdx from '@mdx-js/rollup';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
@@ -15,6 +16,7 @@ export default defineConfig(async () => ({
 		['import.meta.env.PACKAGE_VERSION']: validateAndStringify('npm_package_version')
 	},
 	plugins: [
+		contentCollections(),
 		tsConfigPaths({
 			projects: ['./tsconfig.json']
 		}),

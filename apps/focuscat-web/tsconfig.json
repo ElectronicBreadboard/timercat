@@ -5,7 +5,8 @@
 		"lib": ["ES2022", "dom", "dom.iterable"],
 		"baseUrl": ".",
 		"paths": {
-			"@/*": ["./src/*"]
+			"@/*": ["./src/*"],
+			"content-collections": ["./.content-collections/generated"]
 		}
 	},
 	"include": ["env.d.ts", "**/*.ts", "**/*.tsx"],

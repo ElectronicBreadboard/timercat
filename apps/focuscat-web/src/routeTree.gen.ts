@@ -11,10 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HelpIndexRouteImport } from './routes/help/index'
-import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as SitesPomodorocatIndexRouteImport } from './routes/sites.pomodorocat/index'
 import { Route as LegalTermsIndexRouteImport } from './routes/legal.terms/index'
 import { Route as LegalPrivacyIndexRouteImport } from './routes/legal.privacy/index'
+import { Route as SitesPomodorocatBlogIndexRouteImport } from './routes/sites.pomodorocat.blog/index'
+import { Route as SitesPomodorocatBlogSlugIndexRouteImport } from './routes/sites.pomodorocat.blog.$slug/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -24,11 +25,6 @@ const IndexRoute = IndexRouteImport.update({
 const HelpIndexRoute = HelpIndexRouteImport.update({
   id: '/help/',
   path: '/help/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppIndexRoute = AppIndexRouteImport.update({
-  id: '/app/',
-  path: '/app/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitesPomodorocatIndexRoute = SitesPomodorocatIndexRouteImport.update({
@@ -46,66 +42,85 @@ const LegalPrivacyIndexRoute = LegalPrivacyIndexRouteImport.update({
   path: '/legal/privacy/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitesPomodorocatBlogIndexRoute =
+  SitesPomodorocatBlogIndexRouteImport.update({
+    id: '/sites/pomodorocat/blog/',
+    path: '/sites/pomodorocat/blog/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SitesPomodorocatBlogSlugIndexRoute =
+  SitesPomodorocatBlogSlugIndexRouteImport.update({
+    id: '/sites/pomodorocat/blog/$slug/',
+    path: '/sites/pomodorocat/blog/$slug/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/app/': typeof AppIndexRoute
   '/help/': typeof HelpIndexRoute
   '/legal/privacy/': typeof LegalPrivacyIndexRoute
   '/legal/terms/': typeof LegalTermsIndexRoute
   '/sites/pomodorocat/': typeof SitesPomodorocatIndexRoute
+  '/sites/pomodorocat/blog/': typeof SitesPomodorocatBlogIndexRoute
+  '/sites/pomodorocat/blog/$slug/': typeof SitesPomodorocatBlogSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app': typeof AppIndexRoute
   '/help': typeof HelpIndexRoute
   '/legal/privacy': typeof LegalPrivacyIndexRoute
   '/legal/terms': typeof LegalTermsIndexRoute
   '/sites/pomodorocat': typeof SitesPomodorocatIndexRoute
+  '/sites/pomodorocat/blog': typeof SitesPomodorocatBlogIndexRoute
+  '/sites/pomodorocat/blog/$slug': typeof SitesPomodorocatBlogSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/app/': typeof AppIndexRoute
   '/help/': typeof HelpIndexRoute
   '/legal/privacy/': typeof LegalPrivacyIndexRoute
   '/legal/terms/': typeof LegalTermsIndexRoute
   '/sites/pomodorocat/': typeof SitesPomodorocatIndexRoute
+  '/sites/pomodorocat/blog/': typeof SitesPomodorocatBlogIndexRoute
+  '/sites/pomodorocat/blog/$slug/': typeof SitesPomodorocatBlogSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/app/'
     | '/help/'
     | '/legal/privacy/'
     | '/legal/terms/'
     | '/sites/pomodorocat/'
+    | '/sites/pomodorocat/blog/'
+    | '/sites/pomodorocat/blog/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/app'
     | '/help'
     | '/legal/privacy'
     | '/legal/terms'
     | '/sites/pomodorocat'
+    | '/sites/pomodorocat/blog'
+    | '/sites/pomodorocat/blog/$slug'
   id:
     | '__root__'
     | '/'
-    | '/app/'
     | '/help/'
     | '/legal/privacy/'
     | '/legal/terms/'
     | '/sites/pomodorocat/'
+    | '/sites/pomodorocat/blog/'
+    | '/sites/pomodorocat/blog/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppIndexRoute: typeof AppIndexRoute
   HelpIndexRoute: typeof HelpIndexRoute
   LegalPrivacyIndexRoute: typeof LegalPrivacyIndexRoute
   LegalTermsIndexRoute: typeof LegalTermsIndexRoute
   SitesPomodorocatIndexRoute: typeof SitesPomodorocatIndexRoute
+  SitesPomodorocatBlogIndexRoute: typeof SitesPomodorocatBlogIndexRoute
+  SitesPomodorocatBlogSlugIndexRoute: typeof SitesPomodorocatBlogSlugIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -122,13 +137,6 @@ declare module '@tanstack/react-router' {
       path: '/help'
       fullPath: '/help/'
       preLoaderRoute: typeof HelpIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/app/': {
-      id: '/app/'
-      path: '/app'
-      fullPath: '/app/'
-      preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sites/pomodorocat/': {
@@ -152,16 +160,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalPrivacyIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sites/pomodorocat/blog/': {
+      id: '/sites/pomodorocat/blog/'
+      path: '/sites/pomodorocat/blog'
+      fullPath: '/sites/pomodorocat/blog/'
+      preLoaderRoute: typeof SitesPomodorocatBlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sites/pomodorocat/blog/$slug/': {
+      id: '/sites/pomodorocat/blog/$slug/'
+      path: '/sites/pomodorocat/blog/$slug'
+      fullPath: '/sites/pomodorocat/blog/$slug/'
+      preLoaderRoute: typeof SitesPomodorocatBlogSlugIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppIndexRoute: AppIndexRoute,
   HelpIndexRoute: HelpIndexRoute,
   LegalPrivacyIndexRoute: LegalPrivacyIndexRoute,
   LegalTermsIndexRoute: LegalTermsIndexRoute,
   SitesPomodorocatIndexRoute: SitesPomodorocatIndexRoute,
+  SitesPomodorocatBlogIndexRoute: SitesPomodorocatBlogIndexRoute,
+  SitesPomodorocatBlogSlugIndexRoute: SitesPomodorocatBlogSlugIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
