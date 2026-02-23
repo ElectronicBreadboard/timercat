@@ -1,3 +1,10 @@
 .tanstack
 .output
-.content-collections
+
+# Ignore generated content-collections output, 
+# but keep the type declarations so `tsc` can resolve
+# the `content-collections` module on a fresh checkout (e.g. Vercel CI).
+.content-collections/*
+!.content-collections/generated/
+.content-collections/generated/*
+!.content-collections/generated/index.d.ts
