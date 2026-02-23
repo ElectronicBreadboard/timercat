@@ -14,6 +14,8 @@ import { Route as HelpIndexRouteImport } from './routes/help/index'
 import { Route as SitesPomodorocatIndexRouteImport } from './routes/sites.pomodorocat/index'
 import { Route as LegalTermsIndexRouteImport } from './routes/legal.terms/index'
 import { Route as LegalPrivacyIndexRouteImport } from './routes/legal.privacy/index'
+import { Route as SitesPomodorocatSitemapDotxmlRouteImport } from './routes/sites.pomodorocat/sitemap[.]xml'
+import { Route as SitesPomodorocatRobotsDottxtRouteImport } from './routes/sites.pomodorocat/robots[.]txt'
 import { Route as SitesPomodorocatBlogIndexRouteImport } from './routes/sites.pomodorocat.blog/index'
 import { Route as SitesPomodorocatBlogSlugIndexRouteImport } from './routes/sites.pomodorocat.blog.$slug/index'
 
@@ -42,6 +44,18 @@ const LegalPrivacyIndexRoute = LegalPrivacyIndexRouteImport.update({
   path: '/legal/privacy/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitesPomodorocatSitemapDotxmlRoute =
+  SitesPomodorocatSitemapDotxmlRouteImport.update({
+    id: '/sites/pomodorocat/sitemap.xml',
+    path: '/sites/pomodorocat/sitemap.xml',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SitesPomodorocatRobotsDottxtRoute =
+  SitesPomodorocatRobotsDottxtRouteImport.update({
+    id: '/sites/pomodorocat/robots.txt',
+    path: '/sites/pomodorocat/robots.txt',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const SitesPomodorocatBlogIndexRoute =
   SitesPomodorocatBlogIndexRouteImport.update({
     id: '/sites/pomodorocat/blog/',
@@ -58,6 +72,8 @@ const SitesPomodorocatBlogSlugIndexRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/help/': typeof HelpIndexRoute
+  '/sites/pomodorocat/robots.txt': typeof SitesPomodorocatRobotsDottxtRoute
+  '/sites/pomodorocat/sitemap.xml': typeof SitesPomodorocatSitemapDotxmlRoute
   '/legal/privacy/': typeof LegalPrivacyIndexRoute
   '/legal/terms/': typeof LegalTermsIndexRoute
   '/sites/pomodorocat/': typeof SitesPomodorocatIndexRoute
@@ -67,6 +83,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/help': typeof HelpIndexRoute
+  '/sites/pomodorocat/robots.txt': typeof SitesPomodorocatRobotsDottxtRoute
+  '/sites/pomodorocat/sitemap.xml': typeof SitesPomodorocatSitemapDotxmlRoute
   '/legal/privacy': typeof LegalPrivacyIndexRoute
   '/legal/terms': typeof LegalTermsIndexRoute
   '/sites/pomodorocat': typeof SitesPomodorocatIndexRoute
@@ -77,6 +95,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/help/': typeof HelpIndexRoute
+  '/sites/pomodorocat/robots.txt': typeof SitesPomodorocatRobotsDottxtRoute
+  '/sites/pomodorocat/sitemap.xml': typeof SitesPomodorocatSitemapDotxmlRoute
   '/legal/privacy/': typeof LegalPrivacyIndexRoute
   '/legal/terms/': typeof LegalTermsIndexRoute
   '/sites/pomodorocat/': typeof SitesPomodorocatIndexRoute
@@ -88,6 +108,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/help/'
+    | '/sites/pomodorocat/robots.txt'
+    | '/sites/pomodorocat/sitemap.xml'
     | '/legal/privacy/'
     | '/legal/terms/'
     | '/sites/pomodorocat/'
@@ -97,6 +119,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/help'
+    | '/sites/pomodorocat/robots.txt'
+    | '/sites/pomodorocat/sitemap.xml'
     | '/legal/privacy'
     | '/legal/terms'
     | '/sites/pomodorocat'
@@ -106,6 +130,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/help/'
+    | '/sites/pomodorocat/robots.txt'
+    | '/sites/pomodorocat/sitemap.xml'
     | '/legal/privacy/'
     | '/legal/terms/'
     | '/sites/pomodorocat/'
@@ -116,6 +142,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HelpIndexRoute: typeof HelpIndexRoute
+  SitesPomodorocatRobotsDottxtRoute: typeof SitesPomodorocatRobotsDottxtRoute
+  SitesPomodorocatSitemapDotxmlRoute: typeof SitesPomodorocatSitemapDotxmlRoute
   LegalPrivacyIndexRoute: typeof LegalPrivacyIndexRoute
   LegalTermsIndexRoute: typeof LegalTermsIndexRoute
   SitesPomodorocatIndexRoute: typeof SitesPomodorocatIndexRoute
@@ -160,6 +188,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalPrivacyIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sites/pomodorocat/sitemap.xml': {
+      id: '/sites/pomodorocat/sitemap.xml'
+      path: '/sites/pomodorocat/sitemap.xml'
+      fullPath: '/sites/pomodorocat/sitemap.xml'
+      preLoaderRoute: typeof SitesPomodorocatSitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sites/pomodorocat/robots.txt': {
+      id: '/sites/pomodorocat/robots.txt'
+      path: '/sites/pomodorocat/robots.txt'
+      fullPath: '/sites/pomodorocat/robots.txt'
+      preLoaderRoute: typeof SitesPomodorocatRobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sites/pomodorocat/blog/': {
       id: '/sites/pomodorocat/blog/'
       path: '/sites/pomodorocat/blog'
@@ -180,6 +222,8 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HelpIndexRoute: HelpIndexRoute,
+  SitesPomodorocatRobotsDottxtRoute: SitesPomodorocatRobotsDottxtRoute,
+  SitesPomodorocatSitemapDotxmlRoute: SitesPomodorocatSitemapDotxmlRoute,
   LegalPrivacyIndexRoute: LegalPrivacyIndexRoute,
   LegalTermsIndexRoute: LegalTermsIndexRoute,
   SitesPomodorocatIndexRoute: SitesPomodorocatIndexRoute,
