@@ -18,7 +18,7 @@ export class WindowCx {
 		},
 		settings: {
 			id: 'settings',
-			trafficLights: { close: true, minimize: true, maximize: true },
+			trafficLights: { close: true, minimize: false, maximize: true },
 			bounds: {
 				size: { width: 600, height: 450 },
 				position: { x: 'center', y: 'center' }
@@ -82,8 +82,7 @@ export class WindowCx {
 	public unmount(): void {}
 
 	public open(id: TWindowId): void {
-		const maxZ = this._maxZ();
-		this.windows[id].set((prev) => ({ ...prev, visibility: 'visible', zIndex: maxZ + 1 }));
+		this.windows[id].set((prev) => ({ ...prev, visibility: 'visible', zIndex: this._maxZ() + 1 }));
 	}
 
 	public close(id: TWindowId): void {

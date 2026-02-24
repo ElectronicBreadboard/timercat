@@ -1,4 +1,4 @@
-import { Cat, catConfig, type TCatFace, type TCatHat, type TCatRef } from '@repo/ui';
+import { Cat, randomCat, type TCatRef } from '@repo/ui';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import React from 'react';
 import { WindowHeader } from '@/components';
@@ -10,17 +10,7 @@ export const Route = createFileRoute('/window/main/splash/')({
 function RouteComponent() {
 	const navigate = useNavigate();
 	const catRef = React.useRef<TCatRef>(null);
-
-	// Randomized accessories (picked once on mount)
-	const face = React.useMemo<TCatFace>(() => {
-		const faces = catConfig.parts.face.available;
-		return faces[Math.floor(Math.random() * faces.length)] as TCatFace;
-	}, []);
-	const hat = React.useMemo<TCatHat | undefined>(() => {
-		if (Math.random() < 0.5) return undefined;
-		const hats = catConfig.parts.hat.available;
-		return hats[Math.floor(Math.random() * hats.length)] as TCatHat;
-	}, []);
+	const { face, hat } = React.useMemo(() => randomCat(), []);
 
 	// MARK: - Effects
 
