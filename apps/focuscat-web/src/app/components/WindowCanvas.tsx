@@ -15,8 +15,11 @@ export const WindowCanvas: React.FC<TWindowCanvasProps> = (props) => {
 		<>
 			<DraggableWindow windowId="main" windowCx={windowCx}>
 				<MainWindow
-					onOpenSettings={() => windowCx.open('settings')}
-					onMinimize={() => {
+					onOpenSettings={() => {
+						windowCx.open('settings');
+						windowCx.close('main');
+					}}
+					onOpenCat={() => {
 						windowCx.open('cat');
 						windowCx.close('main');
 					}}
@@ -32,7 +35,11 @@ export const WindowCanvas: React.FC<TWindowCanvasProps> = (props) => {
 				/>
 			</DraggableWindow>
 
-			<DraggableWindow windowId="settings" windowCx={windowCx}>
+			<DraggableWindow
+				windowId="settings"
+				windowCx={windowCx}
+				onClose={() => windowCx.open('main')}
+			>
 				<SettingsWindow />
 			</DraggableWindow>
 

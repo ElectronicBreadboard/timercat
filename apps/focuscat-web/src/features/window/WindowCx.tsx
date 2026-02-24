@@ -1,73 +1,56 @@
 import { mq, useMediaQuery, useMemoCleanup } from '@repo/ui';
-import { createState, TPersistFeature, TState } from 'feature-state';
+import { createState, TState } from 'feature-state';
 import React from 'react';
-import { TVersionedMigrationConfig, withVersionedLocalStorage } from '@/lib';
 
 export class WindowCx {
 	private static readonly _windowConfig: Record<TWindowId, TWindowConfig> = {
 		main: {
-			canMaximize: true,
-			version: '0.0.1',
 			id: 'main',
 			trafficLights: { close: false, minimize: false, maximize: false },
 			bounds: {
 				size: { width: 300, height: 500 },
 				position: { x: 'center', y: 'center' }
 			},
-			isOpen: true,
+			visibility: 'visible',
 			zIndex: 10,
 			boundsBeforeMaximize: null,
-			onOpen(cx) {
-				cx.windows.cat.set((prev) => ({ ...prev, isOpen: false }));
-			}
+			canMaximize: true
 		},
 		settings: {
-			canMaximize: true,
-			version: '0.0.1',
 			id: 'settings',
 			trafficLights: { close: true, minimize: true, maximize: true },
 			bounds: {
 				size: { width: 600, height: 450 },
 				position: { x: 'center', y: 'center' }
 			},
-			isOpen: false,
+			visibility: 'closed',
 			zIndex: 11,
 			boundsBeforeMaximize: null,
-			onOpen(cx) {
-				cx.windows.main.set((prev) => ({ ...prev, isOpen: false }));
-			},
-			onClose(cx) {
-				cx.open('main');
-			}
+			canMaximize: true
 		},
 		cat: {
-			canMaximize: false,
-			version: '0.0.1',
 			id: 'cat',
 			trafficLights: { close: false, minimize: false, maximize: false },
 			bounds: {
 				size: { width: 170, height: 170 },
 				position: { x: 'center', y: 'center' }
 			},
-			isOpen: false,
+			visibility: 'closed',
 			zIndex: 12,
 			boundsBeforeMaximize: null,
-			onOpen(cx) {
-				cx.windows.main.set((prev) => ({ ...prev, isOpen: false }));
-			}
+			canMaximize: false
 		},
 		spotify: {
-			canMaximize: false,
-			version: '0.0.1',
 			id: 'spotify',
 			trafficLights: { close: false, minimize: false, maximize: false },
 			bounds: {
 				size: { width: 352, height: 152 },
 				position: { x: 'start', y: 'end' }
 			},
-			isOpen: true,
+			visibility: 'visible',
 			zIndex: 10,
-			boundsBeforeMaximize: null
+			boundsBeforeMaximize: null,
+			canMaximize: false
 		}
 	};
 
@@ -77,44 +60,34 @@ export class WindowCx {
 	public readonly containerRef = React.createRef<HTMLDivElement>();
 	public readonly $containerRect = createState<TContainerRect>({ width: 0, height: 0 });
 
-	public readonly windows: Record<TWindowId, TState<TWindow, [TPersistFeature]>> = {} as Record<
+	public readonly windows: Record<TWindowId, TState<TWindow, []>> = {} as Record<
 		TWindowId,
-		TState<TWindow, [TPersistFeature]>
+		TState<TWindow, []>
 	>;
 
 	constructor() {
 		for (const windowConfig of Object.values(WindowCx._windowConfig)) {
-			const window = withVersionedLocalStorage(
-				createState<TWindow>(this._toWindowState(windowConfig)),
-				`focuscat-window-${windowConfig.id}`,
-				windowMigrationConfig
-			);
+			const window = this._toWindowState(windowConfig);
 			this.windows[windowConfig.id] = window;
-			window.listen(({ value: window, prevValue: prevWindow }) => {
-				if (window.isOpen && prevWindow?.isOpen !== window.isOpen) {
-					this.$focusedId.set(window.id);
+			window.listen(({ value: w, prevValue: prev }) => {
+				if (w.visibility === 'visible' && prev?.visibility !== 'visible') {
+					this.$focusedId.set(w.id);
 				}
 			});
 		}
 	}
 
-	public mount(): void {
-		for (const window of Object.values(this.windows)) {
-			void window.persist();
-		}
-	}
+	public mount(): void {}
 
 	public unmount(): void {}
 
 	public open(id: TWindowId): void {
 		const maxZ = this._maxZ();
-		this.windows[id].set((prev) => ({ ...prev, isOpen: true, zIndex: maxZ + 1 }));
-		WindowCx._windowConfig[id].onOpen?.(this);
+		this.windows[id].set((prev) => ({ ...prev, visibility: 'visible', zIndex: maxZ + 1 }));
 	}
 
 	public close(id: TWindowId): void {
-		this.windows[id].set((prev) => ({ ...prev, isOpen: false }));
-		WindowCx._windowConfig[id].onClose?.(this);
+		this.windows[id].set((prev) => ({ ...prev, visibility: 'closed' }));
 	}
 
 	public minimize(id: TWindowId): void {
@@ -263,24 +236,20 @@ export class WindowCx {
 		return Math.max(...Object.values(this.windows).map((window) => window.get().zIndex));
 	}
 
-	private _toWindowState(config: TWindowConfig): TWindow {
-		const { canMaximize, onOpen, onClose, ...rest } = config;
-		return rest;
+	private _toWindowState(config: TWindowConfig): TState<TWindow, []> {
+		const { canMaximize, ...rest } = config;
+		return createState<TWindow>(rest);
 	}
 }
-
-const windowMigrationConfig: TVersionedMigrationConfig<TWindow> = {
-	latestVersion: '0.0.1',
-	migrations: {}
-};
 
 export interface TContainerRect {
 	width: number;
 	height: number;
 }
 
+export type TBreakpoint = 'sm' | 'md' | 'lg';
+
 export interface TWindow {
-	version: '0.0.1';
 	id: TWindowId;
 	trafficLights: {
 		close: boolean;
@@ -288,19 +257,17 @@ export interface TWindow {
 		maximize: boolean;
 	};
 	bounds: TBounds;
-	isOpen: boolean;
+	visibility: TWindowVisibility;
 	zIndex: number;
 	boundsBeforeMaximize: TBounds | null;
 }
 
 export interface TWindowConfig extends TWindow {
 	canMaximize: boolean;
-	onOpen?: (cx: WindowCx) => void;
-	onClose?: (cx: WindowCx) => void;
 }
 
 export type TWindowId = 'main' | 'settings' | 'cat' | 'spotify';
-export type TBreakpoint = 'sm' | 'md' | 'lg';
+export type TWindowVisibility = 'visible' | 'minimized' | 'closed';
 
 export interface TBounds {
 	size: TSize;
@@ -330,6 +297,10 @@ export type TAnchor = 'start' | 'center' | 'end';
 
 export function isAbsolutePosition(p: TPosition | null | undefined): p is TAbsolutePosition {
 	return p != null && typeof p.x === 'number';
+}
+
+export function isWindowVisible(w: TWindow): boolean {
+	return w.visibility === 'visible';
 }
 
 // MARK: - React Context

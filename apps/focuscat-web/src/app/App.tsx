@@ -1,11 +1,13 @@
 import { useBoundingRectObserver } from '@repo/ui';
 import { useCompute } from 'feature-react/state';
+import { AnimatePresence } from 'motion/react';
 import React from 'react';
 import { useWindowCx } from '@/features/window';
-import { Fireflies, WindowCanvas } from './components';
+import { AppSplash, Fireflies, WindowCanvas } from './components';
 
 export const App: React.FC = () => {
 	const windowCx = useWindowCx();
+	const [splashDone, setSplashDone] = React.useState(false);
 	const containerReady = useCompute(
 		windowCx.$containerRect,
 		({ value: rect }) => rect.width > 0 && rect.height > 0
@@ -15,6 +17,8 @@ export const App: React.FC = () => {
 	);
 
 	// MARK: - Actions
+
+	const handleSplashComplete = React.useCallback(() => setSplashDone(true), []);
 
 	const handleBackgroundClick = React.useCallback(() => {
 		windowCx.clearFocus();
@@ -44,6 +48,11 @@ export const App: React.FC = () => {
 
 			{/* Windows */}
 			{containerReady && <WindowCanvas windowCx={windowCx} />}
+
+			{/* Splash */}
+			<AnimatePresence>
+				{!splashDone && <AppSplash onComplete={handleSplashComplete} />}
+			</AnimatePresence>
 		</div>
 	);
 };

@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
 import {
 	isAbsolutePosition,
+	isWindowVisible,
 	type TAbsolutePosition,
 	type TBounds,
 	type TPosition,
@@ -13,10 +14,19 @@ import {
 } from '@/features/window';
 
 export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
-	const { windowId, windowCx, transparent = false, edgePaddingPx = 16, children } = props;
+	const {
+		windowId,
+		windowCx,
+		transparent = false,
+		edgePaddingPx = 16,
+		onClose,
+		onMinimize,
+		onMaximize,
+		children
+	} = props;
 	const $window = windowCx.windows[windowId];
 
-	const isOpen = useCompute($window, ({ value }) => value.isOpen);
+	const isVisible = useCompute($window, ({ value }) => isWindowVisible(value));
 	const trafficLights = useCompute($window, ({ value }) => value.trafficLights);
 	const isMaximized = useCompute($window, ({ value }) => value.boundsBeforeMaximize != null);
 	const isFocused = useCompute(
@@ -158,24 +168,27 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 		(e: React.MouseEvent<HTMLButtonElement>) => {
 			e.stopPropagation();
 			windowCx.close(windowId);
+			onClose?.();
 		},
-		[windowCx, windowId]
+		[windowCx, windowId, onClose]
 	);
 
 	const handleMinimize = React.useCallback(
 		(e: React.MouseEvent<HTMLButtonElement>) => {
 			e.stopPropagation();
 			windowCx.minimize(windowId);
+			onMinimize?.();
 		},
-		[windowCx, windowId]
+		[windowCx, windowId, onMinimize]
 	);
 
 	const handleMaximize = React.useCallback(
 		(e: React.MouseEvent<HTMLButtonElement>) => {
 			e.stopPropagation();
 			windowCx.maximize(windowId);
+			onMaximize?.();
 		},
-		[windowCx, windowId]
+		[windowCx, windowId, onMaximize]
 	);
 
 	const setWindowRef = React.useCallback(
@@ -210,7 +223,7 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 
 	return (
 		<AnimatePresence>
-			{isOpen && (
+			{isVisible && (
 				<div ref={setWindowRef}>
 					<motion.div
 						className={cn(
@@ -296,5 +309,8 @@ export interface TDraggableWindowProps {
 	windowCx: WindowCx;
 	transparent?: boolean;
 	edgePaddingPx?: number;
+	onClose?: () => void;
+	onMinimize?: () => void;
+	onMaximize?: () => void;
 	children: React.ReactNode;
 }

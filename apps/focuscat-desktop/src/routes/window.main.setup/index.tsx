@@ -2,10 +2,10 @@ import { Button, Input } from '@repo/ui';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
+import { WindowHeader } from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
-import { WindowHeader } from '@/components';
 import { toTuple } from '@/lib';
 import { AddProfileButton, ProfileTag, targetKey, TargetTag } from './components';
 

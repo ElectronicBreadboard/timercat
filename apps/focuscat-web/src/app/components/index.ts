@@ -1,4 +1,5 @@
 export * from './AppProvider';
+export * from './AppSplash';
 export * from './DraggableWindow';
 export * from './Fireflies';
 export * from './Navbar';
