@@ -83,6 +83,7 @@ export class WindowCx {
 
 	public open(id: TWindowId): void {
 		this.windows[id].set((prev) => ({ ...prev, visibility: 'visible', zIndex: this._maxZ() + 1 }));
+		this._autoMaximizeIfNeeded(id);
 	}
 
 	public close(id: TWindowId): void {
@@ -169,6 +170,11 @@ export class WindowCx {
 	public setContainerRect(width: number, height: number): void {
 		this.$containerRect.set({ width, height });
 		this._clampWindowPositions({ width, height });
+		for (const id of Object.keys(this.windows) as TWindowId[]) {
+			if (this.windows[id].get().visibility === 'visible') {
+				this._autoMaximizeIfNeeded(id);
+			}
+		}
 	}
 
 	public setBreakpoint(breakpoint: TBreakpoint): void {
@@ -201,6 +207,26 @@ export class WindowCx {
 		}
 	}
 
+	private _autoMaximizeIfNeeded(id: TWindowId): void {
+		if (!WindowCx._windowConfig[id].canMaximize) {
+			return;
+		}
+
+		const w = this.windows[id].get();
+		if (w.boundsBeforeMaximize != null) {
+			return;
+		}
+
+		const container = this.$containerRect.get();
+		if (container.width <= 0 || container.height <= 0) {
+			return;
+		}
+
+		if (w.bounds.size.width > container.width || w.bounds.size.height > container.height) {
+			this.maximize(id);
+		}
+	}
+
 	private _clampPosition(
 		position: TAbsolutePosition,
 		size: TSize,
@@ -219,6 +245,9 @@ export class WindowCx {
 		for (const win of Object.values(this.windows)) {
 			const w = win.get();
 			if (!isAbsolutePosition(w.bounds.position)) {
+				continue;
+			}
+			if (w.boundsBeforeMaximize != null) {
 				continue;
 			}
 			const position = this._clampPosition(w.bounds.position, w.bounds.size, container, padding);

@@ -7,47 +7,59 @@ import { TSettingsPanel } from '../types';
 import { SidebarItem } from './SidebarItem';
 
 export const Sidebar: React.FC<TSidebarProps> = (props) => {
-	const { activePanel, onSelectPanel } = props;
+	const { activePanel, onSelectPanel, isMobile } = props;
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
+
+	const items = (
+		<>
+			<SidebarItem
+				panel="app"
+				icon={<AppWindowIcon size={16} />}
+				label="App"
+				activePanel={activePanel}
+				onSelectPanel={onSelectPanel}
+			/>
+			<SidebarItem
+				panel="timer"
+				icon={<TimerIcon size={16} />}
+				label="Timer"
+				activePanel={activePanel}
+				onSelectPanel={onSelectPanel}
+			/>
+			{settings.features.goals && (
+				<SidebarItem
+					panel="goals"
+					icon={<TargetIcon size={16} />}
+					label="Goals"
+					activePanel={activePanel}
+					onSelectPanel={onSelectPanel}
+				/>
+			)}
+			{settings.features.developer && (
+				<SidebarItem
+					panel="developer"
+					icon={<CodeIcon size={16} />}
+					label="Developer"
+					activePanel={activePanel}
+					onSelectPanel={onSelectPanel}
+				/>
+			)}
+		</>
+	);
+
+	if (isMobile) {
+		return (
+			<nav className="border-base-200 bg-base-50 shrink-0 overflow-x-auto border-b">
+				<ul className="flex gap-1 p-2">{items}</ul>
+			</nav>
+		);
+	}
 
 	return (
 		<aside className="border-base-200 bg-base-50 flex w-40 shrink-0 flex-col border-r">
 			<nav className="flex-1 p-3">
-				<ul className="space-y-0.5">
-					<SidebarItem
-						panel="app"
-						icon={<AppWindowIcon size={16} />}
-						label="App"
-						activePanel={activePanel}
-						onSelectPanel={onSelectPanel}
-					/>
-					<SidebarItem
-						panel="timer"
-						icon={<TimerIcon size={16} />}
-						label="Timer"
-						activePanel={activePanel}
-						onSelectPanel={onSelectPanel}
-					/>
-					{settings.features.goals && (
-						<SidebarItem
-							panel="goals"
-							icon={<TargetIcon size={16} />}
-							label="Goals"
-							activePanel={activePanel}
-							onSelectPanel={onSelectPanel}
-						/>
-					)}
-					{settings.features.developer && (
-						<SidebarItem
-							panel="developer"
-							icon={<CodeIcon size={16} />}
-							label="Developer"
-							activePanel={activePanel}
-							onSelectPanel={onSelectPanel}
-						/>
-					)}
-				</ul>
+				<ul className="space-y-0.5">{items}</ul>
 			</nav>
 			<div className="border-base-200 space-y-2 border-t p-3">
 				<Button
@@ -70,4 +82,5 @@ export const Sidebar: React.FC<TSidebarProps> = (props) => {
 interface TSidebarProps {
 	activePanel: TSettingsPanel;
 	onSelectPanel: (panel: TSettingsPanel) => void;
+	isMobile: boolean;
 }

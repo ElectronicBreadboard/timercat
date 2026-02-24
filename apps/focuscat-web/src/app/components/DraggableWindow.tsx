@@ -1,5 +1,5 @@
 import { cn, MinusIcon, XIcon } from '@repo/ui';
-import { useCompute, useListener } from 'feature-react/state';
+import { useCombinedCompute, useCompute, useListener } from 'feature-react/state';
 import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
 import {
@@ -29,6 +29,17 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 	const isVisible = useCompute($window, ({ value }) => isWindowVisible(value));
 	const trafficLights = useCompute($window, ({ value }) => value.trafficLights);
 	const isMaximized = useCompute($window, ({ value }) => value.boundsBeforeMaximize != null);
+	const canToggleMaximize = useCombinedCompute(
+		[$window, windowCx.$containerRect],
+		([winCx, containerCx]) => {
+			const bounds = winCx.value.boundsBeforeMaximize;
+			if (bounds == null) {
+				return true;
+			}
+			const container = containerCx.value;
+			return bounds.size.width <= container.width && bounds.size.height <= container.height;
+		}
+	);
 	const isFocused = useCompute(
 		windowCx.$focusedId,
 		({ value: focusedId }) => focusedId === windowId,
@@ -281,7 +292,7 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 								)}
 
 								{/* Maximize */}
-								{trafficLights.maximize ? (
+								{trafficLights.maximize && canToggleMaximize ? (
 									<button
 										className={cn(
 											'size-4.5 cursor-default rounded-full ring-1 ring-black/20 group-hover:bg-[#28C840] sm:size-3',
