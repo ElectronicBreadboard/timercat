@@ -1,7 +1,14 @@
+import { randomCat } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { App } from '@/app';
 
 export const Route = createFileRoute('/sites/pomodorocat/')({
+	loader: () => {
+		return {
+			// Runs on the server so client hydration uses the same values (no SSR flash)
+			splashCat: randomCat()
+		};
+	},
 	head: () => ({
 		meta: [
 			{ title: 'Pomodoro Cat — Free Cat Pomodoro Timer' },
@@ -30,9 +37,11 @@ export const Route = createFileRoute('/sites/pomodorocat/')({
 });
 
 function RouteComponent() {
+	const { splashCat } = Route.useLoaderData();
+
 	return (
 		<div className="scrollbar-hide h-screen overflow-x-hidden overflow-y-auto">
-			<App />
+			<App splashCat={splashCat} />
 
 			<section className="mx-auto max-w-3xl space-y-10 px-8 py-16 text-gray-800">
 				<div>

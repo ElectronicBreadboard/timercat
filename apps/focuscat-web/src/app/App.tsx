@@ -1,11 +1,12 @@
-import { useBoundingRectObserver } from '@repo/ui';
+import { useBoundingRectObserver, type TRandomCat } from '@repo/ui';
 import { useCompute } from 'feature-react/state';
 import { AnimatePresence } from 'motion/react';
 import React from 'react';
 import { useWindowCx } from '@/features/window';
 import { AppSplash, Fireflies, WindowCanvas } from './components';
 
-export const App: React.FC = () => {
+export const App: React.FC<TAppProps> = (props) => {
+	const { splashCat } = props;
 	const windowCx = useWindowCx();
 	const [splashDone, setSplashDone] = React.useState(false);
 	const containerReady = useCompute(
@@ -51,8 +52,14 @@ export const App: React.FC = () => {
 
 			{/* Splash */}
 			<AnimatePresence>
-				{!splashDone && <AppSplash onComplete={handleSplashComplete} />}
+				{splashCat != null && !splashDone && (
+					<AppSplash cat={splashCat} onComplete={handleSplashComplete} />
+				)}
 			</AnimatePresence>
 		</div>
 	);
 };
+
+interface TAppProps {
+	splashCat?: TRandomCat;
+}
