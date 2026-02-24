@@ -2,10 +2,18 @@ import { cn, MinusIcon, XIcon } from '@repo/ui';
 import { useCompute, useListener } from 'feature-react/state';
 import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
-import type { TBounds, TWindow, TWindowId, WindowCx } from '@/features/window';
+import {
+	isAbsolutePosition,
+	type TAbsolutePosition,
+	type TBounds,
+	type TPosition,
+	type TWindow,
+	type TWindowId,
+	type WindowCx
+} from '@/features/window';
 
 export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
-	const { windowId, windowCx, transparent = false, children } = props;
+	const { windowId, windowCx, transparent = false, edgePaddingPx = 16, children } = props;
 	const $window = windowCx.windows[windowId];
 
 	const isOpen = useCompute($window, ({ value }) => value.isOpen);
@@ -24,21 +32,72 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 
 	// MARK: - Actions
 
-	const applyLayout = React.useCallback((el: HTMLElement, bounds: TBounds, zIndex: number) => {
-		el.style.position = 'absolute';
-		el.style.width = `${bounds.size.width}px`;
-		el.style.height = `${bounds.size.height}px`;
-		el.style.zIndex = String(zIndex);
-		if (bounds.position == null) {
-			el.style.top = '50%';
-			el.style.left = '50%';
-			el.style.transform = 'translate(-50%, -50%)';
-		} else {
-			el.style.top = `${bounds.position.y}px`;
-			el.style.left = `${bounds.position.x}px`;
+	const applyPosition = React.useCallback(
+		(el: HTMLElement, position: TPosition): void => {
+			el.style.right = '';
+			el.style.bottom = '';
 			el.style.transform = '';
-		}
-	}, []);
+			if (isAbsolutePosition(position)) {
+				el.style.left = `${position.x}px`;
+				el.style.top = `${position.y}px`;
+				return;
+			}
+			// Anchor: use CSS so the browser handles layout and resize
+			el.style.left = '';
+			if (position.x === 'start') {
+				el.style.left = `${edgePaddingPx}px`;
+			} else if (position.x === 'end') {
+				el.style.right = `${edgePaddingPx}px`;
+			} else {
+				el.style.left = '50%';
+			}
+			el.style.top = '';
+			if (position.y === 'start') {
+				el.style.top = `${edgePaddingPx}px`;
+			} else if (position.y === 'end') {
+				el.style.bottom = `${edgePaddingPx}px`;
+			} else {
+				el.style.top = '50%';
+			}
+			const tx = position.x === 'center' ? '-50%' : '0';
+			const ty = position.y === 'center' ? '-50%' : '0';
+			el.style.transform = tx !== '0' || ty !== '0' ? `translate(${tx}, ${ty})` : '';
+		},
+		[edgePaddingPx]
+	);
+
+	const getAbsolutePosition = React.useCallback(
+		(
+			position: TPosition | null,
+			el: HTMLElement | null,
+			containerEl: HTMLElement | null
+		): TAbsolutePosition => {
+			if (isAbsolutePosition(position)) {
+				return { x: position.x, y: position.y };
+			}
+			if (el != null && containerEl != null) {
+				const rect = el.getBoundingClientRect();
+				const containerRect = containerEl.getBoundingClientRect();
+				return {
+					x: rect.left - containerRect.left,
+					y: rect.top - containerRect.top
+				};
+			}
+			return { x: 0, y: 0 };
+		},
+		[]
+	);
+
+	const applyLayout = React.useCallback(
+		(el: HTMLElement, bounds: TBounds, zIndex: number) => {
+			el.style.position = 'absolute';
+			el.style.width = `${bounds.size.width}px`;
+			el.style.height = `${bounds.size.height}px`;
+			el.style.zIndex = String(zIndex);
+			applyPosition(el, bounds.position);
+		},
+		[applyPosition]
+	);
 
 	const handleWindowPointerDown = React.useCallback(
 		(e: React.PointerEvent<HTMLDivElement>) => {
@@ -59,16 +118,19 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 				return;
 			}
 
-			const rect = windowRef.current?.getBoundingClientRect();
 			const layout = layoutRef.current;
-			const windowX = layout?.bounds?.position?.x ?? rect?.left ?? 0;
-			const windowY = layout?.bounds?.position?.y ?? rect?.top ?? 0;
+			const position = layout?.bounds?.position ?? null;
+			const { x: windowX, y: windowY } = getAbsolutePosition(
+				position,
+				windowRef.current,
+				windowCx.containerRef.current
+			);
 
 			e.currentTarget.setPointerCapture(e.pointerId);
 			isDragging.current = true;
 			dragStart.current = { pointerX: e.clientX, pointerY: e.clientY, windowX, windowY };
 		},
-		[isMaximized, windowCx, windowId]
+		[getAbsolutePosition, isMaximized, windowCx, windowId]
 	);
 
 	const handleWindowPointerMove = React.useCallback(
@@ -141,7 +203,7 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 			}
 			layoutRef.current = { bounds: value.bounds, zIndex: value.zIndex };
 		},
-		[$window]
+		[$window, applyLayout]
 	);
 
 	// MARK: - UI
@@ -233,5 +295,6 @@ export interface TDraggableWindowProps {
 	windowId: TWindowId;
 	windowCx: WindowCx;
 	transparent?: boolean;
+	edgePaddingPx?: number;
 	children: React.ReactNode;
 }

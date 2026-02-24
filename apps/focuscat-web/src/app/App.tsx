@@ -42,16 +42,6 @@ export const App: React.FC = () => {
 			/>
 			<Fireflies count={containerReady ? fireflyCount : 0} />
 
-			{/* Spotify playlist (bottom-left) */}
-			<div className="absolute bottom-4 left-4 z-10 hidden overflow-hidden rounded-xl shadow-lg sm:block">
-				<iframe
-					title="Spotify playlist: beats to relax/study to"
-					src="https://open.spotify.com/embed/playlist/0vvXsWCC9xrXsKd4FyS8kM"
-					allow="encrypted-media"
-					className="h-[152px] w-[352px] border-0"
-				/>
-			</div>
-
 			{/* Windows */}
 			{containerReady && <WindowCanvas windowCx={windowCx} />}
 		</div>

@@ -10,7 +10,10 @@ export class WindowCx {
 			version: '0.0.1',
 			id: 'main',
 			trafficLights: { close: false, minimize: false, maximize: false },
-			bounds: { size: { width: 300, height: 500 }, position: null },
+			bounds: {
+				size: { width: 300, height: 500 },
+				position: { x: 'center', y: 'center' }
+			},
 			isOpen: true,
 			zIndex: 10,
 			boundsBeforeMaximize: null,
@@ -23,7 +26,10 @@ export class WindowCx {
 			version: '0.0.1',
 			id: 'settings',
 			trafficLights: { close: true, minimize: true, maximize: true },
-			bounds: { size: { width: 600, height: 450 }, position: null },
+			bounds: {
+				size: { width: 600, height: 450 },
+				position: { x: 'center', y: 'center' }
+			},
 			isOpen: false,
 			zIndex: 11,
 			boundsBeforeMaximize: null,
@@ -39,13 +45,29 @@ export class WindowCx {
 			version: '0.0.1',
 			id: 'cat',
 			trafficLights: { close: false, minimize: false, maximize: false },
-			bounds: { size: { width: 170, height: 170 }, position: null },
+			bounds: {
+				size: { width: 170, height: 170 },
+				position: { x: 'center', y: 'center' }
+			},
 			isOpen: false,
 			zIndex: 12,
 			boundsBeforeMaximize: null,
 			onOpen(cx) {
 				cx.windows.main.set((prev) => ({ ...prev, isOpen: false }));
 			}
+		},
+		spotify: {
+			canMaximize: false,
+			version: '0.0.1',
+			id: 'spotify',
+			trafficLights: { close: false, minimize: false, maximize: false },
+			bounds: {
+				size: { width: 352, height: 152 },
+				position: { x: 'start', y: 'end' }
+			},
+			isOpen: true,
+			zIndex: 10,
+			boundsBeforeMaximize: null
 		}
 	};
 
@@ -107,7 +129,7 @@ export class WindowCx {
 			const container = this.$containerRect.get();
 
 			let position = bounds.position;
-			if (position != null) {
+			if (isAbsolutePosition(position)) {
 				const outOfBounds =
 					position.x < 0 ||
 					position.y < 0 ||
@@ -209,7 +231,7 @@ export class WindowCx {
 	): void {
 		for (const win of Object.values(this.windows)) {
 			const w = win.get();
-			if (w.bounds.position == null) {
+			if (!isAbsolutePosition(w.bounds.position)) {
 				continue;
 			}
 
@@ -263,13 +285,32 @@ export interface TWindowConfig extends TWindow {
 	onClose?: (cx: WindowCx) => void;
 }
 
-export type TWindowId = 'main' | 'settings' | 'cat';
+export type TWindowId = 'main' | 'settings' | 'cat' | 'spotify';
 export type TBreakpoint = 'sm' | 'md' | 'lg';
 
 export interface TBounds {
 	size: { width: number; height: number };
-	/** null = auto-centered on first render */
-	position: { x: number; y: number } | null;
+	position: TPosition;
+}
+
+export type TPosition = TAbsolutePosition | TAnchorPosition;
+
+export interface TAbsolutePosition {
+	x: number;
+	y: number;
+}
+
+export interface TAnchorPosition {
+	x: TAnchor;
+	y: TAnchor;
+}
+
+export type TAnchor = 'start' | 'center' | 'end';
+
+// MARK: - Helpers
+
+export function isAbsolutePosition(p: TPosition | null | undefined): p is TAbsolutePosition {
+	return p != null && typeof p.x === 'number';
 }
 
 // MARK: - React Context
