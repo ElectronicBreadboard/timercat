@@ -43,7 +43,7 @@ function RouteComponent() {
 		<div className="scrollbar-hide h-screen overflow-x-hidden overflow-y-auto">
 			<App splashCat={splashCat} />
 
-			<section className="mx-auto max-w-3xl space-y-10 px-8 py-16 text-gray-800">
+			<section className="mx-auto max-w-3xl space-y-10 border-t border-gray-200/70 px-8 py-16 text-gray-800">
 				<div>
 					<h2 className="text-2xl font-semibold text-gray-900">What is Pomodoro Cat?</h2>
 					<p className="mt-4 leading-relaxed">
