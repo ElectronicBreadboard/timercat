@@ -233,7 +233,7 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 								{trafficLights.close ? (
 									<button
 										className={cn(
-											'relative flex size-[18px] cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FF5F57] sm:size-[14px]',
+											'relative flex size-4.5 cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FF5F57] sm:size-3',
 											isFocused ? 'bg-[#FF5F57]' : 'bg-base-200'
 										)}
 										onClick={handleClose}
@@ -245,14 +245,14 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 										/>
 									</button>
 								) : (
-									<div className="bg-base-200 size-[18px] rounded-full ring-1 ring-black/20 sm:size-[14px]" />
+									<div className="bg-base-200 size-4.5 rounded-full ring-1 ring-black/20 sm:size-3" />
 								)}
 
 								{/* Minimize */}
 								{trafficLights.minimize && !isMaximized ? (
 									<button
 										className={cn(
-											'relative flex size-[18px] cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FFBD2E] sm:size-[14px]',
+											'relative flex size-4.5 cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FFBD2E] sm:size-3',
 											isFocused ? 'bg-[#FFBD2E]' : 'bg-base-200'
 										)}
 										onClick={handleMinimize}
@@ -264,21 +264,21 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 										/>
 									</button>
 								) : (
-									<div className="bg-base-200 size-[18px] rounded-full ring-1 ring-black/20 sm:size-[14px]" />
+									<div className="bg-base-200 size-4.5 rounded-full ring-1 ring-black/20 sm:size-3" />
 								)}
 
 								{/* Maximize */}
 								{trafficLights.maximize ? (
 									<button
 										className={cn(
-											'size-[18px] cursor-default rounded-full ring-1 ring-black/20 group-hover:bg-[#28C840] sm:size-[14px]',
+											'size-4.5 cursor-default rounded-full ring-1 ring-black/20 group-hover:bg-[#28C840] sm:size-3',
 											isFocused ? 'bg-[#28C840]' : 'bg-base-200'
 										)}
 										aria-label={isMaximized ? 'Restore window' : 'Maximize window'}
 										onClick={handleMaximize}
 									/>
 								) : (
-									<div className="bg-base-200 size-[18px] rounded-full ring-1 ring-black/20 sm:size-[14px]" />
+									<div className="bg-base-200 size-4.5 rounded-full ring-1 ring-black/20 sm:size-3" />
 								)}
 							</div>
 						)}

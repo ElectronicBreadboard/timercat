@@ -110,13 +110,10 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 					<IconButton
 						variant="bare"
 						size="sm"
-						className={cn(
-							'absolute top-2.5 right-3 z-40',
-							decorative ? 'size-3' : 'size-4 sm:size-3'
-						)}
+						className="absolute top-2 right-2 z-40 sm:top-1 sm:right-1"
 						onClick={handleRandomize}
 					>
-						<ShuffleIcon />
+						<ShuffleIcon className={cn(decorative ? 'size-3' : 'size-4 sm:size-3')} />
 					</IconButton>
 				</div>
 			</div>

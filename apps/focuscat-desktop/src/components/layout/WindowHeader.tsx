@@ -51,7 +51,7 @@ export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 				</Badge>
 			)}
 			<div data-tauri-drag-region className="flex-1" />
-			{children != null && <div className="flex items-center gap-1 pr-1">{children}</div>}
+			{children != null && <div className="flex items-center gap-0.5 pr-1">{children}</div>}
 		</header>
 	);
 };

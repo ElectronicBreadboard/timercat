@@ -1,7 +1,10 @@
 import {
 	Cat,
 	catConfig,
+	HistoryIcon,
 	IconButton,
+	MinimizeIcon,
+	SettingsIcon,
 	ShuffleIcon,
 	TCatFace,
 	TCatHat,
@@ -14,7 +17,8 @@ import React from 'react';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
-import { Navbar, OverviewCard } from './components';
+import { WindowHeader } from '../../components';
+import { OverviewCard } from './components';
 
 export const Route = createFileRoute('/window/main/')({
 	component: RouteComponent
@@ -88,13 +92,27 @@ function RouteComponent() {
 
 	return (
 		<div className="bg-base-0 flex h-screen w-[300px] flex-col">
-			<Navbar
-				onMinimize={handleMinimize}
-				onActivity={handleActivity}
-				onSettings={handleSettings}
-				showActivity={settings.features.activity}
-				showMinimize={settings.features.catWindow}
-			/>
+			<WindowHeader>
+				{settings.features.catWindow && (
+					<IconButton
+						variant="bare"
+						size="sm"
+						onClick={handleMinimize}
+						aria-label="Minimize to cat widget"
+					>
+						<MinimizeIcon className="size-4" />
+					</IconButton>
+				)}
+				<div className="flex-1" />
+				{settings.features.activity && (
+					<IconButton variant="bare" size="sm" onClick={handleActivity} aria-label="View activity">
+						<HistoryIcon className="size-4" />
+					</IconButton>
+				)}
+				<IconButton variant="bare" size="sm" onClick={handleSettings} aria-label="Open settings">
+					<SettingsIcon className="size-4" />
+				</IconButton>
+			</WindowHeader>
 
 			{/* Top section: Overview + Cat */}
 			<div className="flex shrink-0" style={{ height: topSection.height }}>
@@ -113,10 +131,10 @@ function RouteComponent() {
 					<IconButton
 						variant="bare"
 						size="sm"
-						className="absolute top-2.5 right-3 z-40 size-3"
+						className="absolute top-1 right-1 z-40"
 						onClick={handleRandomize}
 					>
-						<ShuffleIcon size={16} />
+						<ShuffleIcon className="size-3" />
 					</IconButton>
 				</div>
 			</div>

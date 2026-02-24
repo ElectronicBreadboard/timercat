@@ -27,7 +27,7 @@ export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 				<div
 					className={cn(
 						'flex items-center',
-						decorative ? 'gap-1 pr-1' : 'gap-2 pr-2 sm:gap-1 sm:pr-1'
+						decorative ? 'gap-0.5 pr-1' : 'gap-2 pr-2 sm:gap-1 sm:pr-1'
 					)}
 				>
 					{children}
