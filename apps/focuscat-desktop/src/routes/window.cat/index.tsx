@@ -126,17 +126,17 @@ function RouteComponent() {
 						}
 					}}
 				>
-					<GripIcon size={14} className="text-base-500" />
+					<GripIcon className="text-base-500 size-4 sm:size-3.5" />
 				</div>
 
 				{/* Session Type Indicator */}
 				{isBreak ? (
-					<CoffeeIcon size={14} className="text-base-400" />
+					<CoffeeIcon className="text-base-400 size-4 sm:size-3.5" />
 				) : (
-					<BriefcaseIcon size={14} className="text-base-400" />
+					<BriefcaseIcon className="text-base-400 size-4 sm:size-3.5" />
 				)}
 
-				<div className="group relative flex min-w-[48px] items-center justify-center px-2">
+				<div className="group relative flex items-center justify-center px-2">
 					{/* Timer */}
 					<span
 						className={cn(
@@ -153,13 +153,13 @@ function RouteComponent() {
 							className="text-base-400 hover:text-base-950 flex items-center p-1 transition-colors"
 							onClick={handlePauseResume}
 						>
-							{isRunning ? <PauseIcon size={14} /> : <PlayIcon size={14} />}
+							{isRunning ? <PauseIcon className="size-3.5" /> : <PlayIcon className="size-3.5" />}
 						</Button>
 						<Button
 							className="text-base-400 hover:text-base-950 flex items-center p-1 transition-colors"
 							onClick={handleAdvance}
 						>
-							<SkipForwardIcon size={14} />
+							<SkipForwardIcon className="size-3.5" />
 						</Button>
 					</div>
 				</div>
@@ -169,7 +169,7 @@ function RouteComponent() {
 					className="text-base-400 hover:text-base-950 flex items-center px-2 py-2 transition-colors"
 					onClick={handleExpand}
 				>
-					<ExpandIcon size={14} />
+					<ExpandIcon className="size-3.5" />
 				</Button>
 			</div>
 		</div>
