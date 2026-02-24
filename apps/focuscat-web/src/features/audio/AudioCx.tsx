@@ -13,6 +13,12 @@ export class AudioCx {
 		this._preload();
 	}
 
+	public unmount(): void {
+		this._audio?.ctx.close().catch(() => {});
+		this._audio = null;
+		this._buffers.clear();
+	}
+
 	public playSound(id: TSoundId): void {
 		const { enabled, volume } = this._settingsCx.$appSettings.get().audio;
 		if (!enabled) {
@@ -35,12 +41,6 @@ export class AudioCx {
 		source.buffer = buffer;
 		source.connect(gainNode);
 		source.start(0);
-	}
-
-	public dispose(): void {
-		this._audio?.ctx.close().catch(() => {});
-		this._audio = null;
-		this._buffers.clear();
 	}
 
 	private _getAudio(): { ctx: AudioContext; gainNode: GainNode } {
@@ -73,7 +73,7 @@ export const AudioCxProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
 	const cx = useMemoCleanup(() => {
 		const audioCx = new AudioCx(settingsCx);
-		return [audioCx, () => audioCx.dispose()];
+		return [audioCx, () => audioCx.unmount()];
 	}, [settingsCx]);
 
 	return <ReactAudioCx.Provider value={cx}>{children}</ReactAudioCx.Provider>;
