@@ -5,8 +5,8 @@ import React from 'react';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
 import { useTimerCx } from '@/features/timer';
+import { WindowHeader } from '@/components';
 import { toTuple } from '@/lib';
-import { Navbar } from '../window.main/components';
 import { AddProfileButton, ProfileTag, targetKey, TargetTag } from './components';
 
 export const Route = createFileRoute('/window/main/setup/')({
@@ -78,14 +78,6 @@ function RouteComponent() {
 		setSelectedIds((prev) => prev.filter((v) => v !== id));
 	}, []);
 
-	const handleActivity = React.useCallback(async () => {
-		await specta.commands.showActivityWindow();
-	}, []);
-
-	const handleSettings = React.useCallback(async () => {
-		await specta.commands.showSettingsWindow();
-	}, []);
-
 	const handleOpenProfileInSettings = React.useCallback(async (profileId: number) => {
 		await specta.commands.showSettingsWindowAtProfile(profileId);
 	}, []);
@@ -151,14 +143,7 @@ function RouteComponent() {
 
 	return (
 		<div className="bg-base-0 flex h-screen w-[300px] flex-col">
-			<Navbar
-				onActivity={handleActivity}
-				onMinimize={() => {}}
-				onSettings={handleSettings}
-				showActivity={false}
-				showSettings={false}
-				showMinimize={false}
-			/>
+			<WindowHeader />
 
 			{/* Scrollable content */}
 			<div className="flex flex-1 flex-col overflow-y-auto px-4 py-6">

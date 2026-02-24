@@ -93,8 +93,9 @@ export class SessionTimelineCx {
 		const extendPauseTimestamps = new Set<number>();
 		const keyEvents = events.filter((e) => ['paused', 'resumed', 'extended'].includes(e.eventType));
 		for (let i = 0; i < keyEvents.length; i++) {
-			if (keyEvents[i]!.eventType === 'paused' && keyEvents[i + 1]?.eventType === 'extended') {
-				extendPauseTimestamps.add(keyEvents[i]!.timestamp);
+			const keyEvent = keyEvents[i];
+			if (keyEvent?.eventType === 'paused' && keyEvents[i + 1]?.eventType === 'extended') {
+				extendPauseTimestamps.add(keyEvent.timestamp);
 			}
 		}
 
@@ -206,7 +207,8 @@ export class SessionTimelineCx {
 		const keyEvents = events.filter((e) => ['paused', 'resumed', 'extended'].includes(e.eventType));
 
 		for (let i = 0; i < keyEvents.length; i++) {
-			const event = keyEvents[i]!;
+			const event = keyEvents[i];
+			if (!event) continue;
 			const prevEvent = keyEvents[i - 1];
 			const nextEvent = keyEvents[i + 1];
 
