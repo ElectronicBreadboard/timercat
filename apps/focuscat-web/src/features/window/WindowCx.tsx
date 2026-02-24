@@ -183,15 +183,20 @@ export class WindowCx {
 	}
 
 	public setPosition(id: TWindowId, x: number, y: number): void {
+		const position = this._clampPosition(
+			{ x, y },
+			this.windows[id].get().bounds.size,
+			this.$containerRect.get()
+		);
 		this.windows[id].set((prev) => ({
 			...prev,
-			bounds: { ...prev.bounds, position: { x, y } }
+			bounds: { ...prev.bounds, position }
 		}));
 	}
 
 	public setContainerRect(width: number, height: number): void {
 		this.$containerRect.set({ width, height });
-		this._clampWindowPositions(width, height);
+		this._clampWindowPositions({ width, height });
 	}
 
 	public setBreakpoint(breakpoint: TBreakpoint): void {
@@ -224,23 +229,32 @@ export class WindowCx {
 		}
 	}
 
-	private _clampWindowPositions(
-		containerWidth: number,
-		containerHeight: number,
-		clampPadding = 8
-	): void {
+	private _clampPosition(
+		position: TAbsolutePosition,
+		size: TSize,
+		container: TSize,
+		padding = 8
+	): TAbsolutePosition {
+		const maxX = Math.max(padding, container.width - size.width - padding);
+		const maxY = Math.max(padding, container.height - size.height - padding);
+		return {
+			x: Math.max(padding, Math.min(position.x, maxX)),
+			y: Math.max(padding, Math.min(position.y, maxY))
+		};
+	}
+
+	private _clampWindowPositions(container: TSize, padding = 8): void {
 		for (const win of Object.values(this.windows)) {
 			const w = win.get();
 			if (!isAbsolutePosition(w.bounds.position)) {
 				continue;
 			}
-
-			const maxX = Math.max(clampPadding, containerWidth - w.bounds.size.width - clampPadding);
-			const maxY = Math.max(clampPadding, containerHeight - w.bounds.size.height - clampPadding);
-			const x = Math.max(clampPadding, Math.min(w.bounds.position.x, maxX));
-			const y = Math.max(clampPadding, Math.min(w.bounds.position.y, maxY));
-			if (x !== w.bounds.position.x || y !== w.bounds.position.y) {
-				win.set((prev) => ({ ...prev, bounds: { ...prev.bounds, position: { x, y } } }));
+			const position = this._clampPosition(w.bounds.position, w.bounds.size, container, padding);
+			if (position.x !== w.bounds.position.x || position.y !== w.bounds.position.y) {
+				win.set((prev) => ({
+					...prev,
+					bounds: { ...prev.bounds, position }
+				}));
 			}
 		}
 	}
@@ -289,8 +303,13 @@ export type TWindowId = 'main' | 'settings' | 'cat' | 'spotify';
 export type TBreakpoint = 'sm' | 'md' | 'lg';
 
 export interface TBounds {
-	size: { width: number; height: number };
+	size: TSize;
 	position: TPosition;
+}
+
+export interface TSize {
+	width: number;
+	height: number;
 }
 
 export type TPosition = TAbsolutePosition | TAnchorPosition;
