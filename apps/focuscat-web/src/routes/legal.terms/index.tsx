@@ -8,7 +8,7 @@ export const Route = createFileRoute('/legal/terms/')({
 
 function RouteComponent() {
 	return (
-		<article className="prose prose-base mx-auto max-w-3xl p-8">
+		<article className="prose prose-base dark:prose-invert mx-auto max-w-3xl p-8">
 			<Content components={mdxComponents} />
 		</article>
 	);

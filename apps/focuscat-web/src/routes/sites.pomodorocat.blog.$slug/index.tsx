@@ -26,10 +26,10 @@ function RouteComponent() {
 	const { post } = Route.useLoaderData();
 
 	return (
-		<div className="bg-base-0 text-base-950 min-h-screen font-sans">
+		<>
 			<Header />
 
-			<article className="prose prose-base mx-auto max-w-2xl px-6 py-12">
+			<article className="prose dark:prose-invert prose-base mx-auto max-w-2xl px-6 py-12">
 				<p className="not-prose text-base-400 mb-2 text-xs">{post.published}</p>
 				<MDXContent code={post.mdx} />
 			</article>
@@ -43,7 +43,7 @@ function RouteComponent() {
 					Open Pomodoro Cat — free in your browser
 				</a>
 			</footer>
-		</div>
+		</>
 	);
 }
 

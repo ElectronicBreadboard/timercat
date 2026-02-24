@@ -24,7 +24,7 @@ function RouteComponent() {
 	const posts = Route.useLoaderData();
 
 	return (
-		<div className="bg-base-0 text-base-950 min-h-screen font-sans">
+		<>
 			<Header />
 
 			<main className="mx-auto max-w-2xl px-6 py-12">
@@ -54,7 +54,7 @@ function RouteComponent() {
 					← Open the Timer
 				</a>
 			</footer>
-		</div>
+		</>
 	);
 }
 

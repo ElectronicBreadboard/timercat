@@ -263,9 +263,8 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 										onClick={handleClose}
 									>
 										<XIcon
-											size={8}
 											strokeWidth={6}
-											className="hidden text-[#4c0000]/60 group-hover:block"
+											className="block size-3 text-[#4c0000]/60 sm:hidden sm:size-2 sm:group-hover:block"
 										/>
 									</button>
 								) : (
@@ -282,9 +281,8 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 										onClick={handleMinimize}
 									>
 										<MinusIcon
-											size={8}
 											strokeWidth={6}
-											className="hidden text-[#5a3500]/60 group-hover:block"
+											className="block size-3 text-[#5a3500]/60 sm:hidden sm:size-2 sm:group-hover:block"
 										/>
 									</button>
 								) : (

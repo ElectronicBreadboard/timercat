@@ -43,9 +43,9 @@ function RouteComponent() {
 		<div className="scrollbar-hide h-screen overflow-x-hidden overflow-y-auto">
 			<App splashCat={splashCat} />
 
-			<section className="mx-auto max-w-3xl space-y-10 border-t border-gray-200/70 px-8 py-16 text-gray-800">
+			<section className="border-base-200/70 text-base-800 mx-auto max-w-3xl space-y-10 border-t px-8 py-16">
 				<div>
-					<h2 className="text-2xl font-semibold text-gray-900">What is Pomodoro Cat?</h2>
+					<h2 className="text-base-900 text-2xl font-semibold">What is Pomodoro Cat?</h2>
 					<p className="mt-4 leading-relaxed">
 						Pomodoro Cat is a free, cat-themed pomodoro timer that runs in your browser. It pairs
 						the proven Pomodoro Technique with a cozy lofi aesthetic and a virtual cat companion —
@@ -55,7 +55,7 @@ function RouteComponent() {
 				</div>
 
 				<div>
-					<h2 className="text-2xl font-semibold text-gray-900">How the Pomodoro Technique Works</h2>
+					<h2 className="text-base-900 text-2xl font-semibold">How the Pomodoro Technique Works</h2>
 					<p className="mt-4 leading-relaxed">
 						The Pomodoro Technique is a time management method developed by Francesco Cirillo in the
 						late 1980s. Work in focused 25-minute blocks, take a 5-minute break, then repeat. After
@@ -66,7 +66,7 @@ function RouteComponent() {
 				</div>
 
 				<div>
-					<h2 className="text-2xl font-semibold text-gray-900">Why a Cat Pomodoro Timer?</h2>
+					<h2 className="text-base-900 text-2xl font-semibold">Why a Cat Pomodoro Timer?</h2>
 					<p className="mt-4 leading-relaxed">
 						Research shows that looking at cute imagery can sharpen focus and attention to detail —
 						the so-called "kawaii effect." Your virtual cat companion gives you a low-pressure form
@@ -77,12 +77,12 @@ function RouteComponent() {
 				</div>
 
 				<div>
-					<h3 className="text-lg font-semibold text-gray-900">From the blog</h3>
+					<h3 className="text-base-900 text-lg font-semibold">From the blog</h3>
 					<ul className="mt-3 space-y-2">
 						<li>
 							<a
 								href="/blog/what-is-pomodoro-technique"
-								className="text-blue-600 underline underline-offset-2 hover:text-blue-800"
+								className="text-base-600 hover:text-base-950 underline underline-offset-2"
 							>
 								What is the Pomodoro Technique? A Complete Guide
 							</a>
@@ -90,7 +90,7 @@ function RouteComponent() {
 						<li>
 							<a
 								href="/blog/pomodoro-cat-timer"
-								className="text-blue-600 underline underline-offset-2 hover:text-blue-800"
+								className="text-base-600 hover:text-base-950 underline underline-offset-2"
 							>
 								Why a Cat Pomodoro Timer Helps You Focus
 							</a>
