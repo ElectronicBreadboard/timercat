@@ -3,10 +3,12 @@ pub mod tray;
 pub mod window;
 
 use crate::environment::db;
+#[cfg(not(feature = "app-store"))]
+use crate::features::autostart;
 use crate::features::{
     activity_window,
     activity_window::types::CurrentActivityEvent,
-    app as app_feature, audio, autostart, blocking,
+    app as app_feature, audio, blocking,
     blocking::types::BlockingViolationEvent,
     focus_profile::{self, types::ProfileChangedEvent},
     input::{self, types::InputDetectedEvent},
@@ -154,9 +156,12 @@ pub fn run() {
             updater::setup(app.handle());
 
             // Apply autostart settings on startup
-            if let Some(state) = app.try_state::<AppSettingsState>() {
-                let enabled = state.lock().unwrap().launch_at_login;
-                autostart::apply(app.handle(), enabled);
+            #[cfg(not(feature = "app-store"))]
+            {
+                if let Some(state) = app.try_state::<AppSettingsState>() {
+                    let enabled = state.lock().unwrap().launch_at_login;
+                    autostart::apply(app.handle(), enabled);
+                }
             }
 
             // Show main window on startup

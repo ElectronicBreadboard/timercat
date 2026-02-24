@@ -22,7 +22,7 @@ impl Default for AppSettings {
     fn default() -> Self {
         return Self {
             version: SettingsVersion::current(),
-            launch_at_login: true,
+            launch_at_login: false,
             features: FeaturesSettings::default(),
             appearance: AppearanceSettings::default(),
             audio: AudioSettings::default(),
