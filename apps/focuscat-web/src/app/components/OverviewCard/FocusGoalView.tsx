@@ -1,5 +1,5 @@
 import { formatDuration, useTimerCx } from '@repo/ui';
-import { useCombinedCompute, useCompute } from 'feature-react/state';
+import { useCombinedCompute, useCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { useSessionCx } from '@/features/session';
 import { useSettingsCx } from '@/features/settings';
@@ -9,10 +9,7 @@ export const FocusGoalView: React.FC = () => {
 	const sessionCx = useSessionCx();
 	const cx = useTimerCx();
 
-	const baseFocusSeconds = useCompute(
-		sessionCx.$sessionData,
-		({ value: sessionData }) => sessionData.focusSeconds
-	);
+	const baseFocusSeconds = useFeatureState(sessionCx.$todayFocusSeconds);
 	const goalSeconds = useCompute(
 		settingsCx.$appSettings,
 		({ value: settings }) => settings.goals.dailyGoalMinutes * 60

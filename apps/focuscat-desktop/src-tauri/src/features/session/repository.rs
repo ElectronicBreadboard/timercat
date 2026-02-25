@@ -161,7 +161,8 @@ impl SessionRepository {
     }
 
     /// Get total focus seconds for today (midnight-to-now).
-    /// Includes actual_seconds from completed work sessions only.
+    /// Includes completed work sessions and cancelled work sessions >= 30s
+    /// (cancelled but meaningful; user focused before being interrupted).
     pub async fn get_today_focus_seconds(pool: &SqlitePool) -> Result<u32, sqlx::Error> {
         // Get today's midnight in local time as Unix timestamp
         let today = Local::now().date_naive();
@@ -175,7 +176,7 @@ impl SessionRepository {
             SELECT COALESCE(SUM(actual_seconds), 0)
             FROM sessions
             WHERE session_type = 'pomodoro:work'
-              AND status = 'completed'
+              AND (status = 'completed' OR (status = 'cancelled' AND actual_seconds >= 30))
               AND started_at >= ?
             "#,
         )

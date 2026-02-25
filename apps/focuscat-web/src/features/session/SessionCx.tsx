@@ -1,52 +1,70 @@
 import { useMemoCleanup } from '@repo/ui';
-import { withLocalStorage } from 'feature-react';
 import { createState } from 'feature-state';
 import React from 'react';
+import { unwrapOrNull } from 'tuple-result';
+import { SessionRepository, type TSessionRow } from './SessionRepository';
 
 export class SessionCx {
-	public readonly $sessionData = withLocalStorage(
-		createState<TSessionData>({
-			date: this._getTodayDateString(),
-			focusSeconds: 0
-		}),
-		'focuscat-session'
-	);
+	private readonly _repo = new SessionRepository();
 
-	public mount(): void {
-		void this.$sessionData.persist();
+	public readonly $todayFocusSeconds = createState<number>(0);
 
-		// Reset if stored data is from a previous day
-		const data = this.$sessionData.get();
-		if (data.date !== this._getTodayDateString()) {
-			this.$sessionData.set({ date: this._getTodayDateString(), focusSeconds: 0 });
+	public async mount(): Promise<void> {
+		// Cleanup active sessions orphaned by a previous crash
+		const [isCleanupOk, , cleanupCount] = await this._repo.cleanupOrphaned();
+		if (isCleanupOk && cleanupCount > 0) {
+			console.info(`[session] Cleaned up ${cleanupCount} orphaned session(s)`);
+		}
+
+		// Load today's focus total
+		const [areSecondsOk, , seconds] = await this._repo.getTodayFocusSeconds();
+		if (areSecondsOk) {
+			this.$todayFocusSeconds.set(seconds);
 		}
 	}
 
-	public unmount(): void {
-		// No listeners to clean up
+	public unmount(): void {}
+
+	public async createSession(data: TCreateSessionInput): Promise<number | null> {
+		return unwrapOrNull(
+			await this._repo.createSession({
+				...data,
+				status: 'active',
+				actual_seconds: null,
+				ended_at: null
+			})
+		);
 	}
 
-	public recordWorkSession(elapsedSeconds: number): void {
-		const data = this.$sessionData.get();
-		const today = this._getTodayDateString();
+	public async completeSession(id: number, endedAt: number, actualSeconds: number): Promise<void> {
+		const [isCompleteOk, ,] = await this._repo.completeSession(id, endedAt, actualSeconds);
+		if (!isCompleteOk) {
+			return;
+		}
 
-		// Reset if day changed since last session
-		if (data.date !== today) {
-			this.$sessionData.set({ date: today, focusSeconds: elapsedSeconds });
-		} else {
-			this.$sessionData.set({ date: today, focusSeconds: data.focusSeconds + elapsedSeconds });
+		const [areSecondsOk, , seconds] = await this._repo.getTodayFocusSeconds();
+		if (areSecondsOk) {
+			this.$todayFocusSeconds.set(seconds);
 		}
 	}
 
-	private _getTodayDateString(): string {
-		return new Date().toLocaleDateString('en-CA');
+	public async cancelSession(id: number, endedAt: number, actualSeconds: number): Promise<void> {
+		const [isCancelOk, ,] = await this._repo.cancelSession(id, endedAt, actualSeconds);
+		if (!isCancelOk) {
+			return;
+		}
+
+		const [areSecondsOk, , seconds] = await this._repo.getTodayFocusSeconds();
+		if (areSecondsOk) {
+			this.$todayFocusSeconds.set(seconds);
+		}
 	}
 }
 
-interface TSessionData {
-	date: string; // YYYY-MM-DD
-	focusSeconds: number;
-}
+export type TCreateSessionInput = Pick<
+	TSessionRow,
+	'session_type' | 'planned_seconds' | 'intention' | 'started_at'
+>;
 
 // MARK: - React Context
 
@@ -59,7 +77,7 @@ export const SessionCxProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 	}, []);
 
 	React.useEffect(() => {
-		cx.mount();
+		void cx.mount();
 	}, [cx]);
 
 	return <ReactSessionCx.Provider value={cx}>{children}</ReactSessionCx.Provider>;

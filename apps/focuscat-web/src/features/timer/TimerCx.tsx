@@ -16,6 +16,7 @@ export class TimerCx implements TTimerCx {
 	private _interval: ReturnType<typeof setInterval> | null = null;
 	private _remainingAtStart = 0;
 	private _startedAt = 0;
+	private _activeSessionId: number | null = null;
 
 	private readonly _settingsCx: SettingsCx;
 	private readonly _sessionCx: SessionCx;
@@ -30,6 +31,7 @@ export class TimerCx implements TTimerCx {
 	public readonly $sessionsCompleted = createState(0);
 	public readonly $speed: TState<number, []>;
 	public readonly $startTime = createState<Date | null>(null);
+	public readonly $intention = createState<string | null>(null);
 
 	constructor(settingsCx: SettingsCx, sessionCx: SessionCx, audioCx: AudioCx) {
 		this._settingsCx = settingsCx;
@@ -86,6 +88,13 @@ export class TimerCx implements TTimerCx {
 		if (this.$status.get() !== 'idle') {
 			return;
 		}
+		const startedAt = Date.now();
+		this._activeSessionId = await this._sessionCx.createSession({
+			session_type: this.$sessionType.get(),
+			planned_seconds: this.$totalSeconds.get(),
+			intention: this.$intention.get(),
+			started_at: startedAt
+		});
 		this.$status.set('running');
 		this.$startTime.set(new Date());
 		this.startLoop();
@@ -111,12 +120,23 @@ export class TimerCx implements TTimerCx {
 
 	public async reset(): Promise<void> {
 		this.stopLoop();
+
+		if (this._activeSessionId != null) {
+			await this._sessionCx.cancelSession(
+				this._activeSessionId,
+				Date.now(),
+				this.getElapsedSeconds()
+			);
+			this._activeSessionId = null;
+		}
+
 		this.$status.set('idle');
 		this.$startTime.set(null);
 		this.$overtimeSeconds.set(0);
 		this.$autoAdvanceCountdownSeconds.set(null);
 		this.$sessionType.set('pomodoro:work');
 		this.$sessionsCompleted.set(0);
+		this.$intention.set(null);
 
 		const duration = this.getDurationForSessionType(this.$sessionType.get());
 		this.$totalSeconds.set(duration);
@@ -127,9 +147,15 @@ export class TimerCx implements TTimerCx {
 	public async advance(): Promise<void> {
 		this.stopLoop();
 
+		const now = Date.now();
+		const elapsed = this.getElapsedSeconds();
+		if (this._activeSessionId != null) {
+			await this._sessionCx.completeSession(this._activeSessionId, now, elapsed);
+			this._activeSessionId = null;
+		}
+
 		const currentType = this.$sessionType.get();
 		if (currentType === 'pomodoro:work') {
-			this._sessionCx.recordWorkSession(this.getElapsedSeconds());
 			this.$sessionsCompleted.set(this.$sessionsCompleted.get() + 1);
 		}
 
@@ -141,6 +167,14 @@ export class TimerCx implements TTimerCx {
 		this.$remainingSeconds.set(duration);
 		this.$overtimeSeconds.set(0);
 		this.$autoAdvanceCountdownSeconds.set(null);
+		this.$intention.set(null);
+
+		this._activeSessionId = await this._sessionCx.createSession({
+			session_type: nextType,
+			planned_seconds: duration,
+			intention: null,
+			started_at: now
+		});
 
 		this.$status.set('running');
 		this.$startTime.set(new Date());
@@ -148,17 +182,21 @@ export class TimerCx implements TTimerCx {
 	}
 
 	public async complete(): Promise<void> {
-		if (this.$sessionType.get() === 'pomodoro:work') {
-			this._sessionCx.recordWorkSession(this.getElapsedSeconds());
+		this.stopLoop();
+
+		const elapsed = this.getElapsedSeconds();
+		if (this._activeSessionId != null) {
+			await this._sessionCx.completeSession(this._activeSessionId, Date.now(), elapsed);
+			this._activeSessionId = null;
 		}
 
-		this.stopLoop();
 		this.$status.set('idle');
 		this.$startTime.set(null);
 		this.$sessionType.set('pomodoro:work');
 		this.$sessionsCompleted.set(0);
 		this.$overtimeSeconds.set(0);
 		this.$autoAdvanceCountdownSeconds.set(null);
+		this.$intention.set(null);
 
 		const duration = this.getDurationForSessionType('pomodoro:work');
 		this.$totalSeconds.set(duration);
@@ -177,6 +215,10 @@ export class TimerCx implements TTimerCx {
 
 	public playSound(id: string): void {
 		this._audioCx.playSound(id as TSoundId);
+	}
+
+	public setIntention(value: string | null): void {
+		this.$intention.set(value);
 	}
 
 	private _updateDocumentTitle(): void {
