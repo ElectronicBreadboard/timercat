@@ -1,4 +1,4 @@
-import { cn, MinusIcon, XIcon } from '@repo/ui';
+import { ChevronsLeftRightIcon, ChevronsRightLeftIcon, cn, MinusIcon, XIcon } from '@repo/ui';
 import { useCombinedCompute, useCompute, useListener } from 'feature-react/state';
 import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
@@ -293,12 +293,23 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 								{trafficLights.maximize && canToggleMaximize ? (
 									<button
 										className={cn(
-											'size-4.5 cursor-default rounded-full ring-1 ring-black/20 group-hover:bg-[#28C840] sm:size-3',
+											'relative flex size-4.5 cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#28C840] sm:size-3',
 											isFocused ? 'bg-[#28C840]' : 'bg-base-200'
 										)}
-										aria-label={isMaximized ? 'Restore window' : 'Maximize window'}
 										onClick={handleMaximize}
-									/>
+									>
+										{isMaximized ? (
+											<ChevronsRightLeftIcon
+												strokeWidth={6}
+												className="block size-3 rotate-45 text-[#5a3500]/60 sm:hidden sm:size-2 sm:group-hover:block"
+											/>
+										) : (
+											<ChevronsLeftRightIcon
+												strokeWidth={6}
+												className="block size-3 rotate-45 text-[#5a3500]/60 sm:hidden sm:size-2 sm:group-hover:block"
+											/>
+										)}
+									</button>
 								) : (
 									<div className="bg-base-200 size-4.5 rounded-full ring-1 ring-black/20 sm:size-3" />
 								)}

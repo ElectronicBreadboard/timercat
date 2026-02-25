@@ -20,6 +20,8 @@ export {
 	Check as CheckIcon,
 	ChevronLeft as ChevronLeftIcon,
 	ChevronRight as ChevronRightIcon,
+	ChevronsLeftRight as ChevronsLeftRightIcon,
+	ChevronsRightLeft as ChevronsRightLeftIcon,
 	Clock as ClockIcon,
 	Code as CodeIcon,
 	Coffee as CoffeeIcon,
