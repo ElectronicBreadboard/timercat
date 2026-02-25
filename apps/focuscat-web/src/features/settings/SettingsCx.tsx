@@ -73,10 +73,11 @@ const settingsMigrationConfig: TVersionedMigrationConfig<TAppSettings> = {
 		'0.0.1': {
 			to: '0.0.2',
 			migrate: (value) => {
+				const v = value as TAppSettings;
 				return {
-					...value,
+					...v,
 					timer: {
-						...value.timer,
+						...(v.timer ?? {}),
 						showSessionSetup: false
 					}
 				};

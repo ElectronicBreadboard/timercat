@@ -63,7 +63,7 @@ export class VersionedLocalStorageInterface<
 			}
 
 			// Apply migration
-			current = migration.migrate(current);
+			current = migration.migrate(current) as GValue;
 			current.version = migration.to;
 
 			// Save updated value
@@ -83,10 +83,10 @@ export class VersionedLocalStorageInterface<
 
 export interface TVersionedMigrationConfig<GValue extends { version: string }> {
 	latestVersion: GValue['version'];
-	migrations: Record<string, TVersionedMigration<GValue, GValue>>;
+	migrations: Record<string, TVersionedMigration<unknown, unknown>>;
 }
 
-export interface TVersionedMigration<TFrom, TTo> {
+export interface TVersionedMigration<GFrom, GTo> {
 	to: string;
-	migrate: (value: TFrom) => TTo;
+	migrate: (value: GFrom) => GTo;
 }
