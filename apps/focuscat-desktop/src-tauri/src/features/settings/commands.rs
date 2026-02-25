@@ -28,7 +28,10 @@ pub fn set_settings(
     state: State<'_, AppSettingsState>,
     settings: AppSettings,
 ) -> Result<(), String> {
-    let prev_launch_at_login = state.lock().unwrap().launch_at_login;
+    let (prev_launch_at_login, prev_timer) = {
+        let guard = state.lock().unwrap();
+        (guard.launch_at_login, guard.timer.clone())
+    };
 
     // Update in-memory state
     *state.lock().unwrap() = settings.clone();
@@ -42,12 +45,14 @@ pub fn set_settings(
         autostart::apply(&app, settings.launch_at_login);
     }
 
-    // Apply new timer settings (if idle)
-    if let Some(timer_state) = app.try_state::<TimerState>() {
-        let mut timer = timer_state.lock().unwrap();
-        if timer.status == TimerStatus::Idle {
-            timer.reset_to_idle(&settings);
-            let _ = TimerUpdatedEvent(TimerDto::from(&*timer)).emit(&app);
+    // Apply new timer settings (if idle and timer settings changed)
+    if prev_timer != settings.timer {
+        if let Some(timer_state) = app.try_state::<TimerState>() {
+            let mut timer = timer_state.lock().unwrap();
+            if timer.status == TimerStatus::Idle {
+                timer.reset_to_idle(&settings);
+                let _ = TimerUpdatedEvent(TimerDto::from(&*timer)).emit(&app);
+            }
         }
     }
 

@@ -8,7 +8,7 @@ import { createState, TState } from 'feature-state';
 import React from 'react';
 import { TSoundId, useAudioCx, type AudioCx } from '@/features/audio';
 import { useSessionCx, type SessionCx } from '@/features/session';
-import { useSettingsCx, type SettingsCx } from '@/features/settings';
+import { useSettingsCx, type SettingsCx, type TAppSettings } from '@/features/settings';
 
 export class TimerCx implements TTimerCx {
 	private readonly _unlisteners: (() => void)[] = [];
@@ -43,8 +43,7 @@ export class TimerCx implements TTimerCx {
 		this.$speed = createState(Math.max(1, app.developer.timerSpeed));
 
 		this._unlisteners.push(
-			settingsCx.$appSettings.listen(() => {
-				const settings = this._settingsCx.$appSettings.get();
+			settingsCx.$appSettings.listen(({ value: settings, prevValue: prevSettings }) => {
 				const newSpeed = Math.max(1, settings.developer.timerSpeed);
 				const oldSpeed = this.$speed.get();
 				this.$speed.set(newSpeed);
@@ -55,11 +54,18 @@ export class TimerCx implements TTimerCx {
 					this.startLoop();
 				}
 
-				// Sync duration when idle so pomo setting changes are reflected immediately
+				// Apply new duration (if idle and timer settings changed)
 				if (this.$status.get() === 'idle') {
-					const duration = this.getDurationForSessionType(this.$sessionType.get());
-					this.$totalSeconds.set(duration);
-					this.$remainingSeconds.set(duration);
+					const sessionType = this.$sessionType.get();
+					const prevDuration =
+						prevSettings != null
+							? this.getDurationForSessionType(sessionType, prevSettings.timer)
+							: null;
+					const duration = this.getDurationForSessionType(sessionType, settings.timer);
+					if (prevDuration == null || prevDuration !== duration) {
+						this.$totalSeconds.set(duration);
+						this.$remainingSeconds.set(duration);
+					}
 				}
 			})
 		);
@@ -265,16 +271,19 @@ export class TimerCx implements TTimerCx {
 		return this.$totalSeconds.get() - this.$remainingSeconds.get() + this.$overtimeSeconds.get();
 	}
 
-	private getDurationForSessionType(sessionType: string): number {
-		const { workDurationMinutes, shortBreakMinutes, longBreakMinutes } =
-			this._settingsCx.$appSettings.get().timer.pomodoro;
+	private getDurationForSessionType(
+		sessionType: string,
+		settings: TAppSettings['timer'] = this._settingsCx.$appSettings.get().timer
+	): number {
 		switch (sessionType) {
 			case 'pomodoro:short_break':
-				return shortBreakMinutes * 60;
+				return settings.pomodoro.shortBreakMinutes * 60;
 			case 'pomodoro:long_break':
-				return longBreakMinutes * 60;
+				return settings.pomodoro.longBreakMinutes * 60;
+			case 'countdown':
+				return settings.countdown.durationMinutes * 60;
 			default:
-				return workDurationMinutes * 60;
+				return settings.pomodoro.workDurationMinutes * 60;
 		}
 	}
 }

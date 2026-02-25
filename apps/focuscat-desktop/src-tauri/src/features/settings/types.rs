@@ -124,7 +124,7 @@ impl Default for DeveloperSettings {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 pub struct TimerSettings {
     pub timer_mode: TimerModeEnum,
@@ -153,7 +153,7 @@ pub enum TimerModeEnum {
     Countdown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 pub struct PomodoroSettings {
     pub work_duration_minutes: u32,
@@ -177,7 +177,7 @@ impl Default for PomodoroSettings {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 pub struct CountdownSettings {
     pub duration_minutes: u32,
