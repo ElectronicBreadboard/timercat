@@ -306,7 +306,7 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 									>
 										{isMaximized ? (
 											<ChevronsRightLeftIcon
-												strokeWidth={6}
+												strokeWidth={5}
 												className={cn(
 													'size-3 rotate-45 text-[#5a3500]/60 sm:hidden sm:size-2.5 sm:group-hover:block',
 													isFocused ? 'max-sm:block' : 'max-sm:hidden'
