@@ -257,43 +257,49 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 								{trafficLights.close ? (
 									<button
 										className={cn(
-											'relative flex size-4.5 cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FF5F57] sm:size-3',
+											'relative flex size-4.5 cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FF5F57] sm:size-3.5',
 											isFocused ? 'bg-[#FF5F57]' : 'bg-base-200'
 										)}
 										onClick={handleClose}
 									>
 										<XIcon
 											strokeWidth={6}
-											className="block size-3 text-[#4c0000]/60 sm:hidden sm:size-2 sm:group-hover:block"
+											className={cn(
+												'size-3 text-[#4c0000]/60 sm:hidden sm:size-2.5 sm:group-hover:block',
+												isFocused ? 'max-sm:block' : 'max-sm:hidden'
+											)}
 										/>
 									</button>
 								) : (
-									<div className="bg-base-200 size-4.5 rounded-full ring-1 ring-black/20 sm:size-3" />
+									<div className="bg-base-200 size-4.5 rounded-full ring-1 ring-black/20 sm:size-3.5" />
 								)}
 
 								{/* Minimize */}
 								{trafficLights.minimize && !isMaximized ? (
 									<button
 										className={cn(
-											'relative flex size-4.5 cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FFBD2E] sm:size-3',
+											'relative flex size-4.5 cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#FFBD2E] sm:size-3.5',
 											isFocused ? 'bg-[#FFBD2E]' : 'bg-base-200'
 										)}
 										onClick={handleMinimize}
 									>
 										<MinusIcon
 											strokeWidth={6}
-											className="block size-3 text-[#5a3500]/60 sm:hidden sm:size-2 sm:group-hover:block"
+											className={cn(
+												'size-3 text-[#5a3500]/60 sm:hidden sm:size-2.5 sm:group-hover:block',
+												isFocused ? 'max-sm:block' : 'max-sm:hidden'
+											)}
 										/>
 									</button>
 								) : (
-									<div className="bg-base-200 size-4.5 rounded-full ring-1 ring-black/20 sm:size-3" />
+									<div className="bg-base-200 size-4.5 rounded-full ring-1 ring-black/20 sm:size-3.5" />
 								)}
 
 								{/* Maximize */}
 								{trafficLights.maximize && canToggleMaximize ? (
 									<button
 										className={cn(
-											'relative flex size-4.5 cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#28C840] sm:size-3',
+											'relative flex size-4.5 cursor-default items-center justify-center rounded-full ring-1 ring-black/20 group-hover:bg-[#28C840] sm:size-3.5',
 											isFocused ? 'bg-[#28C840]' : 'bg-base-200'
 										)}
 										onClick={handleMaximize}
@@ -301,17 +307,23 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 										{isMaximized ? (
 											<ChevronsRightLeftIcon
 												strokeWidth={6}
-												className="block size-3 rotate-45 text-[#5a3500]/60 sm:hidden sm:size-2 sm:group-hover:block"
+												className={cn(
+													'size-3 rotate-45 text-[#5a3500]/60 sm:hidden sm:size-2.5 sm:group-hover:block',
+													isFocused ? 'max-sm:block' : 'max-sm:hidden'
+												)}
 											/>
 										) : (
 											<ChevronsLeftRightIcon
-												strokeWidth={6}
-												className="block size-3 rotate-45 text-[#5a3500]/60 sm:hidden sm:size-2 sm:group-hover:block"
+												strokeWidth={5}
+												className={cn(
+													'size-3 rotate-45 text-[#5a3500]/60 sm:hidden sm:size-2.5 sm:group-hover:block',
+													isFocused ? 'max-sm:block' : 'max-sm:hidden'
+												)}
 											/>
 										)}
 									</button>
 								) : (
-									<div className="bg-base-200 size-4.5 rounded-full ring-1 ring-black/20 sm:size-3" />
+									<div className="bg-base-200 size-4.5 rounded-full ring-1 ring-black/20 sm:size-3.5" />
 								)}
 							</div>
 						)}
