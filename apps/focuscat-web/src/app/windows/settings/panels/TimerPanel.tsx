@@ -162,6 +162,16 @@ export const TimerPanel: React.FC = () => {
 						)}
 					</>
 				)}
+				<SettingItem
+					label="Show Session Setup"
+					description="Show intention before starting a session"
+				>
+					<Switch
+						checked={settings.timer.showSessionSetup}
+						onCheckedChange={(checked) => updateTimer({ showSessionSetup: checked })}
+						size="sm"
+					/>
+				</SettingItem>
 			</SettingGroup>
 		</div>
 	);

@@ -32,10 +32,10 @@ export const TimerCxProvider: React.FC<{ value: TTimerCx; children: React.ReactN
 	return <ReactTimerCx.Provider value={value}>{children}</ReactTimerCx.Provider>;
 };
 
-export function useTimerCx(): TTimerCx {
-	const cx = React.useContext(ReactTimerCx);
+export function useTimerCx<GTimerCx extends TTimerCx>(): GTimerCx {
+	const cx = React.useContext(ReactTimerCx) as GTimerCx | null;
 	if (cx == null) {
 		throw new Error('useTimerCx must be used within a TimerCxProvider');
 	}
-	return cx;
+	return cx as GTimerCx;
 }

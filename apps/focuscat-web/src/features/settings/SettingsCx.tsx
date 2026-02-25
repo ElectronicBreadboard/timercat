@@ -7,7 +7,7 @@ import { type TAppSettings } from './types';
 export class SettingsCx {
 	public readonly $appSettings = withVersionedLocalStorage(
 		createState<TAppSettings>({
-			version: '0.0.1',
+			version: '0.0.2',
 			features: {
 				goals: true,
 				catWindow: true,
@@ -36,7 +36,8 @@ export class SettingsCx {
 				},
 				countdown: {
 					durationMinutes: 25
-				}
+				},
+				showSessionSetup: false
 			},
 			goals: {
 				dailyGoalMinutes: 120
@@ -67,8 +68,21 @@ export class SettingsCx {
 }
 
 const settingsMigrationConfig: TVersionedMigrationConfig<TAppSettings> = {
-	latestVersion: '0.0.1',
-	migrations: {}
+	latestVersion: '0.0.2',
+	migrations: {
+		'0.0.1': {
+			to: '0.0.2',
+			migrate: (value) => {
+				return {
+					...value,
+					timer: {
+						...value.timer,
+						showSessionSetup: false
+					}
+				};
+			}
+		}
+	}
 };
 
 // MARK: - React Context

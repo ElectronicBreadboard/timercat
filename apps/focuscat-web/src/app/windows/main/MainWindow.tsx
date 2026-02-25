@@ -17,6 +17,8 @@ import React from 'react';
 import { OverviewCard, WindowHeader } from '@/app';
 import { useAudioCx } from '@/features/audio';
 import { useSettingsCx } from '@/features/settings';
+import type { TimerCx } from '@/features/timer';
+import { SessionSetupView } from './SessionSetupView';
 
 export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 	const { decorative = false, onOpenSettings, onOpenCat, className } = props;
@@ -25,8 +27,9 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 
-	const timerCx = useTimerCx();
+	const timerCx = useTimerCx<TimerCx>();
 	const timerStatus = useFeatureState(timerCx.$status);
+	const sessionSetupRequested = useFeatureState(timerCx.$sessionSetupRequested);
 
 	const audioCx = useAudioCx();
 
@@ -72,6 +75,10 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 	}, [audioCx, timerStatus]);
 
 	// MARK: - UI
+
+	if (sessionSetupRequested != null) {
+		return <SessionSetupView timerCx={timerCx} />;
+	}
 
 	return (
 		<div className={cn('bg-base-0 flex h-full flex-col', className)}>

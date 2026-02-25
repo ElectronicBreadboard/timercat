@@ -641,11 +641,7 @@ export type Stage = "dev" | "prod"
 export type Theme = "light" | "dark" | "auto"
 export type TimerDto = { status: TimerStatus; sessionType: string; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; speed: number }
 export type TimerModeEnum = "pomodoro" | "countdown"
-export type TimerSettings = { timerMode: TimerModeEnum; pomodoro: PomodoroSettings; countdown: CountdownSettings; 
-/**
- * Show the intention/profile setup screen when starting a session
- */
-showSessionSetup: boolean }
+export type TimerSettings = { timerMode: TimerModeEnum; pomodoro: PomodoroSettings; countdown: CountdownSettings; showSessionSetup: boolean }
 export type TimerStatus = "idle" | "running" | "paused"
 export type TimerUpdatedEvent = TimerDto
 export type UpdateAvailableEvent = UpdateInfo

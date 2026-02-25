@@ -51,7 +51,7 @@ function RouteComponent() {
 
 	// MARK: - Actions
 
-	const handleBack = React.useCallback(() => {
+	const handleCancel = React.useCallback(() => {
 		navigate({ to: '/window/main' });
 	}, [navigate]);
 
@@ -60,12 +60,10 @@ function RouteComponent() {
 			return;
 		}
 		setIsStarting(true);
-		const intentionOpt = intention.trim() || undefined;
-		const profileIdsOpt = selectedIds.length > 0 ? selectedIds : undefined;
 		if (advance) {
-			await timerCx.advance(intentionOpt, profileIdsOpt);
+			await timerCx.advance(intention, selectedIds);
 		} else {
-			await timerCx.start(intentionOpt, profileIdsOpt);
+			await timerCx.start(intention, selectedIds);
 		}
 		navigate({ to: '/window/main' });
 	}, [isStarting, intention, selectedIds, advance, timerCx, navigate]);
@@ -223,7 +221,7 @@ function RouteComponent() {
 
 			{/* Footer */}
 			<footer className="border-base-200 bg-base-50 flex shrink-0 justify-end gap-2 border-t px-4 py-3">
-				<Button variant="ghost" onClick={handleBack}>
+				<Button variant="ghost" onClick={handleCancel}>
 					Cancel
 				</Button>
 				<Button variant="primary" onClick={handleStart} disabled={isStarting}>

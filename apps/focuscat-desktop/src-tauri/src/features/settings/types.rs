@@ -130,7 +130,6 @@ pub struct TimerSettings {
     pub timer_mode: TimerModeEnum,
     pub pomodoro: PomodoroSettings,
     pub countdown: CountdownSettings,
-    /// Show the intention/profile setup screen when starting a session
     pub show_session_setup: bool,
 }
 

@@ -36,6 +36,7 @@ export class VersionedLocalStorageInterface<
 			return FAILED_TO_LOAD_FROM_STORAGE_IDENTIFIER;
 		}
 
+		// Parse loaded local storage item
 		let value: unknown;
 		try {
 			value = JSON.parse(item) as unknown;
@@ -46,11 +47,12 @@ export class VersionedLocalStorageInterface<
 			return FAILED_TO_LOAD_FROM_STORAGE_IDENTIFIER;
 		}
 
+		// Extract version from parsed value
 		const version = (value as { version?: string }).version;
 		if (version == null) {
 			return FAILED_TO_LOAD_FROM_STORAGE_IDENTIFIER;
 		}
-		let current = value as Record<string, unknown> & { version: string };
+		let current = value as GValue;
 		let currentVersion: string = version;
 
 		// Run migration chain until latest
@@ -59,8 +61,15 @@ export class VersionedLocalStorageInterface<
 			if (migration == null) {
 				return FAILED_TO_LOAD_FROM_STORAGE_IDENTIFIER;
 			}
-			current = migration.migrate(current) as Record<string, unknown> & { version: string };
-			currentVersion = (current as { version: string }).version;
+
+			// Apply migration
+			current = migration.migrate(current);
+			current.version = migration.to;
+
+			// Save updated value
+			this.save(key, current);
+
+			currentVersion = migration.to;
 		}
 
 		return current as GValue;
@@ -74,7 +83,7 @@ export class VersionedLocalStorageInterface<
 
 export interface TVersionedMigrationConfig<GValue extends { version: string }> {
 	latestVersion: GValue['version'];
-	migrations: Record<string, TVersionedMigration<unknown, unknown>>;
+	migrations: Record<string, TVersionedMigration<GValue, GValue>>;
 }
 
 export interface TVersionedMigration<TFrom, TTo> {

@@ -1,7 +1,7 @@
 import type { TCatFace, TCatFur, TCatHat } from '@repo/ui';
 
 export interface TAppSettings {
-	version: '0.0.1';
+	version: '0.0.2';
 	features: {
 		goals: boolean;
 		catWindow: boolean;
@@ -31,6 +31,7 @@ export interface TAppSettings {
 		countdown: {
 			durationMinutes: number;
 		};
+		showSessionSetup: boolean;
 	};
 	goals: {
 		dailyGoalMinutes: number;
