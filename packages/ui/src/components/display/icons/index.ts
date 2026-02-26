@@ -1,4 +1,5 @@
 // Custom Icons
+export * from './DiscordWordmarkLogo';
 export * from './SketchArrowIcon';
 export * from './TriangleDownIcon';
 export * from './TriangleLeftIcon';

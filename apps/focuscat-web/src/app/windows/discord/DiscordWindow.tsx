@@ -1,17 +1,19 @@
-import { GripIcon } from '@repo/ui';
+import { DiscordWordmarkLogo, GripIcon } from '@repo/ui';
 import React from 'react';
 
-export const SpotifyWindow: React.FC = () => {
+export const DiscordWindow: React.FC = () => {
 	const handlePointerDown = useGrabbingCursorOnDrag();
 
 	return (
 		<div className="group flex h-full w-full overflow-hidden rounded-xl shadow-lg">
-			<iframe
-				title="Spotify playlist: beats to relax/study to"
-				src="https://open.spotify.com/embed/playlist/0vvXsWCC9xrXsKd4FyS8kM"
-				allow="encrypted-media"
-				className="min-w-0 flex-1 border-0"
-			/>
+			<a
+				href="https://discord.com/invite/w4xE3bSjhQ"
+				target="_blank"
+				rel="noopener noreferrer"
+				className="flex min-w-0 flex-1 items-center justify-center rounded-xl bg-[#E0E3FF] p-3 transition hover:opacity-90"
+			>
+				<DiscordWordmarkLogo className="h-5 w-auto text-[#5865F2]" aria-hidden />
+			</a>
 			<div
 				data-drag-region
 				className="bg-base-100/90 absolute top-2 -right-4 flex h-8 w-4 cursor-grab items-center justify-center rounded-r-lg opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing active:opacity-100"

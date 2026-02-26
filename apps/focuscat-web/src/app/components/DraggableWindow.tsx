@@ -18,7 +18,6 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 		windowId,
 		windowCx,
 		transparent = false,
-		edgePaddingPx = 16,
 		onClose,
 		onMinimize,
 		onMaximize,
@@ -53,39 +52,38 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 
 	// MARK: - Actions
 
-	const applyPosition = React.useCallback(
-		(el: HTMLElement, position: TPosition): void => {
-			el.style.right = '';
-			el.style.bottom = '';
-			el.style.transform = '';
-			if (isAbsolutePosition(position)) {
-				el.style.left = `${position.x}px`;
-				el.style.top = `${position.y}px`;
-				return;
-			}
-			// Anchor: use CSS so the browser handles layout and resize
-			el.style.left = '';
-			if (position.x === 'start') {
-				el.style.left = `${edgePaddingPx}px`;
-			} else if (position.x === 'end') {
-				el.style.right = `${edgePaddingPx}px`;
-			} else {
-				el.style.left = '50%';
-			}
-			el.style.top = '';
-			if (position.y === 'start') {
-				el.style.top = `${edgePaddingPx}px`;
-			} else if (position.y === 'end') {
-				el.style.bottom = `${edgePaddingPx}px`;
-			} else {
-				el.style.top = '50%';
-			}
-			const tx = position.x === 'center' ? '-50%' : '0';
-			const ty = position.y === 'center' ? '-50%' : '0';
-			el.style.transform = tx !== '0' || ty !== '0' ? `translate(${tx}, ${ty})` : '';
-		},
-		[edgePaddingPx]
-	);
+	const applyPosition = React.useCallback((el: HTMLElement, position: TPosition): void => {
+		el.style.right = '';
+		el.style.bottom = '';
+		el.style.transform = '';
+		if (isAbsolutePosition(position)) {
+			el.style.left = `${position.x}px`;
+			el.style.top = `${position.y}px`;
+			return;
+		}
+		// Anchor: use CSS so the browser handles layout and resize
+		const ox = position.offset?.x ?? 0;
+		const oy = position.offset?.y ?? 0;
+		el.style.left = '';
+		if (position.x === 'start') {
+			el.style.left = `${ox}px`;
+		} else if (position.x === 'end') {
+			el.style.right = `${ox}px`;
+		} else {
+			el.style.left = '50%';
+		}
+		el.style.top = '';
+		if (position.y === 'start') {
+			el.style.top = `${oy}px`;
+		} else if (position.y === 'end') {
+			el.style.bottom = `${oy}px`;
+		} else {
+			el.style.top = '50%';
+		}
+		const tx = position.x === 'center' ? '-50%' : '0';
+		const ty = position.y === 'center' ? '-50%' : '0';
+		el.style.transform = tx !== '0' || ty !== '0' ? `translate(${tx}, ${ty})` : '';
+	}, []);
 
 	const getAbsolutePosition = React.useCallback(
 		(
@@ -340,7 +338,6 @@ export interface TDraggableWindowProps {
 	windowId: TWindowId;
 	windowCx: WindowCx;
 	transparent?: boolean;
-	edgePaddingPx?: number;
 	onClose?: () => void;
 	onMinimize?: () => void;
 	onMaximize?: () => void;

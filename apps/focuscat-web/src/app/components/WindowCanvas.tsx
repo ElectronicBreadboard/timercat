@@ -2,6 +2,7 @@ import { useCompute } from 'feature-react/state';
 import React from 'react';
 import type { WindowCx } from '@/features/window';
 import { CatWindow } from '../windows/cat';
+import { DiscordWindow } from '../windows/discord';
 import { MainWindow } from '../windows/main';
 import { SettingsWindow } from '../windows/settings';
 import { SpotifyWindow } from '../windows/spotify';
@@ -9,7 +10,7 @@ import { DraggableWindow } from './DraggableWindow';
 
 export const WindowCanvas: React.FC<TWindowCanvasProps> = (props) => {
 	const { windowCx } = props;
-	const showSpotify = useCompute(windowCx.$breakpoint, ({ value }) => value !== 'sm');
+	const showWidgets = useCompute(windowCx.$breakpoint, ({ value }) => value !== 'sm');
 
 	return (
 		<>
@@ -43,10 +44,15 @@ export const WindowCanvas: React.FC<TWindowCanvasProps> = (props) => {
 				<SettingsWindow />
 			</DraggableWindow>
 
-			{showSpotify && (
-				<DraggableWindow windowId="spotify" windowCx={windowCx} transparent>
-					<SpotifyWindow />
-				</DraggableWindow>
+			{showWidgets && (
+				<>
+					<DraggableWindow windowId="spotify" windowCx={windowCx} transparent>
+						<SpotifyWindow />
+					</DraggableWindow>
+					<DraggableWindow windowId="discord" windowCx={windowCx} transparent>
+						<DiscordWindow />
+					</DraggableWindow>
+				</>
 			)}
 		</>
 	);

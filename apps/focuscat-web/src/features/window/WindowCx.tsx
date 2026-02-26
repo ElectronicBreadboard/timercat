@@ -40,12 +40,24 @@ export class WindowCx {
 			boundsBeforeMaximize: null,
 			canMaximize: false
 		},
+		discord: {
+			id: 'discord',
+			trafficLights: { close: false, minimize: false, maximize: false },
+			bounds: {
+				size: { width: 172, height: 48 },
+				position: { x: 'start', y: 'end', offset: { x: 8, y: 152 + 8 + 8 } }
+			},
+			visibility: 'visible',
+			zIndex: 10,
+			boundsBeforeMaximize: null,
+			canMaximize: false
+		},
 		spotify: {
 			id: 'spotify',
 			trafficLights: { close: false, minimize: false, maximize: false },
 			bounds: {
 				size: { width: 352, height: 152 },
-				position: { x: 'start', y: 'end' }
+				position: { x: 'start', y: 'end', offset: { x: 8, y: 8 } }
 			},
 			visibility: 'visible',
 			zIndex: 10,
@@ -294,7 +306,7 @@ export interface TWindowConfig extends TWindow {
 	canMaximize: boolean;
 }
 
-export type TWindowId = 'main' | 'settings' | 'cat' | 'spotify';
+export type TWindowId = 'main' | 'settings' | 'cat' | 'discord' | 'spotify';
 export type TWindowVisibility = 'visible' | 'minimized' | 'closed';
 
 export interface TBounds {
@@ -317,6 +329,7 @@ export interface TAbsolutePosition {
 export interface TAnchorPosition {
 	x: TAnchor;
 	y: TAnchor;
+	offset?: { x: number; y: number };
 }
 
 export type TAnchor = 'start' | 'center' | 'end';
