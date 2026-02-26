@@ -39,7 +39,12 @@ export const appConfig = {
 		}
 	},
 	distribution: {
-		website: 'https://focuscat.app',
+		website:
+			env === 'development' || env === 'local' ? 'http://localhost:3000' : 'https://focuscat.app',
+		webApp:
+			env === 'development' || env === 'local'
+				? 'http://pomodorocat.localhost:3000'
+				: 'https://pomodorocat.com',
 		github: 'https://github.com/builder-group/isshin',
 		githubReleases: 'https://github.com/builder-group/isshin/releases'
 	},

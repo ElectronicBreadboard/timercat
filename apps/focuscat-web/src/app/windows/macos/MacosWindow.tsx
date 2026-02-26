@@ -1,19 +1,20 @@
-import { DiscordWordmarkLogo, GripIcon } from '@repo/ui';
+import { GripIcon } from '@repo/ui';
 import React from 'react';
+import { AppleIcon } from '@/components/display/icons';
 import { appConfig } from '@/environment';
 
-export const DiscordWindow: React.FC = () => {
+export const MacosWindow: React.FC = () => {
 	const handlePointerDown = useGrabbingCursorOnDrag();
 
 	return (
 		<div className="group flex h-full w-full overflow-hidden rounded-xl shadow-lg">
 			<a
-				href={appConfig.help.discord}
+				href={appConfig.distribution.website}
 				target="_blank"
 				rel="noopener noreferrer"
-				className="flex min-w-0 flex-1 items-center justify-center rounded-xl bg-[#E0E3FF] p-3 transition hover:opacity-90"
+				className="bg-base-0 flex min-w-0 flex-1 items-center justify-center rounded-xl p-3 transition hover:opacity-90"
 			>
-				<DiscordWordmarkLogo className="h-5 w-auto text-[#5865F2]" aria-hidden />
+				<AppleIcon className="text-base-900 h-6 w-auto" aria-hidden />
 			</a>
 			<div
 				data-drag-region

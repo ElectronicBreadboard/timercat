@@ -45,7 +45,19 @@ export class WindowCx {
 			trafficLights: { close: false, minimize: false, maximize: false },
 			bounds: {
 				size: { width: 172, height: 48 },
-				position: { x: 'start', y: 'end', offset: { x: 8, y: 152 + 8 + 8 } }
+				position: { x: 'start', y: 'end', offset: { x: 8, y: 8 + 152 + 8 } }
+			},
+			visibility: 'visible',
+			zIndex: 10,
+			boundsBeforeMaximize: null,
+			canMaximize: false
+		},
+		macos: {
+			id: 'macos',
+			trafficLights: { close: false, minimize: false, maximize: false },
+			bounds: {
+				size: { width: 48, height: 48 },
+				position: { x: 'start', y: 'end', offset: { x: 8 + 172 + 8, y: 8 + 152 + 8 } }
 			},
 			visibility: 'visible',
 			zIndex: 10,
@@ -306,7 +318,7 @@ export interface TWindowConfig extends TWindow {
 	canMaximize: boolean;
 }
 
-export type TWindowId = 'main' | 'settings' | 'cat' | 'discord' | 'spotify';
+export type TWindowId = 'main' | 'settings' | 'cat' | 'discord' | 'macos' | 'spotify';
 export type TWindowVisibility = 'visible' | 'minimized' | 'closed';
 
 export interface TBounds {

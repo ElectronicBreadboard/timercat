@@ -2,7 +2,7 @@ import { SketchArrowIcon } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import React from 'react';
 import { MainWindow } from '@/app';
-import { AppleIcon, GithubIcon, SimpleLogoIcon } from '@/components';
+import { AppleIcon, SimpleLogoIcon } from '@/components';
 import { appConfig } from '@/environment';
 import { useDetectPlatform } from '@/hooks';
 import { fetchLatestRelease } from '@/lib';
@@ -14,7 +14,7 @@ export const Route = createFileRoute('/')({
 
 function RouteComponent() {
 	const { downloadLinks } = Route.useLoaderData();
-	const { github, githubReleases } = appConfig.distribution;
+	const { github, githubReleases, webApp } = appConfig.distribution;
 
 	const { platform, isIntel } = useDetectPlatform();
 	const downloadUrl = React.useMemo(() => {
@@ -73,23 +73,33 @@ function RouteComponent() {
 								{downloadUrl != null ? 'Download for Mac' : 'macOS only'}
 							</a>
 							<a
-								href={github}
+								href={webApp}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="border-base-200 bg-base-50 inline-flex items-center justify-center gap-2 rounded-xl border px-5 py-2.5 text-base font-medium transition-opacity hover:opacity-90"
 							>
-								<GithubIcon className="size-5" />
-								View on GitHub
+								Try in browser
 							</a>
 						</div>
-						<a
-							href={githubReleases}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-base-600 mt-4 text-sm underline transition-opacity hover:opacity-80"
-						>
-							More download options
-						</a>
+						<p className="text-base-600 mt-4 text-sm">
+							<a
+								href={githubReleases}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="underline transition-opacity hover:opacity-80"
+							>
+								More download options
+							</a>
+							<span className="text-base-400"> · </span>
+							<a
+								href={github}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="underline transition-opacity hover:opacity-80"
+							>
+								GitHub
+							</a>
+						</p>
 					</div>
 				</div>
 
