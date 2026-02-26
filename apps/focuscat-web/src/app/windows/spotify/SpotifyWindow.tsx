@@ -14,7 +14,7 @@ export const SpotifyWindow: React.FC = () => {
 			/>
 			<div
 				data-drag-region
-				className="bg-base-100/90 absolute top-2 -right-4 flex h-8 w-4 cursor-grab items-center justify-center rounded-r-lg opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing active:opacity-100"
+				className="bg-base-100/90 absolute top-4 -right-4 flex h-8 w-4 cursor-grab items-center justify-center rounded-r-lg opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing active:opacity-100"
 				onPointerDown={handlePointerDown}
 			>
 				<GripIcon

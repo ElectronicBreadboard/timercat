@@ -17,12 +17,12 @@ export const DiscordWindow: React.FC = () => {
 			</a>
 			<div
 				data-drag-region
-				className="bg-base-100/90 absolute top-2 -right-4 flex h-8 w-4 cursor-grab items-center justify-center rounded-r-lg opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing active:opacity-100"
+				className="bg-base-100/90 absolute -top-4 right-4 flex h-4 w-8 cursor-grab items-center justify-center rounded-t-lg opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing active:opacity-100"
 				onPointerDown={handlePointerDown}
 			>
 				<GripIcon
 					size={12}
-					className="text-base-500/60 group-hover:text-base-600 active:text-base-600 transition-colors"
+					className="text-base-500/60 group-hover:text-base-600 active:text-base-600 rotate-90 transition-colors"
 				/>
 			</div>
 		</div>
