@@ -2,6 +2,7 @@ import {
 	Cat,
 	catConfig,
 	cn,
+	HistoryIcon,
 	IconButton,
 	MinimizeIcon,
 	SettingsIcon,
@@ -21,7 +22,7 @@ import type { TimerCx } from '@/features/timer';
 import { SessionSetupView } from './SessionSetupView';
 
 export const MainWindow: React.FC<TMainWindowProps> = (props) => {
-	const { decorative = false, onOpenSettings, onOpenCat, className } = props;
+	const { decorative = false, onOpenSettings, onOpenActivity, onOpenCat, className } = props;
 	const catRef = React.useRef<TCatRef>(null);
 
 	const settingsCx = useSettingsCx();
@@ -93,6 +94,11 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 						<MinimizeIcon className={cn(decorative ? 'size-4' : 'size-5 sm:size-4')} />
 					</IconButton>
 				) : null}
+				{onOpenActivity != null ? (
+					<IconButton variant="bare" size="sm" aria-label="Open activity" onClick={onOpenActivity}>
+						<HistoryIcon className={cn(decorative ? 'size-4' : 'size-5 sm:size-4')} />
+					</IconButton>
+				) : null}
 				{onOpenSettings != null ? (
 					<IconButton variant="bare" size="sm" aria-label="Open settings" onClick={onOpenSettings}>
 						<SettingsIcon className={cn(decorative ? 'size-4' : 'size-5 sm:size-4')} />
@@ -141,6 +147,7 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 interface TMainWindowProps {
 	decorative?: boolean;
 	onOpenSettings?: () => void;
+	onOpenActivity?: () => void;
 	onOpenCat?: () => void;
 	className?: string;
 }

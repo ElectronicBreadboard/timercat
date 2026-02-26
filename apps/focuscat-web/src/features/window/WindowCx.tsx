@@ -12,12 +12,24 @@ export class WindowCx {
 				position: { x: 'center', y: 'center' }
 			},
 			visibility: 'visible',
-			zIndex: 10,
+			zIndex: 11,
 			boundsBeforeMaximize: null,
 			canMaximize: true
 		},
 		settings: {
 			id: 'settings',
+			trafficLights: { close: true, minimize: false, maximize: true },
+			bounds: {
+				size: { width: 600, height: 450 },
+				position: { x: 'center', y: 'center' }
+			},
+			visibility: 'closed',
+			zIndex: 11,
+			boundsBeforeMaximize: null,
+			canMaximize: true
+		},
+		activity: {
+			id: 'activity',
 			trafficLights: { close: true, minimize: false, maximize: true },
 			bounds: {
 				size: { width: 600, height: 450 },
@@ -318,7 +330,7 @@ export interface TWindowConfig extends TWindow {
 	canMaximize: boolean;
 }
 
-export type TWindowId = 'main' | 'settings' | 'cat' | 'discord' | 'macos' | 'spotify';
+export type TWindowId = 'main' | 'settings' | 'activity' | 'cat' | 'discord' | 'macos' | 'spotify';
 export type TWindowVisibility = 'visible' | 'minimized' | 'closed';
 
 export interface TBounds {

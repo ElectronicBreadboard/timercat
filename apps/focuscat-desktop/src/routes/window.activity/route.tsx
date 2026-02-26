@@ -39,8 +39,8 @@ function LayoutComponent() {
 
 	// MARK: - UI
 
-	// Empty state - no sessions
-	if (sessions.length === 0) {
+	// No sessions
+	if (!sessions.length) {
 		return (
 			<SettingsCxProvider>
 				<ThemeProvider>

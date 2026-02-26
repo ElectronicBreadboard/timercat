@@ -59,6 +59,19 @@ export class SessionCx {
 			this.$todayFocusSeconds.set(seconds);
 		}
 	}
+
+	public async getSessions(
+		startedAfter: number,
+		startedBefore: number,
+		limit: number,
+		minDurationSecs: number
+	): Promise<TSessionRow[]> {
+		const [ok, , rows] = await this._repo.getSessions(startedAfter, startedBefore, limit);
+		if (!ok) {
+			return [];
+		}
+		return rows.filter((r) => r.status === 'active' || (r.actual_seconds ?? 0) >= minDurationSecs);
+	}
 }
 
 export type TCreateSessionInput = Pick<

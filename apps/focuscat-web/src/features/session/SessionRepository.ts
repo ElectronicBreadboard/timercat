@@ -57,6 +57,26 @@ export class SessionRepository {
 		}
 	}
 
+	// Get sessions by time range.
+	public async getSessions(
+		startedAfter: number,
+		startedBefore: number,
+		limit: number
+	): Promise<TResult<TSessionRow[], Error>> {
+		try {
+			const db = await this._getDb();
+			const range = IDBKeyRange.bound(startedAfter, startedBefore, false, true);
+			const tx = db.transaction(this._config.storeName, 'readonly');
+			const rows = (await idbReq(
+				tx.objectStore(this._config.storeName).index('started_at').getAll(range)
+			)) as TSessionRow[];
+			rows.sort((a, b) => b.started_at - a.started_at);
+			return Ok(rows.slice(0, limit));
+		} catch (e) {
+			return Err(toError(e));
+		}
+	}
+
 	// Get total focus seconds for today (midnight-to-now).
 	// Includes completed work sessions and cancelled work sessions >= 30s
 	// (cancelled but meaningful; user focused before being interrupted).

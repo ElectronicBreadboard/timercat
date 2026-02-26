@@ -68,6 +68,7 @@ function RouteComponent() {
 				: `${formatTimeOfDayAmPm(startDate)} - ongoing`;
 
 		const intention = session.intention?.trim() ?? '';
+
 		return {
 			isWork,
 			name: isWork ? (intention !== '' ? intention : 'Focus') : 'Break',
@@ -77,6 +78,8 @@ function RouteComponent() {
 			status: session.status
 		};
 	}, [data]);
+
+	// MARK: - UI
 
 	if (data == null || sessionInfo == null) {
 		return (

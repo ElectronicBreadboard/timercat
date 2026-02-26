@@ -1,6 +1,7 @@
 import { useCompute } from 'feature-react/state';
 import React from 'react';
 import type { WindowCx } from '@/features/window';
+import { ActivityWindow } from '../windows/activity';
 import { CatWindow } from '../windows/cat';
 import { DiscordWindow } from '../windows/discord';
 import { MacosWindow } from '../windows/macos';
@@ -21,18 +22,13 @@ export const WindowCanvas: React.FC<TWindowCanvasProps> = (props) => {
 						windowCx.open('settings');
 						windowCx.close('main');
 					}}
+					onOpenActivity={() => {
+						windowCx.open('activity');
+						windowCx.close('main');
+					}}
 					onOpenCat={() => {
 						windowCx.open('cat');
 						windowCx.close('main');
-					}}
-				/>
-			</DraggableWindow>
-
-			<DraggableWindow windowId="cat" windowCx={windowCx} transparent>
-				<CatWindow
-					onExpand={() => {
-						windowCx.open('main');
-						windowCx.close('cat');
 					}}
 				/>
 			</DraggableWindow>
@@ -43,6 +39,23 @@ export const WindowCanvas: React.FC<TWindowCanvasProps> = (props) => {
 				onClose={() => windowCx.open('main')}
 			>
 				<SettingsWindow />
+			</DraggableWindow>
+
+			<DraggableWindow
+				windowId="activity"
+				windowCx={windowCx}
+				onClose={() => windowCx.open('main')}
+			>
+				<ActivityWindow />
+			</DraggableWindow>
+
+			<DraggableWindow windowId="cat" windowCx={windowCx} transparent>
+				<CatWindow
+					onExpand={() => {
+						windowCx.open('main');
+						windowCx.close('cat');
+					}}
+				/>
 			</DraggableWindow>
 
 			{showWidgets && (
