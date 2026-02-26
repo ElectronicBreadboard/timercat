@@ -1,6 +1,7 @@
 import { randomCat } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { App } from '@/app';
+import { appConfig } from '@/environment';
 
 export const Route = createFileRoute('/sites/pomodorocat/')({
 	loader: () => {
@@ -24,13 +25,15 @@ export const Route = createFileRoute('/sites/pomodorocat/')({
 					'A free cat-themed pomodoro timer. Stay focused with the Pomodoro Technique and your virtual cat companion.'
 			},
 			{ property: 'og:type', content: 'website' },
-			{ name: 'twitter:card', content: 'summary' },
+			{ property: 'og:image', content: `${appConfig.distribution.webApp}/og-pomodorocat.png` },
+			{ name: 'twitter:card', content: 'summary_large_image' },
 			{ name: 'twitter:title', content: 'Pomodoro Cat — Free Cat Pomodoro Timer' },
 			{
 				name: 'twitter:description',
 				content:
 					'A free cat-themed pomodoro timer. Stay focused with the Pomodoro Technique and your virtual cat companion.'
-			}
+			},
+			{ name: 'twitter:image', content: `${appConfig.distribution.webApp}/og-pomodorocat.png` }
 		]
 	}),
 	component: RouteComponent

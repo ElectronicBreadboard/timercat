@@ -9,6 +9,32 @@ import { fetchLatestRelease } from '@/lib';
 
 export const Route = createFileRoute('/')({
 	loader: () => fetchLatestRelease(),
+	head: () => ({
+		meta: [
+			{ title: 'FocusCat — Focus timer with a cat companion for Mac' },
+			{
+				name: 'description',
+				content:
+					'Offline-first focus timer for Mac. Pomodoro sessions, activity tracking, app blocking. No accounts, open source.'
+			},
+			{ property: 'og:title', content: 'FocusCat — Focus timer with a cat companion for Mac' },
+			{
+				property: 'og:description',
+				content:
+					'Offline-first focus timer for Mac. Pomodoro sessions, activity tracking, app blocking. No accounts, open source.'
+			},
+			{ property: 'og:type', content: 'website' },
+			{ property: 'og:image', content: `${appConfig.distribution.website}/og-focuscat.png` },
+			{ name: 'twitter:card', content: 'summary_large_image' },
+			{ name: 'twitter:title', content: 'FocusCat — Focus timer with a cat companion for Mac' },
+			{
+				name: 'twitter:description',
+				content:
+					'Offline-first focus timer for Mac. Pomodoro sessions, activity tracking, app blocking. No accounts, open source.'
+			},
+			{ name: 'twitter:image', content: `${appConfig.distribution.website}/og-focuscat.png` }
+		]
+	}),
 	component: RouteComponent
 });
 
@@ -56,7 +82,8 @@ function RouteComponent() {
 					</div>
 					<h1 className="xs:text-5xl mb-8 font-serif text-4xl md:text-6xl">
 						Focus timer with a cat <br className="hidden sm:block" />
-						companion for <AppleIcon className="xs:size-10 mb-5 inline-block size-8 md:size-12" />
+						companion for{' '}
+						<AppleIcon className="xs:size-10 mb-3 inline-block size-8 sm:mb-5 md:size-12" />
 					</h1>
 					<div className="mb-16 flex flex-col items-center gap-2 sm:mb-20">
 						<div className="flex flex-wrap items-center justify-center gap-3">
