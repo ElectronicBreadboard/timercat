@@ -19,12 +19,12 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 		windowCx,
 		transparent = false,
 		dragThreshold,
-		grabCursor = false,
 		excludeFromDrag = 'button, a, input, select, textarea',
 		onClose,
 		onMinimize,
 		onMaximize,
-		children
+		children,
+		className
 	} = props;
 	const $window = windowCx.windows[windowId];
 
@@ -271,7 +271,7 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 							'h-full w-full overflow-hidden',
 							transparent ? 'bg-transparent shadow-none' : 'shadow-2xl',
 							!transparent && !isMaximized && 'rounded-2xl',
-							grabCursor && 'cursor-grab active:cursor-grabbing'
+							className
 						)}
 						initial={{ opacity: 0, scale: 0.95 }}
 						animate={{ opacity: 1, scale: 1 }}
@@ -372,10 +372,10 @@ export interface TDraggableWindowProps {
 	windowCx: WindowCx;
 	transparent?: boolean;
 	dragThreshold?: number;
-	grabCursor?: boolean;
 	excludeFromDrag?: string;
 	onClose?: () => void;
 	onMinimize?: () => void;
 	onMaximize?: () => void;
 	children: React.ReactNode;
+	className?: string;
 }

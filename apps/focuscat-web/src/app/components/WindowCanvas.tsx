@@ -60,7 +60,12 @@ export const WindowCanvas: React.FC<TWindowCanvasProps> = (props) => {
 
 			{showWidgets && (
 				<>
-					<DraggableWindow windowId="spotify" windowCx={windowCx} transparent>
+					<DraggableWindow
+						windowId="spotify"
+						windowCx={windowCx}
+						transparent
+						className="active:cursor-grabbing"
+					>
 						<SpotifyWindow />
 					</DraggableWindow>
 					<DraggableWindow
@@ -68,8 +73,8 @@ export const WindowCanvas: React.FC<TWindowCanvasProps> = (props) => {
 						windowCx={windowCx}
 						transparent
 						dragThreshold={8}
-						grabCursor
 						excludeFromDrag=""
+						className="active:cursor-grabbing"
 					>
 						<DiscordWindow />
 					</DraggableWindow>
@@ -78,8 +83,8 @@ export const WindowCanvas: React.FC<TWindowCanvasProps> = (props) => {
 						windowCx={windowCx}
 						transparent
 						dragThreshold={8}
-						grabCursor
 						excludeFromDrag=""
+						className="active:cursor-grabbing"
 					>
 						<MacosWindow />
 					</DraggableWindow>
