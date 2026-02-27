@@ -2,7 +2,7 @@ import { cn, GripIcon } from '@repo/ui';
 import React from 'react';
 
 export const DragWidgetHandle: React.FC<TDragWidgetHandleProps> = (props) => {
-	const { className, rotateIcon = false } = props;
+	const { className } = props;
 
 	const handlePointerDown = React.useCallback((e: React.PointerEvent) => {
 		if (e.button !== 0) {
@@ -27,17 +27,11 @@ export const DragWidgetHandle: React.FC<TDragWidgetHandleProps> = (props) => {
 			)}
 			onPointerDown={handlePointerDown}
 		>
-			<GripIcon
-				className={cn(
-					'text-base-500/60 group-hover:text-base-600 active:text-base-600 size-3 transition-colors',
-					rotateIcon && 'rotate-90'
-				)}
-			/>
+			<GripIcon className="text-base-500/60 group-hover:text-base-600 active:text-base-600 size-3 transition-colors" />
 		</div>
 	);
 };
 
 export interface TDragWidgetHandleProps {
 	className?: string;
-	rotateIcon?: boolean;
 }

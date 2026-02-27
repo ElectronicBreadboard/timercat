@@ -92,6 +92,7 @@ export class WindowCx {
 
 	public readonly $focusedId = createState<TWindowId | null>(null);
 	public readonly $breakpoint = createState<TBreakpoint>('lg');
+	public readonly $draggingWindowId = createState<TWindowId | null>(null);
 
 	public readonly containerRef = React.createRef<HTMLDivElement>();
 	public readonly $containerRect = createState<TContainerRect>({ width: 0, height: 0 });
@@ -116,6 +117,14 @@ export class WindowCx {
 	public mount(): void {}
 
 	public unmount(): void {}
+
+	public startDrag(id: TWindowId): void {
+		this.$draggingWindowId.set(id);
+	}
+
+	public endDrag(): void {
+		this.$draggingWindowId.set(null);
+	}
 
 	public open(id: TWindowId): void {
 		this.windows[id].set((prev) => ({ ...prev, visibility: 'visible', zIndex: this._maxZ() + 1 }));

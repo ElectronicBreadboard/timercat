@@ -1,6 +1,6 @@
 import { useCompute } from 'feature-react/state';
 import React from 'react';
-import type { WindowCx } from '@/features/window';
+import { TrashDropZone, type WindowCx } from '@/features/window';
 import { ActivityWindow } from '../windows/activity';
 import { CatWindow } from '../windows/cat';
 import { DiscordWindow } from '../windows/discord';
@@ -61,16 +61,30 @@ export const WindowCanvas: React.FC<TWindowCanvasProps> = (props) => {
 			{showWidgets && (
 				<>
 					<DraggableWindow windowId="spotify" windowCx={windowCx} transparent>
-						<SpotifyWindow onClose={() => windowCx.close('spotify')} />
+						<SpotifyWindow />
 					</DraggableWindow>
-					<DraggableWindow windowId="discord" windowCx={windowCx} transparent>
-						<DiscordWindow onClose={() => windowCx.close('discord')} />
+					<DraggableWindow
+						windowId="discord"
+						windowCx={windowCx}
+						transparent
+						dragThreshold={8}
+						excludeFromDrag=""
+					>
+						<DiscordWindow />
 					</DraggableWindow>
-					<DraggableWindow windowId="macos" windowCx={windowCx} transparent>
-						<MacosWindow onClose={() => windowCx.close('macos')} />
+					<DraggableWindow
+						windowId="macos"
+						windowCx={windowCx}
+						transparent
+						dragThreshold={8}
+						excludeFromDrag=""
+					>
+						<MacosWindow />
 					</DraggableWindow>
 				</>
 			)}
+
+			<TrashDropZone windowCx={windowCx} trashableIds={['spotify', 'discord', 'macos']} />
 		</>
 	);
 };
