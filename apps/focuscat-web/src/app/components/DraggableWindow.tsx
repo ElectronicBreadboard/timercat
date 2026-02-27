@@ -51,7 +51,7 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 	const windowRef = React.useRef<HTMLDivElement>(null);
 	const layoutRef = React.useRef<Pick<TWindow, 'bounds' | 'zIndex'> | null>(null);
 	const isDragging = React.useRef(false);
-	const isPendingDrag = React.useRef(false);
+	const pendingDragCleanup = React.useRef<(() => void) | null>(null);
 	const dragStart = React.useRef({ pointerX: 0, pointerY: 0, windowX: 0, windowY: 0 });
 
 	// MARK: - Actions
@@ -150,13 +150,48 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 			);
 
 			dragStart.current = { pointerX: e.clientX, pointerY: e.clientY, windowX, windowY };
-			e.currentTarget.setPointerCapture(e.pointerId);
 
 			if (dragThreshold != null) {
-				isPendingDrag.current = true;
+				const captureTarget = e.currentTarget;
+				const pointerId = e.pointerId;
+
+				let cleanup: () => void;
+
+				const onMove = (ev: PointerEvent): void => {
+					if (ev.pointerId !== pointerId) {
+						return;
+					}
+					const dx = ev.clientX - dragStart.current.pointerX;
+					const dy = ev.clientY - dragStart.current.pointerY;
+					if (Math.sqrt(dx * dx + dy * dy) >= dragThreshold) {
+						isDragging.current = true;
+						captureTarget.setPointerCapture(pointerId);
+						windowCx.startDrag(windowId);
+						cleanup();
+					}
+				};
+
+				const onUp = (ev: PointerEvent): void => {
+					if (ev.pointerId !== pointerId) {
+						return;
+					}
+					cleanup();
+				};
+
+				cleanup = (): void => {
+					document.removeEventListener('pointermove', onMove);
+					document.removeEventListener('pointerup', onUp);
+					pendingDragCleanup.current = null;
+				};
+
+				// Use document listeners so threshold detection works even when cursor leaves the element
+				document.addEventListener('pointermove', onMove);
+				document.addEventListener('pointerup', onUp);
+				pendingDragCleanup.current = cleanup;
 			} else {
 				isDragging.current = true;
 				windowCx.startDrag(windowId);
+				e.currentTarget.setPointerCapture(e.pointerId);
 			}
 		},
 		[dragThreshold, excludeFromDrag, getAbsolutePosition, isMaximized, windowCx, windowId]
@@ -164,17 +199,6 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 
 	const handleWindowPointerMove = React.useCallback(
 		(e: React.PointerEvent<HTMLDivElement>) => {
-			// If the window is pending a drag, and the drag threshold has been crossed, start the drag
-			if (isPendingDrag.current && dragThreshold != null) {
-				const dx = e.clientX - dragStart.current.pointerX;
-				const dy = e.clientY - dragStart.current.pointerY;
-				if (Math.sqrt(dx * dx + dy * dy) >= dragThreshold) {
-					isPendingDrag.current = false;
-					isDragging.current = true;
-					windowCx.startDrag(windowId);
-				}
-			}
-
 			if (!isDragging.current) {
 				return;
 			}
@@ -187,17 +211,10 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 				dragStart.current.windowY + dy
 			);
 		},
-		[dragThreshold, windowCx, windowId]
+		[windowCx, windowId]
 	);
 
 	const handleWindowPointerUp = React.useCallback(() => {
-		// Threshold never crossed, so treat as a normal click and let native events fire instead
-		if (isPendingDrag.current) {
-			isPendingDrag.current = false;
-			return;
-		}
-
-		// If the window was being dragged, end the drag
 		if (isDragging.current) {
 			windowCx.endDrag();
 		}
@@ -247,6 +264,12 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 	);
 
 	// MARK: - Effects
+
+	React.useEffect(() => {
+		return () => {
+			pendingDragCleanup.current?.();
+		};
+	}, []);
 
 	useListener(
 		$window,
