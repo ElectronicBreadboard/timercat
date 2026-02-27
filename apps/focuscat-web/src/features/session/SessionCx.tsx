@@ -6,6 +6,7 @@ import { SessionRepository, type TSessionRow } from './SessionRepository';
 
 export class SessionCx {
 	private readonly _repo = new SessionRepository();
+	private readonly _sessionCompleteListeners: Array<() => void> = [];
 
 	public readonly $todayFocusSeconds = createState<number>(0);
 
@@ -46,6 +47,8 @@ export class SessionCx {
 		if (areSecondsOk) {
 			this.$todayFocusSeconds.set(seconds);
 		}
+
+		this._notifySessionComplete();
 	}
 
 	public async cancelSession(id: number, endedAt: number, actualSeconds: number): Promise<void> {
@@ -57,6 +60,29 @@ export class SessionCx {
 		const [areSecondsOk, , seconds] = await this._repo.getTodayFocusSeconds();
 		if (areSecondsOk) {
 			this.$todayFocusSeconds.set(seconds);
+		}
+
+		this._notifySessionComplete();
+	}
+
+	public registerSessionComplete(callback: () => void): () => void {
+		this._sessionCompleteListeners.push(callback);
+		return () => {
+			const i = this._sessionCompleteListeners.indexOf(callback);
+			if (i !== -1) {
+				this._sessionCompleteListeners.splice(i, 1);
+			}
+		};
+	}
+
+	public async getLastWorkSession(minDurationSecs: number): Promise<TSessionRow | null> {
+		const rows = await this.getSessions(0, Date.now(), 50, minDurationSecs);
+		return rows.find((r) => r.session_type === 'pomodoro:work') ?? null;
+	}
+
+	private _notifySessionComplete(): void {
+		for (const listener of this._sessionCompleteListeners) {
+			listener();
 		}
 	}
 
@@ -72,12 +98,22 @@ export class SessionCx {
 		}
 		return rows.filter((r) => r.status === 'active' || (r.actual_seconds ?? 0) >= minDurationSecs);
 	}
+
+	public computeSessionStats(row: TSessionRow): TSessionStats {
+		const completed = row.actual_seconds ?? row.planned_seconds;
+		const overtimeSeconds = Math.max(0, completed - row.planned_seconds);
+		return { overtimeSeconds };
+	}
 }
 
 export type TCreateSessionInput = Pick<
 	TSessionRow,
 	'session_type' | 'planned_seconds' | 'intention' | 'started_at'
 >;
+
+export interface TSessionStats {
+	overtimeSeconds: number;
+}
 
 // MARK: - React Context
 

@@ -4,20 +4,20 @@ import { specta } from '@/environment';
 import { useOnSessionComplete } from '@/hooks';
 import { toTuple } from '@/lib';
 
-export const LastSessionView: React.FC = () => {
+export const LastSessionView: React.FC<TLastSessionViewProps> = (props) => {
+	const { minSessionDurationSecs = 30 } = props;
 	const [lastSession, setLastSession] = React.useState<specta.SessionDetailDto | null>(null);
 
 	// MARK: - Actions
 
 	const fetchData = React.useCallback(async () => {
 		const [isSessionOk, , session] = toTuple(
-			// Note: Use same min duration as session list (30s) for consistency
-			await specta.commands.getLastWorkSession(30)
+			await specta.commands.getLastWorkSession(minSessionDurationSecs)
 		);
 		if (isSessionOk) {
 			setLastSession(session);
 		}
-	}, []);
+	}, [minSessionDurationSecs]);
 
 	const handleNavigate = React.useCallback(async () => {
 		if (lastSession == null) {
@@ -70,3 +70,7 @@ export const LastSessionView: React.FC = () => {
 		</button>
 	);
 };
+
+interface TLastSessionViewProps {
+	minSessionDurationSecs?: number;
+}
