@@ -19,6 +19,7 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 		windowCx,
 		transparent = false,
 		dragThreshold,
+		grabCursor = false,
 		excludeFromDrag = 'button, a, input, select, textarea',
 		onClose,
 		onMinimize,
@@ -149,11 +150,11 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 			);
 
 			dragStart.current = { pointerX: e.clientX, pointerY: e.clientY, windowX, windowY };
+			e.currentTarget.setPointerCapture(e.pointerId);
 
 			if (dragThreshold != null) {
 				isPendingDrag.current = true;
 			} else {
-				e.currentTarget.setPointerCapture(e.pointerId);
 				isDragging.current = true;
 				windowCx.startDrag(windowId);
 			}
@@ -170,8 +171,6 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 				if (Math.sqrt(dx * dx + dy * dy) >= dragThreshold) {
 					isPendingDrag.current = false;
 					isDragging.current = true;
-					e.currentTarget.setPointerCapture(e.pointerId);
-					document.body.style.cursor = 'grabbing';
 					windowCx.startDrag(windowId);
 				}
 			}
@@ -198,16 +197,13 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 			return;
 		}
 
-		// If the window was being dragged, end the drag and reset the cursor
+		// If the window was being dragged, end the drag
 		if (isDragging.current) {
 			windowCx.endDrag();
-			if (dragThreshold != null) {
-				document.body.style.cursor = '';
-			}
 		}
 
 		isDragging.current = false;
-	}, [dragThreshold, windowCx]);
+	}, [windowCx]);
 
 	const handleClose = React.useCallback(
 		(e: React.MouseEvent<HTMLButtonElement>) => {
@@ -274,7 +270,8 @@ export const DraggableWindow: React.FC<TDraggableWindowProps> = (props) => {
 						className={cn(
 							'h-full w-full overflow-hidden',
 							transparent ? 'bg-transparent shadow-none' : 'shadow-2xl',
-							!transparent && !isMaximized && 'rounded-2xl'
+							!transparent && !isMaximized && 'rounded-2xl',
+							grabCursor && 'cursor-grab active:cursor-grabbing'
 						)}
 						initial={{ opacity: 0, scale: 0.95 }}
 						animate={{ opacity: 1, scale: 1 }}
@@ -375,6 +372,7 @@ export interface TDraggableWindowProps {
 	windowCx: WindowCx;
 	transparent?: boolean;
 	dragThreshold?: number;
+	grabCursor?: boolean;
 	excludeFromDrag?: string;
 	onClose?: () => void;
 	onMinimize?: () => void;

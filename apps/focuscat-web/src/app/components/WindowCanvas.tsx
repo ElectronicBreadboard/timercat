@@ -68,6 +68,7 @@ export const WindowCanvas: React.FC<TWindowCanvasProps> = (props) => {
 						windowCx={windowCx}
 						transparent
 						dragThreshold={8}
+						grabCursor
 						excludeFromDrag=""
 					>
 						<DiscordWindow />
@@ -77,6 +78,7 @@ export const WindowCanvas: React.FC<TWindowCanvasProps> = (props) => {
 						windowCx={windowCx}
 						transparent
 						dragThreshold={8}
+						grabCursor
 						excludeFromDrag=""
 					>
 						<MacosWindow />

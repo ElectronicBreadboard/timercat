@@ -118,14 +118,6 @@ export class WindowCx {
 
 	public unmount(): void {}
 
-	public startDrag(id: TWindowId): void {
-		this.$draggingWindowId.set(id);
-	}
-
-	public endDrag(): void {
-		this.$draggingWindowId.set(null);
-	}
-
 	public open(id: TWindowId): void {
 		this.windows[id].set((prev) => ({ ...prev, visibility: 'visible', zIndex: this._maxZ() + 1 }));
 		this._autoMaximizeIfNeeded(id);
@@ -198,6 +190,14 @@ export class WindowCx {
 
 	public clearFocus(): void {
 		this.$focusedId.set(null);
+	}
+
+	public startDrag(id: TWindowId): void {
+		this.$draggingWindowId.set(id);
+	}
+
+	public endDrag(): void {
+		this.$draggingWindowId.set(null);
 	}
 
 	public setPosition(id: TWindowId, x: number, y: number): void {
