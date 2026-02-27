@@ -6,7 +6,7 @@ import { SessionRepository, type TSessionRow } from './SessionRepository';
 
 export class SessionCx {
 	private readonly _repo = new SessionRepository();
-	private readonly _sessionCompleteListeners: Array<() => void> = [];
+	private readonly _sessionCompleteListeners: (() => void)[] = [];
 
 	public readonly $todayFocusSeconds = createState<number>(0);
 
@@ -65,25 +65,9 @@ export class SessionCx {
 		this._notifySessionComplete();
 	}
 
-	public registerSessionComplete(callback: () => void): () => void {
-		this._sessionCompleteListeners.push(callback);
-		return () => {
-			const i = this._sessionCompleteListeners.indexOf(callback);
-			if (i !== -1) {
-				this._sessionCompleteListeners.splice(i, 1);
-			}
-		};
-	}
-
 	public async getLastWorkSession(minDurationSecs: number): Promise<TSessionRow | null> {
 		const rows = await this.getSessions(0, Date.now(), 50, minDurationSecs);
 		return rows.find((r) => r.session_type === 'pomodoro:work') ?? null;
-	}
-
-	private _notifySessionComplete(): void {
-		for (const listener of this._sessionCompleteListeners) {
-			listener();
-		}
 	}
 
 	public async getSessions(
@@ -103,6 +87,22 @@ export class SessionCx {
 		const completed = row.actual_seconds ?? row.planned_seconds;
 		const overtimeSeconds = Math.max(0, completed - row.planned_seconds);
 		return { overtimeSeconds };
+	}
+
+	public registerSessionComplete(callback: () => void): () => void {
+		this._sessionCompleteListeners.push(callback);
+		return () => {
+			const i = this._sessionCompleteListeners.indexOf(callback);
+			if (i !== -1) {
+				this._sessionCompleteListeners.splice(i, 1);
+			}
+		};
+	}
+
+	private _notifySessionComplete(): void {
+		for (const listener of this._sessionCompleteListeners) {
+			listener();
+		}
 	}
 }
 

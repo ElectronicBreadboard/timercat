@@ -21,27 +21,36 @@ export const ActivityWindow: React.FC = () => {
 		[sessions, selectedId]
 	);
 
+	// MARK: - Actions
+
+	const fetchSessions = React.useCallback(async () => {
+		const { startedAfter, startedBefore } = activitySessionConfig.activitySessionTimeRange();
+		const rows = await sessionCx.getSessions(
+			startedAfter,
+			startedBefore,
+			activitySessionConfig.limit,
+			activitySessionConfig.minDurationSecs
+		);
+		setSessions(rows);
+
+		// Auto-select most recent session on desktop only (mobile shows list first)
+		if (windowCx.$breakpoint.get() !== 'sm') {
+			setSelectedId((prev) => prev ?? rows[0]?.id ?? null);
+		}
+
+		setLoading(false);
+	}, [sessionCx, windowCx]);
+
 	// MARK: - Effects
 
 	React.useEffect(() => {
-		(async () => {
-			const { startedAfter, startedBefore } = activitySessionConfig.activitySessionTimeRange();
-			const rows = await sessionCx.getSessions(
-				startedAfter,
-				startedBefore,
-				activitySessionConfig.limit,
-				activitySessionConfig.minDurationSecs
-			);
-			setSessions(rows);
+		fetchSessions();
+	}, [fetchSessions]);
 
-			// Auto-select most recent session on desktop only (mobile shows list first)
-			if (windowCx.$breakpoint.get() !== 'sm') {
-				setSelectedId((prev) => prev ?? rows[0]?.id ?? null);
-			}
-
-			setLoading(false);
-		})();
-	}, []);
+	React.useEffect(() => {
+		const unregister = sessionCx.registerSessionComplete(fetchSessions);
+		return () => unregister();
+	}, [sessionCx, fetchSessions]);
 
 	// MARK: - Actions
 
