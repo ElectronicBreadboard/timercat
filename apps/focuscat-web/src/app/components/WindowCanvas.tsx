@@ -61,13 +61,13 @@ export const WindowCanvas: React.FC<TWindowCanvasProps> = (props) => {
 			{showWidgets && (
 				<>
 					<DraggableWindow windowId="spotify" windowCx={windowCx} transparent>
-						<SpotifyWindow />
+						<SpotifyWindow onClose={() => windowCx.close('spotify')} />
 					</DraggableWindow>
 					<DraggableWindow windowId="discord" windowCx={windowCx} transparent>
-						<DiscordWindow />
+						<DiscordWindow onClose={() => windowCx.close('discord')} />
 					</DraggableWindow>
 					<DraggableWindow windowId="macos" windowCx={windowCx} transparent>
-						<MacosWindow />
+						<MacosWindow onClose={() => windowCx.close('macos')} />
 					</DraggableWindow>
 				</>
 			)}
