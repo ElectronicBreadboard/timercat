@@ -40,9 +40,12 @@ export class TimerCx implements TTimerCx {
 		this._audioCx = audioCx;
 
 		const app = settingsCx.$appSettings.get();
-		const workSeconds = app.timer.pomodoro.workDurationMinutes * 60;
-		this.$remainingSeconds = createState(workSeconds);
-		this.$totalSeconds = createState(workSeconds);
+		const timerMode = app.timer.timerMode;
+		const sessionType = timerMode === 'countdown' ? 'countdown' : 'pomodoro:work';
+		this.$sessionType.set(sessionType);
+		const duration = this.getDurationForSessionType(sessionType, app.timer);
+		this.$remainingSeconds = createState(duration);
+		this.$totalSeconds = createState(duration);
 		this.$speed = createState(Math.max(1, app.developer.timerSpeed));
 
 		this._unlisteners.push(
@@ -59,6 +62,9 @@ export class TimerCx implements TTimerCx {
 
 				// Apply new duration (if idle and timer settings changed)
 				if (this.$status.get() === 'idle') {
+					this.$sessionType.set(
+						settings.timer.timerMode === 'countdown' ? 'countdown' : 'pomodoro:work'
+					);
 					const sessionType = this.$sessionType.get();
 					const prevDuration =
 						prevSettings != null
@@ -144,10 +150,12 @@ export class TimerCx implements TTimerCx {
 		this.$startTime.set(null);
 		this.$overtimeSeconds.set(0);
 		this.$autoAdvanceCountdownSeconds.set(null);
-		this.$sessionType.set('pomodoro:work');
 		this.$sessionsCompleted.set(0);
 
-		const duration = this.getDurationForSessionType(this.$sessionType.get());
+		const timerMode = this._settingsCx.$appSettings.get().timer.timerMode;
+		const sessionType = timerMode === 'countdown' ? 'countdown' : 'pomodoro:work';
+		this.$sessionType.set(sessionType);
+		const duration = this.getDurationForSessionType(sessionType);
 		this.$totalSeconds.set(duration);
 		this.$remainingSeconds.set(duration);
 		this._updateDocumentTitle();
@@ -211,12 +219,14 @@ export class TimerCx implements TTimerCx {
 
 		this.$status.set('idle');
 		this.$startTime.set(null);
-		this.$sessionType.set('pomodoro:work');
 		this.$sessionsCompleted.set(0);
 		this.$overtimeSeconds.set(0);
 		this.$autoAdvanceCountdownSeconds.set(null);
 
-		const duration = this.getDurationForSessionType('pomodoro:work');
+		const timerMode = this._settingsCx.$appSettings.get().timer.timerMode;
+		const sessionType = timerMode === 'countdown' ? 'countdown' : 'pomodoro:work';
+		this.$sessionType.set(sessionType);
+		const duration = this.getDurationForSessionType(sessionType);
 		this.$totalSeconds.set(duration);
 		this.$remainingSeconds.set(duration);
 		this._updateDocumentTitle();
