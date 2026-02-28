@@ -1,21 +1,25 @@
-import { useCombinedCompute } from 'feature-react/state';
+import { useCombinedCompute, useCompute } from 'feature-react/state';
 import { animate, motion, useMotionValue } from 'motion/react';
 import React from 'react';
-import { cn } from '../../lib';
-import { type TTimerCx } from './TimerCx';
+import { cn } from '@/lib';
+import { TTimerViewCx } from '../TimerViewCx';
 
 export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
-	const { cx, windowSize = 10, sessionsBeforeLongBreak = 4, itemHeight = 28, className } = props;
+	const { cx, windowSize = 10, itemHeight = 28, className } = props;
+	const sessionsBeforeLongBreak = useCompute(
+		cx.$config,
+		({ value }) => value.pomodoro.sessionsBeforeLongBreak
+	);
 
 	const y = useMotionValue(0);
 
 	const { value, isRunning } = useCombinedCompute(
 		[
-			cx.$status,
-			cx.$sessionType,
-			cx.$remainingSeconds,
-			cx.$totalSeconds,
-			cx.$sessionsCompleted
+			cx.timer.$status,
+			cx.timer.$sessionType,
+			cx.timer.$remainingSeconds,
+			cx.timer.$totalSeconds,
+			cx.timer.$sessionsCompleted
 		] as const,
 		([
 			{ value: status = 'idle' },
@@ -84,9 +88,8 @@ export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
 };
 
 interface TSessionWheelProps {
-	cx: TTimerCx;
+	cx: TTimerViewCx;
 	windowSize?: number;
-	sessionsBeforeLongBreak?: number;
 	itemHeight?: number;
 	className?: string;
 }

@@ -1,11 +1,11 @@
 import React from 'react';
-import { TriangleRightIcon } from '../../components';
+import { TriangleRightIcon } from '@/components';
+import { type TTimerViewCx } from '../TimerViewCx';
 import { SessionWheel } from './SessionWheel';
 import { TimeDial } from './TimeDial';
-import { type TTimerCx } from './TimerCx';
 
 export const PomodoroTimerDial: React.FC<TProps> = (props) => {
-	const { cx, previewMinutes, sessionsBeforeLongBreak, onPreviewChange } = props;
+	const { cx } = props;
 
 	// MARK: - UI
 
@@ -15,13 +15,13 @@ export const PomodoroTimerDial: React.FC<TProps> = (props) => {
 			<div className="bg-base-200 absolute inset-x-0 top-0 z-20 h-px" />
 			<div className="bg-base-200 absolute inset-x-0 bottom-0 z-20 h-px" />
 
-			<TimeDial cx={cx} previewMinutes={previewMinutes} onPreviewChange={onPreviewChange} />
+			<TimeDial cx={cx} />
 
 			<div className="bg-base-200 h-16 w-px" />
 
 			{/* Session wheel */}
 			<div className="relative mr-2">
-				<SessionWheel cx={cx} sessionsBeforeLongBreak={sessionsBeforeLongBreak} />
+				<SessionWheel cx={cx} />
 
 				{/* Edge fades */}
 				<div className="from-base-0 pointer-events-none absolute inset-x-0 top-px z-10 h-6 bg-linear-to-b to-transparent" />
@@ -42,8 +42,5 @@ export const PomodoroTimerDial: React.FC<TProps> = (props) => {
 };
 
 interface TProps {
-	cx: TTimerCx;
-	previewMinutes: number | null;
-	sessionsBeforeLongBreak: number;
-	onPreviewChange?: (minutes: number | null) => void;
+	cx: TTimerViewCx;
 }

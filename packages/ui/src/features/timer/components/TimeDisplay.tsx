@@ -1,14 +1,20 @@
 import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { cn, formatTime, formatTimeOfDay } from '../../lib';
-import { type TTimerCx } from './TimerCx';
+import { cn, formatTime, formatTimeOfDay } from '@/lib';
+import { type TTimerViewCx } from '../TimerViewCx';
 
 export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
-	const { cx, previewMinutes, className } = props;
-	const autoAdvanceCountdownSeconds = useFeatureState(cx.$autoAdvanceCountdownSeconds);
+	const { cx, className } = props;
+	const previewMinutes = useFeatureState(cx.$previewMinutes);
+	const autoAdvanceCountdownSeconds = useFeatureState(cx.timer.$autoAdvanceCountdownSeconds);
 
 	const { isOvertime, displaySeconds, displayStartTime, displayEndTime } = useCombinedCompute(
-		[cx.$status, cx.$remainingSeconds, cx.$overtimeSeconds, cx.$startTime] as const,
+		[
+			cx.timer.$status,
+			cx.timer.$remainingSeconds,
+			cx.timer.$overtimeSeconds,
+			cx.timer.$startTime
+		] as const,
 		([
 			{ value: status = 'idle' },
 			{ value: remainingSeconds = 0 },
@@ -39,7 +45,7 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 		}
 	);
 	const { totalWorked, overtimeSeconds } = useCombinedCompute(
-		[cx.$totalSeconds, cx.$overtimeSeconds] as const,
+		[cx.timer.$totalSeconds, cx.timer.$overtimeSeconds] as const,
 		([{ value: totalSeconds = 0 }, { value: overtimeSeconds = 0 }]) => ({
 			totalWorked: totalSeconds + overtimeSeconds,
 			overtimeSeconds
@@ -86,7 +92,6 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 };
 
 interface TTimeDisplayProps {
-	cx: TTimerCx;
-	previewMinutes: number | null;
+	cx: TTimerViewCx;
 	className?: string;
 }

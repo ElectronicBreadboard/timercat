@@ -6,7 +6,7 @@ import {
 	useMotionValueEvent
 } from 'motion/react';
 import React from 'react';
-import { cn } from '../../lib';
+import { cn } from '@/lib';
 
 export const TimeWheel: React.FC<TTimeWheelProps> = (props) => {
 	const {

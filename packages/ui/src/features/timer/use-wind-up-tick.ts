@@ -1,5 +1,5 @@
 import React from 'react';
-import { TTimerCx } from './TimerCx';
+import { TTimerViewCx } from './TimerViewCx';
 
 /**
  * Plays wind-up tick sounds on value changes using a sliding window.
@@ -7,7 +7,7 @@ import { TTimerCx } from './TimerCx';
  * The window's position slides based on drag speed — slow drags use
  * lower variants (1-5), fast drags shift to higher variants (7-11).
  */
-export function useWindUpTick(cx: TTimerCx, options: TWindUpTickOptions = {}) {
+export function useWindUpTick(cx: TTimerViewCx, options: TWindUpTickOptions = {}) {
 	const { tickCount = 11, windowSize = 5, throttleMs = 30, slowMs = 200 } = options;
 
 	const prevValueRef = React.useRef<number | null>(null);
@@ -43,7 +43,7 @@ export function useWindUpTick(cx: TTimerCx, options: TWindUpTickOptions = {}) {
 			}
 			prevValueRef.current = value;
 		},
-		[cx, tickCount, windowSize, throttleMs, slowMs]
+		[tickCount, windowSize, throttleMs, slowMs, cx]
 	);
 
 	return { reset, tick };

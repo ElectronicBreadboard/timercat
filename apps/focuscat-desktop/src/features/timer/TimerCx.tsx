@@ -3,7 +3,6 @@ import { useNavigate } from '@tanstack/react-router';
 import { createState } from 'feature-state';
 import React from 'react';
 import { specta } from '@/environment';
-import { type SoundId } from '@/environment/specta/bindings.gen';
 import { useSettingsCx, type SettingsCx } from '@/features/settings';
 import { toTuple } from '@/lib';
 
@@ -154,10 +153,6 @@ export class TimerCx implements TTimerCx {
 		if (!ok) {
 			console.error('Failed to set timer duration:', err);
 		}
-	}
-
-	public playSound(id: string): void {
-		specta.commands.playSound(id as SoundId);
 	}
 }
 

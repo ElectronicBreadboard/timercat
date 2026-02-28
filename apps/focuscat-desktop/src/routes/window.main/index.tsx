@@ -12,12 +12,12 @@ import {
 	type TCatRef
 } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
-import { useFeatureState } from 'feature-react/state';
+import { useFeatureState, useListener } from 'feature-react/state';
 import React from 'react';
 import { WindowHeader } from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
-import { useTimerCx } from '@/features/timer';
+import { useTimerViewCx } from '@/features/timer';
 import { OverviewCard } from './components';
 
 export const Route = createFileRoute('/window/main/')({
@@ -30,8 +30,8 @@ function RouteComponent() {
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 
-	const timerCx = useTimerCx();
-	const timerStatus = useFeatureState(timerCx.$status);
+	const timerViewCx = useTimerViewCx();
+	const timerStatus = useFeatureState(timerViewCx.timer.$status);
 
 	// Top section (Stats + Cat): width is half of 300px window, height lets cat overflow into timer wheel
 	const topSection = React.useMemo(() => {
@@ -54,10 +54,6 @@ function RouteComponent() {
 
 	const handleActivity = React.useCallback(async () => {
 		await specta.commands.showActivityWindow();
-	}, []);
-
-	const handleTick = React.useCallback(() => {
-		catRef.current?.tap();
 	}, []);
 
 	const handleRandomize = React.useCallback(() => {
@@ -87,6 +83,31 @@ function RouteComponent() {
 		specta.commands.playSound('meow');
 		return timerStatus === 'running' ? { mode: 'both' as const } : undefined;
 	}, [timerStatus]);
+
+	// MARK: - Effects
+
+	useListener(
+		timerViewCx.$previewMinutes,
+		({ value: minutes, prevValue: prevMinutes }) => {
+			if (minutes != null && Math.round(minutes) !== Math.round(prevMinutes ?? minutes + 1)) {
+				catRef.current?.tap();
+			}
+		},
+		[timerViewCx]
+	);
+
+	useListener(
+		timerViewCx.timer.$remainingSeconds,
+		() => {
+			if (
+				timerViewCx.timer.$status.get() === 'running' &&
+				timerViewCx.$previewMinutes.get() == null
+			) {
+				catRef.current?.tap();
+			}
+		},
+		[timerViewCx]
+	);
 
 	// MARK: - UI
 
@@ -140,14 +161,7 @@ function RouteComponent() {
 			</div>
 
 			{/* Timer */}
-			<TimerView
-				cx={timerCx}
-				timerMode={settings.timer.timerMode}
-				sessionsBeforeLongBreak={settings.timer.pomodoro.sessionsBeforeLongBreak}
-				showDevSpeed={settings.features.developer}
-				onTick={handleTick}
-				className="flex-1"
-			/>
+			<TimerView cx={timerViewCx} className="flex-1" />
 		</div>
 	);
 }

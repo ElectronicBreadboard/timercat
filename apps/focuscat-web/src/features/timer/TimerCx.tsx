@@ -6,7 +6,7 @@ import {
 } from '@repo/ui';
 import { createState, TState } from 'feature-state';
 import React from 'react';
-import { TSoundId, useAudioCx, type AudioCx } from '@/features/audio';
+import { useAudioCx, type AudioCx } from '@/features/audio';
 import { useSessionCx, type SessionCx } from '@/features/session';
 import { useSettingsCx, type SettingsCx, type TAppSettings } from '@/features/settings';
 
@@ -223,16 +223,12 @@ export class TimerCx implements TTimerCx {
 	}
 
 	public async setDuration(minutes: number): Promise<void> {
-		if (this.$status.get() !== 'idle') {
+		if (this.$status.get() === 'running') {
 			return;
 		}
 		const seconds = minutes * 60;
 		this.$totalSeconds.set(seconds);
 		this.$remainingSeconds.set(seconds);
-	}
-
-	public playSound(id: string): void {
-		this._audioCx.playSound(id as TSoundId);
 	}
 
 	private _updateDocumentTitle(): void {
@@ -284,10 +280,10 @@ export class TimerCx implements TTimerCx {
 		const oldOvertime = this.$overtimeSeconds.get();
 
 		if (speed === 1 && newRemaining > 0 && newRemaining < oldRemaining) {
-			this.playSound('tick');
+			this._audioCx.playSound('tick');
 		}
 		if (oldOvertime === 0 && newOvertime > 0) {
-			this.playSound('complete');
+			this._audioCx.playSound('complete');
 		}
 
 		this.$remainingSeconds.set(newRemaining);

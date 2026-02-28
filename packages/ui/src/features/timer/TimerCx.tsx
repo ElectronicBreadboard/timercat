@@ -20,7 +20,6 @@ export interface TTimerCx {
 	advance(intention?: string, profileIds?: number[]): Promise<void>;
 	complete(): Promise<void>;
 	setDuration(minutes: number): Promise<void>;
-	playSound?(id: string): void;
 }
 
 const ReactTimerCx = React.createContext<TTimerCx | null>(null);

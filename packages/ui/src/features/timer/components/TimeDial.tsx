@@ -1,18 +1,19 @@
-import { useCombinedCompute } from 'feature-react/state';
+import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { TriangleDownIcon } from '../../components';
-import { type TTimerCx } from './TimerCx';
+import { TriangleDownIcon } from '@/components';
+import { type TTimerViewCx } from '../TimerViewCx';
+import { useWindUpTick } from '../use-wind-up-tick';
 import { TimeWheel } from './TimeWheel';
-import { useWindUpTick } from './useWindUpTick';
 
 export const TimeDial: React.FC<TTimeDialProps> = (props) => {
-	const { cx, previewMinutes, onPreviewChange } = props;
+	const { cx } = props;
+	const previewMinutes = useFeatureState(cx.$previewMinutes);
 
 	const wasRunningRef = React.useRef(false);
 	const windUpTick = useWindUpTick(cx);
 
 	const { value, smooth } = useCombinedCompute(
-		[cx.$status, cx.$remainingSeconds] as const,
+		[cx.timer.$status, cx.timer.$remainingSeconds] as const,
 		([{ value: status = 'idle' }, { value: remainingSeconds = 0 }]) => {
 			const isActive = status !== 'idle';
 			const isPreviewing = previewMinutes != null;
@@ -33,29 +34,29 @@ export const TimeDial: React.FC<TTimeDialProps> = (props) => {
 
 	const handleDragStart = React.useCallback(() => {
 		windUpTick.reset();
-		wasRunningRef.current = cx.$status.get() === 'running';
+		wasRunningRef.current = cx.timer.$status.get() === 'running';
 		if (wasRunningRef.current) {
-			cx.pause();
+			cx.timer.pause();
 		}
 	}, [cx, windUpTick]);
 
 	const handleDragMove = React.useCallback(
 		(minutes: number) => {
 			windUpTick.tick(minutes);
-			onPreviewChange?.(minutes);
+			cx.$previewMinutes.set(minutes);
 		},
-		[onPreviewChange, windUpTick]
+		[cx, windUpTick]
 	);
 
 	const handleDragEnd = React.useCallback(
 		async (minutes: number) => {
-			onPreviewChange?.(null);
-			await cx.setDuration(minutes);
+			cx.$previewMinutes.set(null);
+			await cx.timer.setDuration(minutes);
 			if (wasRunningRef.current) {
-				cx.resume();
+				cx.timer.resume();
 			}
 		},
-		[cx, onPreviewChange]
+		[cx]
 	);
 
 	// MARK: - UI
@@ -88,7 +89,5 @@ export const TimeDial: React.FC<TTimeDialProps> = (props) => {
 };
 
 interface TTimeDialProps {
-	cx: TTimerCx;
-	previewMinutes: number | null;
-	onPreviewChange?: (minutes: number | null) => void;
+	cx: TTimerViewCx;
 }

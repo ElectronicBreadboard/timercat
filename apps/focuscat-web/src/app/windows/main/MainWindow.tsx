@@ -8,17 +8,16 @@ import {
 	SettingsIcon,
 	ShuffleIcon,
 	TimerView,
-	useTimerCx,
 	type TCatFace,
 	type TCatHat,
 	type TCatRef
 } from '@repo/ui';
-import { useFeatureState } from 'feature-react/state';
+import { useFeatureState, useListener } from 'feature-react/state';
 import React from 'react';
 import { OverviewCard, WindowHeader } from '@/app';
 import { useAudioCx } from '@/features/audio';
 import { useSettingsCx } from '@/features/settings';
-import type { TimerCx } from '@/features/timer';
+import { useTimerViewCx, type TimerCx } from '@/features/timer';
 import { SessionSetupView } from './SessionSetupView';
 
 export const MainWindow: React.FC<TMainWindowProps> = (props) => {
@@ -28,7 +27,8 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 
-	const timerCx = useTimerCx<TimerCx>();
+	const timerViewCx = useTimerViewCx();
+	const timerCx = timerViewCx.timer as TimerCx;
 	const timerStatus = useFeatureState(timerCx.$status);
 	const sessionSetupRequested = useFeatureState(timerCx.$sessionSetupRequested);
 
@@ -43,10 +43,6 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 	}, []);
 
 	// MARK: - Actions
-
-	const handleTick = React.useCallback(() => {
-		catRef.current?.tap();
-	}, []);
 
 	const handleRandomize = React.useCallback(() => {
 		const faces = catConfig.parts.face.available;
@@ -74,6 +70,31 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 		audioCx.playSound('meow');
 		return timerStatus === 'running' ? { mode: 'both' as const } : undefined;
 	}, [audioCx, timerStatus]);
+
+	// MARK: - Effects
+
+	useListener(
+		timerViewCx.$previewMinutes,
+		({ value: minutes, prevValue: prevMinutes }) => {
+			if (minutes != null && Math.round(minutes) !== Math.round(prevMinutes ?? minutes + 1)) {
+				catRef.current?.tap();
+			}
+		},
+		[timerViewCx]
+	);
+
+	useListener(
+		timerViewCx.timer.$remainingSeconds,
+		() => {
+			if (
+				timerViewCx.timer.$status.get() === 'running' &&
+				timerViewCx.$previewMinutes.get() == null
+			) {
+				catRef.current?.tap();
+			}
+		},
+		[timerViewCx]
+	);
 
 	// MARK: - UI
 
@@ -132,14 +153,7 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 			</div>
 
 			{/* Timer */}
-			<TimerView
-				cx={timerCx}
-				timerMode={settings.timer.timerMode}
-				sessionsBeforeLongBreak={settings.timer.pomodoro.sessionsBeforeLongBreak}
-				showDevSpeed={settings.features.developer}
-				onTick={handleTick}
-				className="flex-1"
-			/>
+			<TimerView cx={timerViewCx} className="flex-1" />
 		</div>
 	);
 };
