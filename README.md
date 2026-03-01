@@ -51,7 +51,7 @@ We're building focus tools that actually work. No willpower battles. No manual s
   </a>
 </p>
 
-**Free macOS app. Coming soon.**
+**Download:** [macOS (focuscat.app)](https://focuscat.app) · [Mac App Store](https://apps.apple.com/us/app/focus-cat-pomodoro-timer/id6759088013?mt=12) · [Web](https://pomodorocat.com)
 
 Pomodoro timer with a cat companion that reacts to your work. Configure your cycles, block apps during focus time. Enforces breaks so you actually take them.
 
