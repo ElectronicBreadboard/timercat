@@ -12,6 +12,8 @@ export interface TTimerViewCx {
 export interface TTimerViewConfig {
 	pomodoro: {
 		sessionsBeforeLongBreak: number;
+		autoAdvance: boolean;
+		autoAdvanceCountdownSeconds: number;
 	};
 	dev: {
 		showSpeed: boolean;

@@ -16,10 +16,9 @@ export class TimerCx implements TTimerCx {
 	public readonly $remainingSeconds = createState(0);
 	public readonly $totalSeconds = createState(0);
 	public readonly $overtimeSeconds = createState(0);
-	public readonly $autoAdvanceCountdownSeconds = createState<number | null>(null);
 	public readonly $sessionsCompleted = createState(0);
 	public readonly $speed = createState(1);
-	public readonly $startTime = createState<Date | null>(null);
+	public readonly $startedAt = createState<Date | null>(null);
 
 	constructor(settingsCx: SettingsCx, navigate: ReturnType<typeof useNavigate>) {
 		this._settingsCx = settingsCx;
@@ -70,12 +69,9 @@ export class TimerCx implements TTimerCx {
 			const threshold = pomodoro.autoAdvanceCountdownSeconds;
 			const secondsLeft = threshold - timer.overtimeSeconds;
 			const prevSecondsLeft = threshold - prevOvertime;
-			this.$autoAdvanceCountdownSeconds.set(secondsLeft <= 0 ? null : secondsLeft);
 			if (prevSecondsLeft > 0 && secondsLeft <= 0) {
 				this.advance();
 			}
-		} else {
-			this.$autoAdvanceCountdownSeconds.set(null);
 		}
 	}
 
@@ -91,7 +87,7 @@ export class TimerCx implements TTimerCx {
 			await specta.commands.startTimer(intention ?? null, profileIds ?? null)
 		);
 		if (ok) {
-			this.$startTime.set(new Date());
+			this.$startedAt.set(new Date());
 		} else {
 			console.error('Failed to start timer:', err);
 		}
@@ -107,7 +103,7 @@ export class TimerCx implements TTimerCx {
 	public async resume(): Promise<void> {
 		const [ok, , err] = toTuple(await specta.commands.resumeTimer());
 		if (ok) {
-			this.$startTime.set(new Date());
+			this.$startedAt.set(new Date());
 		} else {
 			console.error('Failed to resume timer:', err);
 		}
@@ -116,7 +112,7 @@ export class TimerCx implements TTimerCx {
 	public async reset(): Promise<void> {
 		const [ok, , err] = toTuple(await specta.commands.resetTimer());
 		if (ok) {
-			this.$startTime.set(null);
+			this.$startedAt.set(null);
 		} else {
 			console.error('Failed to reset timer:', err);
 		}
@@ -133,7 +129,7 @@ export class TimerCx implements TTimerCx {
 			await specta.commands.advanceTimer(intention ?? null, profileIds ?? null)
 		);
 		if (ok) {
-			this.$startTime.set(null);
+			this.$startedAt.set(null);
 		} else {
 			console.error('Failed to advance timer:', err);
 		}
@@ -142,7 +138,7 @@ export class TimerCx implements TTimerCx {
 	public async complete(): Promise<void> {
 		const [ok, , err] = toTuple(await specta.commands.completeTimer());
 		if (ok) {
-			this.$startTime.set(null);
+			this.$startedAt.set(null);
 		} else {
 			console.error('Failed to complete timer:', err);
 		}

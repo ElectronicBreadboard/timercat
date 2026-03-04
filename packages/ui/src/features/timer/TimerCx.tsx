@@ -8,10 +8,9 @@ export interface TTimerCx {
 	readonly $remainingSeconds: TState<number, []>;
 	readonly $totalSeconds: TState<number, []>;
 	readonly $overtimeSeconds: TState<number, []>;
-	readonly $autoAdvanceCountdownSeconds: TState<number | null, []>;
 	readonly $sessionsCompleted: TState<number, []>;
 	readonly $speed: TState<number, []>;
-	readonly $startTime: TState<Date | null, []>;
+	readonly $startedAt: TState<Date | null, []>;
 
 	start(intention?: string, profileIds?: number[]): Promise<void>;
 	pause(): Promise<void>;

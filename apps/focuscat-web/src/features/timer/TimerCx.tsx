@@ -26,10 +26,9 @@ export class TimerCx implements TTimerCx {
 	public readonly $remainingSeconds: TState<number, []>;
 	public readonly $totalSeconds: TState<number, []>;
 	public readonly $overtimeSeconds = createState(0);
-	public readonly $autoAdvanceCountdownSeconds = createState<number | null>(null);
 	public readonly $sessionsCompleted = createState(0);
 	public readonly $speed: TState<number, []>;
-	public readonly $startTime = createState<Date | null>(null);
+	public readonly $startedAt = createState<Date | null>(null);
 
 	public readonly $sessionType = createState('pomodoro:work');
 	public readonly $sessionSetupRequested = createState<'start' | 'advance' | null>(null);
@@ -97,7 +96,7 @@ export class TimerCx implements TTimerCx {
 			started_at: Date.now()
 		});
 		this.$status.set('running');
-		this.$startTime.set(new Date());
+		this.$startedAt.set(new Date());
 		this.startLoop();
 	}
 
@@ -115,7 +114,7 @@ export class TimerCx implements TTimerCx {
 			return;
 		}
 		this.$status.set('running');
-		this.$startTime.set(new Date());
+		this.$startedAt.set(new Date());
 		this.startLoop();
 	}
 
@@ -132,9 +131,8 @@ export class TimerCx implements TTimerCx {
 		}
 
 		this.$status.set('idle');
-		this.$startTime.set(null);
+		this.$startedAt.set(null);
 		this.$overtimeSeconds.set(0);
-		this.$autoAdvanceCountdownSeconds.set(null);
 		this.$sessionsCompleted.set(0);
 		this.applyIdleStateFromSettings();
 		this._updateDocumentTitle();
@@ -170,7 +168,6 @@ export class TimerCx implements TTimerCx {
 		this.$totalSeconds.set(duration);
 		this.$remainingSeconds.set(duration);
 		this.$overtimeSeconds.set(0);
-		this.$autoAdvanceCountdownSeconds.set(null);
 
 		this._activeSessionId = await this._sessionCx.createSession({
 			session_type: nextType,
@@ -183,7 +180,7 @@ export class TimerCx implements TTimerCx {
 		});
 
 		this.$status.set('running');
-		this.$startTime.set(new Date());
+		this.$startedAt.set(new Date());
 		this.startLoop();
 	}
 
@@ -197,10 +194,9 @@ export class TimerCx implements TTimerCx {
 		}
 
 		this.$status.set('idle');
-		this.$startTime.set(null);
+		this.$startedAt.set(null);
 		this.$sessionsCompleted.set(0);
 		this.$overtimeSeconds.set(0);
-		this.$autoAdvanceCountdownSeconds.set(null);
 		this.applyIdleStateFromSettings();
 		this._updateDocumentTitle();
 	}
@@ -274,18 +270,17 @@ export class TimerCx implements TTimerCx {
 		this._updateDocumentTitle();
 
 		// Auto-advance
-		const pomodoro = this._settingsCx.$appSettings.get().timer.pomodoro;
-		const shouldCountdown = newOvertime > 0 && pomodoro.autoAdvance;
+		const timerSettings = this._settingsCx.$appSettings.get().timer;
+		const pomodoro = timerSettings.pomodoro;
+		const shouldCountdown =
+			newOvertime > 0 && pomodoro.autoAdvance && timerSettings.timerMode === 'pomodoro';
 
 		if (shouldCountdown) {
 			const secondsLeft = pomodoro.autoAdvanceCountdownSeconds - newOvertime;
-			this.$autoAdvanceCountdownSeconds.set(secondsLeft > 0 ? secondsLeft : null);
 			if (secondsLeft <= 0) {
 				void this.advance();
 				return;
 			}
-		} else {
-			this.$autoAdvanceCountdownSeconds.set(null);
 		}
 	}
 

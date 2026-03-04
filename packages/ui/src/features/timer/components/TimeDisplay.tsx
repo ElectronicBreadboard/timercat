@@ -6,20 +6,19 @@ import { type TTimerViewCx } from '../TimerViewCx';
 export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 	const { cx, className } = props;
 	const previewMinutes = useFeatureState(cx.$previewMinutes);
-	const autoAdvanceCountdownSeconds = useFeatureState(cx.timer.$autoAdvanceCountdownSeconds);
 
 	const { isOvertime, displaySeconds, displayStartTime, displayEndTime } = useCombinedCompute(
 		[
 			cx.timer.$status,
 			cx.timer.$remainingSeconds,
 			cx.timer.$overtimeSeconds,
-			cx.timer.$startTime
+			cx.timer.$startedAt
 		] as const,
 		([
 			{ value: status = 'idle' },
 			{ value: remainingSeconds = 0 },
 			{ value: overtimeSeconds = 0 },
-			{ value: startTime = null }
+			{ value: startedAt = null }
 		]) => {
 			const isRunning = status === 'running';
 			const isOvertime = remainingSeconds === 0 && overtimeSeconds > 0;
@@ -28,7 +27,7 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 				isRunning && remainingSeconds > 0 ? new Date(Date.now() + remainingSeconds * 1000) : null;
 
 			const now = new Date();
-			const displayStartTime = isRunning && startTime != null ? startTime : now;
+			const displayStartTime = isRunning && startedAt != null ? startedAt : now;
 			const displayEndTime =
 				isRunning && endTime != null ? endTime : new Date(now.getTime() + displaySeconds * 1000);
 
@@ -44,15 +43,32 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 					Math.floor(b.displayEndTime.getTime() / 1000)
 		}
 	);
-	const { totalWorked, overtimeSeconds } = useCombinedCompute(
-		[cx.timer.$totalSeconds, cx.timer.$overtimeSeconds] as const,
-		([{ value: totalSeconds = 0 }, { value: overtimeSeconds = 0 }]) => ({
-			totalWorked: totalSeconds + overtimeSeconds,
-			overtimeSeconds
-		}),
+	const { totalWorked, overtimeSeconds, autoAdvanceCountdownSeconds } = useCombinedCompute(
+		[cx.timer.$totalSeconds, cx.timer.$overtimeSeconds, cx.$timerMode, cx.$config] as const,
+		([
+			{ value: totalSeconds = 0 },
+			{ value: overtimeSeconds = 0 },
+			{ value: timerMode = 'pomodoro' },
+			{ value: config }
+		]) => {
+			const threshold = config.pomodoro.autoAdvanceCountdownSeconds;
+			const autoAdvanceCountdownSeconds =
+				timerMode === 'pomodoro' && config.pomodoro.autoAdvance && overtimeSeconds > 0
+					? Math.max(0, threshold - overtimeSeconds) || null
+					: null;
+
+			return {
+				totalWorked: totalSeconds + overtimeSeconds,
+				overtimeSeconds,
+				autoAdvanceCountdownSeconds
+			};
+		},
 		[],
 		{
-			isEqual: (a, b) => a.totalWorked === b.totalWorked && a.overtimeSeconds === b.overtimeSeconds
+			isEqual: (a, b) =>
+				a.totalWorked === b.totalWorked &&
+				a.overtimeSeconds === b.overtimeSeconds &&
+				a.autoAdvanceCountdownSeconds === b.autoAdvanceCountdownSeconds
 		}
 	);
 

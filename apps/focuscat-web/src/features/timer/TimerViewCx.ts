@@ -15,7 +15,7 @@ export class TimerViewCx implements TTimerViewCx {
 	public readonly $timerMode = createState<'countdown' | 'pomodoro'>('pomodoro');
 	public readonly $previewMinutes = createState<number | null>(null);
 	public readonly $config = createState<TTimerViewConfig>({
-		pomodoro: { sessionsBeforeLongBreak: 4 },
+		pomodoro: { sessionsBeforeLongBreak: 4, autoAdvance: false, autoAdvanceCountdownSeconds: 5 },
 		dev: { showSpeed: false }
 	});
 
@@ -29,7 +29,11 @@ export class TimerViewCx implements TTimerViewCx {
 		const s = settingsCx.$appSettings.get();
 		this.$timerMode.set(s.timer.timerMode);
 		this.$config.set({
-			pomodoro: { sessionsBeforeLongBreak: s.timer.pomodoro.sessionsBeforeLongBreak },
+			pomodoro: {
+				sessionsBeforeLongBreak: s.timer.pomodoro.sessionsBeforeLongBreak,
+				autoAdvance: s.timer.pomodoro.autoAdvance,
+				autoAdvanceCountdownSeconds: s.timer.pomodoro.autoAdvanceCountdownSeconds
+			},
 			dev: { showSpeed: s.features.developer }
 		});
 
@@ -39,7 +43,11 @@ export class TimerViewCx implements TTimerViewCx {
 				timerCx.reset();
 			}
 			this.$config.set({
-				pomodoro: { sessionsBeforeLongBreak: value.timer.pomodoro.sessionsBeforeLongBreak },
+				pomodoro: {
+					sessionsBeforeLongBreak: value.timer.pomodoro.sessionsBeforeLongBreak,
+					autoAdvance: value.timer.pomodoro.autoAdvance,
+					autoAdvanceCountdownSeconds: value.timer.pomodoro.autoAdvanceCountdownSeconds
+				},
 				dev: { showSpeed: value.features.developer }
 			});
 		});
