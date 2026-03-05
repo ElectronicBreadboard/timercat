@@ -8,6 +8,12 @@ import { toTuple } from '@/lib';
 
 export class TimerCx implements TTimerCx {
 	private _unlisten?: () => void;
+
+	// Async init can finish after unmount (StrictMode/dev remount), so prevent late event subscriptions
+	private _isDisposed = false;
+	// Only one window should run timer side effects to avoid duplicate side effects
+	private readonly _enableSideEffects: boolean;
+
 	private readonly _settingsCx: SettingsCx;
 	private readonly _navigate: ReturnType<typeof useNavigate>;
 
@@ -20,21 +26,41 @@ export class TimerCx implements TTimerCx {
 	public readonly $speed = createState(1);
 	public readonly $startedAt = createState<Date | null>(null);
 
-	constructor(settingsCx: SettingsCx, navigate: ReturnType<typeof useNavigate>) {
+	constructor(
+		settingsCx: SettingsCx,
+		navigate: ReturnType<typeof useNavigate>,
+		enableSideEffects: boolean
+	) {
 		this._settingsCx = settingsCx;
 		this._navigate = navigate;
+		this._enableSideEffects = enableSideEffects;
 		this.init();
 	}
 
 	private async init(): Promise<void> {
+		if (this._isDisposed) {
+			return;
+		}
 		const timer = await specta.commands.getTimer();
+		if (this._isDisposed) {
+			return;
+		}
 		this.applyTimerUpdate(timer);
-		this._unlisten = await specta.events.timerUpdatedEvent.listen((event) => {
+		const unlisten = await specta.events.timerUpdatedEvent.listen((event) => {
+			if (this._isDisposed) {
+				return;
+			}
 			this.applyTimerUpdate(event.payload);
 		});
+		if (this._isDisposed) {
+			unlisten();
+			return;
+		}
+		this._unlisten = unlisten;
 	}
 
 	public unmount(): void {
+		this._isDisposed = true;
 		this._unlisten?.();
 	}
 
@@ -63,14 +89,19 @@ export class TimerCx implements TTimerCx {
 		}
 
 		// Auto-advance when overtime reaches threshold
+		// Note: Side effects are gated so only one designated owner triggers them in this window runtime
 		const s = this._settingsCx.$appSettings.get();
 		const pomodoro = s.timer.pomodoro;
-		if (s.timer.timerMode === 'pomodoro' && pomodoro.autoAdvance && timer.overtimeSeconds > 0) {
+		const shouldCountdown =
+			this._enableSideEffects &&
+			timer.overtimeSeconds > 0 &&
+			pomodoro.autoAdvance &&
+			s.timer.timerMode === 'pomodoro';
+		if (shouldCountdown) {
 			const threshold = pomodoro.autoAdvanceCountdownSeconds;
-			const secondsLeft = threshold - timer.overtimeSeconds;
-			const prevSecondsLeft = threshold - prevOvertime;
-			if (prevSecondsLeft > 0 && secondsLeft <= 0) {
-				this.advance();
+			const crossedThreshold = prevOvertime < threshold && timer.overtimeSeconds >= threshold;
+			if (crossedThreshold) {
+				void this.advance();
 			}
 		}
 	}
@@ -152,14 +183,20 @@ export class TimerCx implements TTimerCx {
 	}
 }
 
-export const TimerCxProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const TimerCxProvider: React.FC<TTimerCxProviderProps> = (props) => {
+	const { children, enableSideEffects = false } = props;
 	const navigate = useNavigate();
 	const settingsCx = useSettingsCx();
 
 	const cx = useMemoCleanup(() => {
-		const timerCx = new TimerCx(settingsCx, navigate);
+		const timerCx = new TimerCx(settingsCx, navigate, enableSideEffects);
 		return [timerCx, () => timerCx.unmount()];
 	}, []);
 
 	return <BaseTimerCxProvider value={cx}>{children}</BaseTimerCxProvider>;
 };
+
+interface TTimerCxProviderProps {
+	children: React.ReactNode;
+	enableSideEffects?: boolean;
+}

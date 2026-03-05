@@ -10,7 +10,7 @@ export const Route = createFileRoute('/window/main')({
 function LayoutComponent() {
 	return (
 		<SettingsCxProvider>
-			<TimerCxProvider>
+			<TimerCxProvider enableSideEffects>
 				<ThemeProvider>
 					<Outlet />
 				</ThemeProvider>

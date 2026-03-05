@@ -255,13 +255,13 @@ export class TimerCx implements TTimerCx {
 		const newRemaining = Math.max(0, this._remainingAtStart - elapsed);
 		const newOvertime = Math.max(0, elapsed - this._remainingAtStart);
 
-		const oldRemaining = this.$remainingSeconds.get();
-		const oldOvertime = this.$overtimeSeconds.get();
+		const prevRemaining = this.$remainingSeconds.get();
+		const prevOvertime = this.$overtimeSeconds.get();
 
-		if (speed === 1 && newRemaining > 0 && newRemaining < oldRemaining) {
+		if (speed === 1 && newRemaining > 0 && newRemaining < prevRemaining) {
 			this._audioCx.playSound('tick');
 		}
-		if (oldOvertime === 0 && newOvertime > 0) {
+		if (prevOvertime === 0 && newOvertime > 0) {
 			this._audioCx.playSound('complete');
 		}
 
@@ -269,17 +269,16 @@ export class TimerCx implements TTimerCx {
 		this.$overtimeSeconds.set(newOvertime);
 		this._updateDocumentTitle();
 
-		// Auto-advance
+		// Auto-advance when overtime reaches threshold
 		const timerSettings = this._settingsCx.$appSettings.get().timer;
 		const pomodoro = timerSettings.pomodoro;
 		const shouldCountdown =
 			newOvertime > 0 && pomodoro.autoAdvance && timerSettings.timerMode === 'pomodoro';
-
 		if (shouldCountdown) {
-			const secondsLeft = pomodoro.autoAdvanceCountdownSeconds - newOvertime;
-			if (secondsLeft <= 0) {
+			const threshold = pomodoro.autoAdvanceCountdownSeconds;
+			const crossedThreshold = prevOvertime < threshold && newOvertime >= threshold;
+			if (crossedThreshold) {
 				void this.advance();
-				return;
 			}
 		}
 	}
