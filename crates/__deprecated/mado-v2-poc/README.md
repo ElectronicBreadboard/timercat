@@ -119,4 +119,4 @@ The monitor runs in a **spawned thread**, but requires the **main thread to run 
 ## See Also
 
 - [Decision Document](../../docs/decisions/why-swift-for-mado-macos.md) - Why we chose Swift
-- [Mado v1](../__deprecated/mado/) - Original Rust implementation
+- [Mado v1](../_deprecated/mado/) - Original Rust implementation

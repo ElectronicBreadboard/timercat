@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = ["apps/*/src-tauri", "crates/*"]
-exclude = ["crates/__deprecated"]
+exclude = ["crates/_deprecated"]
 
 [workspace.package]
 authors = ["@bennobuilder"]
