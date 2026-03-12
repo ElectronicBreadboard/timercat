@@ -45,7 +45,7 @@
 		"validation-adapters": "^0.0.37"
 	},
 	"devDependencies": {
-		"@content-collections/core": "^0.14.1",
+		"@content-collections/core": "^0.14.2",
 		"@content-collections/mdx": "^0.2.2",
 		"@content-collections/vite": "^0.2.9",
 		"@mdx-js/rollup": "^3.1.1",
@@ -56,7 +56,7 @@
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
 		"@vitejs/plugin-react": "^5.1.4",
-		"nitro": "3.0.260311-beta",
+		"nitro": "3.0.1-alpha.2",
 		"tailwindcss": "^4.2.1",
 		"vite-tsconfig-paths": "^6.1.1"
 	}
