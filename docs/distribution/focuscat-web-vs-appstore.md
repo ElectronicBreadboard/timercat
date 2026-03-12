@@ -1,14 +1,14 @@
-# Web vs App Store distribution (Focuscat)
+# Web vs App Store distribution (FocusCat)
 
 What's different between the two distribution channels, and why.
 
 ## Why two versions?
 
-The Mac App Store has three restrictions that limit Focuscat's functionality:
+The Mac App Store has three restrictions that limit FocusCat's functionality:
 
-1. **[App Sandbox](https://developer.apple.com/documentation/security/app-sandbox) (required)**. Sandboxed apps cannot access other processes. This blocks cross-process Accessibility API calls, which Focuscat uses for window title tracking.
+1. **[App Sandbox](https://developer.apple.com/documentation/security/app-sandbox) (required)**. Sandboxed apps cannot access other processes. This blocks cross-process Accessibility API calls, which FocusCat uses for window title tracking.
 2. **No private APIs ([guideline 2.5.1](https://developer.apple.com/app-store/review/guidelines/#software-requirements))**. Apple rejects apps that use non-public APIs. Tauri's `macOSPrivateApi` option (needed for transparent/overlay windows) enables a [transparent background API](https://v2.tauri.app/reference/config/) that counts as private API usage, so the cat widget can't be included.
-3. **Input Monitoring for non-accessibility ([guideline 2.4.5](https://developer.apple.com/app-store/review/guidelines/#performance))**. Apps may not use Input Monitoring to read keystrokes for non-accessibility purposes. Focuscat uses it for idle detection (e.g. AFK) and cat reaction to keypress, so the App Store build does not use it.
+3. **Input Monitoring for non-accessibility ([guideline 2.4.5](https://developer.apple.com/app-store/review/guidelines/#performance))**. Apps may not use Input Monitoring to read keystrokes for non-accessibility purposes. FocusCat uses it for idle detection (e.g. AFK) and cat reaction to keypress, so the App Store build does not use it.
 
 The web version has neither restriction, so it can offer full functionality.
 
@@ -27,9 +27,9 @@ The web version has neither restriction, so it can offer full functionality.
 
 ### Window title tracking
 
-Window tracking uses the Accessibility API (`AXUIElementCreateApplication`, `AXObserverCreate`) to read other apps' window titles, bounds, and focus state. This requires cross-process access because the Focuscat process reads UI state from other running apps.
+Window tracking uses the Accessibility API (`AXUIElementCreateApplication`, `AXObserverCreate`) to read other apps' window titles, bounds, and focus state. This requires cross-process access because the FocusCat process reads UI state from other running apps.
 
-The [App Sandbox blocks cross-process Accessibility access](https://developer.apple.com/forums/thread/749494). Same-process AX access works fine (Focuscat can observe its own window changes), but the sandbox prevents reading any other app's windows. In our testing, `AXIsProcessTrusted()` returned `true` and `AXObserverCreate` succeeded, but the observer never received notifications for other apps, and `AXUIElementCopyAttributeValue` returned `nil` for their windows.
+The [App Sandbox blocks cross-process Accessibility access](https://developer.apple.com/forums/thread/749494). Same-process AX access works fine (FocusCat can observe its own window changes), but the sandbox prevents reading any other app's windows. In our testing, `AXIsProcessTrusted()` returned `true` and `AXObserverCreate` succeeded, but the observer never received notifications for other apps, and `AXUIElementCopyAttributeValue` returned `nil` for their windows.
 
 We have not found an alternative API that provides window titles from a sandboxed app. The candidates we looked at:
 

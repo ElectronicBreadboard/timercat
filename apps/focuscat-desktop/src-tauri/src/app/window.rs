@@ -33,11 +33,11 @@ impl Window {
     /// Window title.
     pub fn title(&self) -> &'static str {
         return match self {
-            Self::Main => "Focuscat",
-            Self::Cat => "Focuscat",
-            Self::Settings => "Focuscat Settings",
-            Self::Activity => "Focuscat Activity",
-            Self::Blocker => "Focuscat",
+            Self::Main => "FocusCat",
+            Self::Cat => "FocusCat",
+            Self::Settings => "FocusCat Settings",
+            Self::Activity => "FocusCat Activity",
+            Self::Blocker => "FocusCat",
         };
     }
 

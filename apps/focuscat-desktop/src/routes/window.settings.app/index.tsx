@@ -84,7 +84,7 @@ function RouteComponent() {
 								url={appConfig.distribution.docsAppStore}
 							/>
 						) : (
-							'Start Focuscat when you log in'
+							'Start FocusCat when you log in'
 						)
 					}
 					disabled={isAppStore}

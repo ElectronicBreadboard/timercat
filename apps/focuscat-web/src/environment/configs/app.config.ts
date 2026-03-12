@@ -32,7 +32,7 @@ export const appConfig = {
 		email: 'support@focuscat.app',
 		githubIssues: 'https://github.com/builder-group/isshin/issues',
 		mailto: (subject: string) =>
-			`mailto:${appConfig.help.email}?subject=${encodeURIComponent(`[Focuscat] ${subject}`)}`,
+			`mailto:${appConfig.help.email}?subject=${encodeURIComponent(`[FocusCat] ${subject}`)}`,
 		legal: {
 			privacy: 'https://focuscat.app/legal/privacy',
 			terms: 'https://focuscat.app/legal/terms'

@@ -1,8 +1,8 @@
 {
 	"$schema": "https://schema.tauri.app/config/2",
-	"productName": "Focuscat",
+	"productName": "FocusCat",
 	"version": "0.0.36",
-	"mainBinaryName": "Focuscat",
+	"mainBinaryName": "FocusCat",
 	"identifier": "com.buildergroup.focuscat",
 	"bundle": {
 		"createUpdaterArtifacts": true

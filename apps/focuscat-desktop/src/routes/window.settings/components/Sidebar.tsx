@@ -91,7 +91,7 @@ export const Sidebar: React.FC<TSidebarProps> = (props) => {
 					className="w-full"
 					onClick={() => specta.commands.quitApp()}
 				>
-					Quit Focuscat
+					Quit FocusCat
 				</Button>
 				<p className="text-base-400 text-center text-xs">{appInfo.version}</p>
 			</div>

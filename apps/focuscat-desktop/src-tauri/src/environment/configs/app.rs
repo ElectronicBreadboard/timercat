@@ -9,11 +9,11 @@ impl AppConfig {
     }
 
     pub fn app_name() -> &'static str {
-        return "Focuscat";
+        return "FocusCat";
     }
 
     pub fn app_title() -> &'static str {
-        return "Focuscat";
+        return "FocusCat";
     }
 
     pub fn tray_tooltip() -> &'static str {

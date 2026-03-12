@@ -71,7 +71,7 @@ export const Sidebar: React.FC<TSidebarProps> = (props) => {
 					}
 					nativeButton={false}
 				>
-					Get Focuscat
+					Get FocusCat
 				</Button>
 				<p className="text-base-400 text-center text-xs">{appConfig.version}</p>
 			</div>

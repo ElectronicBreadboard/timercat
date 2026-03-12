@@ -49,7 +49,7 @@ function RouteComponent() {
 			</SettingGroup>
 
 			<div className="text-base-400 space-y-1 text-center text-xs">
-				<p>Focuscat {appInfo.version}</p>
+				<p>FocusCat {appInfo.version}</p>
 				<p>© {new Date().getFullYear()} builder.group</p>
 			</div>
 		</div>

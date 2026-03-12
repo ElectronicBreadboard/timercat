@@ -1,8 +1,8 @@
 {
 	"$schema": "https://schema.tauri.app/config/2",
-	"productName": "Focuscat",
+	"productName": "FocusCat",
 	"version": "0.0.36",
-	"mainBinaryName": "Focuscat",
+	"mainBinaryName": "FocusCat",
 	"identifier": "com.buildergroup.focuscat",
 	"build": {
 		"features": [
@@ -18,7 +18,7 @@
 			"minimumSystemVersion": "12.0",
 			"entitlements": "./Entitlements.plist",
 			"files": {
-				"embedded.provisionprofile": "../.local/Focuscat.provisionprofile"
+				"embedded.provisionprofile": "../.local/FocusCat.provisionprofile"
 			}
 		}
 	}
