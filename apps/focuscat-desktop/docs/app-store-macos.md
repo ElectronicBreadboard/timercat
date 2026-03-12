@@ -1,4 +1,4 @@
-# Mac App Store distribution (FocusCat)
+# Mac App Store distribution
 
 Reference: [Tauri App Store guide](https://v2.tauri.app/distribute/app-store/)
 

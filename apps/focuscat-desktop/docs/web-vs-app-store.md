@@ -1,4 +1,4 @@
-# Web vs App Store distribution (FocusCat)
+# Web vs App Store distribution
 
 What's different between the two distribution channels, and why.
 
