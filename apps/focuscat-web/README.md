@@ -1,1 +1,1 @@
-# `@repo/web`
+# `@repo/focuscat-web`
