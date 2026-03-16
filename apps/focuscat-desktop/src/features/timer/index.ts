@@ -1,3 +1,4 @@
 export { useTimerCx } from '@repo/ui';
-export * from './TimerCx';
+export * from './modes';
+export * from './TimerCxProvider';
 export * from './TimerViewCx';

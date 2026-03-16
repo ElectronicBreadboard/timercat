@@ -1,7 +1,8 @@
 import {
 	useMemoCleanup,
 	useTimerCx,
-	type TTimerCx,
+	type TCountdownCx,
+	type TPomodoroCx,
 	type TTimerViewConfig,
 	type TTimerViewCx
 } from '@repo/ui';
@@ -10,8 +11,7 @@ import { specta } from '@/environment';
 import { useSettingsCx, type SettingsCx } from '@/features/settings';
 
 export class TimerViewCx implements TTimerViewCx {
-	public readonly timer: TTimerCx;
-	public readonly $timerMode = createState<'countdown' | 'pomodoro'>('pomodoro');
+	public readonly timer: TCountdownCx | TPomodoroCx;
 	public readonly $previewMinutes = createState<number | null>(null);
 	public readonly $config = createState<TTimerViewConfig>({
 		pomodoro: { sessionsBeforeLongBreak: 4, autoAdvance: false, autoAdvanceCountdownSeconds: 5 },
@@ -20,11 +20,10 @@ export class TimerViewCx implements TTimerViewCx {
 
 	private _unlisten?: () => void;
 
-	constructor(timerCx: TTimerCx, settingsCx: SettingsCx) {
+	constructor(timerCx: TCountdownCx | TPomodoroCx, settingsCx: SettingsCx) {
 		this.timer = timerCx;
 
 		const s = settingsCx.$appSettings.get();
-		this.$timerMode.set(s.timer.timerMode);
 		this.$config.set({
 			pomodoro: {
 				sessionsBeforeLongBreak: s.timer.pomodoro.sessionsBeforeLongBreak,
@@ -34,11 +33,7 @@ export class TimerViewCx implements TTimerViewCx {
 			dev: { showSpeed: s.features.developer }
 		});
 
-		this._unlisten = settingsCx.$appSettings.listen(({ value, prevValue }) => {
-			if (value.timer.timerMode !== prevValue?.timer.timerMode) {
-				this.$timerMode.set(value.timer.timerMode);
-				timerCx.reset();
-			}
+		this._unlisten = settingsCx.$appSettings.listen(({ value }) => {
 			this.$config.set({
 				pomodoro: {
 					sessionsBeforeLongBreak: value.timer.pomodoro.sessionsBeforeLongBreak,
@@ -60,7 +55,7 @@ export class TimerViewCx implements TTimerViewCx {
 }
 
 export function useTimerViewCx(): TTimerViewCx {
-	const timerCx = useTimerCx();
+	const timerCx = useTimerCx<TCountdownCx | TPomodoroCx>();
 	const settingsCx = useSettingsCx();
 
 	return useMemoCleanup(() => {

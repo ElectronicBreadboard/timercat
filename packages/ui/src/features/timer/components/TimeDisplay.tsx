@@ -44,17 +44,11 @@ export const TimeDisplay: React.FC<TTimeDisplayProps> = (props) => {
 		}
 	);
 	const { totalWorked, overtimeSeconds, autoAdvanceCountdownSeconds } = useCombinedCompute(
-		[cx.timer.$totalSeconds, cx.timer.$overtimeSeconds, cx.$timerMode, cx.$config] as const,
-		([
-			{ value: totalSeconds = 0 },
-			{ value: overtimeSeconds = 0 },
-			{ value: timerMode = 'pomodoro' },
-			{ value: config }
-		]) => {
-			const threshold = config.pomodoro.autoAdvanceCountdownSeconds;
+		[cx.timer.$totalSeconds, cx.timer.$overtimeSeconds, cx.$config] as const,
+		([{ value: totalSeconds = 0 }, { value: overtimeSeconds = 0 }, { value: config }]) => {
 			const autoAdvanceCountdownSeconds =
-				timerMode === 'pomodoro' && config.pomodoro.autoAdvance && overtimeSeconds > 0
-					? Math.max(0, threshold - overtimeSeconds) || null
+				config.pomodoro.autoAdvance && overtimeSeconds > 0
+					? Math.max(0, config.pomodoro.autoAdvanceCountdownSeconds - overtimeSeconds) || null
 					: null;
 
 			return {

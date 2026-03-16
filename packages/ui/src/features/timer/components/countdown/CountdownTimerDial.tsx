@@ -1,6 +1,6 @@
 import React from 'react';
-import { type TTimerViewCx } from '../TimerViewCx';
-import { TimeDial } from './TimeDial';
+import { type TTimerViewCx } from '../../TimerViewCx';
+import { TimeDial } from '../TimeDial';
 
 export const CountdownTimerDial: React.FC<TProps> = (props) => {
 	const { cx } = props;

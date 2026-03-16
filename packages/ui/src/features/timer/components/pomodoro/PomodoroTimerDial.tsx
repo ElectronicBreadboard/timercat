@@ -1,8 +1,8 @@
 import React from 'react';
 import { TriangleRightIcon } from '@/components';
-import { type TTimerViewCx } from '../TimerViewCx';
-import { SessionWheel } from './SessionWheel';
-import { TimeDial } from './TimeDial';
+import { type TTimerViewCx } from '../../TimerViewCx';
+import { SessionWheel } from '../SessionWheel';
+import { TimeDial } from '../TimeDial';
 
 export const PomodoroTimerDial: React.FC<TProps> = (props) => {
 	const { cx } = props;

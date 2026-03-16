@@ -12,11 +12,10 @@ export interface TTimerCx {
 	readonly $speed: TState<number, []>;
 	readonly $startedAt: TState<Date | null, []>;
 
-	start(intention?: string, profileIds?: number[]): Promise<void>;
+	start(): Promise<void>;
 	pause(): Promise<void>;
 	resume(): Promise<void>;
 	reset(): Promise<void>;
-	advance(intention?: string, profileIds?: number[]): Promise<void>;
 	complete(): Promise<void>;
 	setDuration(minutes: number): Promise<void>;
 }

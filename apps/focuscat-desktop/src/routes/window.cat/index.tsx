@@ -10,7 +10,9 @@ import {
 	PauseIcon,
 	PlayIcon,
 	SkipForwardIcon,
-	type TCatRef
+	type TCatRef,
+	type TCountdownCx,
+	type TPomodoroCx
 } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -28,7 +30,7 @@ export const Route = createFileRoute('/window/cat/')({
 function RouteComponent() {
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
-	const timerCx = useTimerCx();
+	const timerCx = useTimerCx<TCountdownCx | TPomodoroCx>();
 	const catRef = React.useRef<TCatRef>(null);
 
 	const { isBreak, isOvertime, isRunning, isPaused, displayTime } = useCombinedCompute(
@@ -82,7 +84,9 @@ function RouteComponent() {
 	}, [timerCx, isRunning, isPaused]);
 
 	const handleAdvance = React.useCallback(async () => {
-		await timerCx.advance();
+		if ('advance' in timerCx) {
+			await timerCx.advance();
+		}
 	}, [timerCx]);
 
 	const handleCatTap = React.useCallback(() => {
@@ -155,12 +159,14 @@ function RouteComponent() {
 						>
 							{isRunning ? <PauseIcon className="size-3.5" /> : <PlayIcon className="size-3.5" />}
 						</Button>
-						<Button
-							className="text-base-400 hover:text-base-950 flex items-center p-1 transition-colors"
-							onClick={handleAdvance}
-						>
-							<SkipForwardIcon className="size-3.5" />
-						</Button>
+						{timerCx.mode === 'pomodoro' && (
+							<Button
+								className="text-base-400 hover:text-base-950 flex items-center p-1 transition-colors"
+								onClick={handleAdvance}
+							>
+								<SkipForwardIcon className="size-3.5" />
+							</Button>
+						)}
 					</div>
 				</div>
 

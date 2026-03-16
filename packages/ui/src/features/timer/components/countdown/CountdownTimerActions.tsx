@@ -1,30 +1,16 @@
 import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
-import {
-	BriefcaseIcon,
-	Button,
-	CheckIcon,
-	CoffeeIcon,
-	IconButton,
-	PauseIcon,
-	PlayIcon,
-	XIcon
-} from '@/components';
+import { Button, CheckIcon, IconButton, PauseIcon, PlayIcon, XIcon } from '@/components';
 import { cn } from '@/lib';
-import { type TTimerCx } from '../TimerCx';
+import { type TCountdownCx } from '../../modes';
 
-export const PomodoroTimerActions: React.FC<TProps> = (props) => {
+export const CountdownTimerActions: React.FC<TProps> = (props) => {
 	const { cx, className } = props;
 
-	const { status, isBreak, isOvertime } = useCombinedCompute(
-		[cx.$status, cx.$sessionType, cx.$overtimeSeconds] as const,
-		([
-			{ value: status = 'idle' },
-			{ value: sessionType = 'pomodoro:work' },
-			{ value: overtimeSeconds = 0 }
-		]) => ({
+	const { status, isOvertime } = useCombinedCompute(
+		[cx.$status, cx.$overtimeSeconds] as const,
+		([{ value: status = 'idle' }, { value: overtimeSeconds = 0 }]) => ({
 			status,
-			isBreak: !sessionType.endsWith(':work'),
 			isOvertime: overtimeSeconds > 0
 		})
 	);
@@ -35,7 +21,6 @@ export const PomodoroTimerActions: React.FC<TProps> = (props) => {
 		right: TActionSlot | null;
 	} => {
 		const handleStart = () => cx.start();
-		const handleAdvance = () => cx.advance();
 		const handlePause = () => cx.pause();
 		const handleResume = () => cx.resume();
 		const handleComplete = () => cx.complete();
@@ -45,7 +30,7 @@ export const PomodoroTimerActions: React.FC<TProps> = (props) => {
 		if (status === 'idle') {
 			return {
 				left: null,
-				center: { type: 'text', text: 'START SESSION', onClick: handleStart },
+				center: { type: 'text', text: 'START', onClick: handleStart },
 				right: null
 			};
 		}
@@ -53,12 +38,8 @@ export const PomodoroTimerActions: React.FC<TProps> = (props) => {
 		// Overtime
 		if (isOvertime) {
 			return {
-				left: { type: 'icon', icon: <CheckIcon size={18} />, onClick: handleComplete },
-				center: {
-					type: 'icon',
-					icon: isBreak ? <BriefcaseIcon size={24} /> : <CoffeeIcon size={24} />,
-					onClick: handleAdvance
-				},
+				left: null,
+				center: { type: 'icon', icon: <CheckIcon size={24} />, onClick: handleComplete },
 				right: {
 					type: 'icon',
 					icon: status === 'running' ? <PauseIcon size={18} /> : <PlayIcon size={18} />,
@@ -80,13 +61,9 @@ export const PomodoroTimerActions: React.FC<TProps> = (props) => {
 		return {
 			left: { type: 'icon', icon: <XIcon size={18} />, onClick: handleCancel },
 			center: { type: 'icon', icon: <PlayIcon size={24} />, onClick: handleResume },
-			right: {
-				type: 'icon',
-				icon: isBreak ? <BriefcaseIcon size={18} /> : <CoffeeIcon size={18} />,
-				onClick: handleAdvance
-			}
+			right: null
 		};
-	}, [status, isBreak, isOvertime, cx]);
+	}, [status, isOvertime, cx]);
 
 	function renderSlot(action: TActionSlot | null, slot: 'left' | 'center' | 'right') {
 		if (!action || action.type === 'none') {
@@ -133,11 +110,11 @@ export const PomodoroTimerActions: React.FC<TProps> = (props) => {
 };
 
 interface TProps {
-	cx: TTimerCx;
+	cx: TCountdownCx;
 	className?: string;
 }
 
 type TActionSlot =
-	| { type: 'none'; text?: string }
+	| { type: 'none' }
 	| { type: 'text'; text: string; onClick: () => void }
 	| { type: 'icon'; icon: React.ReactNode; onClick: () => void };

@@ -1,4 +1,4 @@
-import { Button, Input } from '@repo/ui';
+import { Button, Input, type TPomodoroCx } from '@repo/ui';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
@@ -18,7 +18,7 @@ export const Route = createFileRoute('/window/main/setup/')({
 
 function RouteComponent() {
 	const navigate = useNavigate();
-	const timerCx = useTimerCx();
+	const timerCx = useTimerCx<TPomodoroCx>();
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 	const { advance } = Route.useSearch();

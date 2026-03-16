@@ -1,5 +1,6 @@
+use super::modes::TimerMode;
 use crate::features::session::session::{Session, SessionEvent, SessionStatus, SessionType};
-use crate::features::settings::types::{AppSettings, TimerModeEnum};
+use crate::features::settings::types::AppSettings;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
@@ -111,108 +112,4 @@ pub enum TimerStatus {
     Idle,
     Running,
     Paused,
-}
-
-// MARK: - Timer mode
-
-#[derive(Debug, Clone)]
-pub enum TimerMode {
-    Pomodoro {
-        work_duration_seconds: u32,
-        short_break_duration_seconds: u32,
-        long_break_duration_seconds: u32,
-        sessions_before_long_break: u32,
-    },
-    Countdown {
-        duration_seconds: u32,
-    },
-}
-
-impl TimerMode {
-    pub fn from_settings(settings: &AppSettings) -> Self {
-        return match settings.timer.timer_mode {
-            TimerModeEnum::Pomodoro => {
-                let p = &settings.timer.pomodoro;
-                Self::Pomodoro {
-                    work_duration_seconds: p.work_duration_minutes * 60,
-                    short_break_duration_seconds: p.short_break_minutes * 60,
-                    long_break_duration_seconds: p.long_break_minutes * 60,
-                    sessions_before_long_break: p.sessions_before_long_break,
-                }
-            }
-            TimerModeEnum::Countdown => Self::Countdown {
-                duration_seconds: settings.timer.countdown.duration_minutes * 60,
-            },
-        };
-    }
-
-    /// First session in the queue for this mode.
-    pub fn first_session(&self) -> (SessionType, u32) {
-        return match self {
-            Self::Pomodoro {
-                work_duration_seconds,
-                ..
-            } => (SessionType::PomodoroWork, *work_duration_seconds),
-            Self::Countdown { duration_seconds } => (SessionType::Countdown, *duration_seconds),
-        };
-    }
-
-    /// Next session after completing the current one. None if no next (e.g. countdown done).
-    pub fn next_session(
-        &self,
-        current: SessionType,
-        completed_work: u32,
-    ) -> Option<(SessionType, u32)> {
-        let next_type = match self {
-            Self::Pomodoro {
-                sessions_before_long_break,
-                ..
-            } => match current {
-                SessionType::PomodoroWork => {
-                    let n = completed_work + 1;
-                    if n % sessions_before_long_break == 0 {
-                        SessionType::PomodoroLongBreak
-                    } else {
-                        SessionType::PomodoroShortBreak
-                    }
-                }
-                SessionType::PomodoroShortBreak | SessionType::PomodoroLongBreak => {
-                    SessionType::PomodoroWork
-                }
-                SessionType::Countdown => return None,
-            },
-            Self::Countdown { .. } => return None,
-        };
-        let duration_seconds = self.duration_seconds_for(next_type);
-        return Some((next_type, duration_seconds));
-    }
-
-    /// Duration (seconds) for the given session type.
-    pub fn duration_seconds_for(&self, session_type: SessionType) -> u32 {
-        return match (self, session_type) {
-            (
-                Self::Pomodoro {
-                    work_duration_seconds,
-                    ..
-                },
-                SessionType::PomodoroWork,
-            ) => *work_duration_seconds,
-            (
-                Self::Pomodoro {
-                    short_break_duration_seconds,
-                    ..
-                },
-                SessionType::PomodoroShortBreak,
-            ) => *short_break_duration_seconds,
-            (
-                Self::Pomodoro {
-                    long_break_duration_seconds,
-                    ..
-                },
-                SessionType::PomodoroLongBreak,
-            ) => *long_break_duration_seconds,
-            (Self::Pomodoro { .. }, SessionType::Countdown) => 0,
-            (Self::Countdown { duration_seconds }, _) => *duration_seconds,
-        };
-    }
 }

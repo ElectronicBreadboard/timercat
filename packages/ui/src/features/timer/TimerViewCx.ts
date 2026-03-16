@@ -1,9 +1,9 @@
 import { type TState } from 'feature-state';
-import { type TTimerCx } from './TimerCx';
+import { type TCountdownCx } from './modes/CountdownCx';
+import { type TPomodoroCx } from './modes/PomodoroCx';
 
 export interface TTimerViewCx {
-	readonly timer: TTimerCx;
-	readonly $timerMode: TState<'countdown' | 'pomodoro', []>;
+	readonly timer: TCountdownCx | TPomodoroCx;
 	readonly $previewMinutes: TState<number | null, []>;
 	readonly $config: TState<TTimerViewConfig, []>;
 	playSound?: (id: string) => void;
