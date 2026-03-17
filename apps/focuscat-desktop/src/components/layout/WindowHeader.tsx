@@ -1,4 +1,4 @@
-import { Badge, cn } from '@repo/ui';
+import { Badge, cn, RefreshCcwIcon } from '@repo/ui';
 import React from 'react';
 import { useAppInfo, usePlatform, useUpdateChecker } from '@/hooks';
 
@@ -44,10 +44,10 @@ export const WindowHeader: React.FC<TWindowHeaderProps> = (props) => {
 									? 'error'
 									: 'neutral'
 					}
-					className={cn('ml-2', !installing && 'cursor-pointer hover:opacity-80')}
+					className={cn('ml-2 p-1', !installing && 'cursor-pointer hover:opacity-80')}
 					onClick={installing ? undefined : handleUpdateClick}
 				>
-					{installing ? 'Updating...' : 'UPDATE'}
+					<RefreshCcwIcon size={12} className={installing ? 'animate-spin' : undefined} />
 				</Badge>
 			)}
 			<div data-tauri-drag-region className="flex-1" />

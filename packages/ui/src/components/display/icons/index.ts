@@ -40,6 +40,7 @@ export {
 	Pause as PauseIcon,
 	Play as PlayIcon,
 	Plus as PlusIcon,
+	RefreshCcw as RefreshCcwIcon,
 	Settings as SettingsIcon,
 	Shuffle as ShuffleIcon,
 	SkipForward as SkipForwardIcon,

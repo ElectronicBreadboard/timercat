@@ -208,7 +208,7 @@ impl Window {
     fn build_main(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
         let mut builder = self
             .base_builder(app)
-            .resizable(true)
+            .resizable(false)
             .maximizable(false)
             .minimizable(true)
             .always_on_top(false);
