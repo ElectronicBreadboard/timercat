@@ -269,22 +269,19 @@ pub async fn complete_timer(
     return Ok(());
 }
 
-/// Complete the current session and advance to the next in the sequence (work↔break).
+/// Complete the current session and advance to the next in the Pomodoro sequence (work↔break).
 /// When the next session is work, intention and profile_ids may be provided.
 #[tauri::command]
 #[specta::specta]
-pub async fn advance_timer(
+pub async fn advance_pomodoro_timer(
     app: AppHandle,
     state: State<'_, TimerState>,
-    _app_settings: State<'_, AppSettingsState>,
     runner: State<'_, Mutex<Option<TimerRunner>>>,
     db: State<'_, DatabaseState>,
     intention: Option<String>,
     profile_ids: Option<Vec<i32>>,
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
-
-    // Normalize empty intention to None
     let intention = intention.filter(|s| !s.trim().is_empty());
 
     // Read state
@@ -305,14 +302,8 @@ pub async fn advance_timer(
         };
         (session_data, current_session_type, sessions_completed)
     };
-    let is_work = current_session_type == SessionType::PomodoroWork;
 
-    // DB: complete current session
-    if let Some(data) = session_data {
-        complete_and_emit_session(&db.pool, &app, data, now).await?;
-    }
-
-    // Next session
+    // Next session from mode
     let (next_session_type, next_duration_seconds) = {
         let timer = state.lock().unwrap();
         timer
@@ -320,9 +311,111 @@ pub async fn advance_timer(
             .unwrap_or_else(|| timer.first_session())
     };
 
+    do_advance(
+        &app,
+        &state,
+        &runner,
+        &db,
+        session_data,
+        current_session_type,
+        next_session_type,
+        next_duration_seconds,
+        intention.as_deref(),
+        profile_ids.as_ref(),
+        now,
+    )
+    .await
+}
+
+/// Advance to the specified next Progressive session type and duration.
+#[tauri::command]
+#[specta::specta]
+pub async fn advance_progressive_timer(
+    app: AppHandle,
+    state: State<'_, TimerState>,
+    runner: State<'_, Mutex<Option<TimerRunner>>>,
+    db: State<'_, DatabaseState>,
+    session_type: ProgressiveSessionType,
+    duration_seconds: u32,
+) -> Result<(), String> {
+    let now = Utc::now().timestamp_millis();
+
+    let next_session_type = session_type.to_session_type();
+
+    // Read state
+    let (session_data, current_session_type) = {
+        let timer = state.lock().unwrap();
+        let session_data = timer.session.as_ref().map(|s| {
+            (
+                s.id,
+                s.session_type.as_str().to_string(),
+                s.planned_seconds,
+                s.compute_actual_seconds(now),
+                s.started_at,
+            )
+        });
+        let current_session_type = match &timer.session {
+            None => return Err("No active session".to_string()),
+            Some(s) => s.session_type,
+        };
+        (session_data, current_session_type)
+    };
+
+    do_advance(
+        &app,
+        &state,
+        &runner,
+        &db,
+        session_data,
+        current_session_type,
+        next_session_type,
+        duration_seconds,
+        None,
+        None,
+        now,
+    )
+    .await
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, specta::Type)]
+pub enum ProgressiveSessionType {
+    Work,
+    Break,
+}
+
+impl ProgressiveSessionType {
+    fn to_session_type(&self) -> SessionType {
+        match self {
+            ProgressiveSessionType::Work => SessionType::ProgressiveWork,
+            ProgressiveSessionType::Break => SessionType::ProgressiveBreak,
+        }
+    }
+}
+
+/// Shared advance logic: complete the current session and start the specified next one.
+async fn do_advance(
+    app: &AppHandle,
+    state: &State<'_, TimerState>,
+    runner: &State<'_, Mutex<Option<TimerRunner>>>,
+    db: &State<'_, DatabaseState>,
+    session_data: Option<(i64, String, u32, u32, i64)>,
+    current_session_type: SessionType,
+    next_session_type: SessionType,
+    next_duration_seconds: u32,
+    intention: Option<&str>,
+    profile_ids: Option<&Vec<i32>>,
+    now: i64,
+) -> Result<(), String> {
+    let is_work = current_session_type.is_work();
+
+    // DB: complete current session
+    if let Some(data) = session_data {
+        complete_and_emit_session(&db.pool, app, data, now).await?;
+    }
+
     // DB: create next session
-    let intention_for_create = if next_session_type == SessionType::PomodoroWork {
-        intention.as_deref()
+    let intention_for_create = if next_session_type.is_work() {
+        intention
     } else {
         None
     };
@@ -336,9 +429,9 @@ pub async fn advance_timer(
     .await
     .map_err(db_err)?;
 
-    // Link profiles if provided
-    if next_session_type == SessionType::PomodoroWork {
-        if let Some(ids) = &profile_ids {
+    // Link profiles if next is a work session
+    if next_session_type.is_work() {
+        if let Some(ids) = profile_ids {
             if !ids.is_empty() {
                 SessionRepository::link_profiles(&db.pool, new_session.id, ids)
                     .await
@@ -354,13 +447,13 @@ pub async fn advance_timer(
         timer.clone()
     };
 
-    let _ = TimerUpdatedEvent(TimerDto::from(&timer)).emit(&app);
+    let _ = TimerUpdatedEvent(TimerDto::from(&timer)).emit(app);
 
     #[cfg(target_os = "macos")]
-    TrayState::set_timer(&app, Some(timer.remaining_seconds));
+    TrayState::set_timer(app, Some(timer.remaining_seconds));
 
-    let _ = SessionChangedEvent.emit(&app);
-    restart_runner(&app, &runner);
+    let _ = SessionChangedEvent.emit(app);
+    restart_runner(app, runner);
     return Ok(());
 }
 

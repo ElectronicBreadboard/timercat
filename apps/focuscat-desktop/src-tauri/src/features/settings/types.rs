@@ -129,8 +129,8 @@ impl Default for DeveloperSettings {
 pub struct TimerSettings {
     pub timer_mode: TimerModeEnum,
     pub pomodoro: PomodoroSettings,
+    pub progressive: ProgressivePomodoroSettings,
     pub countdown: CountdownSettings,
-    pub show_session_setup: bool,
 }
 
 impl Default for TimerSettings {
@@ -138,8 +138,8 @@ impl Default for TimerSettings {
         return Self {
             timer_mode: TimerModeEnum::Pomodoro,
             pomodoro: PomodoroSettings::default(),
+            progressive: ProgressivePomodoroSettings::default(),
             countdown: CountdownSettings::default(),
-            show_session_setup: false,
         };
     }
 }
@@ -149,6 +149,7 @@ impl Default for TimerSettings {
 pub enum TimerModeEnum {
     #[default]
     Pomodoro,
+    Progressive,
     Countdown,
 }
 
@@ -161,6 +162,7 @@ pub struct PomodoroSettings {
     pub sessions_before_long_break: u32,
     pub auto_advance: bool,
     pub auto_advance_countdown_seconds: u32,
+    pub show_session_setup: bool,
 }
 
 impl Default for PomodoroSettings {
@@ -172,8 +174,87 @@ impl Default for PomodoroSettings {
             sessions_before_long_break: 4,
             auto_advance: false,
             auto_advance_countdown_seconds: 5,
+            show_session_setup: false,
         };
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase", default)]
+pub struct ProgressivePomodoroSettings {
+    pub ratings: Vec<ProgressiveRatingSetting>,
+    pub auto_advance: bool,
+    pub auto_advance_countdown_seconds: u32,
+}
+
+impl Default for ProgressivePomodoroSettings {
+    fn default() -> Self {
+        fn s(work: u32, brk: impl Into<Option<u32>>) -> ProgressiveSuggestion {
+            ProgressiveSuggestion {
+                work_minutes: work,
+                break_minutes: brk.into(),
+            }
+        }
+        fn r(
+            key: &str,
+            label: &str,
+            desc: &str,
+            suggestions: Vec<ProgressiveSuggestion>,
+        ) -> ProgressiveRatingSetting {
+            ProgressiveRatingSetting {
+                key: key.into(),
+                label: label.into(),
+                description: desc.into(),
+                suggestions,
+            }
+        }
+        return Self {
+            ratings: vec![
+                r(
+                    "distracted",
+                    "Distracted",
+                    "Hard to focus, lots of interruptions",
+                    vec![s(2, 5), s(5, 5), s(10, 5)],
+                ),
+                r(
+                    "okay",
+                    "Okay",
+                    "Some focus, manageable",
+                    vec![s(10, 5), s(20, 5), s(30, 5)],
+                ),
+                r(
+                    "focused",
+                    "Focused",
+                    "Solid focus throughout",
+                    vec![s(25, 5), s(45, 5), s(60, 5)],
+                ),
+                r(
+                    "flow",
+                    "Flow",
+                    "Deep focus — keep going",
+                    vec![s(30, None), s(45, None), s(60, None)],
+                ),
+            ],
+            auto_advance: false,
+            auto_advance_countdown_seconds: 5,
+        };
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ProgressiveSuggestion {
+    pub work_minutes: u32,
+    pub break_minutes: Option<u32>, // None = skip break (flow)
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ProgressiveRatingSetting {
+    pub key: String,
+    pub label: String,
+    pub description: String,
+    pub suggestions: Vec<ProgressiveSuggestion>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, specta::Type)]

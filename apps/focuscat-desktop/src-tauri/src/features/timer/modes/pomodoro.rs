@@ -41,7 +41,7 @@ impl PomodoroMode {
             SessionType::PomodoroShortBreak | SessionType::PomodoroLongBreak => {
                 SessionType::PomodoroWork
             }
-            SessionType::Countdown => return None,
+            _ => return None,
         };
         let duration = self.duration_seconds_for(next_type);
         return Some((next_type, duration));
@@ -52,7 +52,7 @@ impl PomodoroMode {
             SessionType::PomodoroWork => self.work_duration_seconds,
             SessionType::PomodoroShortBreak => self.short_break_duration_seconds,
             SessionType::PomodoroLongBreak => self.long_break_duration_seconds,
-            SessionType::Countdown => 0,
+            _ => 0,
         };
     }
 }

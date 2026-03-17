@@ -14,8 +14,8 @@ export class PomodoroTimerCx extends BaseTimerCx implements TPomodoroCx {
 
 	public async start(intention?: string, profileIds?: number[]): Promise<void> {
 		const s = this._settingsCx.$appSettings.get();
-		if (s.timer.showSessionSetup && intention == null && profileIds == null) {
-			this._navigate({ to: '/window/main/setup', search: { advance: false } });
+		if (s.timer.pomodoro.showSessionSetup && intention == null && profileIds == null) {
+			this._navigate({ to: '/window/main/pomodoro/setup', search: { advance: false } });
 			return;
 		}
 		const [ok, , err] = toTuple(
@@ -31,12 +31,12 @@ export class PomodoroTimerCx extends BaseTimerCx implements TPomodoroCx {
 	public async advance(intention?: string, profileIds?: number[]): Promise<void> {
 		const s = this._settingsCx.$appSettings.get();
 		const isBreak = !this.$sessionType.get().endsWith(':work');
-		if (s.timer.showSessionSetup && isBreak && intention == null && profileIds == null) {
-			this._navigate({ to: '/window/main/setup', search: { advance: true } });
+		if (s.timer.pomodoro.showSessionSetup && isBreak && intention == null && profileIds == null) {
+			this._navigate({ to: '/window/main/pomodoro/setup', search: { advance: true } });
 			return;
 		}
 		const [ok, , err] = toTuple(
-			await specta.commands.advanceTimer(intention ?? null, profileIds ?? null)
+			await specta.commands.advancePomodoroTimer(intention ?? null, profileIds ?? null)
 		);
 		if (ok) {
 			this.$startedAt.set(null);

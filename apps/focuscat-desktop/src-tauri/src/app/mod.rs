@@ -62,7 +62,8 @@ pub fn run() {
             timer::commands::pause_timer,
             timer::commands::resume_timer,
             timer::commands::reset_timer,
-            timer::commands::advance_timer,
+            timer::commands::advance_pomodoro_timer,
+            timer::commands::advance_progressive_timer,
             timer::commands::complete_timer,
             timer::commands::set_timer_duration,
             // Activity window commands

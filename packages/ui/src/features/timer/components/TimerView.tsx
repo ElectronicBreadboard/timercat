@@ -5,6 +5,7 @@ import { cn } from '@/lib';
 import { type TTimerViewCx } from '../TimerViewCx';
 import { CountdownTimerActions, CountdownTimerDial } from './countdown';
 import { PomodoroTimerActions, PomodoroTimerDial } from './pomodoro';
+import { ProgressiveTimerActions, ProgressiveTimerDial } from './progressive';
 import { TimeDisplay } from './TimeDisplay';
 
 export const TimerView: React.FC<TTimerViewProps> = (props) => {
@@ -18,6 +19,8 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 				return <CountdownTimerDial cx={cx} />;
 			case 'pomodoro':
 				return <PomodoroTimerDial cx={cx} />;
+			case 'progressive':
+				return <ProgressiveTimerDial cx={cx} />;
 		}
 	}, [cx]);
 
@@ -27,8 +30,10 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 				return <CountdownTimerActions cx={cx.timer} className="mt-auto" />;
 			case 'pomodoro':
 				return <PomodoroTimerActions cx={cx.timer} className="mt-auto" />;
+			case 'progressive':
+				return <ProgressiveTimerActions cx={cx.timer} className="mt-auto" />;
 		}
-	}, []);
+	}, [cx]);
 
 	return (
 		<div className={cn('flex flex-col items-center pb-8', className)} style={style}>

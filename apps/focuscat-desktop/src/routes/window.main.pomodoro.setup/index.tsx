@@ -9,7 +9,7 @@ import { useTimerCx } from '@/features/timer';
 import { toTuple } from '@/lib';
 import { AddProfileButton, ProfileTag, targetKey, TargetTag } from './components';
 
-export const Route = createFileRoute('/window/main/setup/')({
+export const Route = createFileRoute('/window/main/pomodoro/setup/')({
 	validateSearch: (search: Record<string, unknown>): { advance: boolean } => ({
 		advance: search['advance'] === true
 	}),

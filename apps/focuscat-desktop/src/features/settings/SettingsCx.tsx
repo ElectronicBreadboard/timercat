@@ -35,12 +35,58 @@ export class SettingsCx {
 				longBreakMinutes: 15,
 				sessionsBeforeLongBreak: 4,
 				autoAdvance: false,
+				autoAdvanceCountdownSeconds: 5,
+				showSessionSetup: false
+			},
+			progressive: {
+				ratings: [
+					{
+						key: 'distracted',
+						label: 'Distracted',
+						description: 'Hard to focus, lots of interruptions',
+						suggestions: [
+							{ workMinutes: 2, breakMinutes: 5 },
+							{ workMinutes: 5, breakMinutes: 5 },
+							{ workMinutes: 10, breakMinutes: 5 }
+						]
+					},
+					{
+						key: 'okay',
+						label: 'Okay',
+						description: 'Some focus, manageable',
+						suggestions: [
+							{ workMinutes: 10, breakMinutes: 5 },
+							{ workMinutes: 20, breakMinutes: 5 },
+							{ workMinutes: 30, breakMinutes: 5 }
+						]
+					},
+					{
+						key: 'focused',
+						label: 'Focused',
+						description: 'Solid focus throughout',
+						suggestions: [
+							{ workMinutes: 25, breakMinutes: 5 },
+							{ workMinutes: 45, breakMinutes: 5 },
+							{ workMinutes: 60, breakMinutes: 5 }
+						]
+					},
+					{
+						key: 'flow',
+						label: 'Flow',
+						description: 'Deep focus — keep going',
+						suggestions: [
+							{ workMinutes: 45, breakMinutes: null },
+							{ workMinutes: 60, breakMinutes: null },
+							{ workMinutes: 90, breakMinutes: null }
+						]
+					}
+				],
+				autoAdvance: false,
 				autoAdvanceCountdownSeconds: 5
 			},
 			countdown: {
 				durationMinutes: 25
-			},
-			showSessionSetup: false
+			}
 		},
 		goals: {
 			dailyGoalMinutes: 120

@@ -1,5 +1,6 @@
 export * from './countdown';
 export * from './pomodoro';
+export * from './progressive';
 export * from './SessionWheel';
 export * from './TimeDial';
 export * from './TimeDisplay';

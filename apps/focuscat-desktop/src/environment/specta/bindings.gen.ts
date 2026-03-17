@@ -168,12 +168,23 @@ async resetTimer() : Promise<Result<null, string>> {
 }
 },
 /**
- * Complete the current session and advance to the next in the sequence (work↔break).
+ * Complete the current session and advance to the next in the Pomodoro sequence (work↔break).
  * When the next session is work, intention and profile_ids may be provided.
  */
-async advanceTimer(intention: string | null, profileIds: number[] | null) : Promise<Result<null, string>> {
+async advancePomodoroTimer(intention: string | null, profileIds: number[] | null) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("advance_timer", { intention, profileIds }) };
+    return { status: "ok", data: await TAURI_INVOKE("advance_pomodoro_timer", { intention, profileIds }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Advance to the specified next Progressive session type and duration.
+ */
+async advanceProgressiveTimer(sessionType: ProgressiveSessionType, durationSeconds: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("advance_progressive_timer", { sessionType, durationSeconds }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -559,7 +570,7 @@ export type InputDetectedEvent = InputType
  * Type of input event detected.
  */
 export type InputType = "keyboard" | "mouse"
-export type PomodoroSettings = { workDurationMinutes: number; shortBreakMinutes: number; longBreakMinutes: number; sessionsBeforeLongBreak: number; autoAdvance: boolean; autoAdvanceCountdownSeconds: number }
+export type PomodoroSettings = { workDurationMinutes: number; shortBreakMinutes: number; longBreakMinutes: number; sessionsBeforeLongBreak: number; autoAdvance: boolean; autoAdvanceCountdownSeconds: number; showSessionSetup: boolean }
 /**
  * Preview of resolved rules for a session setup.
  */
@@ -568,6 +579,10 @@ export type PreviewRulesDto = { blocked: RuleTargetDto[]; allowed: RuleTargetDto
  * Event emitted when a focus profile is created, updated, or deleted.
  */
 export type ProfileChangedEvent = null
+export type ProgressivePomodoroSettings = { ratings: ProgressiveRatingSetting[]; autoAdvance: boolean; autoAdvanceCountdownSeconds: number }
+export type ProgressiveRatingSetting = { key: string; label: string; description: string; suggestions: ProgressiveSuggestion[] }
+export type ProgressiveSessionType = "Work" | "Break"
+export type ProgressiveSuggestion = { workMinutes: number; breakMinutes: number | null }
 /**
  * Action for a focus profile rule.
  */
@@ -640,8 +655,8 @@ export type SoundId = "tick" | "complete" | "meow" | "wind-up-tick-1" | "wind-up
 export type Stage = "dev" | "prod"
 export type Theme = "light" | "dark" | "auto"
 export type TimerDto = { status: TimerStatus; sessionType: string; totalSeconds: number; remainingSeconds: number; overtimeSeconds: number; sessionsCompleted: number; speed: number }
-export type TimerModeEnum = "pomodoro" | "countdown"
-export type TimerSettings = { timerMode: TimerModeEnum; pomodoro: PomodoroSettings; countdown: CountdownSettings; showSessionSetup: boolean }
+export type TimerModeEnum = "pomodoro" | "progressive" | "countdown"
+export type TimerSettings = { timerMode: TimerModeEnum; pomodoro: PomodoroSettings; progressive: ProgressivePomodoroSettings; countdown: CountdownSettings }
 export type TimerStatus = "idle" | "running" | "paused"
 export type TimerUpdatedEvent = TimerDto
 export type UpdateAvailableEvent = UpdateInfo

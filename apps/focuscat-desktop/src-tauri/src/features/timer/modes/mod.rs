@@ -1,21 +1,27 @@
 pub mod countdown;
 pub mod pomodoro;
+pub mod progressive;
 
 use crate::features::session::session::SessionType;
 use crate::features::settings::types::{AppSettings, TimerModeEnum};
 pub use countdown::CountdownMode;
 pub use pomodoro::PomodoroMode;
+pub use progressive::ProgressivePomodoroMode;
 
 #[derive(Debug, Clone)]
 pub enum TimerMode {
     Countdown(CountdownMode),
     Pomodoro(PomodoroMode),
+    Progressive(ProgressivePomodoroMode),
 }
 
 impl TimerMode {
     pub fn from_settings(settings: &AppSettings) -> Self {
         return match settings.timer.timer_mode {
             TimerModeEnum::Pomodoro => Self::Pomodoro(PomodoroMode::from_settings(settings)),
+            TimerModeEnum::Progressive => {
+                Self::Progressive(ProgressivePomodoroMode::from_settings(settings))
+            }
             TimerModeEnum::Countdown => Self::Countdown(CountdownMode::from_settings(settings)),
         };
     }
@@ -24,6 +30,7 @@ impl TimerMode {
         return match self {
             Self::Countdown(m) => m.first_session(),
             Self::Pomodoro(m) => m.first_session(),
+            Self::Progressive(m) => m.first_session(),
         };
     }
 
@@ -35,6 +42,7 @@ impl TimerMode {
         return match self {
             Self::Countdown(m) => m.next_session(current, completed_work),
             Self::Pomodoro(m) => m.next_session(current, completed_work),
+            Self::Progressive(m) => m.next_session(current, completed_work),
         };
     }
 }
