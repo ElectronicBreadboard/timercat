@@ -1,4 +1,4 @@
-import { useCompute, useFeatureState } from 'feature-react/state';
+import { useCompute } from 'feature-react/state';
 import React from 'react';
 import { Badge } from '@/components';
 import { cn } from '@/lib';
@@ -10,8 +10,7 @@ import { TimeDisplay } from './TimeDisplay';
 
 export const TimerView: React.FC<TTimerViewProps> = (props) => {
 	const { cx, className, style } = props;
-	const speed = useFeatureState(cx.timer.$speed);
-	const showSpeed = useCompute(cx.$config, ({ value }) => value.dev.showSpeed);
+	const speed = useCompute(cx.$config, ({ value }) => value.dev.speed);
 
 	const renderDial = React.useCallback((): React.ReactNode => {
 		switch (cx.timer.mode) {
@@ -41,7 +40,7 @@ export const TimerView: React.FC<TTimerViewProps> = (props) => {
 
 			<TimeDisplay cx={cx} className="mt-4" />
 
-			{showSpeed && speed > 1 && (
+			{speed > 1 && (
 				<Badge variant="warning" className="mt-1 font-mono">
 					{speed}x
 				</Badge>

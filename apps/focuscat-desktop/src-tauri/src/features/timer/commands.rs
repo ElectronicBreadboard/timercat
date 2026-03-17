@@ -74,7 +74,6 @@ pub async fn start_timer(
         let mut timer = state.lock().unwrap();
         timer.session = Some(session);
         timer.status = TimerStatus::Running;
-        timer.speed = settings.developer.timer_speed;
         timer.clone()
     };
 

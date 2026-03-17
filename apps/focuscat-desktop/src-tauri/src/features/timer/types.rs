@@ -16,7 +16,6 @@ pub struct TimerDto {
     pub remaining_seconds: u32,
     pub overtime_seconds: u32,
     pub sessions_completed: u32,
-    pub speed: u32,
 }
 
 impl From<&Timer> for TimerDto {
@@ -28,7 +27,6 @@ impl From<&Timer> for TimerDto {
             remaining_seconds: timer.remaining_seconds,
             overtime_seconds: timer.overtime_seconds,
             sessions_completed: timer.sessions_completed,
-            speed: timer.speed,
         };
     }
 }

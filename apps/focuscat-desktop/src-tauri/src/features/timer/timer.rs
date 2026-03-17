@@ -10,7 +10,6 @@ pub struct Timer {
     pub remaining_seconds: u32,
     pub overtime_seconds: u32,
     pub sessions_completed: u32,
-    pub speed: u32,
     pub mode: TimerMode,
     pub session: Option<Session>,
 }
@@ -25,7 +24,6 @@ impl Timer {
             remaining_seconds: duration_seconds,
             overtime_seconds: 0,
             sessions_completed: 0,
-            speed: settings.developer.timer_speed,
             mode,
             session: None,
         };
@@ -33,7 +31,6 @@ impl Timer {
 
     pub fn apply_settings(&mut self, settings: &AppSettings) {
         self.mode = TimerMode::from_settings(settings);
-        self.speed = settings.developer.timer_speed;
     }
 
     /// First session in the queue.

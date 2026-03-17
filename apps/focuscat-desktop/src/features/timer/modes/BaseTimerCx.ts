@@ -21,7 +21,6 @@ export abstract class BaseTimerCx {
 	public readonly $totalSeconds = createState(0);
 	public readonly $overtimeSeconds = createState(0);
 	public readonly $sessionsCompleted = createState(0);
-	public readonly $speed = createState(1);
 	public readonly $startedAt = createState<Date | null>(null);
 
 	constructor(
@@ -66,7 +65,6 @@ export abstract class BaseTimerCx {
 			this.$overtimeSeconds.set(timer.overtimeSeconds);
 		if (this.$sessionsCompleted.get() !== timer.sessionsCompleted)
 			this.$sessionsCompleted.set(timer.sessionsCompleted);
-		if (this.$speed.get() !== timer.speed) this.$speed.set(timer.speed);
 	}
 
 	public async pause(): Promise<void> {

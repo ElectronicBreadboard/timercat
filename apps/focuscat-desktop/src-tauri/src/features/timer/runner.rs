@@ -3,6 +3,7 @@ use super::{
     types::{TimerDto, TimerState, TimerUpdatedEvent},
 };
 use crate::features::audio::{audio, types::SoundId};
+use crate::features::settings::types::AppSettingsState;
 use std::{
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -52,7 +53,7 @@ fn run_timer_loop(app: AppHandle, stop_flag: Arc<AtomicBool>) {
         }
 
         // Get sleep duration based on speed
-        let sleep_duration = {
+        let (sleep_duration, speed) = {
             let timer_state = match app.try_state::<TimerState>() {
                 Some(s) => s,
                 None => {
@@ -69,7 +70,13 @@ fn run_timer_loop(app: AppHandle, stop_flag: Arc<AtomicBool>) {
                 continue;
             }
 
-            Duration::from_millis(1000 / timer.speed.max(1) as u64)
+            let speed = app
+                .try_state::<AppSettingsState>()
+                .map(|s| s.lock().unwrap().developer.timer_speed)
+                .unwrap_or(1)
+                .max(1);
+
+            (Duration::from_millis(1000 / speed as u64), speed)
         };
 
         thread::sleep(sleep_duration);
@@ -100,7 +107,7 @@ fn run_timer_loop(app: AppHandle, stop_flag: Arc<AtomicBool>) {
         }
 
         // Play tick sound each second (only at 1x speed; at higher speeds it would overlap)
-        if timer.speed == 1 {
+        if speed == 1 {
             audio::play(&app, SoundId::Tick);
         }
 

@@ -17,7 +17,7 @@ export class TimerViewCx implements TTimerViewCx {
 	public readonly $config = createState<TTimerViewConfig>({
 		pomodoro: { sessionsBeforeLongBreak: 4, autoAdvance: false, autoAdvanceCountdownSeconds: 5 },
 		progressive: { autoAdvance: false, autoAdvanceCountdownSeconds: 5 },
-		dev: { showSpeed: false }
+		dev: { speed: 1 }
 	});
 
 	private _unlisten?: () => void;
@@ -55,7 +55,7 @@ export class TimerViewCx implements TTimerViewCx {
 				autoAdvance: s.timer.progressive.autoAdvance,
 				autoAdvanceCountdownSeconds: s.timer.progressive.autoAdvanceCountdownSeconds
 			},
-			dev: { showSpeed: s.features.developer }
+			dev: { speed: s.developer.timerSpeed }
 		};
 	}
 }

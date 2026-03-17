@@ -9,7 +9,6 @@ export interface TTimerCx {
 	readonly $totalSeconds: TState<number, []>;
 	readonly $overtimeSeconds: TState<number, []>;
 	readonly $sessionsCompleted: TState<number, []>;
-	readonly $speed: TState<number, []>;
 	readonly $startedAt: TState<Date | null, []>;
 
 	start(): Promise<void>;

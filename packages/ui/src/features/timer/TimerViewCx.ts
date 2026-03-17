@@ -21,6 +21,6 @@ export interface TTimerViewConfig {
 		autoAdvanceCountdownSeconds: number;
 	};
 	dev: {
-		showSpeed: boolean;
+		speed: number;
 	};
 }
