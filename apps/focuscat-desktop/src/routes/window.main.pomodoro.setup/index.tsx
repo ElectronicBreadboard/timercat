@@ -1,11 +1,11 @@
-import { Button, Input, type TPomodoroCx } from '@repo/ui';
+import { Button, Input } from '@repo/ui';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { WindowHeader } from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
-import { useTimerCx } from '@/features/timer';
+import { PomodoroTimerCx, useTimerCx } from '@/features/timer';
 import { toTuple } from '@/lib';
 import { AddProfileButton, ProfileTag, targetKey, TargetTag } from './components';
 
@@ -18,7 +18,7 @@ export const Route = createFileRoute('/window/main/pomodoro/setup/')({
 
 function RouteComponent() {
 	const navigate = useNavigate();
-	const timerCx = useTimerCx<TPomodoroCx>();
+	const timerCx = useTimerCx<PomodoroTimerCx>();
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 	const { advance } = Route.useSearch();

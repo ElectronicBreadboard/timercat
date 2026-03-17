@@ -1,18 +1,12 @@
-import {
-	useMemoCleanup,
-	useTimerCx,
-	type TCountdownCx,
-	type TPomodoroCx,
-	type TProgressivePomodoroCx,
-	type TTimerViewConfig,
-	type TTimerViewCx
-} from '@repo/ui';
+import { useMemoCleanup, type TTimerViewConfig, type TTimerViewCx } from '@repo/ui';
 import { createState } from 'feature-state';
 import { specta } from '@/environment';
 import { TAppSettings, useSettingsCx, type SettingsCx } from '@/features/settings';
+import { CountdownTimerCx, PomodoroTimerCx, ProgressivePomodoroTimerCx } from './modes';
+import { useTimerCx } from './use-timer-cx';
 
 export class TimerViewCx implements TTimerViewCx {
-	public readonly timer: TCountdownCx | TPomodoroCx | TProgressivePomodoroCx;
+	public readonly timer: CountdownTimerCx | PomodoroTimerCx | ProgressivePomodoroTimerCx;
 	public readonly $previewMinutes = createState<number | null>(null);
 	public readonly $config = createState<TTimerViewConfig>({
 		pomodoro: { sessionsBeforeLongBreak: 4, autoAdvance: false, autoAdvanceCountdownSeconds: 5 },
@@ -23,7 +17,7 @@ export class TimerViewCx implements TTimerViewCx {
 	private _unlisten?: () => void;
 
 	constructor(
-		timerCx: TCountdownCx | TPomodoroCx | TProgressivePomodoroCx,
+		timerCx: CountdownTimerCx | PomodoroTimerCx | ProgressivePomodoroTimerCx,
 		settingsCx: SettingsCx
 	) {
 		this.timer = timerCx;
@@ -61,7 +55,7 @@ export class TimerViewCx implements TTimerViewCx {
 }
 
 export function useTimerViewCx(): TTimerViewCx {
-	const timerCx = useTimerCx<TCountdownCx | TPomodoroCx | TProgressivePomodoroCx>();
+	const timerCx = useTimerCx();
 	const settingsCx = useSettingsCx();
 
 	return useMemoCleanup(() => {

@@ -2,7 +2,7 @@ import { Button, Input } from '@repo/ui';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { WindowHeader } from '@/app';
-import type { TimerCx } from '@/features/timer';
+import { type PomodoroTimerCx } from '@/features/timer';
 
 export const SessionSetupView: React.FC<TSessionSetupViewProps> = (props) => {
 	const { timerCx } = props;
@@ -67,5 +67,5 @@ export const SessionSetupView: React.FC<TSessionSetupViewProps> = (props) => {
 };
 
 export interface TSessionSetupViewProps {
-	timerCx: TimerCx;
+	timerCx: PomodoroTimerCx;
 }

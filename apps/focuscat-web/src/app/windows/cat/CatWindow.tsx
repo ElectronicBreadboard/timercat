@@ -12,13 +12,13 @@ import {
 	PlayIcon,
 	SkipForwardIcon,
 	useMediaQuery,
-	useTimerCx,
 	type TCatRef
 } from '@repo/ui';
 import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { useAudioCx } from '@/features/audio';
 import { useSettingsCx } from '@/features/settings';
+import { useTimerCx } from '@/features/timer';
 
 export const CatWindow: React.FC<TCatWindowProps> = (props) => {
 	const { onExpand } = props;
@@ -79,7 +79,9 @@ export const CatWindow: React.FC<TCatWindowProps> = (props) => {
 	}, [timerCx, isRunning, isPaused]);
 
 	const handleAdvance = React.useCallback(async () => {
-		await timerCx.advance();
+		if ('advance' in timerCx) {
+			await timerCx.advance();
+		}
 	}, [timerCx]);
 
 	const handleCatTap = React.useCallback(() => {

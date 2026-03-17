@@ -1,54 +1,50 @@
-import {
-	useMemoCleanup,
-	useTimerCx,
-	type TTimerCx,
-	type TTimerViewConfig,
-	type TTimerViewCx
-} from '@repo/ui';
+import { useMemoCleanup, type TTimerViewConfig, type TTimerViewCx } from '@repo/ui';
 import { createState } from 'feature-state';
 import { useAudioCx, type AudioCx, type TSoundId } from '@/features/audio';
 import { useSettingsCx, type SettingsCx } from '@/features/settings';
-import { type TimerCx } from './TimerCx';
+import { CountdownTimerCx, PomodoroTimerCx } from './modes';
+import { useTimerCx } from './use-timer-cx';
 
 export class TimerViewCx implements TTimerViewCx {
-	public readonly timer: TTimerCx;
-	public readonly $timerMode = createState<'countdown' | 'pomodoro'>('pomodoro');
+	public readonly timer: CountdownTimerCx | PomodoroTimerCx;
 	public readonly $previewMinutes = createState<number | null>(null);
 	public readonly $config = createState<TTimerViewConfig>({
 		pomodoro: { sessionsBeforeLongBreak: 4, autoAdvance: false, autoAdvanceCountdownSeconds: 5 },
-		dev: { showSpeed: false }
+		progressive: { autoAdvance: false, autoAdvanceCountdownSeconds: 5 },
+		dev: { speed: 1 }
 	});
 
 	private readonly _audioCx: AudioCx;
 	private _unlisten?: () => void;
 
-	constructor(timerCx: TTimerCx, settingsCx: SettingsCx, audioCx: AudioCx) {
+	constructor(
+		timerCx: CountdownTimerCx | PomodoroTimerCx,
+		settingsCx: SettingsCx,
+		audioCx: AudioCx
+	) {
 		this.timer = timerCx;
 		this._audioCx = audioCx;
 
 		const s = settingsCx.$appSettings.get();
-		this.$timerMode.set(s.timer.timerMode);
 		this.$config.set({
 			pomodoro: {
 				sessionsBeforeLongBreak: s.timer.pomodoro.sessionsBeforeLongBreak,
 				autoAdvance: s.timer.pomodoro.autoAdvance,
 				autoAdvanceCountdownSeconds: s.timer.pomodoro.autoAdvanceCountdownSeconds
 			},
-			dev: { showSpeed: s.features.developer }
+			progressive: { autoAdvance: false, autoAdvanceCountdownSeconds: 5 },
+			dev: { speed: s.developer.timerSpeed }
 		});
 
-		this._unlisten = settingsCx.$appSettings.listen(({ value, prevValue }) => {
-			if (value.timer.timerMode !== prevValue?.timer.timerMode) {
-				this.$timerMode.set(value.timer.timerMode);
-				timerCx.reset();
-			}
+		this._unlisten = settingsCx.$appSettings.listen(({ value }) => {
 			this.$config.set({
 				pomodoro: {
 					sessionsBeforeLongBreak: value.timer.pomodoro.sessionsBeforeLongBreak,
 					autoAdvance: value.timer.pomodoro.autoAdvance,
 					autoAdvanceCountdownSeconds: value.timer.pomodoro.autoAdvanceCountdownSeconds
 				},
-				dev: { showSpeed: value.features.developer }
+				progressive: { autoAdvance: false, autoAdvanceCountdownSeconds: 5 },
+				dev: { speed: value.developer.timerSpeed }
 			});
 		});
 	}
@@ -63,7 +59,7 @@ export class TimerViewCx implements TTimerViewCx {
 }
 
 export function useTimerViewCx(): TTimerViewCx {
-	const timerCx = useTimerCx<TimerCx>();
+	const timerCx = useTimerCx();
 	const settingsCx = useSettingsCx();
 	const audioCx = useAudioCx();
 

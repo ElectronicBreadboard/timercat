@@ -10,9 +10,7 @@ import {
 	PauseIcon,
 	PlayIcon,
 	SkipForwardIcon,
-	type TCatRef,
-	type TCountdownCx,
-	type TPomodoroCx
+	type TCatRef
 } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -30,7 +28,7 @@ export const Route = createFileRoute('/window/cat/')({
 function RouteComponent() {
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
-	const timerCx = useTimerCx<TCountdownCx | TPomodoroCx>();
+	const timerCx = useTimerCx();
 	const catRef = React.useRef<TCatRef>(null);
 
 	const { isBreak, isOvertime, isRunning, isPaused, displayTime } = useCombinedCompute(

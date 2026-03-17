@@ -1,10 +1,10 @@
-import { Button, type TProgressivePomodoroCx } from '@repo/ui';
+import { Button } from '@repo/ui';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { WindowHeader } from '@/components';
 import { useSettingsCx } from '@/features/settings';
-import { useTimerCx } from '@/features/timer';
+import { ProgressivePomodoroTimerCx, useTimerCx } from '@/features/timer';
 
 export const Route = createFileRoute('/window/main/progressive/rating/')({
 	component: RouteComponent
@@ -12,7 +12,7 @@ export const Route = createFileRoute('/window/main/progressive/rating/')({
 
 function RouteComponent() {
 	const navigate = useNavigate();
-	const timerCx = useTimerCx<TProgressivePomodoroCx>();
+	const timerCx = useTimerCx<ProgressivePomodoroTimerCx>();
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 

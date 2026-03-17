@@ -1,13 +1,14 @@
-import { formatDuration, useTimerCx } from '@repo/ui';
+import { formatDuration } from '@repo/ui';
 import { useCombinedCompute, useCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { useSessionCx } from '@/features/session';
 import { useSettingsCx } from '@/features/settings';
+import { useTimerCx } from '@/features/timer';
 
 export const FocusGoalView: React.FC = () => {
 	const settingsCx = useSettingsCx();
 	const sessionCx = useSessionCx();
-	const cx = useTimerCx();
+	const timerCx = useTimerCx();
 
 	const baseFocusSeconds = useFeatureState(sessionCx.$todayFocusSeconds);
 	const goalSeconds = useCompute(
@@ -15,7 +16,13 @@ export const FocusGoalView: React.FC = () => {
 		({ value: settings }) => settings.goals.dailyGoalMinutes * 60
 	);
 	const currentElapsed = useCombinedCompute(
-		[cx.$sessionType, cx.$status, cx.$totalSeconds, cx.$remainingSeconds, cx.$overtimeSeconds],
+		[
+			timerCx.$sessionType,
+			timerCx.$status,
+			timerCx.$totalSeconds,
+			timerCx.$remainingSeconds,
+			timerCx.$overtimeSeconds
+		],
 		([sessionTypeCx, statusCx, totalCx, remainingCx, overtimeCx]) => {
 			const sessionType = sessionTypeCx.value;
 			const status = statusCx.value;
