@@ -6,6 +6,7 @@ use super::{
 use crate::features::autostart;
 use crate::{
     common::path::get_app_data_dir,
+    environment::db::DatabaseState,
     features::timer::{
         timer::TimerStatus,
         types::{TimerDto, TimerState, TimerUpdatedEvent},
@@ -59,6 +60,53 @@ pub fn set_settings(
     // Emit event to notify frontend
     let _ = AppSettingsChangedEvent(settings).emit(&app);
 
+    return Ok(());
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn clear_history(db: State<'_, DatabaseState>) -> Result<(), String> {
+    sqlx::query("DELETE FROM session_events")
+        .execute(&db.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+    sqlx::query("DELETE FROM session_focus_profile")
+        .execute(&db.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+    sqlx::query("DELETE FROM activity_window")
+        .execute(&db.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+    sqlx::query("DELETE FROM activity_app")
+        .execute(&db.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+    sqlx::query("DELETE FROM sessions")
+        .execute(&db.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+    sqlx::query("DELETE FROM app")
+        .execute(&db.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+    sqlx::query("DELETE FROM website")
+        .execute(&db.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+    return Ok(());
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn reset_settings(
+    app: AppHandle,
+    state: State<'_, AppSettingsState>,
+) -> Result<(), String> {
+    let defaults = AppSettings::default();
+    *state.lock().unwrap() = defaults.clone();
+    persistence::save_settings(&app, &defaults)?;
+    let _ = AppSettingsChangedEvent(defaults).emit(&app);
     return Ok(());
 }
 

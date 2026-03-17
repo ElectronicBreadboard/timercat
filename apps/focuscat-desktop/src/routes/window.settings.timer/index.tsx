@@ -1,4 +1,4 @@
-import { Button, Dialog, NumberField, Select, Switch } from '@repo/ui';
+import { NumberField, Select, Switch, useConfirmDialog } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
@@ -14,8 +14,19 @@ function RouteComponent() {
 	const settings = useFeatureState(settingsCx.$appSettings);
 	const timerMode = settings.timer.timerMode;
 
-	const [pendingMode, setPendingMode] = React.useState<specta.TimerModeEnum | null>(null);
-	const [dialogOpen, setDialogOpen] = React.useState(false);
+	const pendingMode = React.useRef<specta.TimerModeEnum | null>(null);
+	const { trigger: triggerModeSwitch, Dialog: ModeSwitchDialog } = useConfirmDialog({
+		title: 'Switch timer mode?',
+		description:
+			'You have an active timer. Switching modes will reset it and your current session will be cancelled.',
+		confirmLabel: 'Switch anyway',
+		cancelLabel: 'Keep current',
+		onConfirm: async () => {
+			if (pendingMode.current != null) {
+				await applyModeSwitch(pendingMode.current);
+			}
+		}
+	});
 
 	// MARK: - Actions
 
@@ -43,26 +54,14 @@ function RouteComponent() {
 			const isActive = (await timer).status !== 'idle';
 
 			if (isActive) {
-				setPendingMode(mode);
-				setDialogOpen(true);
+				pendingMode.current = mode;
+				triggerModeSwitch();
 			} else {
 				await applyModeSwitch(mode);
 			}
 		},
-		[settings.timer.timerMode, applyModeSwitch]
+		[settings.timer.timerMode, applyModeSwitch, triggerModeSwitch]
 	);
-
-	const handleConfirmSwitch = React.useCallback(async () => {
-		if (pendingMode == null) return;
-		setDialogOpen(false);
-		await applyModeSwitch(pendingMode);
-		setPendingMode(null);
-	}, [pendingMode, applyModeSwitch]);
-
-	const handleCancelSwitch = React.useCallback(() => {
-		setDialogOpen(false);
-		setPendingMode(null);
-	}, []);
 
 	// MARK: - UI
 
@@ -268,25 +267,7 @@ function RouteComponent() {
 				)}
 			</div>
 
-			<Dialog.Root open={dialogOpen} onOpenChange={setDialogOpen}>
-				<Dialog.Content>
-					<Dialog.Title className="text-base-900 mb-2 text-base font-semibold">
-						Switch timer mode?
-					</Dialog.Title>
-					<Dialog.Description className="text-base-500 mb-6 text-sm">
-						You have an active timer. Switching modes will reset it and your current session will be
-						cancelled.
-					</Dialog.Description>
-					<div className="flex justify-end gap-2">
-						<Button variant="ghost" onClick={handleCancelSwitch}>
-							Keep current
-						</Button>
-						<Button variant="danger" onClick={handleConfirmSwitch}>
-							Switch anyway
-						</Button>
-					</div>
-				</Dialog.Content>
-			</Dialog.Root>
+			<ModeSwitchDialog />
 		</>
 	);
 }

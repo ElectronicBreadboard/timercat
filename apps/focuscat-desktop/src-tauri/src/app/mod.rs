@@ -54,6 +54,8 @@ pub fn run() {
             // Settings commands
             settings::commands::get_settings,
             settings::commands::set_settings,
+            settings::commands::clear_history,
+            settings::commands::reset_settings,
             settings::commands::get_data_directory_path,
             settings::commands::open_data_directory,
             // Timer commands

@@ -48,5 +48,6 @@ export {
 	Target as TargetIcon,
 	Timer as TimerIcon,
 	Trash2 as TrashIcon,
+	RotateCcw as RotateCcwIcon,
 	X as XIcon
 } from 'lucide-react';
