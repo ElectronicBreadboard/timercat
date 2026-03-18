@@ -161,13 +161,14 @@ export class FocusProfileCx {
 		}
 
 		const editingId = this.$editingId.get();
-		const rules: specta.FocusProfileRuleParams[] =
-			data.ruleEnabled && data.ruleTargets.length > 0
-				? data.ruleTargets.map((item) => ({
-						action: data.ruleMode,
+		const rules: specta.FocusProfileRuleParams[] = data.ruleEnabled
+			? data.ruleMode === 'block_all'
+				? [{ action: 'block', target: { type: 'all' } }]
+				: data.ruleTargets.map((item) => ({
+						action: data.ruleMode === 'allow' ? 'allow' : 'block',
 						target: this.selectedItemToRuleTarget(item)
 					}))
-				: [];
+			: [];
 		const schedules: specta.FocusProfileScheduleParams[] = data.scheduleEnabled
 			? [
 					{
@@ -222,11 +223,21 @@ export class FocusProfileCx {
 
 	private profileToFormData(profile: specta.FocusProfileDto): TFocusProfileFormData {
 		const schedule = profile.schedules[0];
+		const firstRule = profile.rules[0];
+		const isBlockAll =
+			firstRule?.target.type === 'all' &&
+			firstRule?.action === 'block' &&
+			profile.rules.length === 1;
+		const ruleMode: TRuleMode = isBlockAll
+			? 'block_all'
+			: firstRule?.action === 'allow'
+				? 'allow'
+				: 'block';
 		return {
 			name: profile.name,
 			color: profile.color ?? null,
 			ruleEnabled: profile.rules.length > 0,
-			ruleMode: profile.rules[0]?.action ?? 'block',
+			ruleMode,
 			ruleTargets: profile.rules
 				.map((rule) => this.ruleToSelectedItem(rule))
 				.filter((item): item is TSelectedItem => item != null),
@@ -290,7 +301,7 @@ export interface TFocusProfileFormData {
 	name: string;
 	color: string | null;
 	ruleEnabled: boolean;
-	ruleMode: specta.RuleAction;
+	ruleMode: TRuleMode;
 	ruleTargets: TSelectedItem[];
 	scheduleEnabled: boolean;
 	scheduleMode: specta.ScheduleMode;
@@ -298,6 +309,8 @@ export interface TFocusProfileFormData {
 	scheduleStartTime: string;
 	scheduleEndTime: string;
 }
+
+export type TRuleMode = 'block' | 'block_all' | 'allow';
 
 // MARK: - React Context
 
