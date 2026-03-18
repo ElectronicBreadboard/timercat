@@ -263,6 +263,23 @@ function RouteComponent() {
 								/>
 							</SettingItem>
 						)}
+						<SettingItem
+							label="Show Session Setup"
+							description="Show intention and profile selection before starting a session"
+						>
+							<Switch
+								checked={settings.timer.progressive.showSessionSetup}
+								onCheckedChange={(checked) =>
+									updateTimer({
+										progressive: {
+											...settings.timer.progressive,
+											showSessionSetup: checked
+										}
+									})
+								}
+								size="sm"
+							/>
+						</SettingItem>
 					</SettingGroup>
 				)}
 			</div>

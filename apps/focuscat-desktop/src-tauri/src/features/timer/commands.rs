@@ -336,8 +336,11 @@ pub async fn advance_progressive_timer(
     db: State<'_, DatabaseState>,
     session_type: ProgressiveSessionType,
     duration_seconds: u32,
+    intention: Option<String>,
+    profile_ids: Option<Vec<i32>>,
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
+    let intention = intention.filter(|s| !s.trim().is_empty());
 
     let next_session_type = session_type.to_session_type();
 
@@ -369,8 +372,8 @@ pub async fn advance_progressive_timer(
         current_session_type,
         next_session_type,
         duration_seconds,
-        None,
-        None,
+        intention.as_deref(),
+        profile_ids.as_ref(),
         now,
     )
     .await

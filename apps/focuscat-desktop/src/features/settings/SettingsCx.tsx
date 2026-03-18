@@ -82,7 +82,8 @@ export class SettingsCx {
 					}
 				],
 				autoAdvance: false,
-				autoAdvanceCountdownSeconds: 5
+				autoAdvanceCountdownSeconds: 5,
+				showSessionSetup: false
 			},
 			countdown: {
 				durationMinutes: 25

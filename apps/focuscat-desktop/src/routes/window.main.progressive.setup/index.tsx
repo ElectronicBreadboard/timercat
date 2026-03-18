@@ -5,11 +5,17 @@ import React from 'react';
 import { WindowHeader } from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
-import { PomodoroTimerCx, useTimerCx } from '@/features/timer';
+import {
+	AddProfileButton,
+	ProfileTag,
+	ProgressivePomodoroTimerCx,
+	targetKey,
+	TargetTag,
+	useTimerCx
+} from '@/features/timer';
 import { toTuple } from '@/lib';
-import { AddProfileButton, ProfileTag, targetKey, TargetTag } from '@/features/timer';
 
-export const Route = createFileRoute('/window/main/pomodoro/setup/')({
+export const Route = createFileRoute('/window/main/progressive/setup/')({
 	validateSearch: (search: Record<string, unknown>): { advance: boolean } => ({
 		advance: search['advance'] === true
 	}),
@@ -18,7 +24,7 @@ export const Route = createFileRoute('/window/main/pomodoro/setup/')({
 
 function RouteComponent() {
 	const navigate = useNavigate();
-	const timerCx = useTimerCx<PomodoroTimerCx>();
+	const timerCx = useTimerCx<ProgressivePomodoroTimerCx>();
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 	const { advance } = Route.useSearch();

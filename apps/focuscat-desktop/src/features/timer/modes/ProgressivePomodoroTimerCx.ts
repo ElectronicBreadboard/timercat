@@ -16,8 +16,15 @@ export class ProgressivePomodoroTimerCx extends BaseTimerCx implements TProgress
 		this._checkAutoAdvance(prevOvertime, timer.overtimeSeconds);
 	}
 
-	public async start(): Promise<void> {
-		const [ok, , err] = toTuple(await specta.commands.startTimer(null, null));
+	public async start(intention?: string, profileIds?: number[]): Promise<void> {
+		const s = this._settingsCx.$appSettings.get();
+		if (s.timer.progressive.showSessionSetup && intention == null && profileIds == null) {
+			this._navigate({ to: '/window/main/progressive/setup', search: { advance: false } });
+			return;
+		}
+		const [ok, , err] = toTuple(
+			await specta.commands.startTimer(intention ?? null, profileIds ?? null)
+		);
 		if (ok) {
 			this.$startedAt.set(new Date());
 		} else {
@@ -25,13 +32,31 @@ export class ProgressivePomodoroTimerCx extends BaseTimerCx implements TProgress
 		}
 	}
 
-	public async advance(): Promise<void> {
+	public async advance(intention?: string, profileIds?: number[]): Promise<void> {
 		const sessionType = this.$sessionType.get();
 		if (sessionType === 'progressive:work') {
 			this._navigate({ to: '/window/main/progressive/rating' });
-		} else {
-			await this._advanceSession('Work', this.$currentWorkDuration.get());
+			return;
 		}
+
+		const s = this._settingsCx.$appSettings.get();
+		const isBreak = !this.$sessionType.get().endsWith(':work');
+		if (
+			s.timer.progressive.showSessionSetup &&
+			isBreak &&
+			intention == null &&
+			profileIds == null
+		) {
+			this._navigate({ to: '/window/main/progressive/setup', search: { advance: true } });
+			return;
+		}
+
+		await this._advanceSession(
+			'Work',
+			this.$currentWorkDuration.get(),
+			intention ?? null,
+			profileIds ?? null
+		);
 	}
 
 	public async advanceWithSuggestion(
@@ -40,18 +65,25 @@ export class ProgressivePomodoroTimerCx extends BaseTimerCx implements TProgress
 	): Promise<void> {
 		this.$currentWorkDuration.set(workSeconds);
 		if (breakSeconds != null) {
-			await this._advanceSession('Break', breakSeconds);
+			await this._advanceSession('Break', breakSeconds, null, null);
 		} else {
-			await this._advanceSession('Work', workSeconds);
+			await this._advanceSession('Work', workSeconds, null, null);
 		}
 	}
 
 	private async _advanceSession(
 		sessionType: specta.ProgressiveSessionType,
-		durationSeconds: number
+		durationSeconds: number,
+		intention: string | null,
+		profileIds: number[] | null
 	): Promise<void> {
 		const [ok, , err] = toTuple(
-			await specta.commands.advanceProgressiveTimer(sessionType, durationSeconds)
+			await specta.commands.advanceProgressiveTimer(
+				sessionType,
+				durationSeconds,
+				intention,
+				profileIds
+			)
 		);
 		if (ok) {
 			this.$startedAt.set(sessionType === 'Work' ? new Date() : null);

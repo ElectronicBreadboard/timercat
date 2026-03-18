@@ -185,6 +185,7 @@ pub struct ProgressivePomodoroSettings {
     pub ratings: Vec<ProgressiveRatingSetting>,
     pub auto_advance: bool,
     pub auto_advance_countdown_seconds: u32,
+    pub show_session_setup: bool,
 }
 
 impl Default for ProgressivePomodoroSettings {
@@ -237,6 +238,7 @@ impl Default for ProgressivePomodoroSettings {
             ],
             auto_advance: false,
             auto_advance_countdown_seconds: 5,
+            show_session_setup: false,
         };
     }
 }

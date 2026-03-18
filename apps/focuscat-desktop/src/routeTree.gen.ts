@@ -31,6 +31,7 @@ import { Route as WindowActivityOverviewIndexRouteImport } from './routes/window
 import { Route as WindowActivitySessionIdIndexRouteImport } from './routes/window.activity.$sessionId/index'
 import { Route as WindowSettingsFocusProfilesNewIndexRouteImport } from './routes/window.settings.focus-profiles.new/index'
 import { Route as WindowSettingsFocusProfilesProfileIdIndexRouteImport } from './routes/window.settings.focus-profiles.$profileId/index'
+import { Route as WindowMainProgressiveSetupIndexRouteImport } from './routes/window.main.progressive.setup/index'
 import { Route as WindowMainProgressiveRatingIndexRouteImport } from './routes/window.main.progressive.rating/index'
 import { Route as WindowMainPomodoroSetupIndexRouteImport } from './routes/window.main.pomodoro.setup/index'
 
@@ -154,6 +155,12 @@ const WindowSettingsFocusProfilesProfileIdIndexRoute =
     path: '/focus-profiles/$profileId/',
     getParentRoute: () => WindowSettingsRouteRoute,
   } as any)
+const WindowMainProgressiveSetupIndexRoute =
+  WindowMainProgressiveSetupIndexRouteImport.update({
+    id: '/progressive/setup/',
+    path: '/progressive/setup/',
+    getParentRoute: () => WindowMainRouteRoute,
+  } as any)
 const WindowMainProgressiveRatingIndexRoute =
   WindowMainProgressiveRatingIndexRouteImport.update({
     id: '/progressive/rating/',
@@ -190,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/window/settings/timer/': typeof WindowSettingsTimerIndexRoute
   '/window/main/pomodoro/setup/': typeof WindowMainPomodoroSetupIndexRoute
   '/window/main/progressive/rating/': typeof WindowMainProgressiveRatingIndexRoute
+  '/window/main/progressive/setup/': typeof WindowMainProgressiveSetupIndexRoute
   '/window/settings/focus-profiles/$profileId/': typeof WindowSettingsFocusProfilesProfileIdIndexRoute
   '/window/settings/focus-profiles/new/': typeof WindowSettingsFocusProfilesNewIndexRoute
 }
@@ -211,6 +219,7 @@ export interface FileRoutesByTo {
   '/window/settings/timer': typeof WindowSettingsTimerIndexRoute
   '/window/main/pomodoro/setup': typeof WindowMainPomodoroSetupIndexRoute
   '/window/main/progressive/rating': typeof WindowMainProgressiveRatingIndexRoute
+  '/window/main/progressive/setup': typeof WindowMainProgressiveSetupIndexRoute
   '/window/settings/focus-profiles/$profileId': typeof WindowSettingsFocusProfilesProfileIdIndexRoute
   '/window/settings/focus-profiles/new': typeof WindowSettingsFocusProfilesNewIndexRoute
 }
@@ -238,6 +247,7 @@ export interface FileRoutesById {
   '/window/settings/timer/': typeof WindowSettingsTimerIndexRoute
   '/window/main/pomodoro/setup/': typeof WindowMainPomodoroSetupIndexRoute
   '/window/main/progressive/rating/': typeof WindowMainProgressiveRatingIndexRoute
+  '/window/main/progressive/setup/': typeof WindowMainProgressiveSetupIndexRoute
   '/window/settings/focus-profiles/$profileId/': typeof WindowSettingsFocusProfilesProfileIdIndexRoute
   '/window/settings/focus-profiles/new/': typeof WindowSettingsFocusProfilesNewIndexRoute
 }
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/window/settings/timer/'
     | '/window/main/pomodoro/setup/'
     | '/window/main/progressive/rating/'
+    | '/window/main/progressive/setup/'
     | '/window/settings/focus-profiles/$profileId/'
     | '/window/settings/focus-profiles/new/'
   fileRoutesByTo: FileRoutesByTo
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/window/settings/timer'
     | '/window/main/pomodoro/setup'
     | '/window/main/progressive/rating'
+    | '/window/main/progressive/setup'
     | '/window/settings/focus-profiles/$profileId'
     | '/window/settings/focus-profiles/new'
   id:
@@ -313,6 +325,7 @@ export interface FileRouteTypes {
     | '/window/settings/timer/'
     | '/window/main/pomodoro/setup/'
     | '/window/main/progressive/rating/'
+    | '/window/main/progressive/setup/'
     | '/window/settings/focus-profiles/$profileId/'
     | '/window/settings/focus-profiles/new/'
   fileRoutesById: FileRoutesById
@@ -481,6 +494,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WindowSettingsFocusProfilesProfileIdIndexRouteImport
       parentRoute: typeof WindowSettingsRouteRoute
     }
+    '/window/main/progressive/setup/': {
+      id: '/window/main/progressive/setup/'
+      path: '/progressive/setup'
+      fullPath: '/window/main/progressive/setup/'
+      preLoaderRoute: typeof WindowMainProgressiveSetupIndexRouteImport
+      parentRoute: typeof WindowMainRouteRoute
+    }
     '/window/main/progressive/rating/': {
       id: '/window/main/progressive/rating/'
       path: '/progressive/rating'
@@ -541,6 +561,7 @@ interface WindowMainRouteRouteChildren {
   WindowMainSplashIndexRoute: typeof WindowMainSplashIndexRoute
   WindowMainPomodoroSetupIndexRoute: typeof WindowMainPomodoroSetupIndexRoute
   WindowMainProgressiveRatingIndexRoute: typeof WindowMainProgressiveRatingIndexRoute
+  WindowMainProgressiveSetupIndexRoute: typeof WindowMainProgressiveSetupIndexRoute
 }
 
 const WindowMainRouteRouteChildren: WindowMainRouteRouteChildren = {
@@ -548,6 +569,7 @@ const WindowMainRouteRouteChildren: WindowMainRouteRouteChildren = {
   WindowMainSplashIndexRoute: WindowMainSplashIndexRoute,
   WindowMainPomodoroSetupIndexRoute: WindowMainPomodoroSetupIndexRoute,
   WindowMainProgressiveRatingIndexRoute: WindowMainProgressiveRatingIndexRoute,
+  WindowMainProgressiveSetupIndexRoute: WindowMainProgressiveSetupIndexRoute,
 }
 
 const WindowMainRouteRouteWithChildren = WindowMainRouteRoute._addFileChildren(

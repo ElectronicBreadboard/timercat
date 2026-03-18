@@ -198,9 +198,9 @@ async advancePomodoroTimer(intention: string | null, profileIds: number[] | null
 /**
  * Advance to the specified next Progressive session type and duration.
  */
-async advanceProgressiveTimer(sessionType: ProgressiveSessionType, durationSeconds: number) : Promise<Result<null, string>> {
+async advanceProgressiveTimer(sessionType: ProgressiveSessionType, durationSeconds: number, intention: string | null, profileIds: number[] | null) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("advance_progressive_timer", { sessionType, durationSeconds }) };
+    return { status: "ok", data: await TAURI_INVOKE("advance_progressive_timer", { sessionType, durationSeconds, intention, profileIds }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -595,7 +595,7 @@ export type PreviewRulesDto = { blocked: RuleTargetDto[]; allowed: RuleTargetDto
  * Event emitted when a focus profile is created, updated, or deleted.
  */
 export type ProfileChangedEvent = null
-export type ProgressivePomodoroSettings = { ratings: ProgressiveRatingSetting[]; autoAdvance: boolean; autoAdvanceCountdownSeconds: number }
+export type ProgressivePomodoroSettings = { ratings: ProgressiveRatingSetting[]; autoAdvance: boolean; autoAdvanceCountdownSeconds: number; showSessionSetup: boolean }
 export type ProgressiveRatingSetting = { key: string; label: string; description: string; suggestions: ProgressiveSuggestion[] }
 export type ProgressiveSessionType = "Work" | "Break"
 export type ProgressiveSuggestion = { workMinutes: number; breakMinutes: number | null }
