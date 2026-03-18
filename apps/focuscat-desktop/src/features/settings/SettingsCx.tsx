@@ -45,7 +45,7 @@ export class SettingsCx {
 						label: 'Distracted',
 						description: 'Hard to focus, lots of interruptions',
 						suggestions: [
-							{ workMinutes: 2, breakMinutes: 5 },
+							{ workMinutes: 3, breakMinutes: 5 },
 							{ workMinutes: 5, breakMinutes: 5 },
 							{ workMinutes: 10, breakMinutes: 5 }
 						]
@@ -56,8 +56,8 @@ export class SettingsCx {
 						description: 'Some focus, manageable',
 						suggestions: [
 							{ workMinutes: 10, breakMinutes: 5 },
-							{ workMinutes: 20, breakMinutes: 5 },
-							{ workMinutes: 30, breakMinutes: 5 }
+							{ workMinutes: 15, breakMinutes: 5 },
+							{ workMinutes: 20, breakMinutes: 5 }
 						]
 					},
 					{
@@ -65,9 +65,9 @@ export class SettingsCx {
 						label: 'Focused',
 						description: 'Solid focus throughout',
 						suggestions: [
-							{ workMinutes: 25, breakMinutes: 5 },
-							{ workMinutes: 45, breakMinutes: 5 },
-							{ workMinutes: 60, breakMinutes: 5 }
+							{ workMinutes: 20, breakMinutes: 2 },
+							{ workMinutes: 25, breakMinutes: 2 },
+							{ workMinutes: 30, breakMinutes: 2 }
 						]
 					},
 					{
@@ -75,9 +75,9 @@ export class SettingsCx {
 						label: 'Flow',
 						description: 'Deep focus — keep going',
 						suggestions: [
+							{ workMinutes: 30, breakMinutes: null },
 							{ workMinutes: 45, breakMinutes: null },
-							{ workMinutes: 60, breakMinutes: null },
-							{ workMinutes: 90, breakMinutes: null }
+							{ workMinutes: 60, breakMinutes: null }
 						]
 					}
 				],

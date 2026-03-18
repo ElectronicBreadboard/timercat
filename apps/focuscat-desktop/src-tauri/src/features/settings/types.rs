@@ -214,19 +214,19 @@ impl Default for ProgressivePomodoroSettings {
                     "distracted",
                     "Distracted",
                     "Hard to focus, lots of interruptions",
-                    vec![s(2, 5), s(5, 5), s(10, 5)],
+                    vec![s(3, 5), s(5, 5), s(10, 5)],
                 ),
                 r(
                     "okay",
                     "Okay",
                     "Some focus, manageable",
-                    vec![s(10, 5), s(20, 5), s(30, 5)],
+                    vec![s(10, 5), s(15, 5), s(20, 5)],
                 ),
                 r(
                     "focused",
                     "Focused",
                     "Solid focus throughout",
-                    vec![s(25, 5), s(45, 5), s(60, 5)],
+                    vec![s(20, 2), s(25, 2), s(30, 2)],
                 ),
                 r(
                     "flow",

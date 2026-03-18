@@ -1,4 +1,4 @@
-import { Button } from '@repo/ui';
+import { Button, cn } from '@repo/ui';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
@@ -20,7 +20,8 @@ function RouteComponent() {
 	const [isSubmitting, setIsSubmitting] = React.useState(false);
 	const [editableWork, setEditableWork] = React.useState<number[]>([]);
 	const [editableBreak, setEditableBreak] = React.useState<(number | null)[]>([]);
-	const [editingCell, setEditingCell] = React.useState<EditingCell | null>(null);
+	const [editingCell, setEditingCell] = React.useState<TEditingCell | null>(null);
+	const [editingValue, setEditingValue] = React.useState<string>('');
 
 	const ratings = settings.timer.progressive.ratings;
 	const selectedRating = ratings.find((r) => r.key === selectedRatingKey) ?? null;
@@ -40,17 +41,15 @@ function RouteComponent() {
 	);
 
 	const handleSelectSuggestion = React.useCallback(
-		async (suggestionIndex: number) => {
+		async (index: number, workMinutes: number, breakMinutes: number | null) => {
 			if (isSubmitting || selectedRating == null) return;
 			setIsSubmitting(true);
 
-			const suggestion = selectedRating.suggestions[suggestionIndex];
-			if (suggestion == null) return;
-			const workMinutes = editableWork[suggestionIndex] ?? suggestion.workMinutes;
-			const breakMinutes =
-				editableBreak[suggestionIndex] !== undefined
-					? editableBreak[suggestionIndex]
-					: suggestion.breakMinutes;
+			const suggestion = selectedRating.suggestions[index];
+			if (suggestion == null) {
+				setIsSubmitting(false);
+				return;
+			}
 
 			if (workMinutes !== suggestion.workMinutes || breakMinutes !== suggestion.breakMinutes) {
 				const updatedRatings = ratings.map((r) =>
@@ -58,7 +57,7 @@ function RouteComponent() {
 						? {
 								...r,
 								suggestions: r.suggestions.map((s, i) =>
-									i === suggestionIndex ? { workMinutes, breakMinutes } : s
+									i === index ? { workMinutes, breakMinutes } : s
 								)
 							}
 						: r
@@ -71,24 +70,36 @@ function RouteComponent() {
 				});
 			}
 
-			await timerCx.advanceWithSuggestion(
-				workMinutes * 60,
-				breakMinutes != null ? breakMinutes * 60 : null
-			);
-			navigate({ to: '/window/main' });
+			try {
+				await timerCx.advanceWithSuggestion(
+					workMinutes * 60,
+					breakMinutes != null ? breakMinutes * 60 : null
+				);
+				navigate({ to: '/window/main' });
+			} finally {
+				setIsSubmitting(false);
+			}
 		},
 		[
 			isSubmitting,
 			selectedRating,
 			selectedRatingKey,
-			editableWork,
-			editableBreak,
 			ratings,
 			settingsCx,
 			settings.timer,
 			timerCx,
 			navigate
 		]
+	);
+
+	const parseWork = React.useCallback(
+		(raw: string) => Math.max(1, Math.min(120, parseInt(raw, 10) || 1)),
+		[]
+	);
+
+	const parseBreak = React.useCallback(
+		(raw: string) => Math.max(1, Math.min(60, parseInt(raw, 10) || 1)),
+		[]
 	);
 
 	// MARK: - UI
@@ -136,16 +147,21 @@ function RouteComponent() {
 										key={i}
 										role="button"
 										tabIndex={0}
-										onClick={() => !isSubmitting && handleSelectSuggestion(i)}
+										onClick={() => handleSelectSuggestion(i, workMin, breakMin)}
 										onKeyDown={(e) =>
-											e.key === 'Enter' && !isSubmitting && handleSelectSuggestion(i)
+											e.key === 'Enter' && handleSelectSuggestion(i, workMin, breakMin)
 										}
-										className="border-base-200 hover:bg-base-50 flex flex-col items-start rounded-xl border p-4 text-left transition-colors"
+										className={cn(
+											'border-base-200 hover:bg-base-50 flex flex-col items-start rounded-xl border p-4 text-left transition-colors',
+											isSubmitting && 'pointer-events-none opacity-50'
+										)}
 									>
+										{/* Work duration */}
 										<span
 											className="text-base-900 cursor-text text-sm font-semibold"
 											onClick={(e) => {
 												e.stopPropagation();
+												setEditingValue(String(workMin));
 												setEditingCell({ index: i, field: 'work' });
 											}}
 										>
@@ -153,23 +169,26 @@ function RouteComponent() {
 												<input
 													type="number"
 													autoFocus
-													value={workMin}
+													value={editingValue}
 													min={1}
 													max={120}
-													onChange={(e) => {
-														const v = Math.max(1, Math.min(120, Number(e.target.value)));
+													onChange={(e) => setEditingValue(e.target.value)}
+													onBlur={() => {
+														const v = parseWork(editingValue);
 														setEditableWork((prev) => prev.map((m, j) => (j === i ? v : m)));
+														setEditingCell(null);
 													}}
-													onBlur={() => setEditingCell(null)}
 													onKeyDown={(e) => {
 														if (e.key === 'Enter') {
+															const v = parseWork(editingValue);
 															setEditingCell(null);
-															handleSelectSuggestion(i);
+															handleSelectSuggestion(i, v, breakMin);
 														}
 														e.stopPropagation();
 													}}
 													onClick={(e) => e.stopPropagation()}
-													className="text-base-900 w-10 [appearance:textfield] bg-transparent text-sm font-semibold outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+													style={{ width: `${Math.max(1, editingValue.length)}ch` }}
+													className="text-base-900 [appearance:textfield] bg-transparent text-sm font-semibold outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 												/>
 											) : (
 												workMin
@@ -177,33 +196,41 @@ function RouteComponent() {
 											min
 										</span>
 
+										{/* Break duration */}
 										{breakMin != null ? (
 											<span
 												className="text-base-400 cursor-text text-xs"
 												onClick={(e) => {
 													e.stopPropagation();
+													setEditingValue(String(breakMin));
 													setEditingCell({ index: i, field: 'break' });
 												}}
 											>
-												+
+												after{' '}
 												{isEditingBreak ? (
 													<input
 														type="number"
 														autoFocus
-														value={breakMin}
+														value={editingValue}
 														min={1}
 														max={60}
-														onChange={(e) => {
-															const v = Math.max(1, Math.min(60, Number(e.target.value)));
+														onChange={(e) => setEditingValue(e.target.value)}
+														onBlur={() => {
+															const v = parseBreak(editingValue);
 															setEditableBreak((prev) => prev.map((m, j) => (j === i ? v : m)));
+															setEditingCell(null);
 														}}
-														onBlur={() => setEditingCell(null)}
 														onKeyDown={(e) => {
-															if (e.key === 'Enter') setEditingCell(null);
+															if (e.key === 'Enter') {
+																const v = parseBreak(editingValue);
+																setEditingCell(null);
+																handleSelectSuggestion(i, workMin, v);
+															}
 															e.stopPropagation();
 														}}
 														onClick={(e) => e.stopPropagation()}
-														className="text-base-400 w-6 [appearance:textfield] bg-transparent text-xs outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+														style={{ width: `calc(${Math.max(1, editingValue.length)}ch + 1px)` }}
+														className="text-base-400 [appearance:textfield] bg-transparent text-xs outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 													/>
 												) : (
 													breakMin
@@ -211,7 +238,7 @@ function RouteComponent() {
 												min break
 											</span>
 										) : (
-											<span className="text-base-400 text-xs">no break</span>
+											<span className="text-base-400 text-xs">after no break</span>
 										)}
 									</div>
 								);
@@ -250,7 +277,7 @@ function RouteComponent() {
 	);
 }
 
-interface EditingCell {
+interface TEditingCell {
 	index: number;
 	field: 'work' | 'break';
 }
