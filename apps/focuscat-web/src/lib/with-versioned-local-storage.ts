@@ -1,3 +1,4 @@
+import { TEnforceFeatureConstraint, type TFeatureDefinition } from '@blgc/types/features';
 import {
 	FAILED_TO_LOAD_FROM_STORAGE_IDENTIFIER,
 	withStorage,
@@ -6,11 +7,14 @@ import {
 	type TStorageInterface
 } from 'feature-state';
 
-export function withVersionedLocalStorage<GValue extends { version: string }>(
-	baseState: TState<GValue, []>,
+export function withVersionedLocalStorage<
+	GValue extends { version: string },
+	GFeatures extends TFeatureDefinition[]
+>(
+	baseState: TEnforceFeatureConstraint<TState<GValue, GFeatures>, TState<GValue, GFeatures>, []>,
 	key: string,
 	migrationConfig: TVersionedMigrationConfig<GValue>
-): TState<GValue, [TPersistFeature]> {
+): TState<GValue, [TPersistFeature, ...GFeatures]> {
 	return withStorage(baseState, new VersionedLocalStorageInterface(migrationConfig), key);
 }
 
@@ -31,15 +35,15 @@ export class VersionedLocalStorageInterface<
 	}
 
 	public load(key: string): GValue | typeof FAILED_TO_LOAD_FROM_STORAGE_IDENTIFIER {
-		const item = localStorage.getItem(key);
-		if (item == null) {
+		const raw = localStorage.getItem(key);
+		if (raw == null) {
 			return FAILED_TO_LOAD_FROM_STORAGE_IDENTIFIER;
 		}
 
-		// Parse loaded local storage item
+		// Parse loaded storage item
 		let value: unknown;
 		try {
-			value = JSON.parse(item) as unknown;
+			value = JSON.parse(raw) as unknown;
 		} catch {
 			return FAILED_TO_LOAD_FROM_STORAGE_IDENTIFIER;
 		}
@@ -47,15 +51,15 @@ export class VersionedLocalStorageInterface<
 			return FAILED_TO_LOAD_FROM_STORAGE_IDENTIFIER;
 		}
 
-		// Extract version from parsed value
-		const version = (value as { version?: string }).version;
+		// Try to extract version from parsed value
+		const version = (value as { version?: string }).version ?? this._config.fallbackVersion;
 		if (version == null) {
 			return FAILED_TO_LOAD_FROM_STORAGE_IDENTIFIER;
 		}
 		let current = value as GValue;
 		let currentVersion: string = version;
 
-		// Run migration chain until latest
+		// Run migration chain until we reach the latest version
 		while (currentVersion !== this._config.latestVersion) {
 			const migration = this._config.migrations[currentVersion];
 			if (migration == null) {
@@ -83,6 +87,7 @@ export class VersionedLocalStorageInterface<
 
 export interface TVersionedMigrationConfig<GValue extends { version: string }> {
 	latestVersion: GValue['version'];
+	fallbackVersion?: string;
 	migrations: Record<string, TVersionedMigration<unknown, unknown>>;
 }
 
