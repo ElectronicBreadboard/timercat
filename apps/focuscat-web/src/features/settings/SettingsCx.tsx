@@ -7,7 +7,7 @@ import { type TAppSettings } from './types';
 export class SettingsCx {
 	public readonly $appSettings = withVersionedLocalStorage(
 		createState<TAppSettings>({
-			version: '0.0.2',
+			version: '0.0.3',
 			features: {
 				goals: true,
 				catWindow: true,
@@ -17,8 +17,9 @@ export class SettingsCx {
 				theme: 'auto'
 			},
 			audio: {
-				enabled: true,
-				volume: 0.6
+				session: { enabled: true, volume: 0.6 },
+				sessionEnd: { enabled: true, volume: 0.6 },
+				effects: { enabled: true, volume: 0.6 }
 			},
 			developer: {
 				cat: false,
@@ -68,7 +69,7 @@ export class SettingsCx {
 }
 
 const settingsMigrationConfig: TVersionedMigrationConfig<TAppSettings> = {
-	latestVersion: '0.0.2',
+	latestVersion: '0.0.3',
 	migrations: {
 		'0.0.1': {
 			to: '0.0.2',
@@ -79,6 +80,20 @@ const settingsMigrationConfig: TVersionedMigrationConfig<TAppSettings> = {
 					timer: {
 						...(v.timer ?? {}),
 						showSessionSetup: false
+					}
+				};
+			}
+		},
+		'0.0.2': {
+			to: '0.0.3',
+			migrate: (value) => {
+				const v = value as TAppSettings & { audio: { enabled?: boolean; volume?: number } };
+				return {
+					...v,
+					audio: {
+						session: { enabled: v.audio.enabled ?? true, volume: v.audio.volume ?? 0.6 },
+						sessionEnd: { enabled: v.audio.enabled ?? true, volume: v.audio.volume ?? 0.6 },
+						effects: { enabled: v.audio.enabled ?? true, volume: v.audio.volume ?? 0.6 }
 					}
 				};
 			}

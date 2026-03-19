@@ -20,7 +20,8 @@ export class AudioCx {
 	}
 
 	public playSound(id: TSoundId): void {
-		const { enabled, volume } = this._settingsCx.$appSettings.get().audio;
+		const channel = this._getSoundChannel(id);
+		const { enabled, volume } = this._settingsCx.$appSettings.get().audio[channel];
 		if (!enabled) {
 			return;
 		}
@@ -62,7 +63,31 @@ export class AudioCx {
 				.catch(() => {});
 		}
 	}
+
+	private _getSoundChannel(id: TSoundId): TSoundChannel {
+		switch (id) {
+			case 'tick':
+			case 'wind-up-tick-1':
+			case 'wind-up-tick-2':
+			case 'wind-up-tick-3':
+			case 'wind-up-tick-4':
+			case 'wind-up-tick-5':
+			case 'wind-up-tick-6':
+			case 'wind-up-tick-7':
+			case 'wind-up-tick-8':
+			case 'wind-up-tick-9':
+			case 'wind-up-tick-10':
+			case 'wind-up-tick-11':
+				return 'session';
+			case 'complete':
+				return 'sessionEnd';
+			case 'meow':
+				return 'effects';
+		}
+	}
 }
+
+type TSoundChannel = 'session' | 'sessionEnd' | 'effects';
 
 // MARK: - React Context
 

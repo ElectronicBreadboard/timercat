@@ -511,11 +511,12 @@ export type AppInfoDto = { version: string; stage: Stage; distribution: AppDistr
 export type AppSettings = { version: SettingsVersion; launchAtLogin: boolean; features: FeaturesSettings; appearance: AppearanceSettings; audio: AudioSettings; developer: DeveloperSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; cat: CatSettings }
 export type AppSettingsChangedEvent = AppSettings
 export type AppearanceSettings = { theme: Theme }
-export type AudioSettings = { enabled: boolean; 
+export type AudioChannelSettings = { enabled: boolean; 
 /**
  * Volume 0.0..=1.0 (linear scale)
  */
 volume: number }
+export type AudioSettings = { session: AudioChannelSettings; sessionEnd: AudioChannelSettings; effects: AudioChannelSettings }
 /**
  * The target that was blocked.
  */
@@ -666,7 +667,7 @@ data: SessionEventDataDto | null }
 export type SessionStatsDto = { pausedSeconds: number; extendedSeconds: number; overtimeSeconds: number }
 export type SessionStatus = "active" | "completed" | "cancelled"
 export type SessionSummaryDto = { id: number; sessionType: string; status: SessionStatus; plannedSeconds: number; actualSeconds: number | null; intention: string | null; startedAt: number; endedAt: number | null }
-export type SettingsVersion = "0.0.1"
+export type SettingsVersion = "0.0.1" | "0.0.2"
 export type SoundId = "tick" | "complete" | "meow" | "wind-up-tick-1" | "wind-up-tick-2" | "wind-up-tick-3" | "wind-up-tick-4" | "wind-up-tick-5" | "wind-up-tick-6" | "wind-up-tick-7" | "wind-up-tick-8" | "wind-up-tick-9" | "wind-up-tick-10" | "wind-up-tick-11"
 export type Stage = "dev" | "prod"
 export type Theme = "light" | "dark" | "auto"

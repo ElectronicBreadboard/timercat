@@ -104,10 +104,15 @@ pub fn play(app: &AppHandle, id: SoundId) {
             None => return,
         };
         let settings = settings_state.lock().unwrap();
-        if !settings.audio.enabled {
+        let channel_settings = match get_sound_channel(id) {
+            SoundChannel::Session => &settings.audio.session,
+            SoundChannel::SessionEnd => &settings.audio.session_end,
+            SoundChannel::Effects => &settings.audio.effects,
+        };
+        if !channel_settings.enabled {
             return;
         }
-        settings.audio.volume
+        channel_settings.volume
     };
 
     if let Some(state) = app.try_state::<AudioState>() {
@@ -133,4 +138,29 @@ fn get_audio_path(app: &AppHandle, id: SoundId) -> Result<PathBuf, String> {
         SoundId::WindUpTick11 => "timer-wind-up-tick-11.mp3",
     };
     return get_resource_path(app, &format!("audio/{}", filename));
+}
+
+fn get_sound_channel(id: SoundId) -> SoundChannel {
+    match id {
+        SoundId::Tick
+        | SoundId::WindUpTick1
+        | SoundId::WindUpTick2
+        | SoundId::WindUpTick3
+        | SoundId::WindUpTick4
+        | SoundId::WindUpTick5
+        | SoundId::WindUpTick6
+        | SoundId::WindUpTick7
+        | SoundId::WindUpTick8
+        | SoundId::WindUpTick9
+        | SoundId::WindUpTick10
+        | SoundId::WindUpTick11 => SoundChannel::Session,
+        SoundId::Complete => SoundChannel::SessionEnd,
+        SoundId::Meow => SoundChannel::Effects,
+    }
+}
+
+enum SoundChannel {
+    Session,
+    SessionEnd,
+    Effects,
 }

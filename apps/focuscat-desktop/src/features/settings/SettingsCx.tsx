@@ -20,8 +20,18 @@ export class SettingsCx {
 			theme: 'auto'
 		},
 		audio: {
-			enabled: true,
-			volume: 0.6
+			session: {
+				enabled: true,
+				volume: 0.6
+			},
+			sessionEnd: {
+				enabled: true,
+				volume: 0.6
+			},
+			effects: {
+				enabled: true,
+				volume: 0.6
+			}
 		},
 		developer: {
 			cat: false,

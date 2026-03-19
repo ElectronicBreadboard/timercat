@@ -40,11 +40,13 @@ impl Default for AppSettings {
 pub enum SettingsVersion {
     #[serde(rename = "0.0.1")]
     V0_0_1,
+    #[serde(rename = "0.0.2")]
+    V0_0_2,
 }
 
 impl SettingsVersion {
     pub fn current() -> Self {
-        return Self::V0_0_1;
+        return Self::V0_0_2;
     }
 }
 
@@ -94,12 +96,30 @@ pub enum Theme {
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AudioSettings {
+    pub session: AudioChannelSettings,
+    pub session_end: AudioChannelSettings,
+    pub effects: AudioChannelSettings,
+}
+
+impl Default for AudioSettings {
+    fn default() -> Self {
+        return Self {
+            session: AudioChannelSettings::default(),
+            session_end: AudioChannelSettings::default(),
+            effects: AudioChannelSettings::default(),
+        };
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase", default)]
+pub struct AudioChannelSettings {
     pub enabled: bool,
     /// Volume 0.0..=1.0 (linear scale)
     pub volume: f32,
 }
 
-impl Default for AudioSettings {
+impl Default for AudioChannelSettings {
     fn default() -> Self {
         return Self {
             enabled: true,

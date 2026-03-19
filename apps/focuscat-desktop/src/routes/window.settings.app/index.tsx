@@ -72,9 +72,29 @@ function RouteComponent() {
 		[settingsCx, settings.features]
 	);
 
-	const updateAudio = React.useCallback(
-		(updates: Partial<specta.AudioSettings>) => {
-			settingsCx.update({ audio: { ...settings.audio, ...updates } });
+	const updateSessionAudio = React.useCallback(
+		(updates: Partial<specta.AudioChannelSettings>) => {
+			settingsCx.update({
+				audio: { ...settings.audio, session: { ...settings.audio.session, ...updates } }
+			});
+		},
+		[settingsCx, settings.audio]
+	);
+
+	const updateSessionEndAudio = React.useCallback(
+		(updates: Partial<specta.AudioChannelSettings>) => {
+			settingsCx.update({
+				audio: { ...settings.audio, sessionEnd: { ...settings.audio.sessionEnd, ...updates } }
+			});
+		},
+		[settingsCx, settings.audio]
+	);
+
+	const updateEffectsAudio = React.useCallback(
+		(updates: Partial<specta.AudioChannelSettings>) => {
+			settingsCx.update({
+				audio: { ...settings.audio, effects: { ...settings.audio.effects, ...updates } }
+			});
 		},
 		[settingsCx, settings.audio]
 	);
@@ -130,31 +150,82 @@ function RouteComponent() {
 				</SettingGroup>
 
 				<SettingGroup title="Audio">
-					<SettingItem
-						label="Sound effects"
-						description="Timer ticks, completion chime, and other sounds"
-					>
+					<SettingItem label="Session sound" description="Clock ticking during timer sessions">
 						<Switch
-							checked={settings.audio.enabled}
-							onCheckedChange={(checked) => updateAudio({ enabled: checked })}
+							checked={settings.audio.session.enabled}
+							onCheckedChange={(checked) => updateSessionAudio({ enabled: checked })}
 							size="sm"
 						/>
 					</SettingItem>
-					{settings.audio.enabled && (
-						<SettingItem label="Volume" description="Sound effects volume">
+					{settings.audio.session.enabled && (
+						<SettingItem label="Volume">
 							<div className="flex min-w-40 items-center gap-3">
 								<span className="text-base-500 shrink-0 text-right text-xs tabular-nums">
-									{Math.round(settings.audio.volume * 100)}%
+									{Math.round(settings.audio.session.volume * 100)}%
 								</span>
 								<div className="min-w-0 flex-1">
 									<Slider
-										value={Math.round(settings.audio.volume * 100)}
+										value={Math.round(settings.audio.session.volume * 100)}
 										min={0}
 										max={100}
 										step={5}
 										size="sm"
-										aria-label="Volume"
-										onValueChange={(v) => updateAudio({ volume: v / 100 })}
+										aria-label="Session sound volume"
+										onValueChange={(v) => updateSessionAudio({ volume: v / 100 })}
+									/>
+								</div>
+							</div>
+						</SettingItem>
+					)}
+					<SettingItem label="Session end sound" description="Chime when a session ends">
+						<Switch
+							checked={settings.audio.sessionEnd.enabled}
+							onCheckedChange={(checked) => updateSessionEndAudio({ enabled: checked })}
+							size="sm"
+						/>
+					</SettingItem>
+					{settings.audio.sessionEnd.enabled && (
+						<SettingItem label="Volume">
+							<div className="flex min-w-40 items-center gap-3">
+								<span className="text-base-500 shrink-0 text-right text-xs tabular-nums">
+									{Math.round(settings.audio.sessionEnd.volume * 100)}%
+								</span>
+								<div className="min-w-0 flex-1">
+									<Slider
+										value={Math.round(settings.audio.sessionEnd.volume * 100)}
+										min={0}
+										max={100}
+										step={5}
+										size="sm"
+										aria-label="Session end sound volume"
+										onValueChange={(v) => updateSessionEndAudio({ volume: v / 100 })}
+									/>
+								</div>
+							</div>
+						</SettingItem>
+					)}
+					<SettingItem label="Sound effects" description="Cat meow and other widget sounds">
+						<Switch
+							checked={settings.audio.effects.enabled}
+							onCheckedChange={(checked) => updateEffectsAudio({ enabled: checked })}
+							size="sm"
+						/>
+					</SettingItem>
+					{settings.audio.effects.enabled && (
+						<SettingItem label="Volume">
+							<div className="flex min-w-40 items-center gap-3">
+								<span className="text-base-500 shrink-0 text-right text-xs tabular-nums">
+									{Math.round(settings.audio.effects.volume * 100)}%
+								</span>
+								<div className="min-w-0 flex-1">
+									<Slider
+										value={Math.round(settings.audio.effects.volume * 100)}
+										min={0}
+										max={100}
+										step={5}
+										size="sm"
+										aria-label="Sound effects volume"
+										onValueChange={(v) => updateEffectsAudio({ volume: v / 100 })}
 									/>
 								</div>
 							</div>
