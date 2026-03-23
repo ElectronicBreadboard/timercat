@@ -57,10 +57,8 @@ pub fn setup(app: &App) {
                     if let (Ok(db_profiles), Some(state)) =
                         (db_profiles, handle.try_state::<BlockerState>())
                     {
-                        let refs: Vec<(&FocusProfileWithRelations, i64)> = db_profiles
-                            .iter()
-                            .map(|(p, pri)| (p, *pri as i64))
-                            .collect();
+                        let refs: Vec<(&FocusProfileWithRelations, i64)> =
+                            db_profiles.iter().map(|(p, pri)| (p, *pri)).collect();
                         let profiles = to_resolution_profiles(&refs);
                         state.lock().unwrap().set_profiles(profiles);
                     }

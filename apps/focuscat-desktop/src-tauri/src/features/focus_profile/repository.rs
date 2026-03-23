@@ -111,7 +111,7 @@ impl FocusProfileRepository {
     /// Disabled profiles are never active.
     pub async fn get_active(
         pool: &SqlitePool,
-    ) -> Result<Vec<(FocusProfileWithRelations, i32)>, sqlx::Error> {
+    ) -> Result<Vec<(FocusProfileWithRelations, i64)>, sqlx::Error> {
         let now = chrono::Local::now();
         let current_day = now.weekday().num_days_from_monday() as i32;
         let current_time = now.format("%H:%M").to_string();
@@ -128,7 +128,7 @@ impl FocusProfileRepository {
         .fetch_all(pool)
         .await?;
 
-        let session_priorities: std::collections::HashMap<i64, i32> = session_rows
+        let session_priorities: std::collections::HashMap<i64, i64> = session_rows
             .iter()
             .map(|r| (r.get("focus_profile_id"), r.get("priority")))
             .collect();

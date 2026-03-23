@@ -126,21 +126,6 @@ pub async fn delete_focus_profile(
     return Ok(());
 }
 
-#[tauri::command]
-#[specta::specta]
-pub async fn get_active_focus_profiles(
-    db: State<'_, DatabaseState>,
-) -> Result<Vec<FocusProfileDto>, String> {
-    let active = FocusProfileRepository::get_active(&db.pool)
-        .await
-        .map_err(|e| e.to_string())?;
-
-    return Ok(active
-        .into_iter()
-        .map(|(profile, _priority)| FocusProfileDto::from(profile))
-        .collect());
-}
-
 /// Returns all enabled profiles with their activation status for session setup.
 ///
 /// - AlwaysOn: active always_on schedule — shown, not removable
