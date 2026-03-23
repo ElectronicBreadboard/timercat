@@ -6,11 +6,10 @@ use crate::{
     app::window::Window,
     common::url::extract_domain,
     environment::logger::log_info,
-    features::focus_profile::{
-        resolution::{resolve_for_app, resolve_for_website, ResolutionProfile},
-        types::RuleAction,
+    features::focus_profile::resolution::{
+        is_blocked, resolve_category_for_app, resolve_category_for_website, ResolutionProfile,
     },
-    features::settings::types::AppSettingsState,
+    features::settings::types::{AppSettingsState, BlockThreshold},
 };
 use tauri::{AppHandle, Manager};
 use tauri_specta::Event;
@@ -35,6 +34,13 @@ impl Blocker {
             .try_state::<AppSettingsState>()
             .map(|state| state.lock().unwrap().features.developer)
             .unwrap_or(false)
+    }
+
+    fn get_threshold(&self) -> BlockThreshold {
+        self.app
+            .try_state::<AppSettingsState>()
+            .map(|state| state.lock().unwrap().focus.block_threshold)
+            .unwrap_or(BlockThreshold::Distracting)
     }
 
     /// Handle an app switch. Checks if the app is blocked and updates the overlay.
@@ -144,12 +150,13 @@ impl Blocker {
     /// Check if an app is blocked.
     fn check_app(&self, bundle_id: Option<&str>) -> Option<BlockingViolation> {
         let bid = bundle_id?;
-        let (action, profile) = resolve_for_app(bid, &self.profiles)?;
-        if matches!(action, RuleAction::Block) {
+        let threshold = self.get_threshold();
+        let (category, profile) = resolve_category_for_app(bid, &self.profiles);
+        if is_blocked(&category, &threshold) {
             return Some(BlockingViolation {
-                profile_id: profile.profile_id,
-                profile_name: profile.profile_name.clone(),
-                profile_color: profile.profile_color.clone(),
+                profile_id: profile.map(|p| p.profile_id),
+                profile_name: profile.map(|p| p.profile_name.clone()),
+                profile_color: profile.and_then(|p| p.profile_color.clone()),
                 blocked_target: BlockedTarget::App {
                     bundle_id: bid.to_string(),
                 },
@@ -160,12 +167,13 @@ impl Blocker {
 
     /// Check if a website is blocked.
     fn check_website(&self, domain: &str) -> Option<BlockingViolation> {
-        let (action, profile) = resolve_for_website(domain, &self.profiles)?;
-        if matches!(action, RuleAction::Block) {
+        let threshold = self.get_threshold();
+        let (category, profile) = resolve_category_for_website(domain, &self.profiles);
+        if is_blocked(&category, &threshold) {
             return Some(BlockingViolation {
-                profile_id: profile.profile_id,
-                profile_name: profile.profile_name.clone(),
-                profile_color: profile.profile_color.clone(),
+                profile_id: profile.map(|p| p.profile_id),
+                profile_name: profile.map(|p| p.profile_name.clone()),
+                profile_color: profile.and_then(|p| p.profile_color.clone()),
                 blocked_target: BlockedTarget::Website {
                     domain: domain.to_string(),
                 },
@@ -195,10 +203,11 @@ impl Blocker {
 }
 
 /// Violation reported when a blocked app or website is detected.
+/// Profile fields are None when the target is blocked by threshold with no explicit assignment.
 #[derive(Debug, Clone, PartialEq)]
 pub struct BlockingViolation {
-    pub profile_id: i64,
-    pub profile_name: String,
+    pub profile_id: Option<i64>,
+    pub profile_name: Option<String>,
     pub profile_color: Option<String>,
     pub blocked_target: BlockedTarget,
 }

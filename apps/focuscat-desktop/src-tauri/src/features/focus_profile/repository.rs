@@ -1,6 +1,6 @@
 use super::{
     resolution::is_always_on_now,
-    types::{RuleAction, RuleTargetDto, ScheduleMode},
+    types::{FocusCategory, FocusTargetDto, ScheduleMode},
 };
 use crate::features::app::repository::{
     AppRepository, UpsertAppInput, UpsertWebsiteInput, WebsiteRepository,
@@ -11,7 +11,7 @@ use sqlx::{FromRow, Row, SqliteConnection, SqlitePool};
 pub struct FocusProfileRepository;
 
 impl FocusProfileRepository {
-    /// Create new focus profile with rules and schedules.
+    /// Create a new focus profile with categories and schedules.
     pub async fn create(
         pool: &SqlitePool,
         input: &CreateFocusProfileInput,
@@ -20,13 +20,14 @@ impl FocusProfileRepository {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO focus_profile (name, color)
-            VALUES (?, ?)
-            RETURNING id, name, color, created_at
+            INSERT INTO focus_profile (name, color, enabled)
+            VALUES (?, ?, ?)
+            RETURNING id, name, color, enabled, created_at
             "#,
         )
         .bind(&input.name)
         .bind(&input.color)
+        .bind(input.enabled)
         .fetch_one(&mut *tx)
         .await?;
 
@@ -34,42 +35,44 @@ impl FocusProfileRepository {
             id: result.get(0),
             name: result.get(1),
             color: result.get(2),
-            created_at: result.get(3),
+            enabled: result.get(3),
+            created_at: result.get(4),
         };
 
-        Self::insert_rules(&mut *tx, profile.id, &input.rules).await?;
+        Self::insert_categories(&mut *tx, profile.id, &input.categories).await?;
         Self::insert_schedules(&mut *tx, profile.id, &input.schedules).await?;
 
         tx.commit().await?;
 
-        let rules = Self::get_rules(pool, profile.id).await?;
+        let categories = Self::get_categories(pool, profile.id).await?;
         let schedules = Self::get_schedules(pool, profile.id).await?;
 
         return Ok(FocusProfileWithRelations {
             profile,
-            rules,
+            categories,
             schedules,
         });
     }
 
-    /// Get focus profile by id with rules and schedules.
+    /// Get a focus profile by id with categories and schedules.
     pub async fn get(
         pool: &SqlitePool,
         id: i64,
     ) -> Result<Option<FocusProfileWithRelations>, sqlx::Error> {
-        let profile: Option<FocusProfileRow> =
-            sqlx::query_as("SELECT id, name, color, created_at FROM focus_profile WHERE id = ?")
-                .bind(id)
-                .fetch_optional(pool)
-                .await?;
+        let profile: Option<FocusProfileRow> = sqlx::query_as(
+            "SELECT id, name, color, enabled, created_at FROM focus_profile WHERE id = ?",
+        )
+        .bind(id)
+        .fetch_optional(pool)
+        .await?;
 
         match profile {
             Some(profile) => {
-                let rules = Self::get_rules(pool, profile.id).await?;
+                let categories = Self::get_categories(pool, profile.id).await?;
                 let schedules = Self::get_schedules(pool, profile.id).await?;
                 return Ok(Some(FocusProfileWithRelations {
                     profile,
-                    rules,
+                    categories,
                     schedules,
                 }));
             }
@@ -77,21 +80,21 @@ impl FocusProfileRepository {
         }
     }
 
-    /// Get all focus profiles with rules and schedules.
+    /// Get all focus profiles with categories and schedules.
     pub async fn get_all(pool: &SqlitePool) -> Result<Vec<FocusProfileWithRelations>, sqlx::Error> {
         let profiles: Vec<FocusProfileRow> = sqlx::query_as(
-            "SELECT id, name, color, created_at FROM focus_profile ORDER BY created_at DESC",
+            "SELECT id, name, color, enabled, created_at FROM focus_profile ORDER BY created_at DESC",
         )
         .fetch_all(pool)
         .await?;
 
         let mut results = Vec::with_capacity(profiles.len());
         for profile in profiles {
-            let rules = Self::get_rules(pool, profile.id).await?;
+            let categories = Self::get_categories(pool, profile.id).await?;
             let schedules = Self::get_schedules(pool, profile.id).await?;
             results.push(FocusProfileWithRelations {
                 profile,
-                rules,
+                categories,
                 schedules,
             });
         }
@@ -105,9 +108,7 @@ impl FocusProfileRepository {
     /// - It's linked to an active session (via session_focus_profile), OR
     /// - It has an always_on schedule matching the current day and time.
     ///
-    /// Returns each profile paired with its priority (higher = overrides lower).
-    /// Session-linked profiles use their session_focus_profile.priority.
-    /// Always-on profiles default to priority 0.
+    /// Disabled profiles are never active.
     pub async fn get_active(
         pool: &SqlitePool,
     ) -> Result<Vec<(FocusProfileWithRelations, i32)>, sqlx::Error> {
@@ -115,12 +116,11 @@ impl FocusProfileRepository {
         let current_day = now.weekday().num_days_from_monday() as i32;
         let current_time = now.format("%H:%M").to_string();
 
-        // Session-linked profiles: profile_id → max priority
         let session_rows = sqlx::query(
             r#"
             SELECT sfp.focus_profile_id, MAX(sfp.priority) as priority
             FROM session_focus_profile sfp
-            JOIN sessions s ON s.id = sfp.session_id
+            JOIN session s ON s.id = sfp.session_id
             WHERE s.status = 'active'
             GROUP BY sfp.focus_profile_id
             "#,
@@ -133,19 +133,20 @@ impl FocusProfileRepository {
             .map(|r| (r.get("focus_profile_id"), r.get("priority")))
             .collect();
 
-        // All profiles with relations
         let all = Self::get_all(pool).await?;
 
-        // Filter to active: session-linked OR always-on schedule matching now
         let active = all
             .into_iter()
             .filter_map(|p| {
-                // Session-linked: use session priority
+                // Skip disabled profiles
+                if !p.profile.enabled {
+                    return None;
+                }
+
                 if let Some(&priority) = session_priorities.get(&p.profile.id) {
                     return Some((p, priority));
                 }
 
-                // Always-on: active if any schedule matches current day and time
                 if is_always_on_now(&p.schedules, current_day, &current_time) {
                     return Some((p, 0));
                 }
@@ -157,7 +158,7 @@ impl FocusProfileRepository {
         return Ok(active);
     }
 
-    /// Update focus profile with rules and schedules (replaces all).
+    /// Update a focus profile with categories and schedules (replaces all).
     pub async fn update(
         pool: &SqlitePool,
         id: i64,
@@ -165,22 +166,21 @@ impl FocusProfileRepository {
     ) -> Result<FocusProfileWithRelations, sqlx::Error> {
         let mut tx = pool.begin().await?;
 
-        sqlx::query("UPDATE focus_profile SET name = ?, color = ? WHERE id = ?")
+        sqlx::query("UPDATE focus_profile SET name = ?, color = ?, enabled = ? WHERE id = ?")
             .bind(&input.name)
             .bind(&input.color)
+            .bind(input.enabled)
             .bind(id)
             .execute(&mut *tx)
             .await?;
 
-        // Delete existing rules and insert new ones
-        sqlx::query("DELETE FROM focus_profile_rule WHERE focus_profile_id = ?")
+        sqlx::query("DELETE FROM focus_profile_category WHERE focus_profile_id = ?")
             .bind(id)
             .execute(&mut *tx)
             .await?;
 
-        Self::insert_rules(&mut *tx, id, &input.rules).await?;
+        Self::insert_categories(&mut *tx, id, &input.categories).await?;
 
-        // Delete existing schedules and insert new ones
         sqlx::query("DELETE FROM focus_profile_schedule WHERE focus_profile_id = ?")
             .bind(id)
             .execute(&mut *tx)
@@ -190,24 +190,24 @@ impl FocusProfileRepository {
 
         tx.commit().await?;
 
-        // Fetch updated profile
-        let profile: FocusProfileRow =
-            sqlx::query_as("SELECT id, name, color, created_at FROM focus_profile WHERE id = ?")
-                .bind(id)
-                .fetch_one(pool)
-                .await?;
+        let profile: FocusProfileRow = sqlx::query_as(
+            "SELECT id, name, color, enabled, created_at FROM focus_profile WHERE id = ?",
+        )
+        .bind(id)
+        .fetch_one(pool)
+        .await?;
 
-        let rules = Self::get_rules(pool, profile.id).await?;
+        let categories = Self::get_categories(pool, profile.id).await?;
         let schedules = Self::get_schedules(pool, profile.id).await?;
 
         return Ok(FocusProfileWithRelations {
             profile,
-            rules,
+            categories,
             schedules,
         });
     }
 
-    /// Delete focus profile (rules and schedules cascade).
+    /// Delete a focus profile (categories and schedules cascade).
     pub async fn delete(pool: &SqlitePool, id: i64) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM focus_profile WHERE id = ?")
             .bind(id)
@@ -217,16 +217,16 @@ impl FocusProfileRepository {
         return Ok(());
     }
 
-    /// Get rules for a profile with joined app/website data.
-    async fn get_rules(
+    /// Get category assignments for a profile with joined app/website data.
+    async fn get_categories(
         pool: &SqlitePool,
         profile_id: i64,
-    ) -> Result<Vec<FocusProfileRuleRow>, sqlx::Error> {
+    ) -> Result<Vec<FocusProfileCategoryRow>, sqlx::Error> {
         let rows = sqlx::query_as(
             r#"
             SELECT
-                r.id,
-                r.action,
+                c.id,
+                c.category,
                 a.bundle_id as app_bundle_id,
                 a.name as app_name,
                 a.icon as app_icon,
@@ -235,11 +235,11 @@ impl FocusProfileRepository {
                 w.name as website_name,
                 w.icon as website_icon,
                 w.color as website_color
-            FROM focus_profile_rule r
-            LEFT JOIN app a ON a.id = r.app_id
-            LEFT JOIN website w ON w.id = r.website_id
-            WHERE r.focus_profile_id = ?
-            ORDER BY r.created_at ASC
+            FROM focus_profile_category c
+            LEFT JOIN app a ON a.id = c.app_id
+            LEFT JOIN website w ON w.id = c.website_id
+            WHERE c.focus_profile_id = ?
+            ORDER BY c.created_at ASC
             "#,
         )
         .bind(profile_id)
@@ -249,24 +249,24 @@ impl FocusProfileRepository {
         return Ok(rows);
     }
 
-    /// Insert rules for a profile.
-    async fn insert_rules(
+    /// Insert category assignments for a profile.
+    async fn insert_categories(
         conn: &mut SqliteConnection,
         profile_id: i64,
-        rules: &[FocusProfileRuleInput],
+        categories: &[FocusProfileCategoryInput],
     ) -> Result<(), sqlx::Error> {
-        for rule in rules {
-            match &rule.target {
-                RuleTargetDto::All => {
+        for cat in categories {
+            match &cat.target {
+                FocusTargetDto::All => {
                     sqlx::query(
-                        "INSERT INTO focus_profile_rule (focus_profile_id, action) VALUES (?, ?)",
+                        "INSERT INTO focus_profile_category (focus_profile_id, category) VALUES (?, ?)",
                     )
                     .bind(profile_id)
-                    .bind(rule.action.as_str())
+                    .bind(cat.category.as_str())
                     .execute(&mut *conn)
                     .await?;
                 }
-                RuleTargetDto::App {
+                FocusTargetDto::App {
                     bundle_id,
                     name,
                     icon,
@@ -285,15 +285,15 @@ impl FocusProfileRepository {
                     .await?;
 
                     sqlx::query(
-                        "INSERT INTO focus_profile_rule (focus_profile_id, action, app_id) VALUES (?, ?, ?)",
+                        "INSERT INTO focus_profile_category (focus_profile_id, category, app_id) VALUES (?, ?, ?)",
                     )
                     .bind(profile_id)
-                    .bind(rule.action.as_str())
+                    .bind(cat.category.as_str())
                     .bind(app_id)
                     .execute(&mut *conn)
                     .await?;
                 }
-                RuleTargetDto::Website {
+                FocusTargetDto::Website {
                     domain,
                     name,
                     icon,
@@ -311,10 +311,10 @@ impl FocusProfileRepository {
                     .await?;
 
                     sqlx::query(
-                        "INSERT INTO focus_profile_rule (focus_profile_id, action, website_id) VALUES (?, ?, ?)",
+                        "INSERT INTO focus_profile_category (focus_profile_id, category, website_id) VALUES (?, ?, ?)",
                     )
                     .bind(profile_id)
-                    .bind(rule.action.as_str())
+                    .bind(cat.category.as_str())
                     .bind(website_id)
                     .execute(&mut *conn)
                     .await?;
@@ -372,23 +372,27 @@ impl FocusProfileRepository {
     }
 }
 
+// MARK: - Input
+
 pub struct CreateFocusProfileInput {
     pub name: String,
     pub color: Option<String>,
-    pub rules: Vec<FocusProfileRuleInput>,
+    pub enabled: bool,
+    pub categories: Vec<FocusProfileCategoryInput>,
     pub schedules: Vec<FocusProfileScheduleInput>,
 }
 
 pub struct UpdateFocusProfileInput {
     pub name: String,
     pub color: Option<String>,
-    pub rules: Vec<FocusProfileRuleInput>,
+    pub enabled: bool,
+    pub categories: Vec<FocusProfileCategoryInput>,
     pub schedules: Vec<FocusProfileScheduleInput>,
 }
 
-pub struct FocusProfileRuleInput {
-    pub action: RuleAction,
-    pub target: RuleTargetDto,
+pub struct FocusProfileCategoryInput {
+    pub category: FocusCategory,
+    pub target: FocusTargetDto,
 }
 
 pub struct FocusProfileScheduleInput {
@@ -398,18 +402,21 @@ pub struct FocusProfileScheduleInput {
     pub end_time: String,
 }
 
+// MARK: - Row
+
 #[derive(Debug, FromRow)]
 pub struct FocusProfileRow {
     pub id: i64,
     pub name: String,
     pub color: Option<String>,
+    pub enabled: bool,
     pub created_at: i64,
 }
 
 #[derive(Debug, FromRow)]
-pub struct FocusProfileRuleRow {
+pub struct FocusProfileCategoryRow {
     pub id: i64,
-    pub action: String,
+    pub category: String,
     pub app_bundle_id: Option<String>,
     pub app_name: Option<String>,
     pub app_icon: Option<String>,
@@ -431,6 +438,6 @@ pub struct FocusProfileScheduleRow {
 
 pub struct FocusProfileWithRelations {
     pub profile: FocusProfileRow,
-    pub rules: Vec<FocusProfileRuleRow>,
+    pub categories: Vec<FocusProfileCategoryRow>,
     pub schedules: Vec<FocusProfileScheduleRow>,
 }

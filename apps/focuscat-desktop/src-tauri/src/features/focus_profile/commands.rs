@@ -1,13 +1,13 @@
 use super::{
     repository::{
-        CreateFocusProfileInput, FocusProfileRepository, FocusProfileRuleInput,
-        FocusProfileRuleRow, FocusProfileScheduleInput, FocusProfileScheduleRow,
+        CreateFocusProfileInput, FocusProfileCategoryInput, FocusProfileCategoryRow,
+        FocusProfileRepository, FocusProfileScheduleInput, FocusProfileScheduleRow,
         FocusProfileWithRelations, UpdateFocusProfileInput,
     },
-    resolution::{is_always_on_now, resolve_rules, ResolvedRules, ResolvedTarget},
+    resolution::{is_always_on_now, schedule_time_matches},
     types::{
-        EligibleProfileDto, FocusProfileDto, FocusProfileRuleDto, FocusProfileScheduleDto,
-        PreviewRulesDto, ProfileChangedEvent, RuleAction, RuleTargetDto, ScheduleMode,
+        CategoryAssignmentDto, FocusCategory, FocusProfileDto, FocusProfileScheduleDto,
+        FocusTargetDto, ProfileActivation, ProfileChangedEvent, ScheduleMode, SessionProfileDto,
     },
 };
 use crate::environment::db::DatabaseState;
@@ -48,21 +48,24 @@ pub async fn create_focus_profile(
     db: State<'_, DatabaseState>,
     name: String,
     color: Option<String>,
-    rules: Vec<FocusProfileRuleParams>,
+    enabled: bool,
+    categories: Vec<FocusProfileCategoryParams>,
     schedules: Vec<FocusProfileScheduleParams>,
 ) -> Result<FocusProfileDto, String> {
-    let rules = rules.into_iter().map(FocusProfileRuleInput::from).collect();
-    let schedules = schedules
-        .into_iter()
-        .map(FocusProfileScheduleInput::from)
-        .collect();
     let result = FocusProfileRepository::create(
         &db.pool,
         &CreateFocusProfileInput {
             name,
             color,
-            rules,
-            schedules,
+            enabled,
+            categories: categories
+                .into_iter()
+                .map(FocusProfileCategoryInput::from)
+                .collect(),
+            schedules: schedules
+                .into_iter()
+                .map(FocusProfileScheduleInput::from)
+                .collect(),
         },
     )
     .await
@@ -80,22 +83,25 @@ pub async fn update_focus_profile(
     id: i32,
     name: String,
     color: Option<String>,
-    rules: Vec<FocusProfileRuleParams>,
+    enabled: bool,
+    categories: Vec<FocusProfileCategoryParams>,
     schedules: Vec<FocusProfileScheduleParams>,
 ) -> Result<FocusProfileDto, String> {
-    let rules = rules.into_iter().map(FocusProfileRuleInput::from).collect();
-    let schedules = schedules
-        .into_iter()
-        .map(FocusProfileScheduleInput::from)
-        .collect();
     let result = FocusProfileRepository::update(
         &db.pool,
         id as i64,
         &UpdateFocusProfileInput {
             name,
             color,
-            rules,
-            schedules,
+            enabled,
+            categories: categories
+                .into_iter()
+                .map(FocusProfileCategoryInput::from)
+                .collect(),
+            schedules: schedules
+                .into_iter()
+                .map(FocusProfileScheduleInput::from)
+                .collect(),
         },
     )
     .await
@@ -135,11 +141,16 @@ pub async fn get_active_focus_profiles(
         .collect());
 }
 
+/// Returns all enabled profiles with their activation status for session setup.
+///
+/// - AlwaysOn: active always_on schedule — shown, not removable
+/// - PreSelected: active pre_selected schedule — shown, removable
+/// - Manual: no active schedule — user adds manually
 #[tauri::command]
 #[specta::specta]
-pub async fn get_session_eligible_profiles(
+pub async fn get_session_profiles(
     db: State<'_, DatabaseState>,
-) -> Result<Vec<EligibleProfileDto>, String> {
+) -> Result<Vec<SessionProfileDto>, String> {
     let all = FocusProfileRepository::get_all(&db.pool)
         .await
         .map_err(|e| e.to_string())?;
@@ -150,33 +161,19 @@ pub async fn get_session_eligible_profiles(
 
     let profiles = all
         .into_iter()
-        // Exclude profiles that only have always_on schedules (they're enforced independently)
-        .filter(|p| {
-            p.schedules.is_empty()
-                || p.schedules
-                    .iter()
-                    .any(|s| s.mode != ScheduleMode::AlwaysOn.as_str())
-        })
+        .filter(|p| p.profile.enabled)
         .map(|p| {
-            // Auto-select if any sessions_only schedule matches current day and time
-            let auto_selected = p.schedules.iter().any(|s| {
-                if s.mode != ScheduleMode::SessionsOnly.as_str() {
-                    return false;
-                }
-                let days: Vec<i32> = serde_json::from_str(&s.days).unwrap_or_default();
-                if !days.contains(&current_day) {
-                    return false;
-                }
-                if s.start_time <= s.end_time {
-                    s.start_time <= current_time && current_time < s.end_time
-                } else {
-                    current_time >= s.start_time || current_time < s.end_time
-                }
-            });
+            let activation = if is_always_on_now(&p.schedules, current_day, &current_time) {
+                ProfileActivation::AlwaysOn
+            } else if is_pre_selected_now(&p.schedules, current_day, &current_time) {
+                ProfileActivation::PreSelected
+            } else {
+                ProfileActivation::Manual
+            };
 
-            EligibleProfileDto {
+            SessionProfileDto {
                 profile: FocusProfileDto::from(p),
-                auto_selected,
+                activation,
             }
         })
         .collect();
@@ -184,42 +181,31 @@ pub async fn get_session_eligible_profiles(
     return Ok(profiles);
 }
 
-#[tauri::command]
-#[specta::specta]
-pub async fn preview_session_rules(
-    db: State<'_, DatabaseState>,
-    profile_ids: Vec<i32>,
-) -> Result<PreviewRulesDto, String> {
-    let all = FocusProfileRepository::get_all(&db.pool)
-        .await
-        .map_err(|e| e.to_string())?;
-
-    let now = chrono::Local::now();
-    let current_day = now.weekday().num_days_from_monday() as i32;
-    let current_time = now.format("%H:%M").to_string();
-
-    // Selected session profiles: priority = position + 1. Always-on: priority = 0.
-    let mut active: Vec<(&FocusProfileWithRelations, i64)> = Vec::new();
-    for profile in &all {
-        if let Some(pos) = profile_ids
-            .iter()
-            .position(|&id| id as i64 == profile.profile.id)
-        {
-            active.push((profile, (pos + 1) as i64));
-        } else if is_always_on_now(&profile.schedules, current_day, &current_time) {
-            active.push((profile, 0));
+/// True if any pre_selected schedule matches the current day and time.
+fn is_pre_selected_now(
+    schedules: &[FocusProfileScheduleRow],
+    current_day: i32,
+    current_time: &str,
+) -> bool {
+    schedules.iter().any(|s| {
+        if s.mode != ScheduleMode::PreSelected.as_str() {
+            return false;
         }
-    }
-
-    let resolved = resolve_rules(&active);
-    return Ok(PreviewRulesDto::from(&resolved));
+        let days: Vec<i32> = serde_json::from_str(&s.days).unwrap_or_default();
+        if !days.contains(&current_day) {
+            return false;
+        }
+        schedule_time_matches(&s.start_time, &s.end_time, current_time)
+    })
 }
+
+// MARK: - Params
 
 #[derive(Debug, Clone, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
-pub struct FocusProfileRuleParams {
-    pub action: RuleAction,
-    pub target: RuleTargetDto,
+pub struct FocusProfileCategoryParams {
+    pub category: FocusCategory,
+    pub target: FocusTargetDto,
 }
 
 #[derive(Debug, Clone, Deserialize, specta::Type)]
@@ -233,10 +219,10 @@ pub struct FocusProfileScheduleParams {
 
 // MARK: - Conversions
 
-impl From<FocusProfileRuleParams> for FocusProfileRuleInput {
-    fn from(params: FocusProfileRuleParams) -> Self {
+impl From<FocusProfileCategoryParams> for FocusProfileCategoryInput {
+    fn from(params: FocusProfileCategoryParams) -> Self {
         return Self {
-            action: params.action,
+            category: params.category,
             target: params.target,
         };
     }
@@ -259,10 +245,11 @@ impl From<FocusProfileWithRelations> for FocusProfileDto {
             id: data.profile.id as i32,
             name: data.profile.name,
             color: data.profile.color,
-            rules: data
-                .rules
+            enabled: data.profile.enabled,
+            categories: data
+                .categories
                 .into_iter()
-                .map(FocusProfileRuleDto::from)
+                .map(CategoryAssignmentDto::from)
                 .collect(),
             schedules: data
                 .schedules
@@ -274,29 +261,29 @@ impl From<FocusProfileWithRelations> for FocusProfileDto {
     }
 }
 
-impl From<FocusProfileRuleRow> for FocusProfileRuleDto {
-    fn from(row: FocusProfileRuleRow) -> Self {
+impl From<FocusProfileCategoryRow> for CategoryAssignmentDto {
+    fn from(row: FocusProfileCategoryRow) -> Self {
         let target = if let Some(bundle_id) = row.app_bundle_id {
-            RuleTargetDto::App {
+            FocusTargetDto::App {
                 bundle_id,
                 name: row.app_name,
                 icon: row.app_icon,
                 color: row.app_color,
             }
         } else if let Some(domain) = row.website_domain {
-            RuleTargetDto::Website {
+            FocusTargetDto::Website {
                 domain,
                 name: row.website_name,
                 icon: row.website_icon,
                 color: row.website_color,
             }
         } else {
-            RuleTargetDto::All
+            FocusTargetDto::All
         };
 
         return Self {
             id: row.id as i32,
-            action: RuleAction::from_str(&row.action).unwrap_or(RuleAction::Block),
+            category: FocusCategory::from_str(&row.category).unwrap_or(FocusCategory::Neutral),
             target,
         };
     }
@@ -311,45 +298,6 @@ impl From<FocusProfileScheduleRow> for FocusProfileScheduleDto {
             days,
             start_time: row.start_time,
             end_time: row.end_time,
-        };
-    }
-}
-
-impl From<&ResolvedRules> for PreviewRulesDto {
-    fn from(resolved: &ResolvedRules) -> Self {
-        return Self {
-            blocked: resolved.blocked.iter().map(RuleTargetDto::from).collect(),
-            allowed: resolved.allowed.iter().map(RuleTargetDto::from).collect(),
-        };
-    }
-}
-
-impl From<&ResolvedTarget> for RuleTargetDto {
-    fn from(t: &ResolvedTarget) -> Self {
-        return match t {
-            ResolvedTarget::All => RuleTargetDto::All,
-            ResolvedTarget::App {
-                bundle_id,
-                name,
-                icon,
-                color,
-            } => RuleTargetDto::App {
-                bundle_id: bundle_id.clone(),
-                name: name.clone(),
-                icon: icon.clone(),
-                color: color.clone(),
-            },
-            ResolvedTarget::Website {
-                domain,
-                name,
-                icon,
-                color,
-            } => RuleTargetDto::Website {
-                domain: domain.clone(),
-                name: name.clone(),
-                icon: icon.clone(),
-                color: color.clone(),
-            },
         };
     }
 }

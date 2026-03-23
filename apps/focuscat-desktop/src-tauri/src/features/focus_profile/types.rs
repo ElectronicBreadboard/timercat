@@ -1,50 +1,53 @@
 use serde::{Deserialize, Serialize};
 
-/// Action for a focus profile rule.
+/// Focus category for an app or website within a profile.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "snake_case")]
-pub enum RuleAction {
-    Block,
-    Allow,
+pub enum FocusCategory {
+    Focused,
+    Neutral,
+    Distracting,
 }
 
-impl RuleAction {
+impl FocusCategory {
     pub fn as_str(&self) -> &'static str {
         match self {
-            RuleAction::Block => "block",
-            RuleAction::Allow => "allow",
+            FocusCategory::Focused => "focused",
+            FocusCategory::Neutral => "neutral",
+            FocusCategory::Distracting => "distracting",
         }
     }
 
     pub fn from_str(s: &str) -> Option<Self> {
         match s {
-            "block" => Some(RuleAction::Block),
-            "allow" => Some(RuleAction::Allow),
+            "focused" => Some(FocusCategory::Focused),
+            "neutral" => Some(FocusCategory::Neutral),
+            "distracting" => Some(FocusCategory::Distracting),
             _ => None,
         }
     }
 }
 
-/// Schedule mode for a focus profile.
+/// Schedule activation mode for a focus profile.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "snake_case")]
 pub enum ScheduleMode {
     AlwaysOn,
-    SessionsOnly,
+    PreSelected,
 }
 
 impl ScheduleMode {
     pub fn as_str(&self) -> &'static str {
         match self {
             ScheduleMode::AlwaysOn => "always_on",
-            ScheduleMode::SessionsOnly => "sessions_only",
+            ScheduleMode::PreSelected => "pre_selected",
         }
     }
 
     pub fn from_str(s: &str) -> Option<Self> {
         match s {
             "always_on" => Some(ScheduleMode::AlwaysOn),
-            "sessions_only" => Some(ScheduleMode::SessionsOnly),
+            "pre_selected" => Some(ScheduleMode::PreSelected),
             _ => None,
         }
     }
@@ -52,14 +55,12 @@ impl ScheduleMode {
 
 // MARK: - DTO
 
-/// Target for a focus profile rule.
+/// The target of a category assignment: all, a specific app, or a specific website.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub enum RuleTargetDto {
-    /// Applies to all apps/websites.
+pub enum FocusTargetDto {
     #[serde(rename = "all")]
     All,
-    /// Target a specific app.
     #[serde(rename = "app")]
     App {
         bundle_id: String,
@@ -67,7 +68,6 @@ pub enum RuleTargetDto {
         icon: Option<String>,
         color: Option<String>,
     },
-    /// Target a specific website.
     #[serde(rename = "website")]
     Website {
         domain: String,
@@ -77,25 +77,26 @@ pub enum RuleTargetDto {
     },
 }
 
-/// Focus profile with its rules and schedules.
+/// Focus profile with its category assignments and schedules.
 #[derive(Debug, Clone, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FocusProfileDto {
     pub id: i32,
     pub name: String,
     pub color: Option<String>,
-    pub rules: Vec<FocusProfileRuleDto>,
+    pub enabled: bool,
+    pub categories: Vec<CategoryAssignmentDto>,
     pub schedules: Vec<FocusProfileScheduleDto>,
     pub created_at: f64,
 }
 
-/// A rule within a focus profile.
+/// A category assignment within a focus profile (target + category).
 #[derive(Debug, Clone, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
-pub struct FocusProfileRuleDto {
+pub struct CategoryAssignmentDto {
     pub id: i32,
-    pub action: RuleAction,
-    pub target: RuleTargetDto,
+    pub category: FocusCategory,
+    pub target: FocusTargetDto,
 }
 
 /// A schedule entry for a focus profile.
@@ -109,20 +110,24 @@ pub struct FocusProfileScheduleDto {
     pub end_time: String,
 }
 
-/// A profile eligible for session selection, with auto-selection flag.
+/// A profile shown in session setup, with how it was activated.
 #[derive(Debug, Clone, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
-pub struct EligibleProfileDto {
+pub struct SessionProfileDto {
     pub profile: FocusProfileDto,
-    pub auto_selected: bool,
+    pub activation: ProfileActivation,
 }
 
-/// Preview of resolved rules for a session setup.
+/// How a profile was activated for session selection.
 #[derive(Debug, Clone, Serialize, specta::Type)]
-#[serde(rename_all = "camelCase")]
-pub struct PreviewRulesDto {
-    pub blocked: Vec<RuleTargetDto>,
-    pub allowed: Vec<RuleTargetDto>,
+#[serde(rename_all = "snake_case")]
+pub enum ProfileActivation {
+    /// Always-on schedule is active — shown in session setup, not removable.
+    AlwaysOn,
+    /// Pre-selected by schedule — shown in session setup, removable.
+    PreSelected,
+    /// Manually added by the user.
+    Manual,
 }
 
 // MARK: - Event
