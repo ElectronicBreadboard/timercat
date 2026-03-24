@@ -83,7 +83,7 @@ export const CategorySettingGroup: React.FC<TCategorySettingGroupProps> = (props
 	// MARK: - UI
 
 	return (
-		<SettingGroup title="Categories">
+		<SettingGroup title="Apps & Websites">
 			{displayCategories.map(({ value: cat, label, variant, description }) => {
 				const mode: TCategoryMode = (categoryModes ?? {})[cat] ?? 'none';
 				const nonAllTargets = (categories ?? [])

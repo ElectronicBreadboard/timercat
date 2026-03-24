@@ -1,4 +1,11 @@
-import { ChevronRightIcon, ClockIcon, IconButton, PlusIcon } from '@repo/ui';
+import {
+	BriefcaseIcon,
+	ChevronRightIcon,
+	ClockIcon,
+	CoffeeIcon,
+	IconButton,
+	PlusIcon
+} from '@repo/ui';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
@@ -13,11 +20,7 @@ export const Route = createFileRoute('/window/settings/focus-profiles/')({
 function RouteComponent() {
 	const profileCx = useFocusProfileCx();
 	const profiles = useFeatureState(profileCx.$profiles);
-	const activeProfileIdsArray = useFeatureState(profileCx.$activeProfileIds);
-	const activeProfileIds = React.useMemo(
-		() => new Set(activeProfileIdsArray),
-		[activeProfileIdsArray]
-	);
+	const activeProfileIds = useFeatureState(profileCx.$activeProfileIds);
 
 	React.useEffect(() => {
 		void profileCx.load();
@@ -41,14 +44,22 @@ function RouteComponent() {
 			<SettingGroup title="Your Profiles">
 				{profiles.length > 0 ? (
 					<ul className="divide-base-100 divide-y">
-						{profiles.map((profile) => (
-							<ProfileRow
-								key={profile.id}
-								profile={profile}
-								isActive={activeProfileIds.has(profile.id)}
-								isScheduled={profile.schedules.length > 0}
-							/>
-						))}
+						{profiles.map((profile) => {
+							const activation = profile.activations[0];
+							const sessionTypes = activation?.sessionTypes ?? null;
+							return (
+								<ProfileRow
+									key={profile.id}
+									profile={profile}
+									isActive={activeProfileIds.has(profile.id)}
+									isScheduled={
+										activation?.scheduleDays != null || activation?.scheduleStartTime != null
+									}
+									hasFocusOnly={sessionTypes?.length === 1 && sessionTypes.includes('Focus')}
+									hasBreakOnly={sessionTypes?.length === 1 && sessionTypes.includes('Break')}
+								/>
+							);
+						})}
 					</ul>
 				) : (
 					<div className="text-base-400 px-4 py-8 text-center text-sm">
@@ -63,7 +74,7 @@ function RouteComponent() {
 // MARK: - Profile Row
 
 const ProfileRow: React.FC<TProfileRowProps> = (props) => {
-	const { profile, isActive, isScheduled } = props;
+	const { profile, isActive, isScheduled, hasFocusOnly, hasBreakOnly } = props;
 
 	return (
 		<li>
@@ -74,28 +85,25 @@ const ProfileRow: React.FC<TProfileRowProps> = (props) => {
 			>
 				<div className="flex min-w-0 flex-1 items-center gap-3">
 					<span
-						className="size-3 shrink-0 rounded-full"
+						className="block size-3 shrink-0 rounded-full"
 						style={{ backgroundColor: profile.color ?? '#9CA3AF' }}
 					/>
-					<span className="text-base-900 min-w-0 flex-1 truncate text-sm font-medium">
-						{profile.name}
-					</span>
-					{(isScheduled || isActive) && (
-						<span className="flex shrink-0 items-center gap-2">
-							{isScheduled && (
-								<span className="shrink-0" title="Scheduled" aria-hidden>
-									<ClockIcon size={14} className="text-base-400" />
-								</span>
-							)}
-							{isActive && (
-								<span
-									className="h-2 w-2 shrink-0 rounded-full bg-green-500"
-									title="Currently active"
-									aria-hidden
-								/>
-							)}
+					<div className="flex min-w-0 flex-1 items-center gap-1.5">
+						<span className="text-base-900 min-w-0 truncate text-sm font-medium">
+							{profile.name}
 						</span>
-					)}
+						{isActive && <span className="block size-2 shrink-0 rounded-full bg-green-500" />}
+						{!profile.enabled && (
+							<span className="bg-base-100 text-base-400 shrink-0 rounded px-1.5 py-0.5 text-xs">
+								Disabled
+							</span>
+						)}
+					</div>
+					<span className="text-base-400 flex shrink-0 items-center gap-1.5">
+						{hasFocusOnly && <BriefcaseIcon size={13} aria-hidden />}
+						{hasBreakOnly && <CoffeeIcon size={13} aria-hidden />}
+						{isScheduled && <ClockIcon size={13} aria-hidden />}
+					</span>
 				</div>
 				<ChevronRightIcon size={16} className="text-base-400 ml-3 shrink-0" />
 			</Link>
@@ -107,4 +115,6 @@ interface TProfileRowProps {
 	profile: specta.FocusProfileDto;
 	isActive: boolean;
 	isScheduled: boolean;
+	hasFocusOnly: boolean;
+	hasBreakOnly: boolean;
 }

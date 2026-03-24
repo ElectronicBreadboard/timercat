@@ -16,6 +16,7 @@ export type TCategoryMode = 'none' | 'specific' | 'all';
 
 export class FocusProfileCx {
 	public readonly $profiles = createState<specta.FocusProfileDto[]>([]);
+	public readonly $activeProfileIds = createState<Set<number>>(new Set());
 	public readonly $editingId = createState<number | null>(null);
 	public readonly form: TForm<TFocusProfileFormData, []>;
 
@@ -83,11 +84,23 @@ export class FocusProfileCx {
 				categoryModes: {
 					defaultValue: {}
 				},
-				scheduleEnabled: {
+				// Activation: master toggle + mode
+				activationEnabled: {
 					defaultValue: false
 				},
-				scheduleMode: {
-					defaultValue: 'always_on'
+				activationMode: {
+					defaultValue: 'always_on' as specta.ActivationMode
+				},
+				// Session type restriction (optional, independent of schedule)
+				sessionTypeEnabled: {
+					defaultValue: false
+				},
+				sessionTypes: {
+					defaultValue: [] as specta.FocusSessionType[]
+				},
+				// Time/day schedule restriction (optional, independent of session type)
+				scheduleEnabled: {
+					defaultValue: false
 				},
 				scheduleDays: {
 					defaultValue: [0, 1, 2, 3, 4]
@@ -108,11 +121,20 @@ export class FocusProfileCx {
 	}
 
 	public async load(): Promise<void> {
-		const [ok, err, profiles] = toTuple(await specta.commands.getFocusProfiles());
-		if (ok) {
+		const [areFocusProfilesOk, err, profiles] = toTuple(await specta.commands.getFocusProfiles());
+		if (areFocusProfilesOk) {
 			this.$profiles.set(profiles);
 		} else {
 			console.error('Failed to load focus profiles:', err);
+		}
+
+		const [areActiveProfilesOk, , activeProfiles] = toTuple(
+			await specta.commands.getActiveFocusProfiles()
+		);
+		if (areActiveProfilesOk) {
+			this.$activeProfileIds.set(new Set(activeProfiles.map((p) => p.id)));
+		} else {
+			console.error('Failed to load active focus profiles:');
 		}
 	}
 
@@ -124,8 +146,11 @@ export class FocusProfileCx {
 			enabled: true,
 			categories: [],
 			categoryModes: {},
+			activationEnabled: false,
+			activationMode: 'always_on',
+			sessionTypeEnabled: false,
+			sessionTypes: [],
 			scheduleEnabled: false,
-			scheduleMode: 'always_on',
 			scheduleDays: [0, 1, 2, 3, 4],
 			scheduleStartTime: '09:00',
 			scheduleEndTime: '17:00'
@@ -154,13 +179,16 @@ export class FocusProfileCx {
 			category: entry.category,
 			target: entry.target
 		}));
-		const schedules: specta.FocusProfileScheduleParams[] = data.scheduleEnabled
+		const activations: specta.FocusProfileActivationParams[] = data.activationEnabled
 			? [
 					{
-						mode: data.scheduleMode,
-						days: data.scheduleDays,
-						startTime: data.scheduleStartTime,
-						endTime: data.scheduleEndTime
+						mode: data.activationMode,
+						sessionTypes:
+							data.sessionTypeEnabled && data.sessionTypes.length > 0 ? data.sessionTypes : null,
+						scheduleDays:
+							data.scheduleEnabled && data.scheduleDays.length > 0 ? data.scheduleDays : null,
+						scheduleStartTime: data.scheduleEnabled ? data.scheduleStartTime || null : null,
+						scheduleEndTime: data.scheduleEnabled ? data.scheduleEndTime || null : null
 					}
 				]
 			: [];
@@ -173,7 +201,7 @@ export class FocusProfileCx {
 					data.color,
 					data.enabled,
 					categories,
-					schedules
+					activations
 				)
 			);
 			if (!ok) {
@@ -189,7 +217,7 @@ export class FocusProfileCx {
 					data.color,
 					data.enabled,
 					categories,
-					schedules
+					activations
 				)
 			);
 			if (!ok) {
@@ -219,7 +247,7 @@ export class FocusProfileCx {
 	}
 
 	private profileToFormData(profile: specta.FocusProfileDto): TFocusProfileFormData {
-		const schedule = profile.schedules[0];
+		const activation = profile.activations[0];
 		const categoryModes: Partial<Record<specta.FocusCategory, TCategoryMode>> = {};
 		for (const cat of ['focused', 'neutral', 'distracting'] as specta.FocusCategory[]) {
 			const targets = profile.categories.filter((c) => c.category === cat).map((c) => c.target);
@@ -240,11 +268,14 @@ export class FocusProfileCx {
 				target: assignment.target
 			})),
 			categoryModes,
-			scheduleEnabled: profile.schedules.length > 0,
-			scheduleMode: schedule?.mode ?? 'always_on',
-			scheduleDays: schedule?.days ?? [0, 1, 2, 3, 4],
-			scheduleStartTime: schedule?.startTime ?? '09:00',
-			scheduleEndTime: schedule?.endTime ?? '17:00'
+			activationEnabled: profile.activations.length > 0,
+			activationMode: activation?.mode ?? 'always_on',
+			sessionTypeEnabled: (activation?.sessionTypes?.length ?? 0) > 0,
+			sessionTypes: activation?.sessionTypes ?? [],
+			scheduleEnabled: activation?.scheduleDays != null || activation?.scheduleStartTime != null,
+			scheduleDays: activation?.scheduleDays ?? [0, 1, 2, 3, 4],
+			scheduleStartTime: activation?.scheduleStartTime ?? '09:00',
+			scheduleEndTime: activation?.scheduleEndTime ?? '17:00'
 		};
 	}
 }
@@ -255,8 +286,11 @@ export interface TFocusProfileFormData {
 	enabled: boolean;
 	categories: TCategoryFormEntry[];
 	categoryModes: Partial<Record<specta.FocusCategory, TCategoryMode>>;
+	activationEnabled: boolean;
+	activationMode: specta.ActivationMode;
+	sessionTypeEnabled: boolean;
+	sessionTypes: specta.FocusSessionType[];
 	scheduleEnabled: boolean;
-	scheduleMode: specta.ScheduleMode;
 	scheduleDays: number[];
 	scheduleStartTime: string;
 	scheduleEndTime: string;

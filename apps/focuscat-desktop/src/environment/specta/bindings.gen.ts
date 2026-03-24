@@ -365,17 +365,17 @@ async getFocusProfile(id: number) : Promise<Result<FocusProfileDto | null, strin
     else return { status: "error", error: e  as any };
 }
 },
-async createFocusProfile(name: string, color: string | null, enabled: boolean, categories: FocusProfileCategoryParams[], schedules: FocusProfileScheduleParams[]) : Promise<Result<FocusProfileDto, string>> {
+async createFocusProfile(name: string, color: string | null, enabled: boolean, categories: FocusProfileCategoryParams[], activations: FocusProfileActivationParams[]) : Promise<Result<FocusProfileDto, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("create_focus_profile", { name, color, enabled, categories, schedules }) };
+    return { status: "ok", data: await TAURI_INVOKE("create_focus_profile", { name, color, enabled, categories, activations }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-async updateFocusProfile(id: number, name: string, color: string | null, enabled: boolean, categories: FocusProfileCategoryParams[], schedules: FocusProfileScheduleParams[]) : Promise<Result<FocusProfileDto, string>> {
+async updateFocusProfile(id: number, name: string, color: string | null, enabled: boolean, categories: FocusProfileCategoryParams[], activations: FocusProfileActivationParams[]) : Promise<Result<FocusProfileDto, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("update_focus_profile", { id, name, color, enabled, categories, schedules }) };
+    return { status: "ok", data: await TAURI_INVOKE("update_focus_profile", { id, name, color, enabled, categories, activations }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -392,13 +392,27 @@ async deleteFocusProfile(id: number) : Promise<Result<null, string>> {
 /**
  * Returns all enabled profiles with their activation status for session setup.
  * 
- * - AlwaysOn: active always_on schedule — shown, not removable
- * - PreSelected: active pre_selected schedule — shown, removable
- * - Manual: no active schedule — user adds manually
+ * - AlwaysOn: active always_on activation — shown, not removable
+ * - PreSelected: active pre_selected activation — shown, removable
+ * - Manual: no active activation — user adds manually
+ * 
+ * `session_type`: None = no session type filter, show all.
  */
-async getSessionProfiles() : Promise<Result<SessionProfileDto[], string>> {
+async getSessionProfiles(sessionType: FocusSessionType | null) : Promise<Result<SessionProfileDto[], string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_session_profiles") };
+    return { status: "ok", data: await TAURI_INVOKE("get_session_profiles", { sessionType }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Returns profiles currently active based on their always_on activation rules and the
+ * current session type from TimerState.
+ */
+async getActiveFocusProfiles() : Promise<Result<FocusProfileDto[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_active_focus_profiles") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -443,6 +457,10 @@ updateAvailableEvent: "update-available-event"
 
 /** user-defined types **/
 
+/**
+ * Activation mode for a focus profile activation rule.
+ */
+export type ActivationMode = "always_on" | "pre_selected"
 export type ActivitySettings = { 
 /**
  * Whether to record app usage (app switches)
@@ -565,16 +583,24 @@ export type FeaturesSettings = { goals: boolean; activity: boolean; profiles: bo
  * Focus category for an app or website within a profile.
  */
 export type FocusCategory = "focused" | "neutral" | "distracting"
+/**
+ * An activation rule for a focus profile.
+ * session_types: None = all session types; Some([...]) = restricted to listed types.
+ * schedule_*: None = no time restriction; Some = AND condition with session_types.
+ */
+export type FocusProfileActivationDto = { id: number; mode: ActivationMode; sessionTypes: FocusSessionType[] | null; scheduleDays: number[] | null; scheduleStartTime: string | null; scheduleEndTime: string | null }
+export type FocusProfileActivationParams = { mode: ActivationMode; sessionTypes: FocusSessionType[] | null; scheduleDays: number[] | null; scheduleStartTime: string | null; scheduleEndTime: string | null }
 export type FocusProfileCategoryParams = { category: FocusCategory; target: FocusTargetDto }
 /**
- * Focus profile with its category assignments and schedules.
+ * Focus profile with its category assignments and activation rules.
  */
-export type FocusProfileDto = { id: number; name: string; color: string | null; enabled: boolean; categories: CategoryAssignmentDto[]; schedules: FocusProfileScheduleDto[]; createdAt: number }
+export type FocusProfileDto = { id: number; name: string; color: string | null; enabled: boolean; categories: CategoryAssignmentDto[]; activations: FocusProfileActivationDto[]; createdAt: number }
 /**
- * A schedule entry for a focus profile.
+ * Session type for focus profile activation filtering.
+ * Focus = any focus/work session (pomodoro work, progressive work, countdown).
+ * Break = any rest session (pomodoro breaks, progressive break).
  */
-export type FocusProfileScheduleDto = { id: number; mode: ScheduleMode; days: number[]; startTime: string; endTime: string }
-export type FocusProfileScheduleParams = { mode: ScheduleMode; days: number[]; startTime: string; endTime: string }
+export type FocusSessionType = "Focus" | "Break"
 export type FocusSettings = { blockThreshold: BlockThreshold }
 /**
  * The target of a category assignment: all, a specific app, or a specific website.
@@ -602,11 +628,11 @@ export type PomodoroSettings = { workDurationMinutes: number; shortBreakMinutes:
  */
 export type ProfileActivation = 
 /**
- * Always-on schedule is active — shown in session setup, not removable.
+ * Always-on activation is active, shown in session setup, not removable.
  */
 "always_on" | 
 /**
- * Pre-selected by schedule — shown in session setup, removable.
+ * Pre-selected by activation rule, shown in session setup, removable.
  */
 "pre_selected" | 
 /**
@@ -621,10 +647,6 @@ export type ProgressivePomodoroSettings = { ratings: ProgressiveRatingSetting[];
 export type ProgressiveRatingSetting = { key: string; label: string; description: string; suggestions: ProgressiveSuggestion[] }
 export type ProgressiveSessionType = "Work" | "Break"
 export type ProgressiveSuggestion = { workMinutes: number; breakMinutes: number | null }
-/**
- * Schedule activation mode for a focus profile.
- */
-export type ScheduleMode = "always_on" | "pre_selected"
 export type SearchParams = { 
 /**
  * Search query

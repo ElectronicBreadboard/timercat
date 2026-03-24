@@ -11,10 +11,10 @@ use super::{
         SessionProfileDto,
     },
 };
-use crate::environment::db::DatabaseState;
+use crate::{environment::db::DatabaseState, features::timer::types::TimerState};
 use chrono::Datelike;
 use serde::Deserialize;
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Manager, State};
 use tauri_specta::Event;
 
 #[tauri::command]
@@ -125,6 +125,33 @@ pub async fn delete_focus_profile(
 
     let _ = ProfileChangedEvent.emit(&app);
     return Ok(());
+}
+
+/// Returns profiles currently active based on their always_on activation rules and the
+/// current session type from TimerState.
+#[tauri::command]
+#[specta::specta]
+pub async fn get_active_focus_profiles(
+    app: AppHandle,
+    db: State<'_, DatabaseState>,
+) -> Result<Vec<FocusProfileDto>, String> {
+    let session_type = app.try_state::<TimerState>().and_then(|state| {
+        state
+            .lock()
+            .unwrap()
+            .session
+            .as_ref()
+            .map(|s| FocusSessionType::from(&s.session_type))
+    });
+
+    let active = FocusProfileRepository::get_active(&db.pool, session_type.as_ref())
+        .await
+        .map_err(|e| e.to_string())?;
+
+    return Ok(active
+        .into_iter()
+        .map(|(profile, _priority)| FocusProfileDto::from(profile))
+        .collect());
 }
 
 /// Returns all enabled profiles with their activation status for session setup.

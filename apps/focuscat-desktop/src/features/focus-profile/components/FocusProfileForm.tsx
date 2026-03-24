@@ -5,8 +5,8 @@ import { useCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { SettingGroup, SettingItem } from '@/features/settings';
 import { useFocusProfileCx } from '../FocusProfileCx';
+import { ActivationSettingGroup } from './ActivationSettingGroup';
 import { CategorySettingGroup } from './CategorySettingGroup';
-import { ScheduleSettingGroup } from './ScheduleSettingGroup';
 
 export const FocusProfileForm: React.FC<TFocusProfileFormProps> = (props) => {
 	const {
@@ -94,7 +94,7 @@ export const FocusProfileForm: React.FC<TFocusProfileFormProps> = (props) => {
 			</SettingGroup>
 
 			<CategorySettingGroup form={form} />
-			<ScheduleSettingGroup form={form} />
+			<ActivationSettingGroup form={form} />
 		</div>
 	);
 };
