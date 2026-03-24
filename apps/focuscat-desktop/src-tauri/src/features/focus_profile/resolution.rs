@@ -81,7 +81,8 @@ pub(super) fn activation_matches_session_type(
     session_type: Option<&FocusSessionType>,
 ) -> bool {
     let Some(current) = session_type else {
-        return true; // no filter
+        // No active session: only match activations with no session type restriction.
+        return activation.session_types.is_none();
     };
     let Some(ref json) = activation.session_types else {
         return true; // NULL = any session type

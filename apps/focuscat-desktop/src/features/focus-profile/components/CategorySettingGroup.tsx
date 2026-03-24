@@ -72,8 +72,12 @@ export const CategorySettingGroup: React.FC<TCategorySettingGroupProps> = (props
 				category: cat,
 				target: selectedItemToTarget(item)
 			}));
+			// If an item already exists in another category, move it to this one.
+			const newIds = new Set(items.map((item) => item.id));
 			form.fields.categories.set([
-				...(categories ?? []).filter((e) => e.category !== cat),
+				...(categories ?? []).filter(
+					(e) => e.category !== cat && !newIds.has(getTargetId(e.target))
+				),
 				...newEntries
 			]);
 		},
@@ -138,6 +142,12 @@ interface TCategorySettingGroupProps {
 		variant: TBadgeProps['variant'];
 		description: string;
 	}[];
+}
+
+function getTargetId(target: specta.FocusTargetDto): string {
+	if (target.type === 'app') return target.bundle_id;
+	if (target.type === 'website') return target.domain;
+	return 'all';
 }
 
 function targetToSelectedItem(
