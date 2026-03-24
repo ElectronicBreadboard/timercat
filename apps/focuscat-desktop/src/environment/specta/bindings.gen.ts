@@ -365,17 +365,17 @@ async getFocusProfile(id: number) : Promise<Result<FocusProfileDto | null, strin
     else return { status: "error", error: e  as any };
 }
 },
-async createFocusProfile(name: string, color: string | null, rules: FocusProfileRuleParams[], schedules: FocusProfileScheduleParams[]) : Promise<Result<FocusProfileDto, string>> {
+async createFocusProfile(name: string, color: string | null, enabled: boolean, categories: FocusProfileCategoryParams[], schedules: FocusProfileScheduleParams[]) : Promise<Result<FocusProfileDto, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("create_focus_profile", { name, color, rules, schedules }) };
+    return { status: "ok", data: await TAURI_INVOKE("create_focus_profile", { name, color, enabled, categories, schedules }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-async updateFocusProfile(id: number, name: string, color: string | null, rules: FocusProfileRuleParams[], schedules: FocusProfileScheduleParams[]) : Promise<Result<FocusProfileDto, string>> {
+async updateFocusProfile(id: number, name: string, color: string | null, enabled: boolean, categories: FocusProfileCategoryParams[], schedules: FocusProfileScheduleParams[]) : Promise<Result<FocusProfileDto, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("update_focus_profile", { id, name, color, rules, schedules }) };
+    return { status: "ok", data: await TAURI_INVOKE("update_focus_profile", { id, name, color, enabled, categories, schedules }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -389,25 +389,16 @@ async deleteFocusProfile(id: number) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async getActiveFocusProfiles() : Promise<Result<FocusProfileDto[], string>> {
+/**
+ * Returns all enabled profiles with their activation status for session setup.
+ * 
+ * - AlwaysOn: active always_on schedule — shown, not removable
+ * - PreSelected: active pre_selected schedule — shown, removable
+ * - Manual: no active schedule — user adds manually
+ */
+async getSessionProfiles() : Promise<Result<SessionProfileDto[], string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_active_focus_profiles") };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getSessionEligibleProfiles() : Promise<Result<EligibleProfileDto[], string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("get_session_eligible_profiles") };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async previewSessionRules(profileIds: number[]) : Promise<Result<PreviewRulesDto, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("preview_session_rules", { profileIds }) };
+    return { status: "ok", data: await TAURI_INVOKE("get_session_profiles") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -508,7 +499,7 @@ processPath: string | null;
  */
 icon: AppIcon | null }
 export type AppInfoDto = { version: string; stage: Stage; distribution: AppDistribution }
-export type AppSettings = { version: SettingsVersion; launchAtLogin: boolean; features: FeaturesSettings; appearance: AppearanceSettings; audio: AudioSettings; developer: DeveloperSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; cat: CatSettings }
+export type AppSettings = { version: SettingsVersion; launchAtLogin: boolean; features: FeaturesSettings; appearance: AppearanceSettings; audio: AudioSettings; developer: DeveloperSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; cat: CatSettings; focus: FocusSettings }
 export type AppSettingsChangedEvent = AppSettings
 export type AppearanceSettings = { theme: Theme }
 export type AudioChannelSettings = { enabled: boolean; 
@@ -518,13 +509,26 @@ export type AudioChannelSettings = { enabled: boolean;
 volume: number }
 export type AudioSettings = { session: AudioChannelSettings; sessionEnd: AudioChannelSettings; effects: AudioChannelSettings }
 /**
+ * Which category and above gets blocked when a focus profile is active.
+ */
+export type BlockThreshold = 
+/**
+ * Block only Distracting apps/websites.
+ */
+"distracting" | 
+/**
+ * Block Neutral and Distracting apps/websites.
+ */
+"neutral"
+/**
  * The target that was blocked.
  */
 export type BlockedTargetDto = { type: "app"; bundleId: string } | { type: "website"; domain: string }
 /**
  * Describes what was blocked and by which profile.
+ * Profile fields are None when blocked by threshold with no explicit category assignment.
  */
-export type BlockingViolationDto = { profileId: number; profileName: string; profileColor: string | null; blockedTarget: BlockedTargetDto }
+export type BlockingViolationDto = { profileId: number | null; profileName: string | null; profileColor: string | null; blockedTarget: BlockedTargetDto }
 /**
  * Event emitted when a blocking violation is detected (or cleared).
  */
@@ -547,30 +551,35 @@ isPrivate: boolean | null;
  */
 website: WebsiteInfo | null }
 export type CatSettings = { equippedFur: string; equippedFace: string; equippedHat: string | null }
+/**
+ * A category assignment within a focus profile (target + category).
+ */
+export type CategoryAssignmentDto = { id: number; category: FocusCategory; target: FocusTargetDto }
 export type CountdownSettings = { durationMinutes: number }
 export type CurrentActivityDto = { appActivated: { app: AppInfo } } | { windowChanged: { window: WindowInfo } }
 export type CurrentActivityEvent = CurrentActivityDto
 export type CurrentActivityPollTarget = "app" | "window"
 export type DeveloperSettings = { cat: boolean; timerSpeed: number }
-/**
- * A profile eligible for session selection, with auto-selection flag.
- */
-export type EligibleProfileDto = { profile: FocusProfileDto; autoSelected: boolean }
 export type FeaturesSettings = { goals: boolean; activity: boolean; profiles: boolean; catWindow: boolean; developer: boolean }
 /**
- * Focus profile with its rules and schedules.
+ * Focus category for an app or website within a profile.
  */
-export type FocusProfileDto = { id: number; name: string; color: string | null; rules: FocusProfileRuleDto[]; schedules: FocusProfileScheduleDto[]; createdAt: number }
+export type FocusCategory = "focused" | "neutral" | "distracting"
+export type FocusProfileCategoryParams = { category: FocusCategory; target: FocusTargetDto }
 /**
- * A rule within a focus profile.
+ * Focus profile with its category assignments and schedules.
  */
-export type FocusProfileRuleDto = { id: number; action: RuleAction; target: RuleTargetDto }
-export type FocusProfileRuleParams = { action: RuleAction; target: RuleTargetDto }
+export type FocusProfileDto = { id: number; name: string; color: string | null; enabled: boolean; categories: CategoryAssignmentDto[]; schedules: FocusProfileScheduleDto[]; createdAt: number }
 /**
  * A schedule entry for a focus profile.
  */
 export type FocusProfileScheduleDto = { id: number; mode: ScheduleMode; days: number[]; startTime: string; endTime: string }
 export type FocusProfileScheduleParams = { mode: ScheduleMode; days: number[]; startTime: string; endTime: string }
+export type FocusSettings = { blockThreshold: BlockThreshold }
+/**
+ * The target of a category assignment: all, a specific app, or a specific website.
+ */
+export type FocusTargetDto = { type: "all" } | { type: "app"; bundle_id: string; name: string | null; icon: string | null; color: string | null } | { type: "website"; domain: string; name: string | null; icon: string | null; color: string | null }
 export type GetCurrentActivityParams = { pollTarget: CurrentActivityPollTarget }
 export type GetWindowActivitiesParams = { startedAfter: number; startedBefore: number; limit: number | null }
 export type GoalSettings = { 
@@ -589,9 +598,21 @@ export type InputDetectedEvent = InputType
 export type InputType = "keyboard" | "mouse"
 export type PomodoroSettings = { workDurationMinutes: number; shortBreakMinutes: number; longBreakMinutes: number; sessionsBeforeLongBreak: number; autoAdvance: boolean; autoAdvanceCountdownSeconds: number; showSessionSetup: boolean }
 /**
- * Preview of resolved rules for a session setup.
+ * How a profile was activated for session selection.
  */
-export type PreviewRulesDto = { blocked: RuleTargetDto[]; allowed: RuleTargetDto[] }
+export type ProfileActivation = 
+/**
+ * Always-on schedule is active — shown in session setup, not removable.
+ */
+"always_on" | 
+/**
+ * Pre-selected by schedule — shown in session setup, removable.
+ */
+"pre_selected" | 
+/**
+ * Manually added by the user.
+ */
+"manual"
 /**
  * Event emitted when a focus profile is created, updated, or deleted.
  */
@@ -601,29 +622,9 @@ export type ProgressiveRatingSetting = { key: string; label: string; description
 export type ProgressiveSessionType = "Work" | "Break"
 export type ProgressiveSuggestion = { workMinutes: number; breakMinutes: number | null }
 /**
- * Action for a focus profile rule.
+ * Schedule activation mode for a focus profile.
  */
-export type RuleAction = "block" | "allow"
-/**
- * Target for a focus profile rule.
- */
-export type RuleTargetDto = 
-/**
- * Applies to all apps/websites.
- */
-{ type: "all" } | 
-/**
- * Target a specific app.
- */
-{ type: "app"; bundle_id: string; name: string | null; icon: string | null; color: string | null } | 
-/**
- * Target a specific website.
- */
-{ type: "website"; domain: string; name: string | null; icon: string | null; color: string | null }
-/**
- * Schedule mode for a focus profile.
- */
-export type ScheduleMode = "always_on" | "sessions_only"
+export type ScheduleMode = "always_on" | "pre_selected"
 export type SearchParams = { 
 /**
  * Search query
@@ -661,6 +662,10 @@ export type SessionEventDto = { eventType: string; timestamp: number;
  * Extra data (e.g., seconds for Extended events)
  */
 data: SessionEventDataDto | null }
+/**
+ * A profile shown in session setup, with how it was activated.
+ */
+export type SessionProfileDto = { profile: FocusProfileDto; activation: ProfileActivation }
 /**
  * Computed stats for a session.
  */

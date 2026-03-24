@@ -45,8 +45,8 @@ export const ScheduleSettingGroup: React.FC<TScheduleSettingGroupProps> = (props
 						label="Mode"
 						description={
 							scheduleMode === 'always_on'
-								? 'Rules apply continuously during scheduled times'
-								: 'Auto-selected when starting a session during scheduled times'
+								? 'Profile is always active during scheduled times'
+								: 'Auto-suggested when starting a session during scheduled times'
 						}
 					>
 						<ToggleGroup
@@ -57,8 +57,8 @@ export const ScheduleSettingGroup: React.FC<TScheduleSettingGroupProps> = (props
 							<ToggleGroup.Item value="always_on" className="w-auto px-3 text-xs font-medium">
 								Always On
 							</ToggleGroup.Item>
-							<ToggleGroup.Item value="sessions_only" className="w-auto px-3 text-xs font-medium">
-								Sessions Only
+							<ToggleGroup.Item value="pre_selected" className="w-auto px-3 text-xs font-medium">
+								Pre-selected
 							</ToggleGroup.Item>
 						</ToggleGroup>
 					</SettingItem>
