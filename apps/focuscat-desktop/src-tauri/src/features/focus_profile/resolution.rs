@@ -1,7 +1,7 @@
 use super::repository::{
-    FocusProfileCategoryRow, FocusProfileScheduleRow, FocusProfileWithRelations,
+    FocusProfileActivationRow, FocusProfileCategoryRow, FocusProfileWithRelations,
 };
-use super::types::{FocusCategory, ScheduleMode};
+use super::types::{ActivationMode, FocusCategory, FocusSessionType};
 use crate::features::settings::types::BlockThreshold;
 
 /// Resolve the focus category for an app across active profiles.
@@ -43,22 +43,51 @@ pub fn is_blocked(category: &FocusCategory, threshold: &BlockThreshold) -> bool 
     }
 }
 
-/// True if any always_on schedule matches the current day and time.
+/// True if any always_on activation matches the current day, time, and session type.
+/// `session_type`: None = skip session type filter (no active session).
 pub fn is_always_on_now(
-    schedules: &[FocusProfileScheduleRow],
+    activations: &[FocusProfileActivationRow],
     current_day: i32,
     current_time: &str,
+    session_type: Option<&FocusSessionType>,
 ) -> bool {
-    schedules.iter().any(|s| {
-        if s.mode != ScheduleMode::AlwaysOn.as_str() {
+    activations.iter().any(|a| {
+        if a.mode != ActivationMode::AlwaysOn.as_str() {
             return false;
         }
-        let days: Vec<i32> = serde_json::from_str(&s.days).unwrap_or_default();
-        if !days.contains(&current_day) {
+        if !activation_matches_session_type(a, session_type) {
             return false;
         }
-        schedule_time_matches(&s.start_time, &s.end_time, current_time)
+        let days: Vec<i32> = a
+            .schedule_days
+            .as_deref()
+            .and_then(|s| serde_json::from_str(s).ok())
+            .unwrap_or_default();
+        if !days.is_empty() && !days.contains(&current_day) {
+            return false;
+        }
+        let start = a.schedule_start_time.as_deref().unwrap_or("");
+        let end = a.schedule_end_time.as_deref().unwrap_or("");
+        if start.is_empty() || end.is_empty() {
+            return true;
+        }
+        schedule_time_matches(start, end, current_time)
     })
+}
+
+/// True if the activation's session_types includes the given type (or is unrestricted).
+pub(super) fn activation_matches_session_type(
+    activation: &FocusProfileActivationRow,
+    session_type: Option<&FocusSessionType>,
+) -> bool {
+    let Some(current) = session_type else {
+        return true; // no filter
+    };
+    let Some(ref json) = activation.session_types else {
+        return true; // NULL = any session type
+    };
+    let types: Vec<FocusSessionType> = serde_json::from_str(json).unwrap_or_default();
+    return types.contains(current);
 }
 
 /// Convert repository profiles into resolution profiles, sorted by priority descending.

@@ -8,10 +8,11 @@ use crate::{
     features::focus_profile::{
         repository::{FocusProfileRepository, FocusProfileWithRelations},
         resolution::to_resolution_profiles,
-        types::ProfileChangedEvent,
+        types::{FocusSessionType, ProfileChangedEvent},
     },
     features::session::types::SessionChangedEvent,
     features::settings::types::{AppSettingsChangedEvent, AppSettingsState},
+    features::timer::types::TimerState,
 };
 use config::BlockingConfig;
 use std::sync::Arc;
@@ -53,7 +54,16 @@ pub fn setup(app: &App) {
             if profiles_enabled {
                 was_disabled = false;
                 if let Some(db) = handle.try_state::<DatabaseState>() {
-                    let db_profiles = FocusProfileRepository::get_active(&db.pool).await;
+                    let session_type = handle.try_state::<TimerState>().and_then(|state| {
+                        state
+                            .lock()
+                            .unwrap()
+                            .session
+                            .as_ref()
+                            .map(|s| FocusSessionType::from(&s.session_type))
+                    });
+                    let db_profiles =
+                        FocusProfileRepository::get_active(&db.pool, session_type.as_ref()).await;
                     if let (Ok(db_profiles), Some(state)) =
                         (db_profiles, handle.try_state::<BlockerState>())
                     {

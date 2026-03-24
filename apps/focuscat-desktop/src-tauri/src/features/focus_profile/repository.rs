@@ -1,6 +1,6 @@
 use super::{
     resolution::is_always_on_now,
-    types::{FocusCategory, FocusTargetDto, ScheduleMode},
+    types::{ActivationMode, FocusCategory, FocusSessionType, FocusTargetDto},
 };
 use crate::features::app::repository::{
     AppRepository, UpsertAppInput, UpsertWebsiteInput, WebsiteRepository,
@@ -11,7 +11,7 @@ use sqlx::{FromRow, Row, SqliteConnection, SqlitePool};
 pub struct FocusProfileRepository;
 
 impl FocusProfileRepository {
-    /// Create a new focus profile with categories and schedules.
+    /// Create a new focus profile with categories and activations.
     pub async fn create(
         pool: &SqlitePool,
         input: &CreateFocusProfileInput,
@@ -40,21 +40,21 @@ impl FocusProfileRepository {
         };
 
         Self::insert_categories(&mut *tx, profile.id, &input.categories).await?;
-        Self::insert_schedules(&mut *tx, profile.id, &input.schedules).await?;
+        Self::insert_activations(&mut *tx, profile.id, &input.activations).await?;
 
         tx.commit().await?;
 
         let categories = Self::get_categories(pool, profile.id).await?;
-        let schedules = Self::get_schedules(pool, profile.id).await?;
+        let activations = Self::get_activations(pool, profile.id).await?;
 
         return Ok(FocusProfileWithRelations {
             profile,
             categories,
-            schedules,
+            activations,
         });
     }
 
-    /// Get a focus profile by id with categories and schedules.
+    /// Get a focus profile by id with categories and activations.
     pub async fn get(
         pool: &SqlitePool,
         id: i64,
@@ -69,18 +69,18 @@ impl FocusProfileRepository {
         match profile {
             Some(profile) => {
                 let categories = Self::get_categories(pool, profile.id).await?;
-                let schedules = Self::get_schedules(pool, profile.id).await?;
+                let activations = Self::get_activations(pool, profile.id).await?;
                 return Ok(Some(FocusProfileWithRelations {
                     profile,
                     categories,
-                    schedules,
+                    activations,
                 }));
             }
             None => return Ok(None),
         }
     }
 
-    /// Get all focus profiles with categories and schedules.
+    /// Get all focus profiles with categories and activations.
     pub async fn get_all(pool: &SqlitePool) -> Result<Vec<FocusProfileWithRelations>, sqlx::Error> {
         let profiles: Vec<FocusProfileRow> = sqlx::query_as(
             "SELECT id, name, color, enabled, created_at FROM focus_profile ORDER BY created_at DESC",
@@ -91,11 +91,11 @@ impl FocusProfileRepository {
         let mut results = Vec::with_capacity(profiles.len());
         for profile in profiles {
             let categories = Self::get_categories(pool, profile.id).await?;
-            let schedules = Self::get_schedules(pool, profile.id).await?;
+            let activations = Self::get_activations(pool, profile.id).await?;
             results.push(FocusProfileWithRelations {
                 profile,
                 categories,
-                schedules,
+                activations,
             });
         }
 
@@ -106,11 +106,12 @@ impl FocusProfileRepository {
     ///
     /// A profile is active if:
     /// - It's linked to an active session (via session_focus_profile), OR
-    /// - It has an always_on schedule matching the current day and time.
+    /// - It has an always_on activation rule matching the current day, time, and session type.
     ///
     /// Disabled profiles are never active.
     pub async fn get_active(
         pool: &SqlitePool,
+        session_type: Option<&FocusSessionType>,
     ) -> Result<Vec<(FocusProfileWithRelations, i64)>, sqlx::Error> {
         let now = chrono::Local::now();
         let current_day = now.weekday().num_days_from_monday() as i32;
@@ -147,7 +148,7 @@ impl FocusProfileRepository {
                     return Some((p, priority));
                 }
 
-                if is_always_on_now(&p.schedules, current_day, &current_time) {
+                if is_always_on_now(&p.activations, current_day, &current_time, session_type) {
                     return Some((p, 0));
                 }
 
@@ -158,7 +159,7 @@ impl FocusProfileRepository {
         return Ok(active);
     }
 
-    /// Update a focus profile with categories and schedules (replaces all).
+    /// Update a focus profile with categories and activations (replaces all).
     pub async fn update(
         pool: &SqlitePool,
         id: i64,
@@ -181,12 +182,12 @@ impl FocusProfileRepository {
 
         Self::insert_categories(&mut *tx, id, &input.categories).await?;
 
-        sqlx::query("DELETE FROM focus_profile_schedule WHERE focus_profile_id = ?")
+        sqlx::query("DELETE FROM focus_profile_activation WHERE focus_profile_id = ?")
             .bind(id)
             .execute(&mut *tx)
             .await?;
 
-        Self::insert_schedules(&mut *tx, id, &input.schedules).await?;
+        Self::insert_activations(&mut *tx, id, &input.activations).await?;
 
         tx.commit().await?;
 
@@ -198,16 +199,16 @@ impl FocusProfileRepository {
         .await?;
 
         let categories = Self::get_categories(pool, profile.id).await?;
-        let schedules = Self::get_schedules(pool, profile.id).await?;
+        let activations = Self::get_activations(pool, profile.id).await?;
 
         return Ok(FocusProfileWithRelations {
             profile,
             categories,
-            schedules,
+            activations,
         });
     }
 
-    /// Delete a focus profile (categories and schedules cascade).
+    /// Delete a focus profile (categories and activations cascade).
     pub async fn delete(pool: &SqlitePool, id: i64) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM focus_profile WHERE id = ?")
             .bind(id)
@@ -325,15 +326,15 @@ impl FocusProfileRepository {
         return Ok(());
     }
 
-    /// Get schedules for a profile.
-    async fn get_schedules(
+    /// Get activation rules for a profile.
+    async fn get_activations(
         pool: &SqlitePool,
         profile_id: i64,
-    ) -> Result<Vec<FocusProfileScheduleRow>, sqlx::Error> {
+    ) -> Result<Vec<FocusProfileActivationRow>, sqlx::Error> {
         let rows = sqlx::query_as(
             r#"
-            SELECT id, mode, days, start_time, end_time
-            FROM focus_profile_schedule
+            SELECT id, mode, session_types, schedule_days, schedule_start_time, schedule_end_time
+            FROM focus_profile_activation
             WHERE focus_profile_id = ?
             ORDER BY created_at ASC
             "#,
@@ -345,25 +346,34 @@ impl FocusProfileRepository {
         return Ok(rows);
     }
 
-    /// Insert schedules for a profile.
-    async fn insert_schedules(
+    /// Insert activation rules for a profile.
+    async fn insert_activations(
         conn: &mut SqliteConnection,
         profile_id: i64,
-        schedules: &[FocusProfileScheduleInput],
+        activations: &[FocusProfileActivationInput],
     ) -> Result<(), sqlx::Error> {
-        for schedule in schedules {
-            let days_json = serde_json::to_string(&schedule.days).unwrap_or_default();
+        for activation in activations {
+            let session_types_json = activation
+                .session_types
+                .as_ref()
+                .map(|types| serde_json::to_string(types).unwrap_or_default());
+            let schedule_days_json = activation
+                .schedule_days
+                .as_ref()
+                .map(|days| serde_json::to_string(days).unwrap_or_default());
             sqlx::query(
                 r#"
-                INSERT INTO focus_profile_schedule (focus_profile_id, mode, days, start_time, end_time)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO focus_profile_activation
+                    (focus_profile_id, mode, session_types, schedule_days, schedule_start_time, schedule_end_time)
+                VALUES (?, ?, ?, ?, ?, ?)
                 "#,
             )
             .bind(profile_id)
-            .bind(schedule.mode.as_str())
-            .bind(&days_json)
-            .bind(&schedule.start_time)
-            .bind(&schedule.end_time)
+            .bind(activation.mode.as_str())
+            .bind(&session_types_json)
+            .bind(&schedule_days_json)
+            .bind(&activation.schedule_start_time)
+            .bind(&activation.schedule_end_time)
             .execute(&mut *conn)
             .await?;
         }
@@ -379,7 +389,7 @@ pub struct CreateFocusProfileInput {
     pub color: Option<String>,
     pub enabled: bool,
     pub categories: Vec<FocusProfileCategoryInput>,
-    pub schedules: Vec<FocusProfileScheduleInput>,
+    pub activations: Vec<FocusProfileActivationInput>,
 }
 
 pub struct UpdateFocusProfileInput {
@@ -387,7 +397,7 @@ pub struct UpdateFocusProfileInput {
     pub color: Option<String>,
     pub enabled: bool,
     pub categories: Vec<FocusProfileCategoryInput>,
-    pub schedules: Vec<FocusProfileScheduleInput>,
+    pub activations: Vec<FocusProfileActivationInput>,
 }
 
 pub struct FocusProfileCategoryInput {
@@ -395,11 +405,12 @@ pub struct FocusProfileCategoryInput {
     pub target: FocusTargetDto,
 }
 
-pub struct FocusProfileScheduleInput {
-    pub mode: ScheduleMode,
-    pub days: Vec<i32>,
-    pub start_time: String,
-    pub end_time: String,
+pub struct FocusProfileActivationInput {
+    pub mode: ActivationMode,
+    pub session_types: Option<Vec<FocusSessionType>>,
+    pub schedule_days: Option<Vec<i32>>,
+    pub schedule_start_time: Option<String>,
+    pub schedule_end_time: Option<String>,
 }
 
 // MARK: - Row
@@ -428,16 +439,17 @@ pub struct FocusProfileCategoryRow {
 }
 
 #[derive(Debug, FromRow)]
-pub struct FocusProfileScheduleRow {
+pub struct FocusProfileActivationRow {
     pub id: i64,
     pub mode: String,
-    pub days: String,
-    pub start_time: String,
-    pub end_time: String,
+    pub session_types: Option<String>,
+    pub schedule_days: Option<String>,
+    pub schedule_start_time: Option<String>,
+    pub schedule_end_time: Option<String>,
 }
 
 pub struct FocusProfileWithRelations {
     pub profile: FocusProfileRow,
     pub categories: Vec<FocusProfileCategoryRow>,
-    pub schedules: Vec<FocusProfileScheduleRow>,
+    pub activations: Vec<FocusProfileActivationRow>,
 }

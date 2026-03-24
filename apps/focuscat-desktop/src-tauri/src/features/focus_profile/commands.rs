@@ -1,13 +1,14 @@
 use super::{
     repository::{
-        CreateFocusProfileInput, FocusProfileCategoryInput, FocusProfileCategoryRow,
-        FocusProfileRepository, FocusProfileScheduleInput, FocusProfileScheduleRow,
+        CreateFocusProfileInput, FocusProfileActivationInput, FocusProfileActivationRow,
+        FocusProfileCategoryInput, FocusProfileCategoryRow, FocusProfileRepository,
         FocusProfileWithRelations, UpdateFocusProfileInput,
     },
-    resolution::{is_always_on_now, schedule_time_matches},
+    resolution::{activation_matches_session_type, is_always_on_now, schedule_time_matches},
     types::{
-        CategoryAssignmentDto, FocusCategory, FocusProfileDto, FocusProfileScheduleDto,
-        FocusTargetDto, ProfileActivation, ProfileChangedEvent, ScheduleMode, SessionProfileDto,
+        ActivationMode, CategoryAssignmentDto, FocusCategory, FocusProfileActivationDto,
+        FocusProfileDto, FocusSessionType, FocusTargetDto, ProfileActivation, ProfileChangedEvent,
+        SessionProfileDto,
     },
 };
 use crate::environment::db::DatabaseState;
@@ -50,7 +51,7 @@ pub async fn create_focus_profile(
     color: Option<String>,
     enabled: bool,
     categories: Vec<FocusProfileCategoryParams>,
-    schedules: Vec<FocusProfileScheduleParams>,
+    activations: Vec<FocusProfileActivationParams>,
 ) -> Result<FocusProfileDto, String> {
     let result = FocusProfileRepository::create(
         &db.pool,
@@ -62,9 +63,9 @@ pub async fn create_focus_profile(
                 .into_iter()
                 .map(FocusProfileCategoryInput::from)
                 .collect(),
-            schedules: schedules
+            activations: activations
                 .into_iter()
-                .map(FocusProfileScheduleInput::from)
+                .map(FocusProfileActivationInput::from)
                 .collect(),
         },
     )
@@ -85,7 +86,7 @@ pub async fn update_focus_profile(
     color: Option<String>,
     enabled: bool,
     categories: Vec<FocusProfileCategoryParams>,
-    schedules: Vec<FocusProfileScheduleParams>,
+    activations: Vec<FocusProfileActivationParams>,
 ) -> Result<FocusProfileDto, String> {
     let result = FocusProfileRepository::update(
         &db.pool,
@@ -98,9 +99,9 @@ pub async fn update_focus_profile(
                 .into_iter()
                 .map(FocusProfileCategoryInput::from)
                 .collect(),
-            schedules: schedules
+            activations: activations
                 .into_iter()
-                .map(FocusProfileScheduleInput::from)
+                .map(FocusProfileActivationInput::from)
                 .collect(),
         },
     )
@@ -128,13 +129,16 @@ pub async fn delete_focus_profile(
 
 /// Returns all enabled profiles with their activation status for session setup.
 ///
-/// - AlwaysOn: active always_on schedule — shown, not removable
-/// - PreSelected: active pre_selected schedule — shown, removable
-/// - Manual: no active schedule — user adds manually
+/// - AlwaysOn: active always_on activation — shown, not removable
+/// - PreSelected: active pre_selected activation — shown, removable
+/// - Manual: no active activation — user adds manually
+///
+/// `session_type`: None = no session type filter, show all.
 #[tauri::command]
 #[specta::specta]
 pub async fn get_session_profiles(
     db: State<'_, DatabaseState>,
+    session_type: Option<FocusSessionType>,
 ) -> Result<Vec<SessionProfileDto>, String> {
     let all = FocusProfileRepository::get_all(&db.pool)
         .await
@@ -143,14 +147,25 @@ pub async fn get_session_profiles(
     let now = chrono::Local::now();
     let current_day = now.weekday().num_days_from_monday() as i32;
     let current_time = now.format("%H:%M").to_string();
+    let focus_session_type_ref = session_type.as_ref();
 
     let profiles = all
         .into_iter()
         .filter(|p| p.profile.enabled)
         .map(|p| {
-            let activation = if is_always_on_now(&p.schedules, current_day, &current_time) {
+            let activation = if is_always_on_now(
+                &p.activations,
+                current_day,
+                &current_time,
+                focus_session_type_ref,
+            ) {
                 ProfileActivation::AlwaysOn
-            } else if is_pre_selected_now(&p.schedules, current_day, &current_time) {
+            } else if is_pre_selected_now(
+                &p.activations,
+                current_day,
+                &current_time,
+                focus_session_type_ref,
+            ) {
                 ProfileActivation::PreSelected
             } else {
                 ProfileActivation::Manual
@@ -166,21 +181,34 @@ pub async fn get_session_profiles(
     return Ok(profiles);
 }
 
-/// True if any pre_selected schedule matches the current day and time.
+/// True if any pre_selected activation matches the current day, time, and session type.
 fn is_pre_selected_now(
-    schedules: &[FocusProfileScheduleRow],
+    activations: &[FocusProfileActivationRow],
     current_day: i32,
     current_time: &str,
+    session_type: Option<&FocusSessionType>,
 ) -> bool {
-    schedules.iter().any(|s| {
-        if s.mode != ScheduleMode::PreSelected.as_str() {
+    activations.iter().any(|a| {
+        if a.mode != ActivationMode::PreSelected.as_str() {
             return false;
         }
-        let days: Vec<i32> = serde_json::from_str(&s.days).unwrap_or_default();
-        if !days.contains(&current_day) {
+        if !activation_matches_session_type(a, session_type) {
             return false;
         }
-        schedule_time_matches(&s.start_time, &s.end_time, current_time)
+        let days: Vec<i32> = a
+            .schedule_days
+            .as_deref()
+            .and_then(|s| serde_json::from_str(s).ok())
+            .unwrap_or_default();
+        if !days.is_empty() && !days.contains(&current_day) {
+            return false;
+        }
+        let start = a.schedule_start_time.as_deref().unwrap_or("");
+        let end = a.schedule_end_time.as_deref().unwrap_or("");
+        if start.is_empty() || end.is_empty() {
+            return true;
+        }
+        schedule_time_matches(start, end, current_time)
     })
 }
 
@@ -195,11 +223,12 @@ pub struct FocusProfileCategoryParams {
 
 #[derive(Debug, Clone, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
-pub struct FocusProfileScheduleParams {
-    pub mode: ScheduleMode,
-    pub days: Vec<i32>,
-    pub start_time: String,
-    pub end_time: String,
+pub struct FocusProfileActivationParams {
+    pub mode: ActivationMode,
+    pub session_types: Option<Vec<FocusSessionType>>,
+    pub schedule_days: Option<Vec<i32>>,
+    pub schedule_start_time: Option<String>,
+    pub schedule_end_time: Option<String>,
 }
 
 // MARK: - Conversions
@@ -213,13 +242,14 @@ impl From<FocusProfileCategoryParams> for FocusProfileCategoryInput {
     }
 }
 
-impl From<FocusProfileScheduleParams> for FocusProfileScheduleInput {
-    fn from(params: FocusProfileScheduleParams) -> Self {
+impl From<FocusProfileActivationParams> for FocusProfileActivationInput {
+    fn from(params: FocusProfileActivationParams) -> Self {
         return Self {
             mode: params.mode,
-            days: params.days,
-            start_time: params.start_time,
-            end_time: params.end_time,
+            session_types: params.session_types,
+            schedule_days: params.schedule_days,
+            schedule_start_time: params.schedule_start_time,
+            schedule_end_time: params.schedule_end_time,
         };
     }
 }
@@ -236,10 +266,10 @@ impl From<FocusProfileWithRelations> for FocusProfileDto {
                 .into_iter()
                 .map(CategoryAssignmentDto::from)
                 .collect(),
-            schedules: data
-                .schedules
+            activations: data
+                .activations
                 .into_iter()
-                .map(FocusProfileScheduleDto::from)
+                .map(FocusProfileActivationDto::from)
                 .collect(),
             created_at: data.profile.created_at as f64,
         };
@@ -274,15 +304,23 @@ impl From<FocusProfileCategoryRow> for CategoryAssignmentDto {
     }
 }
 
-impl From<FocusProfileScheduleRow> for FocusProfileScheduleDto {
-    fn from(row: FocusProfileScheduleRow) -> Self {
-        let days: Vec<i32> = serde_json::from_str(&row.days).unwrap_or_default();
+impl From<FocusProfileActivationRow> for FocusProfileActivationDto {
+    fn from(row: FocusProfileActivationRow) -> Self {
+        let session_types: Option<Vec<FocusSessionType>> = row
+            .session_types
+            .as_deref()
+            .and_then(|s| serde_json::from_str(s).ok());
+        let schedule_days: Option<Vec<i32>> = row
+            .schedule_days
+            .as_deref()
+            .and_then(|s| serde_json::from_str(s).ok());
         return Self {
             id: row.id as i32,
-            mode: ScheduleMode::from_str(&row.mode).unwrap_or(ScheduleMode::AlwaysOn),
-            days,
-            start_time: row.start_time,
-            end_time: row.end_time,
+            mode: ActivationMode::from_str(&row.mode).unwrap_or(ActivationMode::AlwaysOn),
+            session_types,
+            schedule_days,
+            schedule_start_time: row.schedule_start_time,
+            schedule_end_time: row.schedule_end_time,
         };
     }
 }

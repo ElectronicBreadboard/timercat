@@ -49,26 +49,30 @@ WHERE
     app_id IS NULL
     AND website_id IS NULL;
 
--- Recreate focus_profile_schedule with updated mode values (sessions_only -> pre_selected)
--- SQLite does not support ALTER COLUMN so we recreate the table
-CREATE TABLE focus_profile_schedule_new (
+-- Migrate focus_profile_schedule -> focus_profile_activation
+-- Renames table, renames columns (days/start_time/end_time -> schedule_*),
+-- makes schedule columns nullable (NULL = no time restriction),
+-- adds session_types column (JSON array, NULL = all session types),
+-- and migrates mode values (sessions_only -> pre_selected).
+-- SQLite does not support ALTER COLUMN so we recreate the table.
+CREATE TABLE focus_profile_activation (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     focus_profile_id INTEGER NOT NULL REFERENCES focus_profile (id) ON DELETE CASCADE,
     mode TEXT NOT NULL CHECK (mode IN ('always_on', 'pre_selected')),
-    days TEXT NOT NULL,
-    start_time TEXT NOT NULL,
-    end_time TEXT NOT NULL,
+    session_types TEXT NULL,
+    schedule_days TEXT NULL,
+    schedule_start_time TEXT NULL,
+    schedule_end_time TEXT NULL,
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
 );
 
-INSERT INTO focus_profile_schedule_new
+INSERT INTO focus_profile_activation (id, focus_profile_id, mode, session_types, schedule_days, schedule_start_time, schedule_end_time, created_at)
     SELECT id, focus_profile_id,
         CASE mode WHEN 'sessions_only' THEN 'pre_selected' ELSE mode END,
+        NULL,
         days, start_time, end_time, created_at
     FROM focus_profile_schedule;
 
 DROP TABLE focus_profile_schedule;
 
-ALTER TABLE focus_profile_schedule_new RENAME TO focus_profile_schedule;
-
-CREATE INDEX idx_focus_profile_schedule_profile_id ON focus_profile_schedule (focus_profile_id);
+CREATE INDEX idx_focus_profile_activation_profile_id ON focus_profile_activation (focus_profile_id);
