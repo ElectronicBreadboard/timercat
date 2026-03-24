@@ -7,7 +7,7 @@ export class SettingsCx {
 	private _unlisten?: () => void;
 
 	public readonly $appSettings = createState<TAppSettings>({
-		version: '0.0.1',
+		version: '0.0.2',
 		launchAtLogin: false,
 		features: {
 			goals: true,
@@ -106,6 +106,9 @@ export class SettingsCx {
 			trackApps: true,
 			trackWindows: true,
 			trackBrowser: true
+		},
+		focus: {
+			blockThreshold: 'distracting'
 		},
 		cat: {
 			equippedFur: 'white',
