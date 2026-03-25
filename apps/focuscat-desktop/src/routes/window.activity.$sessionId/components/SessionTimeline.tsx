@@ -4,6 +4,7 @@ import React, { useCallback } from 'react';
 import { Timeline, TimelineAxis } from '@/components';
 import type { specta } from '@/environment';
 import { ActivityRow } from './ActivityRow';
+import { CategorySummary } from './CategorySummary';
 import { SessionEventMarkers, SessionEventPeriodOverlays } from './SessionEventIndicators';
 import { SessionTimelineCx } from './SessionTimelineCx';
 
@@ -16,6 +17,7 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 	}, [session, activities]);
 
 	const granularity = useFeatureState(cx.$granularity);
+	const viewMode = useFeatureState(cx.$viewMode);
 
 	// MARK: - Actions
 
@@ -34,7 +36,25 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 	return (
 		<div className={cn('flex flex-col gap-2', className)}>
 			{/* Header */}
-			<div className="text-base-500 px-2 text-xs font-medium">Activity Timeline</div>
+			<div className="flex items-center justify-between px-2">
+				<span className="text-base-500 text-xs font-medium">Activity Timeline</span>
+				<div className="flex gap-0.5">
+					{(['apps', 'focus'] as const).map((mode) => (
+						<button
+							key={mode}
+							onClick={() => cx.setViewMode(mode)}
+							className={cn(
+								'rounded px-2 py-0.5 text-xs leading-none capitalize',
+								viewMode === mode
+									? 'bg-base-200 text-base-700'
+									: 'text-base-400 hover:text-base-600'
+							)}
+						>
+							{mode === 'apps' ? 'Apps' : 'Focus'}
+						</button>
+					))}
+				</div>
+			</div>
 
 			{/* Timeline */}
 			<Timeline cx={cx.timelineCx}>
@@ -55,6 +75,9 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 					</div>
 				</TooltipProvider>
 			</Timeline>
+
+			{/* Category summary (shown in focus mode) */}
+			{viewMode === 'focus' && <CategorySummary activities={activities} />}
 
 			{/* Footer */}
 			<div className="flex items-center justify-between">

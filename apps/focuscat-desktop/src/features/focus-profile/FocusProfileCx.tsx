@@ -9,13 +9,14 @@ import {
 import { createState } from 'feature-state';
 import React from 'react';
 import { createValidator } from 'validation-adapter';
-import { type TSelectedItem } from '@/components';
 import { specta } from '@/environment';
 import { toTuple } from '@/lib';
 
+export type TCategoryMode = 'none' | 'specific' | 'all';
+
 export class FocusProfileCx {
 	public readonly $profiles = createState<specta.FocusProfileDto[]>([]);
-	public readonly $activeProfileIds = createState<number[]>([]);
+	public readonly $activeProfileIds = createState<Set<number>>(new Set());
 	public readonly $editingId = createState<number | null>(null);
 	public readonly form: TForm<TFocusProfileFormData, []>;
 
@@ -74,20 +75,32 @@ export class FocusProfileCx {
 						}
 					])
 				},
-				ruleEnabled: {
-					defaultValue: false
+				enabled: {
+					defaultValue: true
 				},
-				ruleMode: {
-					defaultValue: 'block'
-				},
-				ruleTargets: {
+				categories: {
 					defaultValue: []
 				},
-				scheduleEnabled: {
+				categoryModes: {
+					defaultValue: {}
+				},
+				// Activation: master toggle + mode
+				activationEnabled: {
 					defaultValue: false
 				},
-				scheduleMode: {
-					defaultValue: 'always_on'
+				activationMode: {
+					defaultValue: 'always_on' as specta.ActivationMode
+				},
+				// Session type restriction (optional, independent of schedule)
+				sessionTypeEnabled: {
+					defaultValue: false
+				},
+				sessionTypes: {
+					defaultValue: [] as specta.FocusSessionType[]
+				},
+				// Time/day schedule restriction (optional, independent of session type)
+				scheduleEnabled: {
+					defaultValue: false
 				},
 				scheduleDays: {
 					defaultValue: [0, 1, 2, 3, 4]
@@ -108,21 +121,20 @@ export class FocusProfileCx {
 	}
 
 	public async load(): Promise<void> {
-		const [profilesResult, activeResult] = await Promise.all([
-			specta.commands.getFocusProfiles().then(toTuple),
-			specta.commands.getActiveFocusProfiles().then(toTuple)
-		]);
-		const [areProfilesOk, profilesErr, profiles] = profilesResult;
-		const [areActiveOk, activeErr, activeProfiles] = activeResult;
-		if (areProfilesOk) {
+		const [areFocusProfilesOk, err, profiles] = toTuple(await specta.commands.getFocusProfiles());
+		if (areFocusProfilesOk) {
 			this.$profiles.set(profiles);
 		} else {
-			console.error('Failed to load focus profiles:', profilesErr);
+			console.error('Failed to load focus profiles:', err);
 		}
-		if (areActiveOk) {
-			this.$activeProfileIds.set(activeProfiles.map((p) => p.id));
+
+		const [areActiveProfilesOk, , activeProfiles] = toTuple(
+			await specta.commands.getActiveFocusProfiles()
+		);
+		if (areActiveProfilesOk) {
+			this.$activeProfileIds.set(new Set(activeProfiles.map((p) => p.id)));
 		} else {
-			console.error('Failed to load active focus profiles:', activeErr);
+			console.error('Failed to load active focus profiles:');
 		}
 	}
 
@@ -131,11 +143,14 @@ export class FocusProfileCx {
 		this.setInitialValues({
 			name: '',
 			color: null,
-			ruleEnabled: false,
-			ruleMode: 'block',
-			ruleTargets: [],
+			enabled: true,
+			categories: [],
+			categoryModes: {},
+			activationEnabled: false,
+			activationMode: 'always_on',
+			sessionTypeEnabled: false,
+			sessionTypes: [],
 			scheduleEnabled: false,
-			scheduleMode: 'always_on',
 			scheduleDays: [0, 1, 2, 3, 4],
 			scheduleStartTime: '09:00',
 			scheduleEndTime: '17:00'
@@ -160,43 +175,53 @@ export class FocusProfileCx {
 			return false;
 		}
 
-		const editingId = this.$editingId.get();
-		const rules: specta.FocusProfileRuleParams[] = data.ruleEnabled
-			? data.ruleMode === 'block_all'
-				? [{ action: 'block', target: { type: 'all' } }]
-				: data.ruleTargets.map((item) => ({
-						action: data.ruleMode === 'allow' ? 'allow' : 'block',
-						target: this.selectedItemToRuleTarget(item)
-					}))
-			: [];
-		const schedules: specta.FocusProfileScheduleParams[] = data.scheduleEnabled
+		const categories: specta.FocusProfileCategoryParams[] = data.categories.map((entry) => ({
+			category: entry.category,
+			target: entry.target
+		}));
+		const activations: specta.FocusProfileActivationParams[] = data.activationEnabled
 			? [
 					{
-						mode: data.scheduleMode,
-						days: data.scheduleDays,
-						startTime: data.scheduleStartTime,
-						endTime: data.scheduleEndTime
+						mode: data.activationMode,
+						sessionTypes:
+							data.sessionTypeEnabled && data.sessionTypes.length > 0 ? data.sessionTypes : null,
+						scheduleDays:
+							data.scheduleEnabled && data.scheduleDays.length > 0 ? data.scheduleDays : null,
+						scheduleStartTime: data.scheduleEnabled ? data.scheduleStartTime || null : null,
+						scheduleEndTime: data.scheduleEnabled ? data.scheduleEndTime || null : null
 					}
 				]
 			: [];
 
+		const editingId = this.$editingId.get();
 		if (editingId == null) {
-			// Create new profile
-			const [isProfileOk, profileErr, profile] = toTuple(
-				await specta.commands.createFocusProfile(data.name, data.color, rules, schedules)
+			const [ok, err, profile] = toTuple(
+				await specta.commands.createFocusProfile(
+					data.name,
+					data.color,
+					data.enabled,
+					categories,
+					activations
+				)
 			);
-			if (!isProfileOk) {
-				console.error('Failed to create focus profile:', profileErr);
+			if (!ok) {
+				console.error('Failed to create focus profile:', err);
 				return false;
 			}
 			this.$profiles.set((prev) => [...prev, profile]);
 		} else {
-			// Update existing profile
-			const [isProfileOk, profileErr, profile] = toTuple(
-				await specta.commands.updateFocusProfile(editingId, data.name, data.color, rules, schedules)
+			const [ok, err, profile] = toTuple(
+				await specta.commands.updateFocusProfile(
+					editingId,
+					data.name,
+					data.color,
+					data.enabled,
+					categories,
+					activations
+				)
 			);
-			if (!isProfileOk) {
-				console.error('Failed to update focus profile:', profileErr);
+			if (!ok) {
+				console.error('Failed to update focus profile:', err);
 				return false;
 			}
 			this.$profiles.set((prev) => prev.map((p) => (p.id === editingId ? profile : p)));
@@ -222,95 +247,60 @@ export class FocusProfileCx {
 	}
 
 	private profileToFormData(profile: specta.FocusProfileDto): TFocusProfileFormData {
-		const schedule = profile.schedules[0];
-		const firstRule = profile.rules[0];
-		const isBlockAll =
-			firstRule?.target.type === 'all' &&
-			firstRule?.action === 'block' &&
-			profile.rules.length === 1;
-		const ruleMode: TRuleMode = isBlockAll
-			? 'block_all'
-			: firstRule?.action === 'allow'
-				? 'allow'
-				: 'block';
+		const activation = profile.activations[0];
+		const categoryModes: Partial<Record<specta.FocusCategory, TCategoryMode>> = {};
+		for (const cat of ['focused', 'neutral', 'distracting'] as specta.FocusCategory[]) {
+			const targets = profile.categories.filter((c) => c.category === cat).map((c) => c.target);
+			if (targets.some((t) => t.type === 'all')) {
+				categoryModes[cat] = 'all';
+			} else if (targets.length > 0) {
+				categoryModes[cat] = 'specific';
+			} else {
+				categoryModes[cat] = 'none';
+			}
+		}
 		return {
 			name: profile.name,
 			color: profile.color ?? null,
-			ruleEnabled: profile.rules.length > 0,
-			ruleMode,
-			ruleTargets: profile.rules
-				.map((rule) => this.ruleToSelectedItem(rule))
-				.filter((item): item is TSelectedItem => item != null),
-			scheduleEnabled: profile.schedules.length > 0,
-			scheduleMode: schedule?.mode ?? 'always_on',
-			scheduleDays: schedule?.days ?? [0, 1, 2, 3, 4],
-			scheduleStartTime: schedule?.startTime ?? '09:00',
-			scheduleEndTime: schedule?.endTime ?? '17:00'
+			enabled: profile.enabled,
+			categories: profile.categories.map((assignment) => ({
+				category: assignment.category,
+				target: assignment.target
+			})),
+			categoryModes,
+			activationEnabled: profile.activations.length > 0,
+			activationMode: activation?.mode ?? 'always_on',
+			sessionTypeEnabled: (activation?.sessionTypes?.length ?? 0) > 0,
+			sessionTypes: activation?.sessionTypes ?? [],
+			scheduleEnabled: activation?.scheduleDays != null || activation?.scheduleStartTime != null,
+			scheduleDays: activation?.scheduleDays ?? [0, 1, 2, 3, 4],
+			scheduleStartTime: activation?.scheduleStartTime ?? '09:00',
+			scheduleEndTime: activation?.scheduleEndTime ?? '17:00'
 		};
-	}
-
-	private ruleToSelectedItem(rule: specta.FocusProfileRuleDto): TSelectedItem | null {
-		const { target } = rule;
-		switch (target.type) {
-			case 'app':
-				return {
-					id: target.bundle_id,
-					type: 'app',
-					bundleId: target.bundle_id,
-					name: target.name ?? undefined,
-					icon: target.icon ?? undefined,
-					color: target.color ?? undefined
-				};
-			case 'website':
-				return {
-					id: target.domain,
-					type: 'website',
-					domain: target.domain,
-					name: target.name ?? undefined,
-					icon: target.icon ?? undefined,
-					color: target.color ?? undefined
-				};
-			case 'all':
-				return null;
-		}
-	}
-
-	private selectedItemToRuleTarget(item: TSelectedItem): specta.RuleTargetDto {
-		switch (item.type) {
-			case 'app':
-				return {
-					type: 'app',
-					bundle_id: item.bundleId,
-					name: item.name ?? null,
-					icon: item.icon ?? null,
-					color: item.color ?? null
-				};
-			case 'website':
-				return {
-					type: 'website',
-					domain: item.domain,
-					name: item.name ?? null,
-					icon: item.icon ?? null,
-					color: item.color ?? null
-				};
-		}
 	}
 }
 
 export interface TFocusProfileFormData {
 	name: string;
 	color: string | null;
-	ruleEnabled: boolean;
-	ruleMode: TRuleMode;
-	ruleTargets: TSelectedItem[];
+	enabled: boolean;
+	categories: TCategoryFormEntry[];
+	categoryModes: Partial<Record<specta.FocusCategory, TCategoryMode>>;
+	activationEnabled: boolean;
+	activationMode: specta.ActivationMode;
+	sessionTypeEnabled: boolean;
+	sessionTypes: specta.FocusSessionType[];
 	scheduleEnabled: boolean;
-	scheduleMode: specta.ScheduleMode;
 	scheduleDays: number[];
 	scheduleStartTime: string;
 	scheduleEndTime: string;
 }
 
-export type TRuleMode = 'block' | 'block_all' | 'allow';
+/// A single category assignment in the form: which category + which target.
+export interface TCategoryFormEntry {
+	category: specta.FocusCategory;
+	target: specta.FocusTargetDto;
+}
 
 // MARK: - React Context
 

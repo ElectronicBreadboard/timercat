@@ -6,18 +6,22 @@ use crate::{
     app::window::Window,
     common::url::extract_domain,
     environment::logger::log_info,
-    features::focus_profile::{
-        resolution::{resolve_for_app, resolve_for_website, ResolutionProfile},
-        types::RuleAction,
+    features::{
+        focus_profile::{
+            resolution::{
+                is_blocked, resolve_category_for_app, resolve_category_for_website,
+                ResolutionProfile,
+            },
+            types::FocusProfileState,
+        },
+        settings::types::{AppSettingsState, BlockThreshold},
     },
-    features::settings::types::AppSettingsState,
 };
 use tauri::{AppHandle, Manager};
 use tauri_specta::Event;
 
 pub struct Blocker {
     app: AppHandle,
-    profiles: Vec<ResolutionProfile>,
     active_violation: Option<BlockingViolation>,
 }
 
@@ -25,7 +29,6 @@ impl Blocker {
     pub fn new(app: AppHandle) -> Self {
         return Self {
             app,
-            profiles: Vec::new(),
             active_violation: None,
         };
     }
@@ -37,13 +40,28 @@ impl Blocker {
             .unwrap_or(false)
     }
 
+    fn get_threshold(&self) -> BlockThreshold {
+        self.app
+            .try_state::<AppSettingsState>()
+            .map(|state| state.lock().unwrap().profiles.block_threshold)
+            .unwrap_or(BlockThreshold::Distracting)
+    }
+
+    fn get_active_profiles(&self) -> Vec<ResolutionProfile> {
+        self.app
+            .try_state::<FocusProfileState>()
+            .map(|s| s.lock().unwrap().active_profiles.clone())
+            .unwrap_or_default()
+    }
+
     /// Handle an app switch. Checks if the app is blocked and updates the overlay.
     pub fn handle_app_activated(&mut self, bundle_id: Option<&str>, app_name: Option<&str>) {
         if Self::is_own_app(bundle_id, app_name) {
             return;
         }
 
-        let violation = self.check_app(bundle_id);
+        let profiles = self.get_active_profiles();
+        let violation = self.check_app(bundle_id, &profiles);
 
         if self.is_developer_enabled() {
             log_info!(
@@ -78,7 +96,8 @@ impl Blocker {
             return;
         }
 
-        let violation = self.check_window(bundle_id, browser_url);
+        let profiles = self.get_active_profiles();
+        let violation = self.check_window(bundle_id, browser_url, &profiles);
 
         if self.is_developer_enabled() {
             log_info!(
@@ -106,10 +125,6 @@ impl Blocker {
 
     pub fn active_violation(&self) -> Option<BlockingViolation> {
         return self.active_violation.clone();
-    }
-
-    pub fn set_profiles(&mut self, profiles: Vec<ResolutionProfile>) {
-        self.profiles = profiles;
     }
 
     fn set_violation(&mut self, violation: Option<BlockingViolation>) {
@@ -142,14 +157,19 @@ impl Blocker {
     }
 
     /// Check if an app is blocked.
-    fn check_app(&self, bundle_id: Option<&str>) -> Option<BlockingViolation> {
+    fn check_app(
+        &self,
+        bundle_id: Option<&str>,
+        profiles: &[ResolutionProfile],
+    ) -> Option<BlockingViolation> {
         let bid = bundle_id?;
-        let (action, profile) = resolve_for_app(bid, &self.profiles)?;
-        if matches!(action, RuleAction::Block) {
+        let threshold = self.get_threshold();
+        let (category, profile) = resolve_category_for_app(bid, profiles);
+        if is_blocked(&category, &threshold) {
             return Some(BlockingViolation {
-                profile_id: profile.profile_id,
-                profile_name: profile.profile_name.clone(),
-                profile_color: profile.profile_color.clone(),
+                profile_id: profile.map(|p| p.profile_id),
+                profile_name: profile.map(|p| p.profile_name.clone()),
+                profile_color: profile.and_then(|p| p.profile_color.clone()),
                 blocked_target: BlockedTarget::App {
                     bundle_id: bid.to_string(),
                 },
@@ -159,13 +179,18 @@ impl Blocker {
     }
 
     /// Check if a website is blocked.
-    fn check_website(&self, domain: &str) -> Option<BlockingViolation> {
-        let (action, profile) = resolve_for_website(domain, &self.profiles)?;
-        if matches!(action, RuleAction::Block) {
+    fn check_website(
+        &self,
+        domain: &str,
+        profiles: &[ResolutionProfile],
+    ) -> Option<BlockingViolation> {
+        let threshold = self.get_threshold();
+        let (category, profile) = resolve_category_for_website(domain, profiles);
+        if is_blocked(&category, &threshold) {
             return Some(BlockingViolation {
-                profile_id: profile.profile_id,
-                profile_name: profile.profile_name.clone(),
-                profile_color: profile.profile_color.clone(),
+                profile_id: profile.map(|p| p.profile_id),
+                profile_name: profile.map(|p| p.profile_name.clone()),
+                profile_color: profile.and_then(|p| p.profile_color.clone()),
                 blocked_target: BlockedTarget::Website {
                     domain: domain.to_string(),
                 },
@@ -179,15 +204,16 @@ impl Blocker {
         &self,
         bundle_id: Option<&str>,
         browser_url: Option<&str>,
+        profiles: &[ResolutionProfile],
     ) -> Option<BlockingViolation> {
         // App blocked -> everything inside it is blocked
-        if let Some(violation) = self.check_app(bundle_id) {
+        if let Some(violation) = self.check_app(bundle_id, profiles) {
             return Some(violation);
         }
         // App not blocked -> check browser URL
         if let Some(url) = browser_url {
             if let Some(domain) = extract_domain(url) {
-                return self.check_website(&domain);
+                return self.check_website(&domain, profiles);
             }
         }
         return None;
@@ -197,8 +223,8 @@ impl Blocker {
 /// Violation reported when a blocked app or website is detected.
 #[derive(Debug, Clone, PartialEq)]
 pub struct BlockingViolation {
-    pub profile_id: i64,
-    pub profile_name: String,
+    pub profile_id: Option<i64>,
+    pub profile_name: Option<String>,
     pub profile_color: Option<String>,
     pub blocked_target: BlockedTarget,
 }

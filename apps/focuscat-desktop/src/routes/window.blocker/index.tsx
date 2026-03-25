@@ -52,19 +52,25 @@ function RouteComponent() {
 							{describeTarget(violation.blockedTarget)}
 						</p>
 						<p className="text-base-500 text-sm">
-							Blocked by{' '}
-							<Badge
-								className="cursor-pointer"
-								style={{
-									backgroundColor: hexToRgba(profileColor, 0.1),
-									color: profileColor
-								}}
-								onClick={() => {
-									specta.commands.showSettingsWindowAtProfile(violation.profileId);
-								}}
-							>
-								{violation.profileName}
-							</Badge>
+							{violation.profileId != null && violation.profileName != null ? (
+								<>
+									Blocked by{' '}
+									<Badge
+										className="cursor-pointer"
+										style={{
+											backgroundColor: hexToRgba(profileColor, 0.1),
+											color: profileColor
+										}}
+										onClick={() => {
+											specta.commands.showSettingsWindowAtProfile(violation.profileId!);
+										}}
+									>
+										{violation.profileName}
+									</Badge>
+								</>
+							) : (
+								'Blocked by your focus settings'
+							)}
 						</p>
 					</div>
 				) : (

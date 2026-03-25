@@ -12,14 +12,15 @@ impl AppActivityRepository {
     ) -> Result<i64, sqlx::Error> {
         let result = sqlx::query(
             r#"
-            INSERT INTO activity_app (app_id, started_at, ended_at)
-            VALUES (?, ?, ?)
+            INSERT INTO activity_app (app_id, started_at, ended_at, category)
+            VALUES (?, ?, ?, ?)
             RETURNING id
             "#,
         )
         .bind(input.app_id)
         .bind(input.started_at)
         .bind(input.ended_at)
+        .bind(&input.category)
         .fetch_one(pool)
         .await?;
 
@@ -42,6 +43,7 @@ impl AppActivityRepository {
                 a.name as app_name,
                 a.icon as app_icon,
                 a.color as app_color,
+                aa.category,
                 aa.started_at,
                 aa.ended_at
             FROM activity_app aa
@@ -64,6 +66,7 @@ impl AppActivityRepository {
                 app_name: row.get("app_name"),
                 app_icon: row.get("app_icon"),
                 app_color: row.get("app_color"),
+                category: row.get("category"),
                 started_at: row.get("started_at"),
                 ended_at: row.get("ended_at"),
             })
@@ -77,6 +80,7 @@ pub struct InsertAppActivityInput {
     pub app_id: i64,
     pub started_at: i64,
     pub ended_at: i64,
+    pub category: Option<String>,
 }
 
 pub struct InsertWindowActivityInput {
@@ -95,6 +99,7 @@ pub struct InsertWindowActivityInput {
     // Timestamps
     pub started_at: i64,
     pub ended_at: i64,
+    pub category: Option<String>,
 }
 
 // MARK: - Window Activity Repository
@@ -113,9 +118,9 @@ impl WindowActivityRepository {
                 app_id, website_id,
                 window_title, window_id, window_x, window_y, window_width, window_height,
                 browser_url, browser_is_private,
-                started_at, ended_at
+                started_at, ended_at, category
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
             "#,
         )
@@ -131,6 +136,7 @@ impl WindowActivityRepository {
         .bind(input.browser_is_private)
         .bind(input.started_at)
         .bind(input.ended_at)
+        .bind(&input.category)
         .fetch_one(pool)
         .await?;
 
@@ -159,6 +165,7 @@ impl WindowActivityRepository {
                 w.color as website_color,
                 aw.window_title,
                 aw.browser_url,
+                aw.category,
                 aw.started_at,
                 aw.ended_at
             FROM activity_window aw
@@ -188,6 +195,7 @@ impl WindowActivityRepository {
                 website_color: row.get("website_color"),
                 window_title: row.get("window_title"),
                 browser_url: row.get("browser_url"),
+                category: row.get("category"),
                 started_at: row.get("started_at"),
                 ended_at: row.get("ended_at"),
             })
@@ -214,6 +222,7 @@ pub struct AppActivityRow {
     pub app_name: Option<String>,
     pub app_icon: Option<String>,
     pub app_color: Option<String>,
+    pub category: Option<String>,
     pub started_at: i64,
     pub ended_at: i64,
 }
@@ -229,6 +238,7 @@ pub struct WindowActivityRow {
     pub website_color: Option<String>,
     pub window_title: Option<String>,
     pub browser_url: Option<String>,
+    pub category: Option<String>,
     pub started_at: i64,
     pub ended_at: i64,
 }

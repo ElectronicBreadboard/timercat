@@ -1,16 +1,16 @@
 use super::blocker::Blocker;
 use serde::Serialize;
-use std::ops::Deref;
-use std::sync::Mutex;
+use std::{ops::Deref, sync::Mutex};
 
 // MARK: - DTO
 
 /// Describes what was blocked and by which profile.
+/// Profile fields are None when blocked by threshold with no explicit category assignment.
 #[derive(Debug, Clone, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct BlockingViolationDto {
-    pub profile_id: i32,
-    pub profile_name: String,
+    pub profile_id: Option<i32>,
+    pub profile_name: Option<String>,
     pub profile_color: Option<String>,
     pub blocked_target: BlockedTargetDto,
 }

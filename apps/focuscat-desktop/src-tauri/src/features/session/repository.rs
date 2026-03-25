@@ -16,7 +16,7 @@ impl SessionRepository {
     ) -> Result<Session, sqlx::Error> {
         let result = sqlx::query(
             r#"
-            INSERT INTO sessions (session_type, status, planned_seconds, intention, started_at)
+            INSERT INTO session (session_type, status, planned_seconds, intention, started_at)
             VALUES (?, 'active', ?, ?, ?)
             RETURNING id
             "#,
@@ -80,7 +80,7 @@ impl SessionRepository {
     ) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"
-            INSERT INTO session_events (session_id, event_type, timestamp, content)
+            INSERT INTO session_event (session_id, event_type, timestamp, content)
             VALUES (?, ?, ?, ?)
             "#,
         )
@@ -103,7 +103,7 @@ impl SessionRepository {
     ) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"
-            UPDATE sessions
+            UPDATE session
             SET status = 'completed', ended_at = ?, actual_seconds = ?
             WHERE id = ?
             "#,
@@ -136,7 +136,7 @@ impl SessionRepository {
     ) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"
-            UPDATE sessions
+            UPDATE session
             SET status = 'cancelled', ended_at = ?, actual_seconds = ?
             WHERE id = ?
             "#,
@@ -174,7 +174,7 @@ impl SessionRepository {
         let result: Option<i64> = sqlx::query_scalar(
             r#"
             SELECT COALESCE(SUM(actual_seconds), 0)
-            FROM sessions
+            FROM session
             WHERE session_type = 'pomodoro:work'
               AND (status = 'completed' OR (status = 'cancelled' AND actual_seconds >= 30))
               AND started_at >= ?
@@ -197,7 +197,7 @@ impl SessionRepository {
         let results = sqlx::query_as::<_, SessionRow>(
             r#"
             SELECT id, session_type, status, planned_seconds, actual_seconds, intention, started_at, ended_at
-            FROM sessions
+            FROM session
             WHERE started_at >= ? AND started_at < ?
               AND (? IS NULL OR actual_seconds IS NULL OR actual_seconds >= ?)
             ORDER BY started_at DESC
@@ -223,7 +223,7 @@ impl SessionRepository {
         let id: Option<i64> = sqlx::query_scalar(
             r#"
             SELECT id
-            FROM sessions
+            FROM session
             WHERE started_at >= ? AND started_at < ?
               AND (? IS NULL OR actual_seconds IS NULL OR actual_seconds >= ?)
             ORDER BY started_at DESC
@@ -245,7 +245,7 @@ impl SessionRepository {
         let result = sqlx::query_as::<_, SessionRow>(
             r#"
             SELECT id, session_type, status, planned_seconds, actual_seconds, intention, started_at, ended_at
-            FROM sessions
+            FROM session
             WHERE id = ?
             "#,
         )
@@ -264,7 +264,7 @@ impl SessionRepository {
         let results = sqlx::query_as::<_, SessionEventRow>(
             r#"
             SELECT id, session_id, event_type, timestamp, content
-            FROM session_events
+            FROM session_event
             WHERE session_id = ?
             ORDER BY timestamp ASC
             "#,
@@ -284,7 +284,7 @@ impl SessionRepository {
         let id: Option<i64> = sqlx::query_scalar(
             r#"
             SELECT id
-            FROM sessions
+            FROM session
             WHERE session_type = 'pomodoro:work'
               AND status = 'completed'
               AND (? IS NULL OR actual_seconds >= ?)
@@ -308,8 +308,8 @@ impl SessionRepository {
         let orphaned = sqlx::query_as::<_, OrphanedSessionRow>(
             r#"
             SELECT s.id, s.started_at, MAX(e.timestamp) as last_event_at
-            FROM sessions s
-            JOIN session_events e ON e.session_id = s.id
+            FROM session s
+            JOIN session_event e ON e.session_id = s.id
             WHERE s.status = 'active' AND s.ended_at IS NULL
             GROUP BY s.id
             "#,
@@ -326,7 +326,7 @@ impl SessionRepository {
             // Update session to cancelled
             sqlx::query(
                 r#"
-                UPDATE sessions
+                UPDATE session
                 SET status = 'cancelled', ended_at = ?, actual_seconds = ?
                 WHERE id = ?
                 "#,

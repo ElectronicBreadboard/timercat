@@ -109,6 +109,7 @@ impl From<AppActivityRow> for WindowActivityDto {
             website_color: None,
             window_title: None,
             browser_url: None,
+            category: row.category,
             started_at: row.started_at as f64,
             ended_at: row.ended_at as f64,
         };
@@ -128,6 +129,7 @@ impl From<WindowActivityRow> for WindowActivityDto {
             website_color: row.website_color,
             window_title: row.window_title,
             browser_url: row.browser_url,
+            category: row.category,
             started_at: row.started_at as f64,
             ended_at: row.ended_at as f64,
         };

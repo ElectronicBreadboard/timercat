@@ -15,6 +15,7 @@ pub struct AppSettings {
     pub timer: TimerSettings,
     pub goals: GoalSettings,
     pub activity: ActivitySettings,
+    pub profiles: FocusProfilesSettings,
     pub cat: CatSettings,
 }
 
@@ -30,6 +31,7 @@ impl Default for AppSettings {
             timer: TimerSettings::default(),
             goals: GoalSettings::default(),
             activity: ActivitySettings::default(),
+            profiles: FocusProfilesSettings::default(),
             cat: CatSettings::default(),
         };
     }
@@ -345,6 +347,33 @@ impl Default for CatSettings {
             equipped_hat: None,
         };
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase", default)]
+pub struct FocusProfilesSettings {
+    pub block_threshold: BlockThreshold,
+}
+
+impl Default for FocusProfilesSettings {
+    fn default() -> Self {
+        return Self {
+            block_threshold: BlockThreshold::Distracting,
+        };
+    }
+}
+
+/// Which category and above gets blocked when a focus profile is active.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum BlockThreshold {
+    /// Do not block any apps/websites.
+    None,
+    /// Block only Distracting apps/websites.
+    #[default]
+    Distracting,
+    /// Block Neutral and Distracting apps/websites.
+    Neutral,
 }
 
 // MARK: - State

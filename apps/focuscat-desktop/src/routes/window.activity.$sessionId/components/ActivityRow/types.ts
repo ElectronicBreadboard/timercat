@@ -1,9 +1,10 @@
 import type { specta } from '@/environment';
+import type { FocusViewCategory } from './category';
 
 /**
  * Activity block union type for timeline display.
  */
-export type TActivityBlock = TWindowGroupBlock | TAppBlock | TWindowBlock;
+export type TActivityBlock = TWindowGroupBlock | TAppBlock | TWindowBlock | TCategoryBlock;
 
 /**
  * Window block - contains 1+ windows from the same app.
@@ -48,5 +49,25 @@ export interface TAppBlock {
 	startMs: number;
 	endMs: number;
 	apps: TAppInfo[]; // Sorted by duration (dominant app first)
+	activities: specta.WindowActivityDto[];
+}
+
+/**
+ * Category block - used in focus view mode. Groups consecutive same-category
+ * activities into segments. Multiple segments may be merged when granularity
+ * is too low to show them individually.
+ */
+export interface TCategoryBlock {
+	type: 'category';
+	startMs: number;
+	endMs: number;
+	category: FocusViewCategory | null; // Dominant category (for block color)
+	segments: TCategorySegment[];
+}
+
+export interface TCategorySegment {
+	startMs: number;
+	endMs: number;
+	category: FocusViewCategory | null;
 	activities: specta.WindowActivityDto[];
 }

@@ -1,121 +1,78 @@
 # Focus Profile
 
-Reusable blocking/allowing configurations for focus sessions.
+Reusable configurations that categorize apps and websites. A global threshold decides what gets blocked.
 
 ```
 focus_profile
-  ├── focus_profile_rule (action, target)        ×N
-  ├── focus_profile_schedule (mode, days, time)  ×N
-  └── session_focus_profile (priority)           ×N → session
+  ├── focus_profile_category (target, category)  xN
+  ├── focus_profile_schedule (mode, days, time)  xN
+  └── session_focus_profile (priority)           xN -> session
+
+app_setting: profiles.block_threshold
 ```
 
-## Rules
+## Categories
 
-**Rule** = action + target
+Each app/website in a profile gets a category:
 
-- Action: `block` or `allow`
-- Target: specific app, specific website, or "all"
+- `focused` — helps you work
+- `neutral` — neither helps nor hurts (default for uncategorized)
+- `distracting` — pulls you away
 
-### App vs Website
+## Category Assignments
 
-Two independent layers:
+Each assignment targets either **All** apps/websites or **Specific** ones (multi-select).
 
-| Rule Type | Controls                 | Example                                     |
-| --------- | ------------------------ | ------------------------------------------- |
-| App       | Can you open this app?   | Block Brave → can't open Brave              |
-| Website   | Can you access this URL? | Block youtube.com → blocked in ALL browsers |
+One assignment per target per profile.
 
-**Key insight**: Blocking an app blocks everything inside it. Blocking a website blocks it everywhere.
+## Global Blocking Threshold
 
-- Block Brave → youtube.com inaccessible via Brave (app is blocked), but reachable via Chrome
-- Block youtube.com → blocked in Chrome, Brave, Safari, everywhere
+One app-level setting. Applied whenever any profile is active.
 
-### Why flat rules instead of modes (blocklist/allowlist)?
+- `none` — do not block anything
+- `distracting` — block Distracting only
+- `neutral` — block Neutral and Distracting
 
-Modes don't compose. If you assign a "blocklist profile" and an "allowlist profile" to the same session, what happens? Unclear.
+No active profile = everything allowed.
 
-Rules are flat, self-contained entries — each carries its own action. Every rule is just "block X" or "allow X". No container or mode on the profile needed. Priority decides conflicts.
+## Activation Modes
 
-### Why "all" as a target?
+| Mode           | Schedule | Session | Behavior                                          |
+| -------------- | -------- | ------- | ------------------------------------------------- |
+| `always_on`    | Yes      | No      | Applies continuously during scheduled window      |
+| `pre_selected` | Yes      | Yes     | Auto-added to session setup, user can remove      |
+| `manual`       | No       | Yes     | User picks when starting a session                |
 
-Enables whitelist pattern without special mode:
+No schedule entries = manual only. Entries can mix modes (e.g. always_on weekdays, pre_selected weekends).
 
-- "Block All" profile (one rule: block all) at priority 0
-- "Allowed Apps" profile (allow rules) at priority 1
-- Result: only allowed apps work
+## Session Setup
 
-Also enables "break mode": "Allow All" profile at highest priority overrides everything.
+- `always_on` profiles active in the current window: shown, not removable
+- `pre_selected` profiles active in the current window: shown, removable
+- Manual profiles: user adds from list
 
-### Constraints
+Profiles can be reordered. Higher position = higher priority.
 
-- One rule per target per profile (can't have "block X" and "allow X" in same profile)
-- Rule targets ONE of: app, website, or all (not multiple)
+## Multi-Profile Composition
 
-## Schedule
+Multiple profiles can be active at once. Higher priority wins, always.
 
-**Schedule entry** = mode + days + time window
+**Resolution**: find the highest-priority profile that assigns a category to the target. Apply global threshold.
 
-- Mode: `always_on` or `sessions_only`
-- Days: which days of the week
-- Time window: start time and end time
-
-No schedule entries = manual-only profile.
-
-### Activation Modes
-
-A profile activates in one of three ways:
-
-| Mode          | Schedule required? | How it works                                                 |
-| ------------- | ------------------ | ------------------------------------------------------------ |
-| Always on     | Yes                | Rules apply continuously during scheduled times              |
-| Sessions only | Yes                | Auto-selected when starting a session during scheduled times |
-| Manual        | No                 | User picks the profile when starting a session               |
-
-- **Always on**: No session needed. During the scheduled window, the profile's rules are enforced automatically.
-- **Sessions only**: Profile is auto-selected when the user starts a focus session during the scheduled window. Outside the window or without a session, nothing happens.
-- **Manual**: No schedule. The user explicitly picks this profile when starting a session. A profile with a schedule can also be manually selected outside its window.
-
-Each entry carries its own mode, so the same profile can be "always on" on weekdays and "sessions only" on weekends.
-
-### Why flat entries?
-
-Same reasoning as rules. Schedule entries are flat, self-contained rows — each carries its own mode. No container needed.
-
-A shared "schedule mode" on the profile would force all time windows to behave the same. Flat entries are simpler and more flexible.
-
-### Edge Cases
-
-- **Overlapping profiles**: Two profiles scheduled for the same window — resolved via priority (existing `session_focus_profile.priority`). For "always on" profiles, all active profiles' rules stack.
-- **Session during "always on" window**: The profile is already active, session inherits it naturally.
-- **Manual selection outside schedule**: Always allowed. Schedule is additive, not restrictive.
-
-## Sessions
-
-A session has one or more profiles assigned, each with a priority number.
-
-**Resolution**: When checking if an app/website is blocked:
-
-1. Collect all matching rules from assigned profiles
-2. Rule from highest priority profile wins
-3. Same priority? `block` wins (fail-safe)
-4. No matching rule? Allowed (default)
-
-### Why priority on assignment, not profile?
-
-Flexibility. Same "Block All" profile can be priority 0 in one session, priority 5 in another.
-
-### Patterns
+### Examples
 
 ```
-Blocklist:   "No Social Media" (blocks twitter, facebook)
-             → those sites blocked, everything else allowed
+Blocklist (threshold: distracting):
+  "No Social": youtube.com -> Distracting, twitter.com -> Distracting
+  Result: social blocked, everything else neutral -> allowed
 
-Exception:   "No Social Media" (pri 0) + "Allow Twitter" (pri 1)
-             → facebook blocked, twitter allowed
+Whitelist (threshold: distracting):
+  "Base" (p0): All -> Distracting
+  "Dev Tools" (p1): Xcode, Terminal -> Focused
+  Result: Xcode/Terminal allowed, everything else blocked
 
-Whitelist:   "Block All" (pri 0) + "Coding Apps" (pri 1)
-             → only coding apps allowed, rest blocked
-
-Break:       "Allow All" (pri 99)
-             → overrides everything, all allowed
+Exception (threshold: distracting):
+  "No Social" (p0): twitter.com -> Distracting
+  "Allow Twitter" (p1): twitter.com -> Neutral
+  Result: p1 wins -> twitter.com neutral -> allowed
 ```

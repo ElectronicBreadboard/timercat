@@ -4,7 +4,7 @@
 
 Most people don't need another blocker. They need a gesture. A conscious, deliberate act of stepping back from digital noise, for whatever reason, for however long they choose.
 
-Abstand (German: *distance, gap, space*) is that gesture. You select the apps you want distance from, set a duration, configure your own rules, and commit. The app doesn't judge why or for how long. A 20-minute morning break and a 30-day reset are the same act at different scales.
+Abstand (German: _distance, gap, space_) is that gesture. You select the apps you want distance from, set a duration, configure your own rules, and commit. The app doesn't judge why or for how long. A 20-minute morning break and a 30-day reset are the same act at different scales.
 
 Not a productivity tool. Not a detox program. A discipline tool for people who want to be more intentional about where their attention goes.
 
@@ -27,7 +27,7 @@ A 15-minute Abstand and a 30-day Abstand are the same act at different scales.
 
 ## Brand
 
-**Name: Abstand.** Subtitle: *Intentional Distance.*
+**Name: Abstand.** Subtitle: _Intentional Distance._
 
 **Feeling:** warm, editorial, grounded. Serif type. Organic forms. Nothing clinical or gamified.
 
@@ -49,6 +49,7 @@ For the prototype this is a clean SVG path. The goal is that someone can read ye
 
 **Create Abstand**
 Three steps, no wizard energy.
+
 1. Choose apps to take distance from
 2. Set duration
 3. Configure your rules: number of allowed opens, total allowed minutes, or no limit (log only)
@@ -66,4 +67,4 @@ Recurring Abstands, collectibles, badges, social features, Android, widgets, mon
 
 ---
 
-*Abstand. Take the distance.*
+_Abstand. Take the distance._

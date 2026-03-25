@@ -2,12 +2,14 @@ import { withLocalStorage } from 'feature-react/state';
 import { createState } from 'feature-state';
 import { TimelineCx } from '@/components';
 import type { specta } from '@/environment';
-import { ActivityRowCx } from './ActivityRow';
+import { ActivityRowCx, TActivityRowCxThresholds } from './ActivityRow';
+import type { TViewMode } from './ActivityRow/category';
 
 export class SessionTimelineCx {
 	public readonly timelineCx: TimelineCx;
 	public readonly activityRowCx: ActivityRowCx;
 	public readonly $granularity;
+	public readonly $viewMode;
 	public readonly config: TSessionTimelineCxConfig;
 
 	public readonly eventPeriods: TEventPeriod[];
@@ -30,6 +32,11 @@ export class SessionTimelineCx {
 		this.config = { storageKey, granularityMin, granularityMax, granularityDefault };
 		this.$granularity = withLocalStorage(createState(granularityDefault), storageKey);
 		this.$granularity.persist();
+		this.$viewMode = withLocalStorage(
+			createState<TViewMode>('apps'),
+			'focuscat:timeline-view-mode'
+		);
+		this.$viewMode.persist();
 
 		// Compute periods and timeline
 		const { eventPeriods, timelineEndMs } = this.computeEventPeriods(session);
@@ -40,16 +47,17 @@ export class SessionTimelineCx {
 		this.eventMarkers = this.computeEventMarkers(session.events, eventPeriods);
 
 		// Setup activity row
-		const { minWindowBlockPx, minAppBlockPx } = this.granularityToConfig(this.$granularity.get());
-		this.activityRowCx = new ActivityRowCx(this.timelineCx, activities, {
-			minWindowBlockPx,
-			minAppBlockPx
-		});
+		const thresholds = this.granularityToThresholds(this.$granularity.get());
+		this.activityRowCx = new ActivityRowCx(this.timelineCx, activities, thresholds);
+		this.activityRowCx.setViewMode(this.$viewMode.get());
 
 		this._unlisteners.push(
 			this.$granularity.listen(({ value }) => {
-				const config = this.granularityToConfig(value);
+				const config = this.granularityToThresholds(value);
 				this.activityRowCx.setConfig(config);
+			}),
+			this.$viewMode.listen(({ value }) => {
+				this.activityRowCx.setViewMode(value);
 			})
 		);
 	}
@@ -67,17 +75,18 @@ export class SessionTimelineCx {
 		this.$granularity.set(granularity);
 	}
 
+	public setViewMode(mode: TViewMode): void {
+		this.$viewMode.set(mode);
+	}
+
 	public setActivities(activities: specta.WindowActivityDto[]): void {
 		this.activityRowCx.setActivities(activities);
 	}
 
-	private granularityToConfig(granularity: number): {
-		minWindowBlockPx: number;
-		minAppBlockPx: number;
-	} {
+	private granularityToThresholds(granularity: number): TActivityRowCxThresholds {
 		return {
-			minWindowBlockPx: (this.config.granularityMax - granularity) * 4,
-			minAppBlockPx: (this.config.granularityMax - granularity) * 6
+			minSegmentPx: (this.config.granularityMax - granularity) * 4,
+			minGroupPx: (this.config.granularityMax - granularity) * 6
 		};
 	}
 

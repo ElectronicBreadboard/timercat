@@ -1,12 +1,12 @@
-import { CheckIcon, cn, Input } from '@repo/ui';
+import { CheckIcon, cn, Input, Switch } from '@repo/ui';
 import { type TFormFieldStatusValue } from 'feature-form';
 import { useForm } from 'feature-react/form';
 import { useCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { SettingGroup, SettingItem } from '@/features/settings';
 import { useFocusProfileCx } from '../FocusProfileCx';
-import { RuleSettingGroup } from './RuleSettingGroup';
-import { ScheduleSettingGroup } from './ScheduleSettingGroup';
+import { ActivationSettingGroup } from './ActivationSettingGroup';
+import { CategorySettingGroup } from './CategorySettingGroup';
 
 export const FocusProfileForm: React.FC<TFocusProfileFormProps> = (props) => {
 	const {
@@ -21,19 +21,11 @@ export const FocusProfileForm: React.FC<TFocusProfileFormProps> = (props) => {
 	const { form, register, status } = useForm(profileCx.form);
 
 	const color = useFeatureState(form.fields.color);
+	const enabled = useFeatureState(form.fields.enabled);
 	const nameError = useCompute(status('name'), computeError);
 	const colorError = useCompute(status('color'), computeError);
 
 	const inputRef = React.useRef<HTMLInputElement>(null);
-
-	// MARK: - Actions
-
-	const handleColorClick = React.useCallback(
-		(colorValue: string) => {
-			form.fields.color.set(colorValue);
-		},
-		[form.fields.color]
-	);
 
 	// MARK: - Effects
 
@@ -72,7 +64,7 @@ export const FocusProfileForm: React.FC<TFocusProfileFormProps> = (props) => {
 								<button
 									key={preset.value}
 									type="button"
-									onClick={() => handleColorClick(preset.value)}
+									onClick={() => form.fields.color.set(preset.value)}
 									className="focus:ring-primary relative size-7 rounded-full transition-transform hover:scale-110 focus:ring-2 focus:ring-offset-2 focus:outline-none"
 									style={{ backgroundColor: preset.value }}
 									title={preset.label}
@@ -89,10 +81,20 @@ export const FocusProfileForm: React.FC<TFocusProfileFormProps> = (props) => {
 						</div>
 					</SettingItem>
 				</div>
+				<SettingItem
+					label="Enabled"
+					description="Disabled profiles are not active and not suggested in session setup"
+				>
+					<Switch
+						checked={enabled ?? true}
+						onCheckedChange={(checked) => form.fields.enabled.set(checked)}
+						size="sm"
+					/>
+				</SettingItem>
 			</SettingGroup>
 
-			<RuleSettingGroup form={form} />
-			<ScheduleSettingGroup form={form} />
+			<CategorySettingGroup form={form} />
+			<ActivationSettingGroup form={form} />
 		</div>
 	);
 };

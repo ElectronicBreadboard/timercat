@@ -1,14 +1,24 @@
 import { createState } from 'feature-state';
 import type { TimelineCx } from '@/components';
 import type { specta } from '@/environment';
-import type { TActivityBlock, TAppBlock, TAppInfo, TWindowBlock, TWindowGroupBlock } from './types';
+import type { FocusViewCategory, TViewMode } from './category';
+import type {
+	TActivityBlock,
+	TAppBlock,
+	TAppInfo,
+	TCategoryBlock,
+	TCategorySegment,
+	TWindowBlock,
+	TWindowGroupBlock
+} from './types';
 
 export class ActivityRowCx {
 	public readonly timelineCx: TimelineCx;
 	public readonly $blocks = createState<TActivityBlock[]>([]);
 
-	private _config: TActivityRowCxConfig;
+	private _thresholds: TActivityRowCxThresholds;
 	private _activities: specta.WindowActivityDto[];
+	private _viewMode: TViewMode = 'apps';
 	private _lastResolution: number = -1;
 	private _unlisteners: Array<() => void> = [];
 
@@ -17,10 +27,10 @@ export class ActivityRowCx {
 		activities: specta.WindowActivityDto[],
 		options: TActivityRowCxOptions = {}
 	) {
-		const { minWindowBlockPx = 8, minAppBlockPx = 12 } = options;
+		const { minSegmentPx = 8, minGroupPx = 12 } = options;
 		this.timelineCx = timelineCx;
 		this._activities = activities;
-		this._config = { minWindowBlockPx, minAppBlockPx };
+		this._thresholds = { minSegmentPx, minGroupPx };
 
 		this.updateBlocks();
 		this._unlisteners.push(
@@ -29,8 +39,8 @@ export class ActivityRowCx {
 		);
 	}
 
-	public get config(): TActivityRowCxConfig {
-		return this._config;
+	public get thresholds(): TActivityRowCxThresholds {
+		return this._thresholds;
 	}
 
 	public unmount(): void {
@@ -46,8 +56,14 @@ export class ActivityRowCx {
 		this.updateBlocks();
 	}
 
-	public setConfig(config: Partial<TActivityRowCxConfig>): void {
-		this._config = { ...this._config, ...config };
+	public setConfig(config: Partial<TActivityRowCxThresholds>): void {
+		this._thresholds = { ...this._thresholds, ...config };
+		this._lastResolution = -1;
+		this.updateBlocks();
+	}
+
+	public setViewMode(mode: TViewMode): void {
+		this._viewMode = mode;
 		this._lastResolution = -1;
 		this.updateBlocks();
 	}
@@ -61,8 +77,17 @@ export class ActivityRowCx {
 		this.$blocks.set(this.createBlocks());
 	}
 
+	private createBlocks(): TActivityBlock[] {
+		if (this._viewMode === 'focus') {
+			return this.createCategoryBlocks();
+		}
+		return this.createAppWebsiteBlocks();
+	}
+
+	// MARK: - App / website pipeline (apps view mode)
+
 	/**
-	 * Creates activity blocks via a 4-step aggregation pipeline.
+	 * Creates app/website blocks via a 4-step aggregation pipeline.
 	 * Like map zoom levels: less detail when zoomed out, more when zoomed in.
 	 *
 	 * Pipeline:
@@ -71,7 +96,7 @@ export class ActivityRowCx {
 	 * 3. mergeTinyGroupsWithNeighbors - Merge tiny groups with smallest neighbor → AppBlocks
 	 * 4. clipBlocksToBounds - Clip edge blocks to visible timeline bounds
 	 */
-	private createBlocks(): TActivityBlock[] {
+	private createAppWebsiteBlocks(): TActivityBlock[] {
 		const { startMs, endMs } = this.timelineCx;
 
 		// Filter to visible range and sort chronologically
@@ -94,8 +119,8 @@ export class ActivityRowCx {
 	}
 
 	/**
-	 * Merges tiny same-app blocks while preserving app identity.
-	 * Blocks smaller than minWindowBlockPx get merged with adjacent same-app blocks.
+	 * Merges windows below minSegmentPx into adjacent same-app windows
+	 * so they don't render as invisible slivers, while preserving app identity.
 	 *
 	 * Strategy:
 	 * - Accumulate consecutive same-app blocks in a buffer
@@ -103,7 +128,7 @@ export class ActivityRowCx {
 	 * - On app change: try to merge tiny buffer backward into previous result
 	 */
 	private mergeTinyWindowsWithinApp(blocks: TWindowBlock[]): TWindowBlock[] {
-		const { minWindowBlockPx } = this._config;
+		const { minSegmentPx } = this._thresholds;
 		const result: TWindowBlock[] = [];
 		let buffer: TWindowBlock[] = [];
 		let currentBundleId: string | null = null;
@@ -121,7 +146,7 @@ export class ActivityRowCx {
 			if (
 				lastResult == null ||
 				lastResult.app.bundleId !== currentBundleId ||
-				this.getBufferWidthPx(buffer) >= minWindowBlockPx
+				this.getBufferWidthPx(buffer) >= minSegmentPx
 			) {
 				return false;
 			}
@@ -146,7 +171,7 @@ export class ActivityRowCx {
 			buffer.push(block);
 
 			// Flush if buffer reached minimum visible size
-			if (this.getBufferWidthPx(buffer) >= minWindowBlockPx) {
+			if (this.getBufferWidthPx(buffer) >= minSegmentPx) {
 				flushBuffer();
 			}
 		}
@@ -162,7 +187,8 @@ export class ActivityRowCx {
 	}
 
 	/**
-	 * Groups consecutive same-app WindowBlocks into WindowGroupBlocks.
+	 * Groups consecutive same-app WindowBlocks into WindowGroupBlocks with per-window segments.
+	 * Segments allow the renderer to draw dividers and attach per-window tooltips inside a single app block.
 	 */
 	private groupConsecutiveSameApp(blocks: TWindowBlock[]): TWindowGroupBlock[] {
 		const result: TWindowGroupBlock[] = [];
@@ -202,7 +228,7 @@ export class ActivityRowCx {
 	 * - Pick the smaller neighbor to absorb the buffer
 	 */
 	private mergeTinyGroupsWithNeighbors(groups: TWindowGroupBlock[]): TActivityBlock[] {
-		const { minAppBlockPx } = this._config;
+		const { minGroupPx } = this._thresholds;
 		const result: TActivityBlock[] = [];
 		let tinyBuffer: TActivityBlock[] = [];
 
@@ -216,7 +242,7 @@ export class ActivityRowCx {
 
 		for (const group of groups) {
 			const widthPx = this.getBlockWidthPx(group);
-			const isLargeEnough = widthPx >= minAppBlockPx;
+			const isLargeEnough = widthPx >= minGroupPx;
 
 			if (isLargeEnough) {
 				this.handleLargeGroup(group, tinyBuffer, result);
@@ -238,10 +264,6 @@ export class ActivityRowCx {
 		return this.mergeConsecutiveSameDominantApp(result);
 	}
 
-	/**
-	 * Handles a large group by deciding where to place accumulated tiny blocks.
-	 * Compares left vs right neighbor size and merges tiny buffer with the smaller one.
-	 */
 	private handleLargeGroup(
 		largeGroup: TWindowGroupBlock,
 		tinyBuffer: TActivityBlock[],
@@ -276,7 +298,8 @@ export class ActivityRowCx {
 
 	/**
 	 * Merges consecutive AppBlocks that have the same dominant app.
-	 * Cleans up artifacts from the merging process.
+	 * Tiny-block merges can leave two adjacent same-dominant AppBlocks with a visible gap between them;
+	 * this pass folds them into one.
 	 */
 	private mergeConsecutiveSameDominantApp(blocks: TActivityBlock[]): TActivityBlock[] {
 		const result: TActivityBlock[] = [];
@@ -433,18 +456,6 @@ export class ActivityRowCx {
 		};
 	}
 
-	/** Extracts all activities from any block type. */
-	private getActivitiesFromBlock(block: TActivityBlock): specta.WindowActivityDto[] {
-		switch (block.type) {
-			case 'window':
-				return block.windows;
-			case 'window-group':
-				return block.segments.flatMap((s) => s.windows);
-			case 'app':
-				return block.activities;
-		}
-	}
-
 	/** Extracts app metadata from an activity. */
 	private extractAppInfo(activity: specta.WindowActivityDto): TAppInfo {
 		return {
@@ -479,6 +490,214 @@ export class ActivityRowCx {
 			.map((entry) => entry.app);
 	}
 
+	// MARK: - Category pipeline (focus view mode)
+
+	/**
+	 * Creates category blocks for focus view mode.
+	 *
+	 * Pipeline:
+	 * 1. groupActivitiesIntoCategorySegments - Group consecutive same-category activities
+	 * 2. mergeTinyCategorySegments - Merge tiny segments with neighbors → CategoryBlocks
+	 * 3. mergeConsecutiveSameDominantCategory - Fold adjacent same-dominant blocks left by step 2
+	 * 4. clipCategoryBlocksToBounds - Clip edge blocks to visible timeline bounds
+	 */
+	private createCategoryBlocks(): TCategoryBlock[] {
+		const { startMs, endMs } = this.timelineCx;
+
+		const visibleActivities = this._activities
+			.filter((a) => a.endedAt > startMs && a.startedAt < endMs)
+			.sort((a, b) => a.startedAt - b.startedAt);
+		if (!visibleActivities.length) {
+			return [];
+		}
+
+		const segments = this.groupActivitiesIntoCategorySegments(visibleActivities);
+		const blocks = this.mergeTinyCategorySegments(segments);
+		const merged = this.mergeConsecutiveSameDominantCategory(blocks);
+		return this.clipCategoryBlocksToBounds(merged, startMs, endMs);
+	}
+
+	/** Groups consecutive same-category activities into segments. */
+	private groupActivitiesIntoCategorySegments(
+		activities: specta.WindowActivityDto[]
+	): TCategorySegment[] {
+		const result: TCategorySegment[] = [];
+		let currentCategory: FocusViewCategory | null | undefined = undefined;
+		let currentActivities: specta.WindowActivityDto[] = [];
+
+		const flush = (): void => {
+			const first = currentActivities.at(0);
+			const last = currentActivities.at(-1);
+			if (first == null || last == null) return;
+			result.push({
+				startMs: first.startedAt,
+				endMs: last.endedAt,
+				category: currentCategory ?? null,
+				activities: currentActivities
+			});
+			currentActivities = [];
+		};
+
+		for (const activity of activities) {
+			const cat = (activity.category as FocusViewCategory | null) ?? null;
+			if (cat !== currentCategory) {
+				flush();
+				currentCategory = cat;
+			}
+			currentActivities.push(activity);
+		}
+		flush();
+
+		return result;
+	}
+
+	/**
+	 * Merges tiny category segments with their smallest neighbor.
+	 * Segments below minGroupPx absorb into the smaller of their two neighbors,
+	 * so large blocks are not visually disrupted.
+	 */
+	private mergeTinyCategorySegments(segments: TCategorySegment[]): TCategoryBlock[] {
+		const { minGroupPx } = this._thresholds;
+		const result: TCategoryBlock[] = [];
+		let tinyBuffer: TCategorySegment[] = [];
+
+		const toBlock = (segs: TCategorySegment[]): TCategoryBlock => {
+			const first = segs.at(0);
+			const last = segs.at(-1);
+			if (first == null || last == null) {
+				throw new Error('Cannot create category block from empty segments array');
+			}
+			return {
+				type: 'category',
+				startMs: first.startMs,
+				endMs: last.endMs,
+				category: this.getDominantCategoryFromSegments(segs),
+				segments: segs
+			};
+		};
+
+		for (const segment of segments) {
+			const widthPx = this.getBlockWidthPx(segment);
+			if (widthPx >= minGroupPx) {
+				this.handleLargeCategorySegment(segment, tinyBuffer, result, toBlock);
+				tinyBuffer = [];
+			} else {
+				tinyBuffer.push(segment);
+			}
+		}
+
+		// Handle trailing tiny buffer; merge with left neighbor
+		if (tinyBuffer.length > 0) {
+			const leftBlock = result.pop();
+			const leftSegs = leftBlock?.segments ?? [];
+			result.push(toBlock([...leftSegs, ...tinyBuffer]));
+		}
+
+		return result;
+	}
+
+	private handleLargeCategorySegment(
+		segment: TCategorySegment,
+		tinyBuffer: TCategorySegment[],
+		result: TCategoryBlock[],
+		toBlock: (segs: TCategorySegment[]) => TCategoryBlock
+	): void {
+		if (!tinyBuffer.length) {
+			result.push(toBlock([segment]));
+			return;
+		}
+		const leftBlock = result[result.length - 1];
+		if (leftBlock == null) {
+			result.push(toBlock([...tinyBuffer, segment]));
+			return;
+		}
+		const leftWidth = this.getBlockWidthPx(leftBlock);
+		const rightWidth = this.getBlockWidthPx(segment);
+		if (leftWidth <= rightWidth) {
+			result.pop();
+			result.push(toBlock([...leftBlock.segments, ...tinyBuffer]));
+			result.push(toBlock([segment]));
+		} else {
+			result.push(toBlock([...tinyBuffer, segment]));
+		}
+	}
+
+	/** Returns the category with the most total duration across the given segments. */
+	private getDominantCategoryFromSegments(segments: TCategorySegment[]): FocusViewCategory | null {
+		const totals = new Map<FocusViewCategory | null, number>();
+		for (const seg of segments) {
+			const dur = seg.endMs - seg.startMs;
+			totals.set(seg.category, (totals.get(seg.category) ?? 0) + dur);
+		}
+		let best: FocusViewCategory | null = null;
+		let bestMs = 0;
+		for (const [cat, ms] of totals) {
+			if (ms > bestMs) {
+				bestMs = ms;
+				best = cat;
+			}
+		}
+		return best;
+	}
+
+	/**
+	 * Merges consecutive CategoryBlocks with the same dominant category.
+	 * Without this step, tiny-segment merges can leave adjacent same-color blocks
+	 * with a visible gap between them.
+	 */
+	private mergeConsecutiveSameDominantCategory(blocks: TCategoryBlock[]): TCategoryBlock[] {
+		const result: TCategoryBlock[] = [];
+		for (const block of blocks) {
+			const last = result.at(-1);
+			if (last != null && last.category === block.category) {
+				result[result.length - 1] = {
+					...last,
+					endMs: block.endMs,
+					segments: [...last.segments, ...block.segments]
+				};
+			} else {
+				result.push(block);
+			}
+		}
+		return result;
+	}
+
+	/** Clips first/last category blocks to timeline bounds; activities may extend beyond the visible session range. */
+	private clipCategoryBlocksToBounds(
+		blocks: TCategoryBlock[],
+		boundsStartMs: number,
+		boundsEndMs: number
+	): TCategoryBlock[] {
+		return blocks.map((block, i) => {
+			const clippedStart = i === 0 ? Math.max(block.startMs, boundsStartMs) : block.startMs;
+			const clippedEnd = i === blocks.length - 1 ? Math.min(block.endMs, boundsEndMs) : block.endMs;
+			if (clippedStart === block.startMs && clippedEnd === block.endMs) return block;
+
+			const segs = block.segments.map((seg, j) => ({
+				...seg,
+				startMs: j === 0 ? Math.max(seg.startMs, clippedStart) : seg.startMs,
+				endMs: j === block.segments.length - 1 ? Math.min(seg.endMs, clippedEnd) : seg.endMs
+			}));
+			return { ...block, startMs: clippedStart, endMs: clippedEnd, segments: segs };
+		});
+	}
+
+	// MARK: - Helpers
+
+	/** Extracts all activities from any block type. */
+	private getActivitiesFromBlock(block: TActivityBlock): specta.WindowActivityDto[] {
+		switch (block.type) {
+			case 'window':
+				return block.windows;
+			case 'window-group':
+				return block.segments.flatMap((s) => s.windows);
+			case 'app':
+				return block.activities;
+			case 'category':
+				return block.segments.flatMap((s) => s.activities);
+		}
+	}
+
 	/** Converts milliseconds to pixels using current timeline scale. */
 	public msToPx(ms: number): number {
 		return this.timelineCx.msToPx(ms);
@@ -502,11 +721,11 @@ export class ActivityRowCx {
 	}
 }
 
-export interface TActivityRowCxOptions {
+export interface TActivityRowCxThresholds {
 	/** Minimum block width in pixels for window-level merging (default: 8) */
-	minWindowBlockPx?: number;
+	minSegmentPx: number;
 	/** Minimum block width in pixels for app-level merging (default: 12) */
-	minAppBlockPx?: number;
+	minGroupPx: number;
 }
 
-export type TActivityRowCxConfig = Required<TActivityRowCxOptions>;
+export interface TActivityRowCxOptions extends Partial<TActivityRowCxThresholds> {}

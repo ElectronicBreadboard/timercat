@@ -33,7 +33,7 @@ export const TargetTag: React.FC<TTargetTagProps> = (props) => {
 };
 
 interface TTargetTagProps {
-	target: specta.RuleTargetDto;
+	target: specta.FocusTargetDto;
 }
 
 const badgeVariants = cva('gap-1.5 px-1.5 text-sm', {
@@ -57,14 +57,3 @@ const iconVariants = cva(
 		}
 	}
 );
-
-export function targetKey(target: specta.RuleTargetDto): string {
-	switch (target.type) {
-		case 'all':
-			return 'all';
-		case 'app':
-			return `app:${target.bundle_id}`;
-		case 'website':
-			return `website:${target.domain}`;
-	}
-}

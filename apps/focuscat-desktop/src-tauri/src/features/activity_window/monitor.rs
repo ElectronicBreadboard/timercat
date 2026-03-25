@@ -10,6 +10,10 @@ use crate::features::app::repository::{
     AppRepository, UpsertAppInput, UpsertWebsiteInput, WebsiteRepository,
 };
 use crate::features::blocking::types::BlockerState;
+use crate::features::focus_profile::{
+    resolution::{resolve_category_for_app, resolve_category_for_website},
+    types::FocusProfileState,
+};
 use crate::features::settings::types::AppSettingsState;
 use chrono::Utc;
 use mado::{MonitorConfig, WindowEvent, WindowListener, WindowMonitor as MadoWindowMonitor};
@@ -145,12 +149,28 @@ impl WindowListener for WindowMonitor {
                     if let Some(prev) = active_app_guard.take() {
                         if prev.bundle_id != app_info.bundle_id {
                             if let Some(state) = app.try_state::<DatabaseState>() {
+                                let category =
+                                    app.try_state::<FocusProfileState>().and_then(|state| {
+                                        let guard = state.lock().unwrap();
+                                        if guard.active_profiles.is_empty() {
+                                            return None;
+                                        }
+                                        let bid = prev.bundle_id.as_deref()?;
+                                        Some(
+                                            resolve_category_for_app(bid, &guard.active_profiles)
+                                                .0
+                                                .as_str()
+                                                .to_string(),
+                                        )
+                                    });
+
                                 let _ = AppActivityRepository::insert(
                                     &state.pool,
                                     &InsertAppActivityInput {
                                         app_id: prev.app_id,
                                         started_at: prev.started_at,
                                         ended_at: now,
+                                        category,
                                     },
                                 )
                                 .await;
@@ -229,6 +249,34 @@ impl WindowListener for WindowMonitor {
                             || prev.window_title != window_info.title
                         {
                             if let Some(state) = app.try_state::<DatabaseState>() {
+                                let category =
+                                    app.try_state::<FocusProfileState>().and_then(|state| {
+                                        let guard = state.lock().unwrap();
+                                        if guard.active_profiles.is_empty() {
+                                            return None;
+                                        }
+                                        if let Some(ref url) = prev.browser_url {
+                                            if let Some(domain) = extract_domain(url) {
+                                                return Some(
+                                                    resolve_category_for_website(
+                                                        &domain,
+                                                        &guard.active_profiles,
+                                                    )
+                                                    .0
+                                                    .as_str()
+                                                    .to_string(),
+                                                );
+                                            }
+                                        }
+                                        let bid = prev.bundle_id.as_deref()?;
+                                        Some(
+                                            resolve_category_for_app(bid, &guard.active_profiles)
+                                                .0
+                                                .as_str()
+                                                .to_string(),
+                                        )
+                                    });
+
                                 let _ = WindowActivityRepository::insert(
                                     &state.pool,
                                     &InsertWindowActivityInput {
@@ -244,6 +292,7 @@ impl WindowListener for WindowMonitor {
                                         browser_is_private: prev.browser_is_private,
                                         started_at: prev.started_at,
                                         ended_at: now,
+                                        category,
                                     },
                                 )
                                 .await;
