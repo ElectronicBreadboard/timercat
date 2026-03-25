@@ -81,11 +81,11 @@ fn migrate_value_one_step(value: &mut Value) {
         SettingsVersion::V0_0_1 => {
             // Migrate flat audio.enabled/audio.volume → nested audio.session/audio.sessionEnd
             if let Some(audio) = value.get("audio").cloned() {
-                let enabled = audio.get("enabled").and_then(|v| v.as_bool()).unwrap_or(true);
-                let volume = audio
-                    .get("volume")
-                    .and_then(|v| v.as_f64())
-                    .unwrap_or(0.6);
+                let enabled = audio
+                    .get("enabled")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
+                let volume = audio.get("volume").and_then(|v| v.as_f64()).unwrap_or(0.6);
                 let category = serde_json::json!({ "enabled": enabled, "volume": volume });
                 value["audio"] = serde_json::json!({
                     "session": category,

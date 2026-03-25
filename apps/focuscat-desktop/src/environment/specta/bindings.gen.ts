@@ -517,7 +517,7 @@ processPath: string | null;
  */
 icon: AppIcon | null }
 export type AppInfoDto = { version: string; stage: Stage; distribution: AppDistribution }
-export type AppSettings = { version: SettingsVersion; launchAtLogin: boolean; features: FeaturesSettings; appearance: AppearanceSettings; audio: AudioSettings; developer: DeveloperSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; cat: CatSettings; focus: FocusSettings }
+export type AppSettings = { version: SettingsVersion; launchAtLogin: boolean; features: FeaturesSettings; appearance: AppearanceSettings; audio: AudioSettings; developer: DeveloperSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; profiles: FocusProfilesSettings; cat: CatSettings }
 export type AppSettingsChangedEvent = AppSettings
 export type AppearanceSettings = { theme: Theme }
 export type AudioChannelSettings = { enabled: boolean; 
@@ -530,6 +530,10 @@ export type AudioSettings = { session: AudioChannelSettings; sessionEnd: AudioCh
  * Which category and above gets blocked when a focus profile is active.
  */
 export type BlockThreshold = 
+/**
+ * Do not block any apps/websites.
+ */
+"none" | 
 /**
  * Block only Distracting apps/websites.
  */
@@ -595,13 +599,13 @@ export type FocusProfileCategoryParams = { category: FocusCategory; target: Focu
  * Focus profile with its category assignments and activation rules.
  */
 export type FocusProfileDto = { id: number; name: string; color: string | null; enabled: boolean; categories: CategoryAssignmentDto[]; activations: FocusProfileActivationDto[]; createdAt: number }
+export type FocusProfilesSettings = { blockThreshold: BlockThreshold }
 /**
  * Session type for focus profile activation filtering.
  * Focus = any focus/work session (pomodoro work, progressive work, countdown).
  * Break = any rest session (pomodoro breaks, progressive break).
  */
 export type FocusSessionType = "Focus" | "Break"
-export type FocusSettings = { blockThreshold: BlockThreshold }
 /**
  * The target of a category assignment: all, a specific app, or a specific website.
  */

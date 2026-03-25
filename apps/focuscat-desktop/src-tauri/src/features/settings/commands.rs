@@ -99,10 +99,7 @@ pub async fn clear_history(db: State<'_, DatabaseState>) -> Result<(), String> {
 
 #[tauri::command]
 #[specta::specta]
-pub fn reset_settings(
-    app: AppHandle,
-    state: State<'_, AppSettingsState>,
-) -> Result<(), String> {
+pub fn reset_settings(app: AppHandle, state: State<'_, AppSettingsState>) -> Result<(), String> {
     let defaults = AppSettings::default();
     *state.lock().unwrap() = defaults.clone();
     persistence::save_settings(&app, &defaults)?;

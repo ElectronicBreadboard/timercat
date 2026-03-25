@@ -4,14 +4,15 @@ import {
 	ClockIcon,
 	CoffeeIcon,
 	IconButton,
-	PlusIcon
+	PlusIcon,
+	Select
 } from '@repo/ui';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { specta } from '@/environment';
 import { useFocusProfileCx } from '@/features/focus-profile';
-import { SettingGroup } from '@/features/settings';
+import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
 
 export const Route = createFileRoute('/window/settings/focus-profiles/')({
 	component: RouteComponent
@@ -19,12 +20,27 @@ export const Route = createFileRoute('/window/settings/focus-profiles/')({
 
 function RouteComponent() {
 	const profileCx = useFocusProfileCx();
+	const settingsCx = useSettingsCx();
+	const settings = useFeatureState(settingsCx.$appSettings);
 	const profiles = useFeatureState(profileCx.$profiles);
 	const activeProfileIds = useFeatureState(profileCx.$activeProfileIds);
+
+	// MARK: - Actions
+
+	const updateProfiles = React.useCallback(
+		(updates: Partial<specta.FocusProfilesSettings>) => {
+			settingsCx.update({ profiles: { ...settings.profiles, ...updates } });
+		},
+		[settingsCx, settings.profiles]
+	);
+
+	// MARK: - Effects
 
 	React.useEffect(() => {
 		void profileCx.load();
 	}, [profileCx]);
+
+	// MARK: - UI
 
 	return (
 		<div className="space-y-6">
@@ -40,6 +56,26 @@ function RouteComponent() {
 					<PlusIcon size={16} />
 				</IconButton>
 			</div>
+
+			<SettingGroup title="Blocking">
+				<SettingItem label="Block when category is" description="Applies to all active profiles">
+					<Select
+						items={React.useMemo(
+							() => [
+								{ label: 'Nothing', value: 'none' },
+								{ label: 'Distracting Only', value: 'distracting' },
+								{ label: 'Neutral + Distracting', value: 'neutral' }
+							],
+							[]
+						)}
+						value={settings.profiles.blockThreshold}
+						onValueChange={(value) =>
+							updateProfiles({ blockThreshold: value as specta.BlockThreshold })
+						}
+						size="sm"
+					/>
+				</SettingItem>
+			</SettingGroup>
 
 			<SettingGroup title="Your Profiles">
 				{profiles.length > 0 ? (

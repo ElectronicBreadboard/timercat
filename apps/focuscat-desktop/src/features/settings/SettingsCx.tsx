@@ -107,7 +107,7 @@ export class SettingsCx {
 			trackWindows: true,
 			trackBrowser: true
 		},
-		focus: {
+		profiles: {
 			blockThreshold: 'distracting'
 		},
 		cat: {

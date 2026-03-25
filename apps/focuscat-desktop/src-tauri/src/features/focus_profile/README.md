@@ -8,7 +8,7 @@ focus_profile
   ├── focus_profile_schedule (mode, days, time)  xN
   └── session_focus_profile (priority)           xN -> session
 
-app_setting: block_threshold
+app_setting: profiles.block_threshold
 ```
 
 ## Categories
@@ -29,6 +29,7 @@ One assignment per target per profile.
 
 One app-level setting. Applied whenever any profile is active.
 
+- `none` — do not block anything
 - `distracting` — block Distracting only
 - `neutral` — block Neutral and Distracting
 

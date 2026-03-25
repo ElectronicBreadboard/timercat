@@ -35,6 +35,7 @@ pub fn resolve_category_for_website<'a>(
 /// True if the category meets or exceeds the blocking threshold.
 pub fn is_blocked(category: &FocusCategory, threshold: &BlockThreshold) -> bool {
     match threshold {
+        BlockThreshold::None => false,
         BlockThreshold::Distracting => matches!(category, FocusCategory::Distracting),
         BlockThreshold::Neutral => matches!(
             category,
@@ -408,6 +409,16 @@ mod tests {
             &FocusCategory::Focused,
             &BlockThreshold::Distracting
         ));
+    }
+
+    #[test]
+    fn test_is_blocked_none_threshold() {
+        assert!(!is_blocked(
+            &FocusCategory::Distracting,
+            &BlockThreshold::None
+        ));
+        assert!(!is_blocked(&FocusCategory::Neutral, &BlockThreshold::None));
+        assert!(!is_blocked(&FocusCategory::Focused, &BlockThreshold::None));
     }
 
     #[test]
