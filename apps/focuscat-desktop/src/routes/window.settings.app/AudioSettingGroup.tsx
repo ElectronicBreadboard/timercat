@@ -1,8 +1,7 @@
 import { ChevronRightIcon, cn, Slider, Switch } from '@repo/ui';
 import React from 'react';
 import { specta } from '@/environment';
-import { SettingGroup } from './SettingGroup';
-import { SettingItem } from './SettingItem';
+import { SettingGroup, SettingItem } from '@/features/settings';
 
 export const AudioSettingGroup: React.FC<TAudioSettingGroupProps> = (props) => {
 	const { audio, onUpdate } = props;
@@ -46,8 +45,9 @@ export const AudioSettingGroup: React.FC<TAudioSettingGroupProps> = (props) => {
 	const updateMasterVolume = React.useCallback(
 		(nextVolumePercent: number) => {
 			const nextVolume = snapVolumePercentToStep(nextVolumePercent) / 100;
-			const channels = [audio.session, audio.sessionEnd, audio.effects];
-			const activeChannels = channels.filter((c) => c.enabled);
+			const activeChannels = [audio.session, audio.sessionEnd, audio.effects].filter(
+				(c) => c.enabled
+			);
 
 			if (activeChannels.length === 0) return;
 

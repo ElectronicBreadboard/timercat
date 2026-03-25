@@ -18,12 +18,12 @@ import {
 	useInputMonitoringPermission
 } from '@/features/permission';
 import {
-	AudioSettingGroup,
 	SettingGroup,
 	SettingItem,
 	SettingItemWarnDescription,
 	useSettingsCx
 } from '@/features/settings';
+import { AudioSettingGroup } from './AudioSettingGroup';
 import { useAppInfo } from '@/hooks';
 
 export const Route = createFileRoute('/window/settings/app/')({
