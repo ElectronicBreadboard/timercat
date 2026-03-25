@@ -2,7 +2,7 @@ import { TooltipProvider } from '@repo/ui';
 import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
 import { ActivityRowCx } from './ActivityRowCx';
-import { AppBlock, WindowGroupBlock } from './components';
+import { AppBlock, CategoryBlock, WindowGroupBlock } from './components';
 import type { TActivityBlock } from './types';
 
 export const ActivityRow: React.FC<TActivityRowProps> = (props) => {
@@ -26,6 +26,8 @@ export const ActivityRow: React.FC<TActivityRowProps> = (props) => {
 							return <WindowGroupBlock key={key} block={block} cx={cx} />;
 						case 'app':
 							return <AppBlock key={key} block={block} cx={cx} />;
+						case 'category':
+							return <CategoryBlock key={key} block={block} cx={cx} />;
 						case 'window':
 							// Currently grouped into window-group by aggregation algorithm
 							// TODO: Render directly at high zoom levels?
