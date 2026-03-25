@@ -19,6 +19,8 @@ pub struct WindowActivityDto {
     // Window fields
     pub window_title: Option<String>,
     pub browser_url: Option<String>,
+    // Focus profile category at the time of recording (NULL = no active profile)
+    pub category: Option<String>,
     pub started_at: f64,
     pub ended_at: f64,
 }

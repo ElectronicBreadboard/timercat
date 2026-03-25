@@ -43,6 +43,7 @@ impl AppActivityRepository {
                 a.name as app_name,
                 a.icon as app_icon,
                 a.color as app_color,
+                aa.category,
                 aa.started_at,
                 aa.ended_at
             FROM activity_app aa
@@ -65,6 +66,7 @@ impl AppActivityRepository {
                 app_name: row.get("app_name"),
                 app_icon: row.get("app_icon"),
                 app_color: row.get("app_color"),
+                category: row.get("category"),
                 started_at: row.get("started_at"),
                 ended_at: row.get("ended_at"),
             })
@@ -163,6 +165,7 @@ impl WindowActivityRepository {
                 w.color as website_color,
                 aw.window_title,
                 aw.browser_url,
+                aw.category,
                 aw.started_at,
                 aw.ended_at
             FROM activity_window aw
@@ -192,6 +195,7 @@ impl WindowActivityRepository {
                 website_color: row.get("website_color"),
                 window_title: row.get("window_title"),
                 browser_url: row.get("browser_url"),
+                category: row.get("category"),
                 started_at: row.get("started_at"),
                 ended_at: row.get("ended_at"),
             })
@@ -218,6 +222,7 @@ pub struct AppActivityRow {
     pub app_name: Option<String>,
     pub app_icon: Option<String>,
     pub app_color: Option<String>,
+    pub category: Option<String>,
     pub started_at: i64,
     pub ended_at: i64,
 }
@@ -233,6 +238,7 @@ pub struct WindowActivityRow {
     pub website_color: Option<String>,
     pub window_title: Option<String>,
     pub browser_url: Option<String>,
+    pub category: Option<String>,
     pub started_at: i64,
     pub ended_at: i64,
 }

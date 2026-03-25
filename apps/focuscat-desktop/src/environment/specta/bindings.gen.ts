@@ -730,7 +730,7 @@ favicon: string | null;
  * Dominant color extracted from favicon as hex string (e.g., "#FF5733")
  */
 color: string | null }
-export type WindowActivityDto = { appBundleId: string | null; appName: string | null; appIcon: string | null; appColor: string | null; websiteDomain: string | null; websiteName: string | null; websiteIcon: string | null; websiteColor: string | null; windowTitle: string | null; browserUrl: string | null; startedAt: number; endedAt: number }
+export type WindowActivityDto = { appBundleId: string | null; appName: string | null; appIcon: string | null; appColor: string | null; websiteDomain: string | null; websiteName: string | null; websiteIcon: string | null; websiteColor: string | null; windowTitle: string | null; browserUrl: string | null; category: string | null; startedAt: number; endedAt: number }
 export type WindowBounds = { 
 /**
  * X coordinate (left edge)
