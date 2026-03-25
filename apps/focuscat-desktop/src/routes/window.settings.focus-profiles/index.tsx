@@ -58,13 +58,16 @@ function RouteComponent() {
 			</div>
 
 			<SettingGroup title="Blocking">
-				<SettingItem label="Block when category is" description="Applies to all active profiles">
+				<SettingItem
+					label="Blocking Level"
+					description="Choose what gets blocked when profiles are active"
+				>
 					<Select
 						items={React.useMemo(
 							() => [
-								{ label: 'Nothing', value: 'none' },
+								{ label: 'Off', value: 'none' },
 								{ label: 'Distracting Only', value: 'distracting' },
-								{ label: 'Neutral + Distracting', value: 'neutral' }
+								{ label: 'Neutral and Distracting', value: 'neutral' }
 							],
 							[]
 						)}
