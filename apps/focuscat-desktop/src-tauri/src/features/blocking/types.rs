@@ -1,7 +1,6 @@
 use super::blocker::Blocker;
 use serde::Serialize;
-use std::ops::Deref;
-use std::sync::Mutex;
+use std::{ops::Deref, sync::Mutex};
 
 // MARK: - DTO
 

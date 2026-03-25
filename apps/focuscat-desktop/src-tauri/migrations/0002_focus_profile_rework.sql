@@ -76,3 +76,22 @@ INSERT INTO focus_profile_activation (id, focus_profile_id, mode, session_types,
 DROP TABLE focus_profile_schedule;
 
 CREATE INDEX idx_focus_profile_activation_profile_id ON focus_profile_activation (focus_profile_id);
+
+-- Snapshot the resolved category on activity records at the time they are written.
+-- NULL = no active focus profile at that moment.
+ALTER TABLE activity_app ADD COLUMN category TEXT CHECK (category IN ('focused', 'neutral', 'distracting'));
+
+ALTER TABLE activity_window ADD COLUMN category TEXT CHECK (category IN ('focused', 'neutral', 'distracting'));
+
+-- App/website taxonomy (two-level hierarchy: e.g. Business > General, Entertainment > Video)
+-- Pre-seeded with common categories, user can customize.
+-- Used for analytics/reporting only — does NOT drive blocking (that's focus_profile_category).
+CREATE TABLE app_category (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    parent_id INTEGER REFERENCES app_category (id) ON DELETE SET NULL,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+);
+
+ALTER TABLE app     ADD COLUMN category_id INTEGER REFERENCES app_category (id) ON DELETE SET NULL;
+ALTER TABLE website ADD COLUMN category_id INTEGER REFERENCES app_category (id) ON DELETE SET NULL;

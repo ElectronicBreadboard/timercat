@@ -149,6 +149,7 @@ pub fn run() {
             settings::setup(app);
             timer::setup(app);
             input::setup(app);
+            focus_profile::setup(app);
             blocking::setup(app);
             activity_window::setup(app);
             app_feature::setup(app);

@@ -1,5 +1,8 @@
-use crate::features::session::session::SessionType;
+use crate::features::{
+    focus_profile::resolution::ResolutionProfile, session::session::SessionType,
+};
 use serde::{Deserialize, Serialize};
+use std::{ops::Deref, sync::Mutex};
 
 /// Focus category for an app or website within a profile.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
@@ -162,3 +165,27 @@ pub enum ProfileActivation {
 /// Event emitted when a focus profile is created, updated, or deleted.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type, tauri_specta::Event)]
 pub struct ProfileChangedEvent;
+
+// MARK: - State
+
+pub struct FocusProfiles {
+    pub active_profiles: Vec<ResolutionProfile>,
+}
+
+pub struct FocusProfileState(Mutex<FocusProfiles>);
+
+impl FocusProfileState {
+    pub fn new() -> Self {
+        Self(Mutex::new(FocusProfiles {
+            active_profiles: vec![],
+        }))
+    }
+}
+
+impl Deref for FocusProfileState {
+    type Target = Mutex<FocusProfiles>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}

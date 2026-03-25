@@ -12,14 +12,15 @@ impl AppActivityRepository {
     ) -> Result<i64, sqlx::Error> {
         let result = sqlx::query(
             r#"
-            INSERT INTO activity_app (app_id, started_at, ended_at)
-            VALUES (?, ?, ?)
+            INSERT INTO activity_app (app_id, started_at, ended_at, category)
+            VALUES (?, ?, ?, ?)
             RETURNING id
             "#,
         )
         .bind(input.app_id)
         .bind(input.started_at)
         .bind(input.ended_at)
+        .bind(&input.category)
         .fetch_one(pool)
         .await?;
 
@@ -77,6 +78,7 @@ pub struct InsertAppActivityInput {
     pub app_id: i64,
     pub started_at: i64,
     pub ended_at: i64,
+    pub category: Option<String>,
 }
 
 pub struct InsertWindowActivityInput {
@@ -95,6 +97,7 @@ pub struct InsertWindowActivityInput {
     // Timestamps
     pub started_at: i64,
     pub ended_at: i64,
+    pub category: Option<String>,
 }
 
 // MARK: - Window Activity Repository
@@ -113,9 +116,9 @@ impl WindowActivityRepository {
                 app_id, website_id,
                 window_title, window_id, window_x, window_y, window_width, window_height,
                 browser_url, browser_is_private,
-                started_at, ended_at
+                started_at, ended_at, category
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
             "#,
         )
@@ -131,6 +134,7 @@ impl WindowActivityRepository {
         .bind(input.browser_is_private)
         .bind(input.started_at)
         .bind(input.ended_at)
+        .bind(&input.category)
         .fetch_one(pool)
         .await?;
 
