@@ -5,7 +5,7 @@ import { unwrapOr } from 'tuple-result';
 import { specta } from '@/environment';
 import { usePlatform } from '@/hooks';
 import { toTuple } from '@/lib';
-import { ActivityBalanceChart, UsageSection, type TUsageEntry } from './components';
+import { ActivityBalanceChart, FocusPulse, UsageSection, type TUsageEntry } from './components';
 
 export const Route = createFileRoute('/window/activity/overview/')({
 	loader: async () => {
@@ -87,7 +87,7 @@ function RouteComponent() {
 
 	return (
 		<>
-			{/* Header — drag region only */}
+			{/* Header */}
 			<header
 				data-tauri-drag-region
 				className={cn('shrink-0 select-none', platform === 'macos' ? 'h-8' : 'h-2')}
@@ -115,8 +115,13 @@ function RouteComponent() {
 						</div>
 					</div>
 
-					{/* Activity balance chart */}
-					<ActivityBalanceChart activities={activities} startOfDay={startedAt} />
+					{/* Activity balance chart + Focus Pulse */}
+					<div className="flex items-start gap-4">
+						<div className="min-w-0 flex-1">
+							<ActivityBalanceChart activities={activities} startOfDay={startedAt} />
+						</div>
+						<FocusPulse activities={activities} />
+					</div>
 
 					{/* App usage */}
 					{appUsage.length > 0 && (
