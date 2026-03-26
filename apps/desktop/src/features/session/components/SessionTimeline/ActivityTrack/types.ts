@@ -1,5 +1,5 @@
 import type { specta } from '@/environment';
-import type { FocusViewCategory } from '../focus-category';
+import type { FocusViewCategory } from '@/features/focus';
 
 /**
  * Activity block union type for timeline display.

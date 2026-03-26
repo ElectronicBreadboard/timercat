@@ -3,8 +3,8 @@ import { createFileRoute } from '@tanstack/react-router';
 import React from 'react';
 import { unwrapOr } from 'tuple-result';
 import { specta } from '@/environment';
+import { SessionTimeline } from '@/features/session';
 import { toTuple } from '@/lib';
-import { SessionTimeline } from './components';
 
 export const Route = createFileRoute('/window/activity/$sessionId/')({
 	loader: async ({ params }) => {

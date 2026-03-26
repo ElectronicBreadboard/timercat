@@ -4,7 +4,7 @@ import React, { useCallback } from 'react';
 import { Timeline, TimelineAxis } from '@/components';
 import type { specta } from '@/environment';
 import { ActivityTrack } from './ActivityTrack';
-import { FocusCategorySummary } from './FocusCategorySummary';
+import { FocusCategorySummary } from '@/features/focus';
 import { SessionEventMarkers, SessionEventPeriodOverlays } from './SessionEventIndicators';
 import { SessionTimelineCx } from './SessionTimelineCx';
 

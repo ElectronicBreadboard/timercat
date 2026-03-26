@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Outlet, useRouter, useRouterState } from '@tanstack/react-router';
 import React from 'react';
 import { unwrapOrNull } from 'tuple-result';
 import { ThemeProvider, WindowHeader } from '@/components';
@@ -32,12 +32,28 @@ export const Route = createFileRoute('/window/activity')({
 function LayoutComponent() {
 	const sessions = Route.useLoaderData();
 	const router = useRouter();
+	const isOverview = useRouterState({
+		select: (s) => s.location.pathname.startsWith('/window/activity/overview')
+	});
 
 	// MARK: - Effects
 
 	useOnSessionComplete(React.useCallback(() => router.invalidate(), [router]));
 
 	// MARK: - UI
+
+	// Overview gets its own full-screen layout (no sidebar, no header)
+	if (isOverview) {
+		return (
+			<SettingsCxProvider>
+				<ThemeProvider>
+					<div className="bg-base-0 flex h-screen flex-col">
+						<Outlet />
+					</div>
+				</ThemeProvider>
+			</SettingsCxProvider>
+		);
+	}
 
 	// No sessions
 	if (!sessions.length) {
@@ -66,7 +82,6 @@ function LayoutComponent() {
 				<div className="bg-base-0 flex h-screen flex-col">
 					<WindowHeader title="Activity" />
 
-					{/* Main Content */}
 					<div className="flex flex-1 overflow-hidden">
 						<SessionList sessions={sessions} className="border-base-200 w-56 shrink-0 border-r" />
 

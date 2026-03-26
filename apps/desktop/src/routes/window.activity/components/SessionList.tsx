@@ -55,7 +55,7 @@ export const SessionList: React.FC<TSessionListProps> = (props) => {
 			>
 				<ClockIcon size={14} className="text-base-500 shrink-0" />
 				<span className={cn('text-base-700 text-sm', isOverviewSelected && 'font-medium')}>
-					Last 24 Hours
+					Overview
 				</span>
 			</Link>
 
@@ -74,7 +74,7 @@ export const SessionList: React.FC<TSessionListProps> = (props) => {
 					</div>
 
 					{/* Sessions */}
-					<div className="divide-base-200 flex flex-col divide-y">
+					<div className="border-base-200 divide-base-200 flex flex-col divide-y border-b">
 						{dateSessions.map((session) => (
 							<SessionListItem key={session.id} session={session} />
 						))}

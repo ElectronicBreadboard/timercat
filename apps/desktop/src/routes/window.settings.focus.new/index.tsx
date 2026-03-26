@@ -4,7 +4,7 @@ import { hasFormChanged } from 'feature-form';
 import { useForm } from 'feature-react/form';
 import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { FocusProfileForm, useFocusProfileCx } from '@/features/focus-profile';
+import { FocusProfileForm, useFocusProfileCx } from '@/features/focus';
 
 export const Route = createFileRoute('/window/settings/focus/new/')({
 	component: RouteComponent

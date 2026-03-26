@@ -3,7 +3,7 @@ import { createState } from 'feature-state';
 import { TimelineCx } from '@/components';
 import type { specta } from '@/environment';
 import { ActivityTrackCx, TActivityTrackCxThresholds } from './ActivityTrack';
-import type { TViewMode } from './focus-category';
+import type { TViewMode } from '@/features/focus';
 
 export class SessionTimelineCx {
 	public readonly timelineCx: TimelineCx;

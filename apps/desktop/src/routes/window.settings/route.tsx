@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { ThemeProvider, WindowHeader } from '@/components';
-import { FocusProfileCxProvider } from '@/features/focus-profile';
+import { FocusProfileCxProvider } from '@/features/focus';
 import { SettingsCxProvider } from '@/features/settings';
 import { TimerCxProvider } from '@/features/timer';
 import { Sidebar } from './components';

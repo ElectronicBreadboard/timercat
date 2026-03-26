@@ -11,7 +11,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { specta } from '@/environment';
-import { useFocusProfileCx } from '@/features/focus-profile';
+import { useFocusProfileCx } from '@/features/focus';
 import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
 
 export const Route = createFileRoute('/window/settings/focus/')({

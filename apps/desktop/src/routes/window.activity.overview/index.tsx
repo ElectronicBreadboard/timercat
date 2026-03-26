@@ -1,16 +1,18 @@
-import { AppWindowIcon, CodeIcon, formatTimeOfDayAmPm } from '@repo/ui';
-import { createFileRoute } from '@tanstack/react-router';
+import { AppWindowIcon, ChevronLeftIcon, cn, CodeIcon, formatDuration } from '@repo/ui';
+import { createFileRoute, useRouter } from '@tanstack/react-router';
 import React from 'react';
 import { unwrapOr } from 'tuple-result';
 import { specta } from '@/environment';
+import { usePlatform } from '@/hooks';
 import { toTuple } from '@/lib';
-import { SessionTimeline } from '../window.activity.$sessionId/components';
-import { UsageSection, type TUsageEntry } from './components';
+import { ActivityBalanceChart, UsageSection, type TUsageEntry } from './components';
 
 export const Route = createFileRoute('/window/activity/overview/')({
 	loader: async () => {
 		const now = Date.now();
-		const startedAt = now - 24 * 60 * 60 * 1000;
+		const startOfDay = new Date();
+		startOfDay.setHours(0, 0, 0, 0);
+		const startedAt = startOfDay.getTime();
 
 		const activities = unwrapOr(
 			toTuple(
@@ -23,40 +25,28 @@ export const Route = createFileRoute('/window/activity/overview/')({
 			[]
 		);
 
-		return { startedAt, endedAt: now, activities };
+		return { startedAt, activities };
 	},
 	pendingComponent: LoadingComponent,
 	component: RouteComponent
 });
 
 function RouteComponent() {
-	const { startedAt, endedAt, activities } = Route.useLoaderData();
+	const { startedAt, activities } = Route.useLoaderData();
+	const router = useRouter();
+	const platform = usePlatform();
 
-	const timeRange = `${formatTimeOfDayAmPm(new Date(startedAt))} - ${formatTimeOfDayAmPm(new Date(endedAt))}`;
+	const totalTrackedSeconds = React.useMemo(
+		() => activities.reduce((sum, a) => sum + (a.endedAt - a.startedAt) / 1000, 0),
+		[activities]
+	);
 
-	// Synthetic session for the timeline (no events = no session markers)
-	const syntheticSession: specta.SessionDetailDto = {
-		id: -1,
-		sessionType: 'pomodoro:work',
-		status: 'completed',
-		plannedSeconds: 24 * 60 * 60,
-		actualSeconds: 24 * 60 * 60,
-		intention: null,
-		startedAt,
-		endedAt,
-		events: [],
-		stats: { pausedSeconds: 0, extendedSeconds: 0, overtimeSeconds: 0 }
-	};
-
-	// Aggregate time per app
 	const appUsage = React.useMemo(() => {
 		const appMap = new Map<string, TUsageEntry>();
-
 		for (const activity of activities) {
 			const key = activity.appBundleId ?? activity.appName ?? 'Unknown';
 			const durationSeconds = (activity.endedAt - activity.startedAt) / 1000;
 			const existing = appMap.get(key);
-
 			if (existing != null) {
 				existing.totalSeconds += durationSeconds;
 			} else {
@@ -68,21 +58,15 @@ function RouteComponent() {
 				});
 			}
 		}
-
 		return Array.from(appMap.values()).sort((a, b) => b.totalSeconds - a.totalSeconds);
 	}, [activities]);
 
-	// Aggregate time per website domain
 	const websiteUsage = React.useMemo(() => {
 		const domainMap = new Map<string, TUsageEntry>();
-
 		for (const activity of activities) {
-			if (activity.websiteDomain == null) {
-				continue;
-			}
+			if (activity.websiteDomain == null) continue;
 			const durationSeconds = (activity.endedAt - activity.startedAt) / 1000;
 			const existing = domainMap.get(activity.websiteDomain);
-
 			if (existing != null) {
 				existing.totalSeconds += durationSeconds;
 			} else {
@@ -94,41 +78,76 @@ function RouteComponent() {
 				});
 			}
 		}
-
 		return Array.from(domainMap.values()).sort((a, b) => b.totalSeconds - a.totalSeconds);
 	}, [activities]);
+
+	const dateLabel = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
 
 	// MARK: - UI
 
 	return (
-		<div className="flex flex-col gap-6">
-			{/* Header */}
-			<div className="flex flex-col gap-1">
-				<h2 className="text-base-900 text-lg font-medium">Last 24 Hours</h2>
-				<span className="text-base-500 text-sm">{timeRange}</span>
-			</div>
+		<>
+			{/* Header — drag region only */}
+			<header
+				data-tauri-drag-region
+				className={cn('shrink-0 select-none', platform === 'macos' ? 'h-8' : 'h-2')}
+			/>
 
-			{/* Timeline */}
-			<SessionTimeline session={syntheticSession} activities={activities} />
+			{/* Content */}
+			<main className="flex-1 overflow-y-auto p-4">
+				<div className="flex flex-col gap-6">
+					{/* Total tracked time + back + date */}
+					<div className="flex items-center gap-1">
+						<button
+							onClick={() => router.history.back()}
+							className="text-base-500 hover:text-base-700 mt-1.5 flex items-center self-start rounded transition-colors"
+						>
+							<ChevronLeftIcon size={18} />
+						</button>
+						<div className="flex flex-1 flex-col gap-0.5">
+							<div className="flex items-baseline justify-between">
+								<span className="text-base-900 text-2xl font-semibold tabular-nums">
+									{formatDuration(totalTrackedSeconds)}
+								</span>
+								<span className="text-base-400 text-xs">{dateLabel}</span>
+							</div>
+							<span className="text-base-400 text-xs">tracked today</span>
+						</div>
+					</div>
 
-			{/* App Usage */}
-			{appUsage.length > 0 && (
-				<UsageSection
-					title="App Usage"
-					entries={appUsage}
-					fallbackIcon={<AppWindowIcon size={20} className="text-base-400 shrink-0" />}
-				/>
-			)}
+					{/* Activity balance chart */}
+					<ActivityBalanceChart activities={activities} startOfDay={startedAt} />
 
-			{/* Website Usage */}
-			{websiteUsage.length > 0 && (
-				<UsageSection
-					title="Website Usage"
-					entries={websiteUsage}
-					fallbackIcon={<CodeIcon size={20} className="text-base-400 shrink-0" />}
-				/>
-			)}
-		</div>
+					{/* App usage */}
+					{appUsage.length > 0 && (
+						<UsageSection
+							title="App Usage"
+							entries={appUsage}
+							fallbackIcon={<AppWindowIcon size={20} className="text-base-400 shrink-0" />}
+						/>
+					)}
+
+					{/* Website usage */}
+					{websiteUsage.length > 0 && (
+						<UsageSection
+							title="Website Usage"
+							entries={websiteUsage}
+							fallbackIcon={<CodeIcon size={20} className="text-base-400 shrink-0" />}
+						/>
+					)}
+
+					{/* Empty state */}
+					{activities.length === 0 && (
+						<div className="flex flex-col items-center justify-center py-12 text-center">
+							<p className="text-base-500 text-sm">No activity tracked today</p>
+							<p className="text-base-400 mt-1 text-xs">
+								Start a focus session to see your daily overview
+							</p>
+						</div>
+					)}
+				</div>
+			</main>
+		</>
 	);
 }
 

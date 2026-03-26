@@ -1,5 +1,3 @@
-import type { specta } from '@/environment';
-
 export function categoryToColor(category: FocusViewCategory | null): string {
 	switch (category) {
 		case 'focused':

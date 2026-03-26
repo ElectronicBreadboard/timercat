@@ -1,7 +1,7 @@
 import { formatDuration } from '@repo/ui';
 import React from 'react';
 import type { specta } from '@/environment';
-import { categoryToColor, categoryToLabel, type FocusViewCategory } from './focus-category';
+import { categoryToColor, categoryToLabel, type FocusViewCategory } from '@/features/focus';
 
 export const FocusCategorySummary: React.FC<TCategorySummaryProps> = (props) => {
 	const { activities } = props;

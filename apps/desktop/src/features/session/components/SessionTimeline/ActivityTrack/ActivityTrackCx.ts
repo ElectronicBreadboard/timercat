@@ -1,7 +1,7 @@
 import { createState } from 'feature-state';
 import type { TimelineCx } from '@/components';
 import type { specta } from '@/environment';
-import type { FocusViewCategory, TViewMode } from '../focus-category';
+import type { FocusViewCategory, TViewMode } from '@/features/focus';
 import {
 	groupConsecutiveByKey,
 	mergeAdjacentBlocksByKey,

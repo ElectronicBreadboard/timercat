@@ -28,7 +28,7 @@ export const Tooltip: React.FC<TTooltipProps> = (props) => {
 				>
 					<BaseTooltip.Popup
 						className={cn(
-							'text-base-900 shadow-base-200 outline-base-200 bg-base-0 flex max-w-xs origin-(--transform-origin) flex-col rounded-md px-2.5 py-1.5 text-xs shadow-lg outline-1 transition-[transform,scale,opacity] data-ending-style:scale-90 data-ending-style:opacity-0 data-instant:transition-none data-starting-style:scale-90 data-starting-style:opacity-0',
+							'text-base-900 outline-base-200 bg-base-0 flex max-w-xs origin-(--transform-origin) flex-col rounded-md px-2.5 py-1.5 text-xs outline-1 transition-[transform,scale,opacity] data-ending-style:scale-90 data-ending-style:opacity-0 data-instant:transition-none data-starting-style:scale-90 data-starting-style:opacity-0',
 							className
 						)}
 					>
