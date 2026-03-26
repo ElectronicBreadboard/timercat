@@ -18,11 +18,11 @@ export const OverviewCard: React.FC<TOverviewCardProps> = (props) => {
 			result.push({ id: 'focus-goal', label: 'Focus Goal' });
 		}
 		result.push({ id: 'last-session', label: 'Last Session' });
-		if (settings.features.profiles) {
+		if (settings.features.focus) {
 			result.push({ id: 'active-profiles', label: 'Active Profiles' });
 		}
 		return result;
-	}, [settings.features.goals, settings.features.profiles]);
+	}, [settings.features.goals, settings.features.focus]);
 
 	const [viewIndex, setViewIndex] = React.useState(0);
 

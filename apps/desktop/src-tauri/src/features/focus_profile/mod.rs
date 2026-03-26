@@ -46,7 +46,7 @@ pub fn setup(app: &App) {
         loop {
             let profiles_enabled = handle
                 .try_state::<AppSettingsState>()
-                .map(|state| state.lock().unwrap().features.profiles)
+                .map(|state| state.lock().unwrap().features.focus)
                 .unwrap_or(false);
 
             if profiles_enabled {

@@ -517,7 +517,7 @@ processPath: string | null;
  */
 icon: AppIcon | null }
 export type AppInfoDto = { version: string; stage: Stage; distribution: AppDistribution }
-export type AppSettings = { version: SettingsVersion; launchAtLogin: boolean; features: FeaturesSettings; appearance: AppearanceSettings; audio: AudioSettings; developer: DeveloperSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; profiles: FocusProfilesSettings; cat: CatSettings }
+export type AppSettings = { version: SettingsVersion; launchAtLogin: boolean; features: FeaturesSettings; appearance: AppearanceSettings; audio: AudioSettings; developer: DeveloperSettings; timer: TimerSettings; goals: GoalSettings; activity: ActivitySettings; focus: FocusSettings; cat: CatSettings }
 export type AppSettingsChangedEvent = AppSettings
 export type AppearanceSettings = { theme: Theme }
 export type AudioChannelSettings = { enabled: boolean; 
@@ -582,7 +582,7 @@ export type CurrentActivityDto = { appActivated: { app: AppInfo } } | { windowCh
 export type CurrentActivityEvent = CurrentActivityDto
 export type CurrentActivityPollTarget = "app" | "window"
 export type DeveloperSettings = { cat: boolean; timerSpeed: number }
-export type FeaturesSettings = { goals: boolean; activity: boolean; profiles: boolean; catWindow: boolean; developer: boolean }
+export type FeaturesSettings = { goals: boolean; activity: boolean; focus: boolean; catWindow: boolean; developer: boolean }
 /**
  * Focus category for an app or website within a profile.
  */
@@ -599,13 +599,13 @@ export type FocusProfileCategoryParams = { category: FocusCategory; target: Focu
  * Focus profile with its category assignments and activation rules.
  */
 export type FocusProfileDto = { id: number; name: string; color: string | null; enabled: boolean; categories: CategoryAssignmentDto[]; activations: FocusProfileActivationDto[]; createdAt: number }
-export type FocusProfilesSettings = { blockThreshold: BlockThreshold }
 /**
  * Session type for focus profile activation filtering.
  * Focus = any focus/work session (pomodoro work, progressive work, countdown).
  * Break = any rest session (pomodoro breaks, progressive break).
  */
 export type FocusSessionType = "Focus" | "Break"
+export type FocusSettings = { blockThreshold: BlockThreshold }
 /**
  * The target of a category assignment: all, a specific app, or a specific website.
  */

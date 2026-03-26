@@ -2,9 +2,9 @@ import {
 	ActivityIcon,
 	AppWindowIcon,
 	Button,
+	CheckCircleIcon,
 	CodeIcon,
 	InfoIcon,
-	TagIcon,
 	TargetIcon,
 	TimerIcon
 } from '@repo/ui';
@@ -47,16 +47,16 @@ export const Sidebar: React.FC<TSidebarProps> = (props) => {
 					{settings.features.goals && (
 						<SidebarItem
 							to="/window/settings/goals"
-							icon={<TargetIcon size={16} />}
+							icon={<CheckCircleIcon size={16} />}
 							label="Goals"
 							disabled={isReadonly}
 						/>
 					)}
-					{settings.features.profiles && (
+					{settings.features.focus && (
 						<SidebarItem
-							to="/window/settings/focus-profiles"
-							icon={<TagIcon size={16} />}
-							label="Profiles"
+							to="/window/settings/focus"
+							icon={<TargetIcon size={16} />}
+							label="Focus"
 							disabled={isReadonly}
 						/>
 					)}

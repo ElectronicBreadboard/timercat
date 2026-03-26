@@ -20,7 +20,7 @@ function LayoutComponent() {
 
 							{/* Main Content */}
 							<div className="flex flex-1 overflow-hidden">
-								<Sidebar readOnlyPrefixes={['/window/settings/focus-profiles/']} />
+								<Sidebar readOnlyPrefixes={['/window/settings/focus/']} />
 
 								{/* Content */}
 								<main className="bg-base-0 flex-1 overflow-y-auto p-6">

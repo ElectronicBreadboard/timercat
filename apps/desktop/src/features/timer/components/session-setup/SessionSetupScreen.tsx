@@ -56,7 +56,7 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 		[selectableProfiles, selectedIdSet]
 	);
 
-	const showProfiles = settings.features.profiles && profiles.length > 0;
+	const showProfiles = settings.features.focus && profiles.length > 0;
 
 	const categoryPreviewItems = React.useMemo(() => {
 		const activeProfiles = [...alwaysOnProfiles, ...selectedProfiles];
@@ -131,7 +131,7 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 	// MARK: - Effects
 
 	React.useEffect(() => {
-		if (!settings.features.profiles) {
+		if (!settings.features.focus) {
 			return;
 		}
 
@@ -150,7 +150,7 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 		return () => {
 			cancelled = true;
 		};
-	}, [settings.features.profiles, upcomingFocusSessionType]);
+	}, [settings.features.focus, upcomingFocusSessionType]);
 
 	// MARK: - UI
 

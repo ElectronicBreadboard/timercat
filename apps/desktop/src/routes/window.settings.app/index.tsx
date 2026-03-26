@@ -149,17 +149,17 @@ function RouteComponent() {
 				)}
 
 				<SettingGroup title="Features">
-					<SettingItem label="Focus Goals" description="Track daily focus time targets">
+					<SettingItem label="Goals" description="Track daily focus targets">
 						<Switch
 							checked={settings.features.goals}
 							onCheckedChange={(checked) => updateFeatures({ goals: checked })}
 							size="sm"
 						/>
 					</SettingItem>
-					<SettingItem label="Focus Profiles" description="Block distracting apps and websites">
+					<SettingItem label="Focus" description="Categorize apps/websites and block distractions">
 						<Switch
-							checked={settings.features.profiles}
-							onCheckedChange={(checked) => updateFeatures({ profiles: checked })}
+							checked={settings.features.focus}
+							onCheckedChange={(checked) => updateFeatures({ focus: checked })}
 							size="sm"
 						/>
 					</SettingItem>

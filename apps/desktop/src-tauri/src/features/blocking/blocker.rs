@@ -43,7 +43,7 @@ impl Blocker {
     fn get_threshold(&self) -> BlockThreshold {
         self.app
             .try_state::<AppSettingsState>()
-            .map(|state| state.lock().unwrap().profiles.block_threshold)
+            .map(|state| state.lock().unwrap().focus.block_threshold)
             .unwrap_or(BlockThreshold::Distracting)
     }
 

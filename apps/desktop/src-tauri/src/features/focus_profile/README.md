@@ -8,7 +8,7 @@ focus_profile
   ├── focus_profile_schedule (mode, days, time)  xN
   └── session_focus_profile (priority)           xN -> session
 
-app_setting: profiles.block_threshold
+app_setting: focus.block_threshold
 ```
 
 ## Categories

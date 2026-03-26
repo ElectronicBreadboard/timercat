@@ -14,7 +14,7 @@ import { specta } from '@/environment';
 import { useFocusProfileCx } from '@/features/focus-profile';
 import { SettingGroup, SettingItem, useSettingsCx } from '@/features/settings';
 
-export const Route = createFileRoute('/window/settings/focus-profiles/')({
+export const Route = createFileRoute('/window/settings/focus/')({
 	component: RouteComponent
 });
 
@@ -28,10 +28,10 @@ function RouteComponent() {
 	// MARK: - Actions
 
 	const updateProfiles = React.useCallback(
-		(updates: Partial<specta.FocusProfilesSettings>) => {
-			settingsCx.update({ profiles: { ...settings.profiles, ...updates } });
+		(updates: Partial<specta.FocusSettings>) => {
+			settingsCx.update({ focus: { ...settings.focus, ...updates } });
 		},
-		[settingsCx, settings.profiles]
+		[settingsCx, settings.focus]
 	);
 
 	// MARK: - Effects
@@ -45,13 +45,13 @@ function RouteComponent() {
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
-				<h1 className="text-base-900 text-xl font-semibold">Focus Profiles</h1>
+				<h1 className="text-base-900 text-xl font-semibold">Focus</h1>
 				<IconButton
 					variant="default"
 					size="sm"
 					title="Create profile"
 					nativeButton={false}
-					render={<Link to="/window/settings/focus-profiles/new" />}
+					render={<Link to="/window/settings/focus/new" />}
 				>
 					<PlusIcon size={16} />
 				</IconButton>
@@ -71,7 +71,7 @@ function RouteComponent() {
 							],
 							[]
 						)}
-						value={settings.profiles.blockThreshold}
+						value={settings.focus.blockThreshold}
 						onValueChange={(value) =>
 							updateProfiles({ blockThreshold: value as specta.BlockThreshold })
 						}
@@ -80,7 +80,7 @@ function RouteComponent() {
 				</SettingItem>
 			</SettingGroup>
 
-			<SettingGroup title="Your Focus Profiles">
+			<SettingGroup title="Focus Profiles">
 				{profiles.length > 0 ? (
 					<ul className="divide-base-100 divide-y">
 						{profiles.map((profile) => {
@@ -118,7 +118,7 @@ const ProfileRow: React.FC<TProfileRowProps> = (props) => {
 	return (
 		<li>
 			<Link
-				to="/window/settings/focus-profiles/$profileId"
+				to="/window/settings/focus/$profileId"
 				params={{ profileId: String(profile.id) }}
 				className="hover:bg-base-100 active:bg-base-200 flex items-center justify-between px-4 py-3 transition-colors duration-100"
 			>

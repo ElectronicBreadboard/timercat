@@ -1,18 +1,16 @@
-import { Button, TrashIcon, useConfirmDialog } from '@repo/ui';
+import { Button } from '@repo/ui';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { hasFormChanged } from 'feature-form';
 import { useForm } from 'feature-react/form';
 import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { FocusProfileForm, useFocusProfileCx } from '@/features/focus-profile';
-import { SettingGroup, SettingItem } from '@/features/settings';
 
-export const Route = createFileRoute('/window/settings/focus-profiles/$profileId/')({
+export const Route = createFileRoute('/window/settings/focus/new/')({
 	component: RouteComponent
 });
 
 function RouteComponent() {
-	const { profileId } = Route.useParams();
 	const navigate = useNavigate();
 	const profileCx = useFocusProfileCx();
 	const { form, handleSubmit } = useForm(profileCx.form);
@@ -24,30 +22,17 @@ function RouteComponent() {
 	);
 	const isDirty = hasFormChanged(form);
 
-	const { trigger: triggerDelete, Dialog: DeleteDialog } = useConfirmDialog({
-		title: 'Delete profile?',
-		description:
-			'This profile and all its category and schedule settings will be permanently deleted.',
-		confirmLabel: 'Delete profile',
-		onConfirm: async () => {
-			const success = await profileCx.delete(Number(profileId));
-			if (success) {
-				navigate({ to: '/window/settings/focus-profiles' });
-			}
-		}
-	});
-
 	// MARK: - Actions
 
 	const handleCancel = React.useCallback(() => {
-		navigate({ to: '/window/settings/focus-profiles' });
+		navigate({ to: '/window/settings/focus' });
 	}, [navigate]);
 
 	const onSubmit = handleSubmit({
 		onValidSubmit: async () => {
 			const success = await profileCx.save();
 			if (success) {
-				navigate({ to: '/window/settings/focus-profiles' });
+				navigate({ to: '/window/settings/focus' });
 			}
 		},
 		onInvalidSubmit: () => {
@@ -64,8 +49,8 @@ function RouteComponent() {
 	// MARK: - Effects
 
 	React.useEffect(() => {
-		profileCx.startEdit(Number(profileId));
-	}, [profileCx, profileId]);
+		profileCx.startCreate();
+	}, [profileCx]);
 
 	// MARK: - UI
 
@@ -73,18 +58,8 @@ function RouteComponent() {
 		<form onSubmit={onSubmit} className="-m-6 flex h-[calc(100%+48px)] flex-col">
 			<div className="flex-1 overflow-y-auto p-6">
 				<div className="space-y-6">
-					<h1 className="text-base-900 text-xl font-semibold">Edit Profile</h1>
+					<h1 className="text-base-900 text-xl font-semibold">New Profile</h1>
 					<FocusProfileForm />
-					<SettingGroup title="Danger">
-						<SettingItem
-							variant="action"
-							label="Delete Profile"
-							description="Permanently delete this profile and all its settings"
-							onClick={triggerDelete}
-						>
-							<TrashIcon className="text-base-400 size-4" />
-						</SettingItem>
-					</SettingGroup>
 				</div>
 			</div>
 
@@ -97,11 +72,9 @@ function RouteComponent() {
 					variant={showInvalidState ? 'danger' : 'primary'}
 					disabled={!isDirty || isSubmitting}
 				>
-					Save
+					Create
 				</Button>
 			</footer>
-
-			<DeleteDialog />
 		</form>
 	);
 }

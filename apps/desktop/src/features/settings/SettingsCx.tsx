@@ -12,7 +12,7 @@ export class SettingsCx {
 		features: {
 			goals: true,
 			activity: true,
-			profiles: true,
+			focus: true,
 			catWindow: true,
 			developer: false
 		},
@@ -107,7 +107,7 @@ export class SettingsCx {
 			trackWindows: true,
 			trackBrowser: true
 		},
-		profiles: {
+		focus: {
 			blockThreshold: 'distracting'
 		},
 		cat: {

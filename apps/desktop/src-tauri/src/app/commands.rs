@@ -111,7 +111,7 @@ pub fn show_settings_window_at_profile(
     app: tauri::AppHandle,
     profile_id: i32,
 ) -> Result<(), String> {
-    let path = format!("/window/settings/focus-profiles/{}", profile_id);
+    let path = format!("/window/settings/focus/{}", profile_id);
 
     Window::Main.hide(&app).map_err(|e| e.to_string())?;
     Window::Settings

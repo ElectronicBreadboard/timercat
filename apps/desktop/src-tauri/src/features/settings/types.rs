@@ -15,7 +15,7 @@ pub struct AppSettings {
     pub timer: TimerSettings,
     pub goals: GoalSettings,
     pub activity: ActivitySettings,
-    pub profiles: FocusProfilesSettings,
+    pub focus: FocusSettings,
     pub cat: CatSettings,
 }
 
@@ -31,7 +31,7 @@ impl Default for AppSettings {
             timer: TimerSettings::default(),
             goals: GoalSettings::default(),
             activity: ActivitySettings::default(),
-            profiles: FocusProfilesSettings::default(),
+            focus: FocusSettings::default(),
             cat: CatSettings::default(),
         };
     }
@@ -63,7 +63,7 @@ impl Default for SettingsVersion {
 pub struct FeaturesSettings {
     pub goals: bool,
     pub activity: bool,
-    pub profiles: bool,
+    pub focus: bool,
     pub cat_window: bool,
     pub developer: bool,
 }
@@ -73,7 +73,7 @@ impl Default for FeaturesSettings {
         return Self {
             goals: true,
             activity: true,
-            profiles: true,
+            focus: true,
             cat_window: !cfg!(feature = "app-store"),
             developer: false,
         };
@@ -351,11 +351,11 @@ impl Default for CatSettings {
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
-pub struct FocusProfilesSettings {
+pub struct FocusSettings {
     pub block_threshold: BlockThreshold,
 }
 
-impl Default for FocusProfilesSettings {
+impl Default for FocusSettings {
     fn default() -> Self {
         return Self {
             block_threshold: BlockThreshold::Distracting,
