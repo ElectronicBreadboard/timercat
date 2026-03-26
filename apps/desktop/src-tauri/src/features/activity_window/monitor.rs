@@ -119,10 +119,10 @@ impl WindowListener for WindowMonitor {
                 // WindowChanged then shows again (has URL, e.g. instagram blocked) → flicker.
                 if !Self::can_track_windows() {
                     if let Some(state) = self.app.try_state::<BlockerState>() {
-                        state.lock().unwrap().handle_app_activated(
-                            app_info.bundle_id.as_deref(),
-                            app_info.name.as_deref(),
-                        );
+                        state
+                            .lock()
+                            .unwrap()
+                            .handle_app_activated(app_info.pid, app_info.bundle_id.as_deref());
                     }
                 }
 
@@ -215,8 +215,8 @@ impl WindowListener for WindowMonitor {
                         .as_ref()
                         .map(|b| (b.x, b.y, b.width, b.height));
                     state.lock().unwrap().handle_window_changed(
+                        window_info.app.pid,
                         window_info.app.bundle_id.as_deref(),
-                        window_info.app.name.as_deref(),
                         browser_url,
                         bounds,
                     );

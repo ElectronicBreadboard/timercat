@@ -55,8 +55,8 @@ impl Blocker {
     }
 
     /// Handle an app switch. Checks if the app is blocked and updates the overlay.
-    pub fn handle_app_activated(&mut self, bundle_id: Option<&str>, app_name: Option<&str>) {
-        if Self::is_own_app(bundle_id, app_name) {
+    pub fn handle_app_activated(&mut self, pid: i32, bundle_id: Option<&str>) {
+        if Self::is_own_app(pid, bundle_id) {
             return;
         }
 
@@ -66,8 +66,7 @@ impl Blocker {
         if self.is_developer_enabled() {
             log_info!(
                 "Blocker",
-                "App Activated: name={:?} bundle_id={:?} violation={:?}",
-                app_name,
+                "App Activated: bundle_id={:?} violation={:?}",
                 bundle_id,
                 violation
                     .as_ref()
@@ -87,12 +86,12 @@ impl Blocker {
     /// Handle a window focus change. Checks app + browser URL and positions the overlay.
     pub fn handle_window_changed(
         &mut self,
+        pid: i32,
         bundle_id: Option<&str>,
-        app_name: Option<&str>,
         browser_url: Option<&str>,
         bounds: Option<(f64, f64, f64, f64)>,
     ) {
-        if Self::is_own_app(bundle_id, app_name) {
+        if Self::is_own_app(pid, bundle_id) {
             return;
         }
 
@@ -102,8 +101,7 @@ impl Blocker {
         if self.is_developer_enabled() {
             log_info!(
                 "Blocker",
-                "Window Changed: name={:?} bundle_id={:?} browser_url={:?} violation={:?}",
-                app_name,
+                "Window Changed: bundle_id={:?} browser_url={:?} violation={:?}",
                 bundle_id,
                 browser_url,
                 violation
@@ -141,17 +139,15 @@ impl Blocker {
     }
 
     /// Check if the given app belongs to our own app (never block ourselves).
-    fn is_own_app(bundle_id: Option<&str>, app_name: Option<&str>) -> bool {
+    fn is_own_app(pid: i32, bundle_id: Option<&str>) -> bool {
         if let Some(bid) = bundle_id {
             if BlockingConfig::own_bundle_ids().contains(&bid) {
                 return true;
             }
         }
-        // Dev builds may not have a bundle_id; fall back to app name
-        if let Some(name) = app_name {
-            if name.to_lowercase().starts_with("focuscat") {
-                return true;
-            }
+        // Dev builds may not have a bundle ID, so fall back to the current process ID
+        if pid == std::process::id() as i32 {
+            return true;
         }
         return false;
     }
