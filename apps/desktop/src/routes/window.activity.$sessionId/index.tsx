@@ -1,10 +1,8 @@
 import { BriefcaseIcon, cn, CoffeeIcon, formatDuration, formatTimeOfDayAmPm } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
-import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { unwrapOr } from 'tuple-result';
 import { specta } from '@/environment';
-import { useSettingsCx } from '@/features/settings';
 import { toTuple } from '@/lib';
 import { SessionTimeline } from './components';
 
@@ -41,8 +39,6 @@ export const Route = createFileRoute('/window/activity/$sessionId/')({
 
 function RouteComponent() {
 	const data = Route.useLoaderData();
-	const settingsCx = useSettingsCx();
-	const settings = useFeatureState(settingsCx.$appSettings);
 
 	const sessionInfo = React.useMemo(() => {
 		if (data == null) {
@@ -119,27 +115,8 @@ function RouteComponent() {
 				</div>
 			</div>
 
-			{/* New Timeline */}
+			{/* Timeline */}
 			<SessionTimeline session={data.session} activities={data.activities} />
-
-			{/* Developer data */}
-			{settings.features.developer && (
-				<div className="border-base-200 mt-4 border-t pt-4">
-					<div className="text-base-500 mb-2 text-xs font-medium">Developer Data</div>
-					<pre className="bg-base-50 text-base-600 rounded p-3 text-xs break-all whitespace-pre-wrap">
-						{JSON.stringify(
-							data,
-							(key, value) => {
-								if (key === 'appIcon' && typeof value === 'string' && value.length > 50) {
-									return `${value.slice(0, 50)}... (${value.length} chars)`;
-								}
-								return value;
-							},
-							2
-						)}
-					</pre>
-				</div>
-			)}
 		</div>
 	);
 }

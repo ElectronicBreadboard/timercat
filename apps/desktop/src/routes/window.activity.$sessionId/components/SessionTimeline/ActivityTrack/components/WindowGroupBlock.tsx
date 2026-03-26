@@ -1,6 +1,6 @@
 import { cn, formatDuration, isColorDark, Tooltip } from '@repo/ui';
 import React from 'react';
-import type { ActivityRowCx } from '../ActivityRowCx';
+import type { ActivityTrackCx } from '../ActivityTrackCx';
 import { useBlockStyle, useVisibleRangeStyle } from '../hooks';
 import type { TAppInfo, TWindowGroupBlock, TWindowSegment } from '../types';
 
@@ -46,7 +46,7 @@ WindowGroupBlock.displayName = 'WindowGroupBlock';
 
 interface TWindowGroupBlockProps {
 	block: TWindowGroupBlock;
-	cx: ActivityRowCx;
+	cx: ActivityTrackCx;
 	gapPx?: number;
 }
 
@@ -105,7 +105,7 @@ interface TWindowSegmentProps {
 	segment: TWindowSegment;
 	parentBlock: TWindowGroupBlock;
 	app: TAppInfo;
-	cx: ActivityRowCx;
+	cx: ActivityTrackCx;
 	gapPx: number;
 	showDivider: boolean;
 	isDark: boolean;

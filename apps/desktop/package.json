@@ -23,7 +23,7 @@
 		"install:clean": "pnpm run clean && pnpm install",
 		"lint": "eslint . --fix",
 		"start:dev": "tauri dev",
-		"test": "echo \"🧪 No tests defined yet.\"",
+		"test": "vitest run --environment node",
 		"typecheck": "tsc --noEmit",
 		"ui:build": "pnpm typecheck && vite build",
 		"ui:start:dev": "vite dev",

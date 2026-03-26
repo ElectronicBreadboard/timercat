@@ -1,6 +1,7 @@
 import { cn, formatDuration, isColorDark, Tooltip } from '@repo/ui';
 import React from 'react';
-import type { ActivityRowCx } from '../ActivityRowCx';
+import type { specta } from '@/environment';
+import type { ActivityTrackCx } from '../ActivityTrackCx';
 import { useBlockStyle, useVisibleRangeStyle } from '../hooks';
 import type { TAppBlock } from '../types';
 
@@ -66,7 +67,7 @@ AppBlock.displayName = 'AppBlock';
 
 interface TAppBlockProps {
 	block: TAppBlock;
-	cx: ActivityRowCx;
+	cx: ActivityTrackCx;
 	gapPx?: number;
 	fallbackColor?: string;
 }
@@ -75,7 +76,13 @@ interface TAppBlockProps {
 
 const AppTooltipContent: React.FC<TAppTooltipContentProps> = (props) => {
 	const { block, durationSec } = props;
-	const dominantApp = block.apps[0];
+	const appEntries = React.useMemo(
+		() => getAppEntriesSortedByDuration(block.activities),
+		[block.activities]
+	);
+	const visibleAppEntries = appEntries.slice(0, 3);
+	const hiddenAppCount = Math.max(appEntries.length - visibleAppEntries.length, 0);
+	const dominantApp = appEntries[0];
 
 	if (dominantApp == null) {
 		return null;
@@ -99,15 +106,23 @@ const AppTooltipContent: React.FC<TAppTooltipContentProps> = (props) => {
 
 			{/* Additional apps list */}
 			{block.apps.length > 1 && (
-				<div className="border-base-200 flex flex-wrap gap-1 border-t pt-2">
-					{block.apps.map((app) => (
-						<div key={app.bundleId} className="flex items-center gap-1">
-							{app.icon != null && (
+				<div className="border-base-200 flex flex-col gap-1 border-t pt-1.5">
+					{visibleAppEntries.map((app) => (
+						<div key={app.bundleId} className="flex items-center gap-1.5">
+							{app.icon != null ? (
 								<img src={app.icon} alt="" className="size-4 shrink-0 rounded" />
+							) : (
+								<div className="bg-base-300 size-2 shrink-0 rounded-full" />
 							)}
-							<span className="text-base-400 text-xs">{app.name}</span>
+							<span className="text-base-400 min-w-0 flex-1 truncate text-xs">{app.name}</span>
+							<span className="text-base-500 shrink-0 text-xs">
+								{formatDuration(app.durationMs / 1000)}
+							</span>
 						</div>
 					))}
+					{hiddenAppCount > 0 && (
+						<span className="text-base-500 pt-0.5 text-xs">+{hiddenAppCount} more apps</span>
+					)}
 				</div>
 			)}
 		</div>
@@ -117,4 +132,35 @@ const AppTooltipContent: React.FC<TAppTooltipContentProps> = (props) => {
 interface TAppTooltipContentProps {
 	block: TAppBlock;
 	durationSec: number;
+}
+
+function getAppEntriesSortedByDuration(activities: specta.WindowActivityDto[]): TAppEntry[] {
+	const map = new Map<string, TAppEntry>();
+
+	for (const activity of activities) {
+		const bundleId = activity.appBundleId ?? 'unknown';
+		const durationMs = activity.endedAt - activity.startedAt;
+		const existing = map.get(bundleId);
+
+		if (existing != null) {
+			existing.durationMs += durationMs;
+			continue;
+		}
+
+		map.set(bundleId, {
+			bundleId,
+			name: activity.appName ?? 'Unknown',
+			icon: activity.appIcon ?? null,
+			durationMs
+		});
+	}
+
+	return Array.from(map.values()).sort((a, b) => b.durationMs - a.durationMs);
+}
+
+interface TAppEntry {
+	bundleId: string;
+	name: string;
+	icon: string | null;
+	durationMs: number;
 }

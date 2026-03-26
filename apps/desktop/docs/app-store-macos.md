@@ -7,7 +7,7 @@ Reference: [Tauri App Store guide](https://v2.tauri.app/distribute/app-store/)
 | Goal                                                                          | Section                                                         |
 | ----------------------------------------------------------------------------- | --------------------------------------------------------------- |
 | **Publish a new version** of FocusCat on this Mac (everything already set up) | [§ Publish new version](#1-publish-a-new-version-this-mac)      |
-| **Fresh clone or new machine** – no `apps/desktop/.local/`           | [§ Fresh clone](#2-fresh-clone-no-local)                        |
+| **Fresh clone or new machine** – no `apps/desktop/.local/`                    | [§ Fresh clone](#2-fresh-clone-no-local)                        |
 | **First-time setup for an app** or **add a new app** (e.g. Abstand)           | [§ Once overall / new app](#3-once-overall--new-app-eg-abstand) |
 
 ## 1. Publish a new version (this Mac)

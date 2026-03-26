@@ -1,5 +1,5 @@
 import type { specta } from '@/environment';
-import type { FocusViewCategory } from './category';
+import type { FocusViewCategory } from '../focus-category';
 
 /**
  * Activity block union type for timeline display.
@@ -53,21 +53,19 @@ export interface TAppBlock {
 }
 
 /**
- * Category block - used in focus view mode. Groups consecutive same-category
- * activities into segments. Multiple segments may be merged when granularity
- * is too low to show them individually.
+ * Category block - used in focus view mode.
+ * Represents either a single category run or a compact mixed-category block.
  */
 export interface TCategoryBlock {
 	type: 'category';
 	startMs: number;
 	endMs: number;
 	category: FocusViewCategory | null; // Dominant category (for block color)
-	segments: TCategorySegment[];
+	categories: Array<TCategoryInfo>;
+	activities: specta.WindowActivityDto[];
 }
 
-export interface TCategorySegment {
-	startMs: number;
-	endMs: number;
+export interface TCategoryInfo {
 	category: FocusViewCategory | null;
-	activities: specta.WindowActivityDto[];
+	durationMs: number;
 }

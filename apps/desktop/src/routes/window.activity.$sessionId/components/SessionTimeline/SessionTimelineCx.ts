@@ -2,12 +2,12 @@ import { withLocalStorage } from 'feature-react/state';
 import { createState } from 'feature-state';
 import { TimelineCx } from '@/components';
 import type { specta } from '@/environment';
-import { ActivityRowCx, TActivityRowCxThresholds } from './ActivityRow';
-import type { TViewMode } from './ActivityRow/category';
+import { ActivityTrackCx, TActivityTrackCxThresholds } from './ActivityTrack';
+import type { TViewMode } from './focus-category';
 
 export class SessionTimelineCx {
 	public readonly timelineCx: TimelineCx;
-	public readonly activityRowCx: ActivityRowCx;
+	public readonly activityTrackCx: ActivityTrackCx;
 	public readonly $granularity;
 	public readonly $viewMode;
 	public readonly config: TSessionTimelineCxConfig;
@@ -48,16 +48,16 @@ export class SessionTimelineCx {
 
 		// Setup activity row
 		const thresholds = this.granularityToThresholds(this.$granularity.get());
-		this.activityRowCx = new ActivityRowCx(this.timelineCx, activities, thresholds);
-		this.activityRowCx.setViewMode(this.$viewMode.get());
+		this.activityTrackCx = new ActivityTrackCx(this.timelineCx, activities, thresholds);
+		this.activityTrackCx.setViewMode(this.$viewMode.get());
 
 		this._unlisteners.push(
 			this.$granularity.listen(({ value }) => {
 				const config = this.granularityToThresholds(value);
-				this.activityRowCx.setConfig(config);
+				this.activityTrackCx.setConfig(config);
 			}),
 			this.$viewMode.listen(({ value }) => {
-				this.activityRowCx.setViewMode(value);
+				this.activityTrackCx.setViewMode(value);
 			})
 		);
 	}
@@ -68,7 +68,7 @@ export class SessionTimelineCx {
 		}
 		this._unlisteners = [];
 		this.timelineCx.unmount();
-		this.activityRowCx.unmount();
+		this.activityTrackCx.unmount();
 	}
 
 	public setGranularity(granularity: number): void {
@@ -80,10 +80,10 @@ export class SessionTimelineCx {
 	}
 
 	public setActivities(activities: specta.WindowActivityDto[]): void {
-		this.activityRowCx.setActivities(activities);
+		this.activityTrackCx.setActivities(activities);
 	}
 
-	private granularityToThresholds(granularity: number): TActivityRowCxThresholds {
+	private granularityToThresholds(granularity: number): TActivityTrackCxThresholds {
 		return {
 			minSegmentPx: (this.config.granularityMax - granularity) * 4,
 			minGroupPx: (this.config.granularityMax - granularity) * 6

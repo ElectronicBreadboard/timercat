@@ -23,8 +23,8 @@ import {
 	SettingItemWarnDescription,
 	useSettingsCx
 } from '@/features/settings';
-import { AudioSettingGroup } from './AudioSettingGroup';
 import { useAppInfo } from '@/hooks';
+import { AudioSettingGroup } from './AudioSettingGroup';
 
 export const Route = createFileRoute('/window/settings/app/')({
 	component: RouteComponent

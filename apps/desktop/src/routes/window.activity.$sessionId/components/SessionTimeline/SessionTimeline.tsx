@@ -3,8 +3,8 @@ import { useFeatureState } from 'feature-react/state';
 import React, { useCallback } from 'react';
 import { Timeline, TimelineAxis } from '@/components';
 import type { specta } from '@/environment';
-import { ActivityRow } from './ActivityRow';
-import { CategorySummary } from './CategorySummary';
+import { ActivityTrack } from './ActivityTrack';
+import { FocusCategorySummary } from './FocusCategorySummary';
 import { SessionEventMarkers, SessionEventPeriodOverlays } from './SessionEventIndicators';
 import { SessionTimelineCx } from './SessionTimelineCx';
 
@@ -37,7 +37,7 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 		<div className={cn('flex flex-col gap-2', className)}>
 			{/* Header */}
 			<div className="flex items-center justify-between px-2">
-				<span className="text-base-500 text-xs font-medium">Activity Timeline</span>
+				<span className="text-base-500 text-xs font-medium">Session Timeline</span>
 				<div className="flex gap-0.5">
 					{(['apps', 'focus'] as const).map((mode) => (
 						<button
@@ -61,7 +61,7 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 				<TooltipProvider delay={200} closeDelay={100}>
 					<div className="relative">
 						<TimelineAxis cx={cx.timelineCx} />
-						<ActivityRow cx={cx.activityRowCx} />
+						<ActivityTrack cx={cx.activityTrackCx} />
 
 						{/* Event markers at top of axis with dashed line through */}
 						<div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -76,10 +76,7 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 				</TooltipProvider>
 			</Timeline>
 
-			{/* Category summary (shown in focus mode) */}
-			{viewMode === 'focus' && <CategorySummary activities={activities} />}
-
-			{/* Footer */}
+			{/* Timeline Control */}
 			<div className="flex items-center justify-between">
 				<span className="text-base-400 text-xs leading-none">
 					Cmd+scroll to zoom · scroll to pan
@@ -91,6 +88,9 @@ export const SessionTimeline: React.FC<TSessionTimelineProps> = (props) => {
 					Granularity: {granularity}
 				</button>
 			</div>
+
+			{/* Category Summary*/}
+			{viewMode === 'focus' && <FocusCategorySummary activities={activities} />}
 		</div>
 	);
 };

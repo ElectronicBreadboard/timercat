@@ -1,6 +1,6 @@
 import { useListener } from 'feature-react/state';
 import React from 'react';
-import type { ActivityRowCx } from '../ActivityRowCx';
+import type { ActivityTrackCx } from '../ActivityTrackCx';
 
 /**
  * Updates block position/size of a block.
@@ -9,7 +9,7 @@ import type { ActivityRowCx } from '../ActivityRowCx';
 export function useBlockStyle(
 	ref: React.RefObject<HTMLDivElement | null>,
 	block: TTimeRange,
-	cx: ActivityRowCx,
+	cx: ActivityTrackCx,
 	options: TBlockStyleOptions = {}
 ): void {
 	const { gapPx = 1, parentBlock } = options;

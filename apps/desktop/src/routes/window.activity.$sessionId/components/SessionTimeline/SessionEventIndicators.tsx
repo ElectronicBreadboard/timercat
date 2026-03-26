@@ -3,8 +3,6 @@ import { useListener } from 'feature-react/state';
 import React from 'react';
 import type { SessionTimelineCx, TEventMarker, TEventPeriod } from './SessionTimelineCx';
 
-// MARK: - Event Period Overlays
-
 export const SessionEventPeriodOverlays: React.FC<TSessionEventPeriodOverlaysProps> = (props) => {
 	const { cx } = props;
 	const periodRefs = React.useRef<Map<number, HTMLDivElement>>(new Map());

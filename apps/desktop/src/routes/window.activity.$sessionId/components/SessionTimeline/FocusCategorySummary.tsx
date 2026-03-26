@@ -1,9 +1,9 @@
 import { formatDuration } from '@repo/ui';
 import React from 'react';
 import type { specta } from '@/environment';
-import { categoryToColor, categoryToLabel, type FocusViewCategory } from './ActivityRow/category';
+import { categoryToColor, categoryToLabel, type FocusViewCategory } from './focus-category';
 
-export const CategorySummary: React.FC<TCategorySummaryProps> = (props) => {
+export const FocusCategorySummary: React.FC<TCategorySummaryProps> = (props) => {
 	const { activities } = props;
 
 	const stats = React.useMemo(() => {
@@ -39,6 +39,10 @@ export const CategorySummary: React.FC<TCategorySummaryProps> = (props) => {
 
 	return (
 		<div className="flex flex-col gap-1.5">
+			<div className="px-2">
+				<span className="text-base-500 text-xs font-medium">Focus Summary</span>
+			</div>
+
 			{/* Proportional bar */}
 			<div className="flex h-1.5 overflow-hidden rounded-full">
 				{items.map(({ key, ms }) => (

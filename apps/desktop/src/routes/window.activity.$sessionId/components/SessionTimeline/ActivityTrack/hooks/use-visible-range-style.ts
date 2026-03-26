@@ -1,6 +1,6 @@
 import { useListener } from 'feature-react/state';
 import React from 'react';
-import type { ActivityRowCx } from '../ActivityRowCx';
+import type { ActivityTrackCx } from '../ActivityTrackCx';
 
 /**
  * Updates tooltip trigger to cover only the visible portion of a block.
@@ -9,7 +9,7 @@ import type { ActivityRowCx } from '../ActivityRowCx';
 export function useVisibleRangeStyle(
 	ref: React.RefObject<HTMLDivElement | null>,
 	block: TTimeRange,
-	cx: ActivityRowCx,
+	cx: ActivityTrackCx,
 	options: TVisibleRangeStyleOptions = {}
 ): void {
 	const { offsetPx = 0 } = options;

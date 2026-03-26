@@ -37,11 +37,11 @@ No active profile = everything allowed.
 
 ## Activation Modes
 
-| Mode           | Schedule | Session | Behavior                                          |
-| -------------- | -------- | ------- | ------------------------------------------------- |
-| `always_on`    | Yes      | No      | Applies continuously during scheduled window      |
-| `pre_selected` | Yes      | Yes     | Auto-added to session setup, user can remove      |
-| `manual`       | No       | Yes     | User picks when starting a session                |
+| Mode           | Schedule | Session | Behavior                                     |
+| -------------- | -------- | ------- | -------------------------------------------- |
+| `always_on`    | Yes      | No      | Applies continuously during scheduled window |
+| `pre_selected` | Yes      | Yes     | Auto-added to session setup, user can remove |
+| `manual`       | No       | Yes     | User picks when starting a session           |
 
 No schedule entries = manual only. Entries can mix modes (e.g. always_on weekdays, pre_selected weekends).
 
