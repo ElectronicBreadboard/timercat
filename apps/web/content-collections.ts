@@ -9,7 +9,8 @@ const pomodorocatBlog = defineCollection({
 	schema: v.object({
 		title: v.string(),
 		summary: v.string(),
-		published: v.string()
+		published: v.string(),
+		content: v.string()
 	}),
 	transform: async (document, context) => {
 		const mdx = await compileMDX(context, document);

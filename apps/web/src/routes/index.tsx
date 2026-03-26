@@ -1,5 +1,5 @@
 import { SketchArrowIcon } from '@repo/ui';
-import { createFileRoute } from '@tanstack/react-router';
+import { ClientOnly, createFileRoute } from '@tanstack/react-router';
 import React from 'react';
 import { MainWindow } from '@/app';
 import { AppleIcon, SimpleLogoIcon } from '@/components';
@@ -136,7 +136,9 @@ function RouteComponent() {
 						<SketchArrowIcon className="h-12 w-12 scale-x-[-1] rotate-180" />
 					</div>
 					<div className="border-base-200 overflow-hidden rounded-2xl border shadow-2xl">
-						<MainWindow className="h-[500px] w-[300px]" decorative />
+						<ClientOnly fallback={<div className="h-[500px] w-[300px]" />}>
+							<MainWindow className="h-[500px] w-[300px]" decorative />
+						</ClientOnly>
 					</div>
 				</div>
 

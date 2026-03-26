@@ -46,14 +46,14 @@
 		"clsx": "^2.1.1",
 		"feature-react": "^0.0.67",
 		"feature-state": "^0.0.65",
-		"lucide-react": "^0.577.0",
-		"motion": "^12.37.0",
+		"lucide-react": "^1.7.0",
+		"motion": "^12.38.0",
 		"tailwind-merge": "^3.5.0"
 	},
 	"devDependencies": {
-		"@tailwindcss/cli": "^4.2.1",
+		"@tailwindcss/cli": "^4.2.2",
 		"@types/react": "^19.2.14",
 		"react": "^19.2.4",
-		"tailwindcss": "^4.2.1"
+		"tailwindcss": "^4.2.2"
 	}
 }

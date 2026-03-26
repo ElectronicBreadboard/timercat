@@ -5,21 +5,20 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
 import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
-import tsConfigPaths from 'vite-tsconfig-paths';
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
 	server: {
 		port: 3000
 	},
+	resolve: {
+		tsconfigPaths: true
+	},
 	define: {
 		['import.meta.env.PACKAGE_VERSION']: validateAndStringify('npm_package_version')
 	},
 	plugins: [
 		contentCollections(),
-		tsConfigPaths({
-			projects: ['./tsconfig.json']
-		}),
 		mdx(),
 		tanstackStart({
 			srcDirectory: 'src'

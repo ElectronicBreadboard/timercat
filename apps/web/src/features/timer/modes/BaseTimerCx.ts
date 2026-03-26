@@ -80,7 +80,9 @@ export abstract class BaseTimerCx implements TTimerCx {
 		this.stopLoop();
 		for (const unlisten of this._unlisteners) unlisten();
 		this._unlisteners.length = 0;
-		document.title = 'FocusCat';
+		if (typeof document !== 'undefined') {
+			document.title = 'FocusCat';
+		}
 	}
 
 	protected startLoop(): void {
@@ -138,7 +140,7 @@ export abstract class BaseTimerCx implements TTimerCx {
 			newTitle = `${prefix}${formatTime(remaining)} • FocusCat`;
 		}
 
-		if (document.title !== newTitle) {
+		if (typeof document !== 'undefined' && document.title !== newTitle) {
 			document.title = newTitle;
 		}
 	}

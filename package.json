@@ -28,13 +28,13 @@
 		"@eslint/js": "^9.39.2",
 		"eslint": "^9.39.2",
 		"prettier": "^3.8.1",
-		"rollup": "^4.59.0",
+		"rollup": "^4.60.0",
 		"rollup-presets": "^0.0.26",
 		"shx": "^0.4.0",
-		"turbo": "^2.8.16",
-		"typescript": "5.9.3",
-		"vite": "^7.3.1",
-		"vitest": "^4.0.18"
+		"turbo": "^2.8.20",
+		"typescript": "6.0.2",
+		"vite": "^8.0.2",
+		"vitest": "^4.1.1"
 	},
 	"packageManager": "pnpm@10.33.0",
 	"engines": {
