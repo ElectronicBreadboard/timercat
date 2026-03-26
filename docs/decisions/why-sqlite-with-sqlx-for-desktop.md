@@ -10,7 +10,7 @@ We chose **SQLite** with **SQLx** for persistent data storage in our Tauri deskt
 
 #### Embedded & Zero-Setup
 
-SQLite is embedded, requires no separate server installation, and is fully portable. The database file is stored at `~/Library/Application Support/com.buildergroup.isshin/isshin.db`. Users never need to manage database infrastructure.
+SQLite is embedded, requires no separate server installation, and is fully portable. The database file is stored at `~/Library/Application Support/com.buildergroup.focuscat/focuscat.db`. Users never need to manage database infrastructure.
 
 #### Battle-Tested
 

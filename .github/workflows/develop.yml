@@ -20,7 +20,7 @@ jobs:
       - name: Run CI
         uses: ./.github/actions/ci
         with:
-          app: focuscat-desktop
+          app: desktop
 
   check-deploy:
     name: 🔍 Check Deploy Marker
@@ -65,8 +65,8 @@ jobs:
         id: bump
         uses: ./.github/actions/version-bump
         with:
-          app: focuscat-desktop
-          app-directory: apps/focuscat-desktop
+          app: desktop
+          app-directory: apps/desktop
 
   build:
     name: 📦 Build ${{ matrix.target }}
@@ -105,8 +105,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          app: focuscat-desktop
-          app-directory: apps/focuscat-desktop
+          app: desktop
+          app-directory: apps/desktop
           platform: ${{ matrix.platform }}
           target: ${{ matrix.target }}
           args: ${{ matrix.args }}
@@ -194,7 +194,7 @@ jobs:
           VERSION: ${{ needs.version-bump.outputs.version }}
           TAG: ${{ needs.version-bump.outputs.tag }}
         run: |
-          REPO="builder-group/isshin"
+          REPO="builder-group/focuscat"
           BASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
 
           # Download signature files from the release (retry up to 3 times with delay)

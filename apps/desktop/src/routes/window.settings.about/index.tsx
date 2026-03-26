@@ -38,7 +38,7 @@ function RouteComponent() {
 				<SettingItem
 					variant="link"
 					label="GitHub"
-					description="github.com/builder-group/isshin"
+					description="github.com/builder-group/focuscat"
 					href={appConfig.distribution.github}
 				/>
 			</SettingGroup>

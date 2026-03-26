@@ -5,11 +5,11 @@
 	"description": "",
 	"keywords": [],
 	"bugs": {
-		"url": "https://github.com/builder-group/isshin/issues"
+		"url": "https://github.com/builder-group/focuscat/issues"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/builder-group/isshin.git"
+		"url": "https://github.com/builder-group/focuscat.git"
 	},
 	"license": "AGPL-3.0-or-later",
 	"author": "@bennobuilder",

@@ -7,7 +7,7 @@ Split the web presence across two domains with distinct purposes:
 - **focuscat.app** — Brand home and macOS app landing page
 - **pomodorocat.com** — Web pomodoro timer, SEO-focused
 
-Both are served from the same `focuscat-web` codebase. Domain routing is handled via TanStack Router's `rewrite` option — browser URLs stay clean while the router internally maps to the correct route tree.
+Both are served from the same `web` codebase. Domain routing is handled via TanStack Router's `rewrite` option — browser URLs stay clean while the router internally maps to the correct route tree.
 
 ## Rationale
 
@@ -47,7 +47,7 @@ These are lower competition, correct intent, and aligned with the cat brand. Aut
 
 ## Architecture
 
-Routes in `focuscat-web`:
+Routes in `web`:
 
 ```
 routes/index.tsx                    → focuscat.app/

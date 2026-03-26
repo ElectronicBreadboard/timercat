@@ -2,7 +2,7 @@
 
 ## Decision
 
-We chose **Value-based migration** for settings: parse JSON as a raw `serde_json::Value` tree, apply migrations that transform the tree step by step, then deserialize into `AppSettings`. One struct, no version-specific type definitions. Implementation lives in `apps/focuscat-desktop/src-tauri/src/features/settings/persistence.rs`.
+We chose **Value-based migration** for settings: parse JSON as a raw `serde_json::Value` tree, apply migrations that transform the tree step by step, then deserialize into `AppSettings`. One struct, no version-specific type definitions. Implementation lives in `apps/desktop/src-tauri/src/features/settings/persistence.rs`.
 
 ## Rationale
 
