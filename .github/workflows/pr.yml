@@ -19,4 +19,4 @@ jobs:
       - name: Run CI
         uses: ./.github/actions/ci
         with:
-          app: focuscat-desktop
+          app: desktop

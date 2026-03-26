@@ -30,7 +30,7 @@ export const appConfig = {
 	help: {
 		discord: 'https://discord.com/invite/w4xE3bSjhQ',
 		email: 'support@focuscat.app',
-		githubIssues: 'https://github.com/builder-group/isshin/issues',
+		githubIssues: 'https://github.com/builder-group/focuscat/issues',
 		mailto: (subject: string) =>
 			`mailto:${appConfig.help.email}?subject=${encodeURIComponent(`[FocusCat] ${subject}`)}`,
 		legal: {
@@ -45,8 +45,8 @@ export const appConfig = {
 			env === 'development' || env === 'local'
 				? 'http://pomodorocat.localhost:3000'
 				: 'https://pomodorocat.com',
-		github: 'https://github.com/builder-group/isshin',
-		githubReleases: 'https://github.com/builder-group/isshin/releases'
+		github: 'https://github.com/builder-group/focuscat',
+		githubReleases: 'https://github.com/builder-group/focuscat/releases'
 	},
-	githubApi: 'https://api.github.com/repos/builder-group/isshin'
+	githubApi: 'https://api.github.com/repos/builder-group/focuscat'
 } as const;
