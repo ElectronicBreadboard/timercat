@@ -57,7 +57,7 @@ Install Rust toolchain with specified targets and configure build caching.
 
 Run lint, typecheck, and test for an app.
 
-**Inputs:** `app` (e.g., `focuscat-desktop`)
+**Inputs:** `app` (e.g., `desktop`)
 
 ### `version-bump`
 
@@ -113,12 +113,12 @@ See [`.secrets.template`](.secrets.template).
 
 ```bash
 # CI
-pnpm --filter @repo/focuscat-desktop lint
-pnpm --filter @repo/focuscat-desktop typecheck
-pnpm --filter @repo/focuscat-desktop test
+pnpm --filter @repo/desktop lint
+pnpm --filter @repo/desktop typecheck
+pnpm --filter @repo/desktop test
 
 # Build
-cd apps/focuscat-desktop
+cd apps/desktop
 pnpm tauri build --config src-tauri/tauri.prod.conf.json
 ```
 
