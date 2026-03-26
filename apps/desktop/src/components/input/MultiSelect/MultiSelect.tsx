@@ -32,6 +32,7 @@ const Container = React.forwardRef<HTMLDivElement, TMultiSelectContainerProps>((
 		<Popover.Trigger
 			// Cast needed: Popover.Trigger types expect HTMLButtonElement, but we render div
 			ref={ref as unknown as React.RefObject<HTMLButtonElement>}
+			nativeButton={false}
 			className={cn(
 				containerVariants({ size }),
 				open
