@@ -12,7 +12,7 @@ use crate::features::app::repository::{
 use crate::features::blocking::types::BlockerState;
 use crate::features::focus_profile::{
     resolution::{resolve_category_for_app, resolve_category_for_website},
-    types::FocusProfileState,
+    types::{FocusCategory, FocusProfileState},
 };
 use crate::features::settings::types::AppSettingsState;
 use chrono::Utc;
@@ -155,13 +155,18 @@ impl WindowListener for WindowMonitor {
                                         if guard.active_profiles.is_empty() {
                                             return None;
                                         }
-                                        let bid = prev.bundle_id.as_deref()?;
-                                        Some(
-                                            resolve_category_for_app(bid, &guard.active_profiles)
+                                        let category = prev
+                                            .bundle_id
+                                            .as_deref()
+                                            .map(|bid| {
+                                                resolve_category_for_app(
+                                                    bid,
+                                                    &guard.active_profiles,
+                                                )
                                                 .0
-                                                .as_str()
-                                                .to_string(),
-                                        )
+                                            })
+                                            .unwrap_or(FocusCategory::Neutral);
+                                        Some(category.as_str().to_string())
                                     });
 
                                 let _ = AppActivityRepository::insert(
@@ -268,13 +273,18 @@ impl WindowListener for WindowMonitor {
                                                 );
                                             }
                                         }
-                                        let bid = prev.bundle_id.as_deref()?;
-                                        Some(
-                                            resolve_category_for_app(bid, &guard.active_profiles)
+                                        let category = prev
+                                            .bundle_id
+                                            .as_deref()
+                                            .map(|bid| {
+                                                resolve_category_for_app(
+                                                    bid,
+                                                    &guard.active_profiles,
+                                                )
                                                 .0
-                                                .as_str()
-                                                .to_string(),
-                                        )
+                                            })
+                                            .unwrap_or(FocusCategory::Neutral);
+                                        Some(category.as_str().to_string())
                                     });
 
                                 let _ = WindowActivityRepository::insert(

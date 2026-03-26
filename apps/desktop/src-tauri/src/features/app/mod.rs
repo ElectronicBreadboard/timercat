@@ -1,3 +1,4 @@
+mod bundle_id;
 pub mod commands;
 mod matcher;
 pub mod repository;

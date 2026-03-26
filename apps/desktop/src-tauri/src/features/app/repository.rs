@@ -1,3 +1,4 @@
+use super::bundle_id::to_stable_bundle_id;
 use sqlx::Row;
 
 // MARK: - App Repository
@@ -22,7 +23,7 @@ impl AppRepository {
             RETURNING id
             "#,
         )
-        .bind(&input.bundle_id)
+        .bind(&to_stable_bundle_id(input))
         .bind(&input.name)
         .bind(&input.process_path)
         .bind(&input.icon)
