@@ -45,7 +45,7 @@ function RouteComponent() {
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
-				<h1 className="text-base-900 text-xl font-semibold">Profiles</h1>
+				<h1 className="text-base-900 text-xl font-semibold">Focus Profiles</h1>
 				<IconButton
 					variant="default"
 					size="sm"
@@ -80,7 +80,7 @@ function RouteComponent() {
 				</SettingItem>
 			</SettingGroup>
 
-			<SettingGroup title="Your Profiles">
+			<SettingGroup title="Your Focus Profiles">
 				{profiles.length > 0 ? (
 					<ul className="divide-base-100 divide-y">
 						{profiles.map((profile) => {
