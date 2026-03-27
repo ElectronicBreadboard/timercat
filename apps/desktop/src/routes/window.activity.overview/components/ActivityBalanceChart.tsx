@@ -19,7 +19,7 @@ export const ActivityBalanceChart: React.FC<TActivityBalanceChartProps> = (props
 	const bins = React.useMemo(() => computeBins(activities, startOfDay), [activities, startOfDay]);
 
 	const maxPositive = React.useMemo(
-		() => Math.max(1, ...bins.map((b) => b.focused + b.neutral)),
+		() => Math.max(1, ...bins.map((b) => b.focused + b.neutral + b.uncategorized)),
 		[bins]
 	);
 	const maxNegative = React.useMemo(() => Math.max(1, ...bins.map((b) => b.distracting)), [bins]);
@@ -84,6 +84,10 @@ export const ActivityBalanceChart: React.FC<TActivityBalanceChartProps> = (props
 								bin.focused > 0 ? Math.max((bin.focused / maxPositive) * halfH, minBarPx) : 0;
 							const neutralH =
 								bin.neutral > 0 ? Math.max((bin.neutral / maxPositive) * halfH, minBarPx) : 0;
+							const uncategorizedH =
+								bin.uncategorized > 0
+									? Math.max((bin.uncategorized / maxPositive) * halfH, minBarPx)
+									: 0;
 							const distractingH =
 								bin.distracting > 0
 									? Math.max((bin.distracting / maxNegative) * halfH, minBarPx)
@@ -91,14 +95,37 @@ export const ActivityBalanceChart: React.FC<TActivityBalanceChartProps> = (props
 
 							const focusedActivities = bin.activities.filter((a) => a.category === 'focused');
 							const neutralActivities = bin.activities.filter((a) => a.category === 'neutral');
+							const uncategorizedActivities = bin.activities.filter((a) =>
+								isUncategorizedActivity(a.category)
+							);
 							const distractingActivities = bin.activities.filter(
 								(a) => a.category === 'distracting'
 							);
 
 							return (
 								<div key={h} className="relative flex flex-1 flex-col">
-									{/* Upper half — focused (bottom) + neutral (top), touching axis */}
+									{/* Upper half — focused (bottom), neutral, uncategorized (top), touching axis */}
 									<div className="flex flex-col justify-end" style={{ height: halfH }}>
+										{uncategorizedH > 0 && (
+											<Tooltip
+												content={
+													<FocusCategoryTooltip
+														category={null}
+														durationMs={bin.uncategorized}
+														activities={uncategorizedActivities}
+													/>
+												}
+												side="bottom"
+											>
+												<div
+													className="w-full cursor-default hover:opacity-80"
+													style={{
+														height: uncategorizedH,
+														backgroundColor: categoryToColor(null)
+													}}
+												/>
+											</Tooltip>
+										)}
 										{neutralH > 0 && (
 											<Tooltip
 												content={
@@ -196,6 +223,7 @@ function computeBins(activities: specta.WindowActivityDto[], startOfDay: number)
 	const bins: THourBin[] = Array.from({ length: 24 }, () => ({
 		focused: 0,
 		neutral: 0,
+		uncategorized: 0,
 		distracting: 0,
 		activities: []
 	}));
@@ -215,6 +243,7 @@ function computeBins(activities: specta.WindowActivityDto[], startOfDay: number)
 			if (cat === 'focused') bin.focused += overlap;
 			else if (cat === 'neutral') bin.neutral += overlap;
 			else if (cat === 'distracting') bin.distracting += overlap;
+			else bin.uncategorized += overlap;
 
 			bin.activities.push({ ...activity, startedAt: clippedStart, endedAt: clippedEnd });
 		}
@@ -226,9 +255,14 @@ function computeBins(activities: specta.WindowActivityDto[], startOfDay: number)
 interface THourBin {
 	focused: number; // ms
 	neutral: number; // ms
+	uncategorized: number; // ms
 	distracting: number; // ms
 	/** Activities clipped to this hour's boundaries */
 	activities: specta.WindowActivityDto[];
+}
+
+function isUncategorizedActivity(category: specta.WindowActivityDto['category']): boolean {
+	return category !== 'focused' && category !== 'neutral' && category !== 'distracting';
 }
 
 function niceTickInterval(maxMs: number, maxTicks = 3): number {

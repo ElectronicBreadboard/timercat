@@ -1,4 +1,4 @@
-import { Tooltip, TooltipProvider } from '@repo/ui';
+import { formatDuration, Tooltip, TooltipProvider } from '@repo/ui';
 import React from 'react';
 import type { specta } from '@/environment';
 import { categoryToColor, FocusCategoryTooltip } from '@/features/focus';
@@ -6,34 +6,39 @@ import { categoryToColor, FocusCategoryTooltip } from '@/features/focus';
 export const FocusPulse: React.FC<TFocusPulseProps> = (props) => {
 	const { activities } = props;
 
-	const { focusedMs, neutralMs, distractingMs, score } = React.useMemo(() => {
-		let focusedMs = 0;
-		let neutralMs = 0;
-		let distractingMs = 0;
-		for (const a of activities) {
-			const dur = a.endedAt - a.startedAt;
-			if (a.category === 'focused') focusedMs += dur;
-			else if (a.category === 'neutral') neutralMs += dur;
-			else if (a.category === 'distracting') distractingMs += dur;
-		}
-		const totalMs = focusedMs + neutralMs + distractingMs;
-		const score =
-			totalMs === 0
-				? 0
-				: Math.min(100, Math.round(((focusedMs + neutralMs * 0.5) / totalMs) * 100));
-		return { focusedMs, neutralMs, distractingMs, score };
-	}, [activities]);
+	const { focusedMs, neutralMs, distractingMs, uncategorizedMs, categorizedMs, score } =
+		React.useMemo(() => {
+			let focusedMs = 0;
+			let neutralMs = 0;
+			let distractingMs = 0;
+			let uncategorizedMs = 0;
+			for (const a of activities) {
+				const dur = a.endedAt - a.startedAt;
+				if (a.category === 'focused') focusedMs += dur;
+				else if (a.category === 'neutral') neutralMs += dur;
+				else if (a.category === 'distracting') distractingMs += dur;
+				else uncategorizedMs += dur;
+			}
+			const categorizedMs = focusedMs + neutralMs + distractingMs;
+			const score =
+				categorizedMs === 0
+					? 0
+					: Math.min(100, Math.round(((focusedMs + neutralMs * 0.5) / categorizedMs) * 100));
+			return { focusedMs, neutralMs, distractingMs, uncategorizedMs, categorizedMs, score };
+		}, [activities]);
 
 	const size = 128;
 	const center = size / 2;
 	const r = 52;
 	const strokeWidth = 14;
 	const c = 2 * Math.PI * r;
-	const totalMs = focusedMs + neutralMs + distractingMs;
+	const totalMs = categorizedMs + uncategorizedMs;
 
 	const focusedLen = totalMs > 0 ? (focusedMs / totalMs) * c : 0;
 	const neutralLen = totalMs > 0 ? (neutralMs / totalMs) * c : 0;
 	const distractingLen = totalMs > 0 ? (distractingMs / totalMs) * c : 0;
+	const uncategorizedLen = totalMs > 0 ? (uncategorizedMs / totalMs) * c : 0;
+	const categorizedPct = totalMs > 0 ? Math.round((categorizedMs / totalMs) * 100) : 0;
 
 	const focusedActivities = React.useMemo(
 		() => activities.filter((activity) => activity.category === 'focused'),
@@ -45,6 +50,10 @@ export const FocusPulse: React.FC<TFocusPulseProps> = (props) => {
 	);
 	const distractingActivities = React.useMemo(
 		() => activities.filter((activity) => activity.category === 'distracting'),
+		[activities]
+	);
+	const uncategorizedActivities = React.useMemo(
+		() => activities.filter((activity) => isUncategorizedActivity(activity.category)),
 		[activities]
 	);
 
@@ -147,6 +156,33 @@ export const FocusPulse: React.FC<TFocusPulseProps> = (props) => {
 								/>
 							</Tooltip>
 						)}
+						{/* Uncategorized arc */}
+						{uncategorizedLen > 0 && (
+							<Tooltip
+								content={
+									<FocusCategoryTooltip
+										category={null}
+										durationMs={uncategorizedMs}
+										activities={uncategorizedActivities}
+									/>
+								}
+								side="left"
+								positionerClassName="z-50"
+							>
+								<circle
+									cx={center}
+									cy={center}
+									r={r}
+									fill="none"
+									strokeWidth={strokeWidth}
+									stroke={categoryToColor(null)}
+									strokeDasharray={`${uncategorizedLen} ${c}`}
+									strokeDashoffset={-(focusedLen + neutralLen + distractingLen)}
+									transform={`rotate(-90 ${center} ${center})`}
+									className="cursor-default transition-opacity hover:opacity-80"
+								/>
+							</Tooltip>
+						)}
 					</svg>
 					{/* Score */}
 					<div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -156,6 +192,11 @@ export const FocusPulse: React.FC<TFocusPulseProps> = (props) => {
 
 				{/* Label */}
 				<span className="text-base-400 text-[11px]">focus score</span>
+				<span className="text-base-400 text-[11px]">
+					{uncategorizedMs > 0
+						? `${categorizedPct}% categorized · ${formatDuration(uncategorizedMs / 1000)} uncategorized`
+						: 'fully categorized'}
+				</span>
 			</div>
 		</TooltipProvider>
 	);
@@ -163,4 +204,8 @@ export const FocusPulse: React.FC<TFocusPulseProps> = (props) => {
 
 interface TFocusPulseProps {
 	activities: specta.WindowActivityDto[];
+}
+
+function isUncategorizedActivity(category: specta.WindowActivityDto['category']): boolean {
+	return category !== 'focused' && category !== 'neutral' && category !== 'distracting';
 }
