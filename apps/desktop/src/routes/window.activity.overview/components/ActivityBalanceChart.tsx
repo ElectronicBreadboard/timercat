@@ -80,6 +80,7 @@ export const ActivityBalanceChart: React.FC<TActivityBalanceChartProps> = (props
 					{/* Bars + axis */}
 					<div className="relative flex gap-px" style={{ height: halfH * 2 }}>
 						{bins.map((bin, h) => {
+							const tooltipSide = h < 12 ? 'right' : 'left';
 							const focusedH =
 								bin.focused > 0 ? Math.max((bin.focused / maxPositive) * halfH, minBarPx) : 0;
 							const neutralH =
@@ -115,7 +116,8 @@ export const ActivityBalanceChart: React.FC<TActivityBalanceChartProps> = (props
 														activities={uncategorizedActivities}
 													/>
 												}
-												side="bottom"
+												side={tooltipSide}
+												sideOffset={8}
 											>
 												<div
 													className="w-full cursor-default hover:opacity-80"
@@ -135,7 +137,8 @@ export const ActivityBalanceChart: React.FC<TActivityBalanceChartProps> = (props
 														activities={neutralActivities}
 													/>
 												}
-												side="bottom"
+												side={tooltipSide}
+												sideOffset={8}
 											>
 												<div
 													className="w-full cursor-default hover:opacity-80"
@@ -152,7 +155,8 @@ export const ActivityBalanceChart: React.FC<TActivityBalanceChartProps> = (props
 														activities={focusedActivities}
 													/>
 												}
-												side="bottom"
+												side={tooltipSide}
+												sideOffset={8}
 											>
 												<div
 													className="w-full cursor-default hover:opacity-80"
@@ -173,7 +177,8 @@ export const ActivityBalanceChart: React.FC<TActivityBalanceChartProps> = (props
 														activities={distractingActivities}
 													/>
 												}
-												side="top"
+												side={tooltipSide}
+												sideOffset={8}
 											>
 												<div
 													className="w-full cursor-default hover:opacity-80"
