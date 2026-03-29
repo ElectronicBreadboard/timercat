@@ -3,8 +3,8 @@ import { useFeatureState } from 'feature-react/state';
 import React, { useCallback } from 'react';
 import { Timeline, TimelineAxis } from '@/components';
 import type { specta } from '@/environment';
-import { ActivityTrack } from './ActivityTrack';
 import { FocusCategorySummary } from '@/features/focus';
+import { ActivityTrack } from './ActivityTrack';
 import { SessionEventMarkers, SessionEventPeriodOverlays } from './SessionEventIndicators';
 import { SessionTimelineCx } from './SessionTimelineCx';
 

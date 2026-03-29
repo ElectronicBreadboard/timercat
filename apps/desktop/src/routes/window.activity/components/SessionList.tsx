@@ -2,6 +2,7 @@ import { ClockIcon, cn } from '@repo/ui';
 import { Link, useParams } from '@tanstack/react-router';
 import React from 'react';
 import { specta } from '@/environment';
+import { getLocalDateKey } from '@/lib';
 import { SessionListItem } from './SessionListItem';
 
 export const SessionList: React.FC<TSessionListProps> = (props) => {
@@ -48,6 +49,7 @@ export const SessionList: React.FC<TSessionListProps> = (props) => {
 			{/* Overview Entry */}
 			<Link
 				to="/window/activity/overview"
+				search={{ date: getLocalDateKey(new Date()) }}
 				className={cn(
 					'border-base-200 flex items-center gap-2 border-b px-3 py-2.5 transition-colors',
 					isOverviewSelected ? 'bg-base-100' : 'hover:bg-base-100/50'

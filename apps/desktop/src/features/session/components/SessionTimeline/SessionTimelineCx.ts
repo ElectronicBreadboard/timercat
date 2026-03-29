@@ -2,8 +2,8 @@ import { withLocalStorage } from 'feature-react/state';
 import { createState } from 'feature-state';
 import { TimelineCx } from '@/components';
 import type { specta } from '@/environment';
-import { ActivityTrackCx, TActivityTrackCxThresholds } from './ActivityTrack';
 import type { TViewMode } from '@/features/focus';
+import { ActivityTrackCx, TActivityTrackCxThresholds } from './ActivityTrack';
 
 export class SessionTimelineCx {
 	public readonly timelineCx: TimelineCx;

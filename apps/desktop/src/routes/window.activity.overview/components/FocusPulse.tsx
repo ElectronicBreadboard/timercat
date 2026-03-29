@@ -1,4 +1,4 @@
-import { formatDuration, Tooltip, TooltipProvider } from '@repo/ui';
+import { Tooltip, TooltipProvider } from '@repo/ui';
 import React from 'react';
 import type { specta } from '@/environment';
 import { categoryToColor, FocusCategoryTooltip } from '@/features/focus';
@@ -38,7 +38,6 @@ export const FocusPulse: React.FC<TFocusPulseProps> = (props) => {
 	const neutralLen = totalMs > 0 ? (neutralMs / totalMs) * c : 0;
 	const distractingLen = totalMs > 0 ? (distractingMs / totalMs) * c : 0;
 	const uncategorizedLen = totalMs > 0 ? (uncategorizedMs / totalMs) * c : 0;
-	const categorizedPct = totalMs > 0 ? Math.round((categorizedMs / totalMs) * 100) : 0;
 
 	const focusedActivities = React.useMemo(
 		() => activities.filter((activity) => activity.category === 'focused'),
@@ -192,11 +191,6 @@ export const FocusPulse: React.FC<TFocusPulseProps> = (props) => {
 
 				{/* Label */}
 				<span className="text-base-400 text-[11px]">focus score</span>
-				<span className="text-base-400 text-[11px]">
-					{uncategorizedMs > 0
-						? `${categorizedPct}% categorized · ${formatDuration(uncategorizedMs / 1000)} uncategorized`
-						: 'fully categorized'}
-				</span>
 			</div>
 		</TooltipProvider>
 	);

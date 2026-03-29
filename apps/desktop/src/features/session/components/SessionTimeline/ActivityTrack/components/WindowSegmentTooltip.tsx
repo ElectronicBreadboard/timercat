@@ -98,4 +98,3 @@ function getWindowLabel(window: specta.WindowActivityDto): string {
 
 	return 'Untitled window';
 }
-

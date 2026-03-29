@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { specta } from '@/environment';
-import { toTuple } from '@/lib';
+import { getLocalDateKey, toTuple } from '@/lib';
 import { activitySessionConfig } from './config';
 
 export const Route = createFileRoute('/window/activity/')({
@@ -19,6 +19,9 @@ export const Route = createFileRoute('/window/activity/')({
 				params: { sessionId: String(sessionId) }
 			});
 		}
-		throw redirect({ to: '/window/activity/overview' });
+		throw redirect({
+			to: '/window/activity/overview',
+			search: { date: getLocalDateKey(new Date()) }
+		});
 	}
 });

@@ -4,35 +4,42 @@ import React from 'react';
 import { unwrapOr } from 'tuple-result';
 import { specta } from '@/environment';
 import { usePlatform } from '@/hooks';
-import { toTuple } from '@/lib';
+import { getLocalDateKey, parseLocalDateKey, parseSearchDate, toTuple } from '@/lib';
 import { ActivityBalanceChart, FocusPulse, UsageSection, type TUsageEntry } from './components';
 
 export const Route = createFileRoute('/window/activity/overview/')({
-	loader: async () => {
-		const now = Date.now();
-		const startOfDay = new Date();
+	validateSearch: (search: Record<string, unknown>): { date: string } => ({
+		date: parseSearchDate(search['date']) ?? getLocalDateKey(new Date())
+	}),
+	loaderDeps: ({ search }) => ({ date: search.date }),
+	loader: async ({ deps }) => {
+		const startOfDay = parseLocalDateKey(deps.date) ?? new Date();
 		startOfDay.setHours(0, 0, 0, 0);
 		const startedAt = startOfDay.getTime();
+		const endedAt = startedAt + 86_400_000;
+		const now = Date.now();
+		const dayEnd = deps.date === getLocalDateKey(new Date()) ? now : endedAt;
 
 		const activities = unwrapOr(
 			toTuple(
 				await specta.commands.getWindowActivities({
 					startedAfter: startedAt,
-					startedBefore: now,
+					startedBefore: dayEnd,
 					limit: null
 				})
 			),
 			[]
 		);
 
-		return { startedAt, activities };
+		return { date: deps.date, startedAt, activities };
 	},
 	pendingComponent: LoadingComponent,
 	component: RouteComponent
 });
 
 function RouteComponent() {
-	const { startedAt, activities } = Route.useLoaderData();
+	const { date, startedAt, activities } = Route.useLoaderData();
+	const { date: currentDate } = Route.useSearch();
 	const router = useRouter();
 	const platform = usePlatform();
 
@@ -81,7 +88,30 @@ function RouteComponent() {
 		return Array.from(domainMap.values()).sort((a, b) => b.totalSeconds - a.totalSeconds);
 	}, [activities]);
 
-	const dateLabel = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+	const selectedDate = React.useMemo(() => new Date(startedAt), [startedAt]);
+	const dateLabel = React.useMemo(
+		() =>
+			selectedDate.toLocaleDateString('en-US', {
+				month: 'long',
+				day: 'numeric'
+			}),
+		[selectedDate]
+	);
+	const isToday = date === getLocalDateKey(new Date());
+	const trackedLabel = isToday ? 'tracked today' : `tracked on ${dateLabel}`;
+
+	const navigateDay = React.useCallback(
+		(dayDelta: number) => {
+			const nextDate = parseLocalDateKey(currentDate) ?? new Date();
+			nextDate.setHours(0, 0, 0, 0);
+			nextDate.setDate(nextDate.getDate() + dayDelta);
+			void router.navigate({
+				to: '/window/activity/overview',
+				search: { date: getLocalDateKey(nextDate) }
+			});
+		},
+		[currentDate, router]
+	);
 
 	// MARK: - UI
 
@@ -99,8 +129,9 @@ function RouteComponent() {
 					{/* Total tracked time + back + date */}
 					<div className="flex items-center gap-1">
 						<button
-							onClick={() => router.history.back()}
+							onClick={() => void router.navigate({ to: '/window/activity' })}
 							className="text-base-500 hover:text-base-700 mt-1.5 flex items-center self-start rounded transition-colors"
+							aria-label="Back to activity sessions"
 						>
 							<ChevronLeftIcon size={18} />
 						</button>
@@ -109,9 +140,26 @@ function RouteComponent() {
 								<span className="text-base-900 text-2xl font-semibold tabular-nums">
 									{formatDuration(totalTrackedSeconds)}
 								</span>
-								<span className="text-base-400 text-xs">{dateLabel}</span>
+								<div className="flex items-center gap-1">
+									<button
+										onClick={() => navigateDay(-1)}
+										className="text-base-400 hover:text-base-700 flex items-center rounded transition-colors"
+										aria-label="View previous day"
+									>
+										<ChevronLeftIcon size={14} />
+									</button>
+									<span className="text-base-400 min-w-18 text-center text-xs">{dateLabel}</span>
+									<button
+										onClick={() => navigateDay(1)}
+										disabled={isToday}
+										className="text-base-400 hover:text-base-700 flex items-center rounded transition-colors disabled:opacity-30"
+										aria-label="View next day"
+									>
+										<ChevronLeftIcon size={14} className="rotate-180" />
+									</button>
+								</div>
 							</div>
-							<span className="text-base-400 text-xs">tracked today</span>
+							<span className="text-base-400 text-xs">{trackedLabel}</span>
 						</div>
 					</div>
 
@@ -144,9 +192,9 @@ function RouteComponent() {
 					{/* Empty state */}
 					{activities.length === 0 && (
 						<div className="flex flex-col items-center justify-center py-12 text-center">
-							<p className="text-base-500 text-sm">No activity tracked today</p>
+							<p className="text-base-500 text-sm">No activity tracked for this day</p>
 							<p className="text-base-400 mt-1 text-xs">
-								Start a focus session to see your daily overview
+								Start a focus session to see the selected day overview
 							</p>
 						</div>
 					)}
