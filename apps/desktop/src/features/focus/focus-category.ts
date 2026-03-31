@@ -1,13 +1,13 @@
 export function categoryToColor(category: FocusViewCategory | null): string {
 	switch (category) {
 		case 'focused':
-			return '#22c55e';
+			return 'var(--color-primary)';
 		case 'neutral':
-			return '#94a3b8';
+			return 'var(--color-base-400)';
 		case 'distracting':
 			return '#ef4444';
 		default:
-			return '#e2e8f0'; // no active profile
+			return 'var(--color-base-300)'; // no active profile
 	}
 }
 
