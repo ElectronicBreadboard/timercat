@@ -27,7 +27,6 @@ pub fn get_timer(state: State<'_, TimerState>) -> TimerDto {
 pub async fn start_timer(
     app: AppHandle,
     state: State<'_, TimerState>,
-    app_settings: State<'_, AppSettingsState>,
     runner: State<'_, Mutex<Option<TimerRunner>>>,
     db: State<'_, DatabaseState>,
     intention: Option<String>,
@@ -39,14 +38,15 @@ pub async fn start_timer(
     let intention = intention.filter(|s| !s.trim().is_empty());
 
     // Read state
-    let (session_type, planned_seconds, settings) = {
+    let (session_type, planned_seconds) = {
         let timer = state.lock().unwrap();
         if timer.status != TimerStatus::Idle {
             return Err("Timer is not idle".to_string());
         }
-        let settings = app_settings.lock().unwrap();
-        let (session_type, planned_seconds) = timer.first_session();
-        (session_type, planned_seconds, (*settings).clone())
+        let (session_type, _) = timer.first_session();
+        // Use remaining_seconds so idle duration adjustments are reflected as planned.
+        let planned_seconds = timer.remaining_seconds;
+        (session_type, planned_seconds)
     };
 
     // DB: create session

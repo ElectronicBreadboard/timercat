@@ -210,7 +210,7 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 					{(alwaysOnProfiles.length > 0 || selectedProfiles.length > 0) && (
 						<div className="flex flex-col gap-2">
 							<span className="text-base-500 text-xs font-medium tracking-wider uppercase">
-								Categories
+								Category Preview
 							</span>
 							<div className="flex flex-wrap gap-1.5">
 								{categoryPreviewItems.map((item) => (
@@ -218,7 +218,7 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 										key={`${item.category}:${item.name}`}
 										className={cn(
 											'rounded-full px-2 py-0.5 text-xs font-medium',
-											item.category === 'focused' && 'bg-green-100 text-green-700',
+											item.category === 'focused' && 'bg-blue-100 text-blue-700',
 											item.category === 'neutral' && 'bg-base-100 text-base-500',
 											item.category === 'distracting' && 'bg-red-100 text-red-600'
 										)}
