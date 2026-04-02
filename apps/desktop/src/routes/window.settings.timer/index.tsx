@@ -89,22 +89,44 @@ function RouteComponent() {
 				</SettingGroup>
 
 				{timerMode === 'countdown' && (
-					<SettingGroup title="Durations">
-						<SettingItem label="Duration" description="Minutes for countdown">
-							<NumberField
-								value={settings.timer.countdown.durationMinutes}
-								min={1}
-								max={120}
-								step={5}
-								size="sm"
-								onChange={(v) =>
-									updateTimer({
-										countdown: { ...settings.timer.countdown, durationMinutes: v }
-									})
-								}
-							/>
-						</SettingItem>
-					</SettingGroup>
+					<>
+						<SettingGroup title="Durations">
+							<SettingItem label="Duration" description="Minutes for countdown">
+								<NumberField
+									value={settings.timer.countdown.durationMinutes}
+									min={1}
+									max={120}
+									step={5}
+									size="sm"
+									onChange={(v) =>
+										updateTimer({
+											countdown: { ...settings.timer.countdown, durationMinutes: v }
+										})
+									}
+								/>
+							</SettingItem>
+						</SettingGroup>
+
+						<SettingGroup title="Sessions">
+							<SettingItem
+								label="Show Session Setup"
+								description="Show intention and profile selection before starting a session"
+							>
+								<Switch
+									checked={settings.timer.countdown.showSessionSetup}
+									onCheckedChange={(checked) =>
+										updateTimer({
+											countdown: {
+												...settings.timer.countdown,
+												showSessionSetup: checked
+											}
+										})
+									}
+									size="sm"
+								/>
+							</SettingItem>
+						</SettingGroup>
+					</>
 				)}
 
 				{timerMode === 'pomodoro' && (

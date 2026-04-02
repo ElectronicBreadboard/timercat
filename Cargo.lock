@@ -837,7 +837,7 @@ dependencies = [
 
 [[package]]
 name = "desktop"
-version = "0.0.42"
+version = "0.0.43"
 dependencies = [
  "chrono",
  "focuscat-macos",

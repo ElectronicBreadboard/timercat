@@ -1,33 +1,19 @@
 import { Button, cn, Input } from '@repo/ui';
 import { useNavigate } from '@tanstack/react-router';
-import { useCompute, useFeatureState } from 'feature-react/state';
+import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { WindowHeader } from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
 import { toTuple } from '@/lib';
-import { PomodoroTimerCx, ProgressivePomodoroTimerCx } from '../../modes';
 import { AddProfileButton } from './AddProfileButton';
 import { ProfileTag } from './ProfileTag';
 
 export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => {
-	const { timerCx, advance } = props;
+	const { onStart, upcomingFocusSessionType } = props;
 	const navigate = useNavigate();
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
-
-	const currentSessionType = useCompute(timerCx.$sessionType, ({ value }) => value);
-
-	// Determine upcoming session type for profile filtering.
-	// Fresh start always begins with a Focus session. Advance flips from the just-completed type.
-	const upcomingFocusSessionType = React.useMemo<specta.FocusSessionType>(() => {
-		if (!advance) {
-			return 'Focus';
-		}
-		const isCurrentWork =
-			currentSessionType.endsWith(':work') || currentSessionType === 'countdown';
-		return isCurrentWork ? 'Break' : 'Focus';
-	}, [advance, currentSessionType]);
 
 	const [intention, setIntention] = React.useState('');
 	const [selectedIds, setSelectedIds] = React.useState<number[]>([]);
@@ -108,13 +94,9 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 			return;
 		}
 		setIsStarting(true);
-		if (advance) {
-			await timerCx.advance(intention, selectedIds);
-		} else {
-			await timerCx.start(intention, selectedIds);
-		}
+		await onStart(intention, selectedIds);
 		navigate({ to: '/window/main' });
-	}, [isStarting, intention, selectedIds, advance, timerCx, navigate]);
+	}, [isStarting, intention, selectedIds, onStart, navigate]);
 
 	const handleAddProfile = React.useCallback((id: number) => {
 		setSelectedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
@@ -246,6 +228,6 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 };
 
 interface SessionSetupScreenProps {
-	timerCx: PomodoroTimerCx | ProgressivePomodoroTimerCx;
-	advance: boolean;
+	onStart: (intention: string, selectedIds: number[]) => Promise<void>;
+	upcomingFocusSessionType: specta.FocusSessionType;
 }

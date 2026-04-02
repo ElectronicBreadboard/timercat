@@ -34,6 +34,7 @@ import { Route as WindowSettingsFocusProfileIdIndexRouteImport } from './routes/
 import { Route as WindowMainProgressiveSetupIndexRouteImport } from './routes/window.main.progressive.setup/index'
 import { Route as WindowMainProgressiveRatingIndexRouteImport } from './routes/window.main.progressive.rating/index'
 import { Route as WindowMainPomodoroSetupIndexRouteImport } from './routes/window.main.pomodoro.setup/index'
+import { Route as WindowMainCountdownSetupIndexRouteImport } from './routes/window.main.countdown.setup/index'
 
 const WindowSettingsRouteRoute = WindowSettingsRouteRouteImport.update({
   id: '/window/settings',
@@ -173,6 +174,12 @@ const WindowMainPomodoroSetupIndexRoute =
     path: '/pomodoro/setup/',
     getParentRoute: () => WindowMainRouteRoute,
   } as any)
+const WindowMainCountdownSetupIndexRoute =
+  WindowMainCountdownSetupIndexRouteImport.update({
+    id: '/countdown/setup/',
+    path: '/countdown/setup/',
+    getParentRoute: () => WindowMainRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/window/activity': typeof WindowActivityRouteRouteWithChildren
@@ -195,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/window/settings/focus/': typeof WindowSettingsFocusIndexRoute
   '/window/settings/goals/': typeof WindowSettingsGoalsIndexRoute
   '/window/settings/timer/': typeof WindowSettingsTimerIndexRoute
+  '/window/main/countdown/setup/': typeof WindowMainCountdownSetupIndexRoute
   '/window/main/pomodoro/setup/': typeof WindowMainPomodoroSetupIndexRoute
   '/window/main/progressive/rating/': typeof WindowMainProgressiveRatingIndexRoute
   '/window/main/progressive/setup/': typeof WindowMainProgressiveSetupIndexRoute
@@ -217,6 +225,7 @@ export interface FileRoutesByTo {
   '/window/settings/focus': typeof WindowSettingsFocusIndexRoute
   '/window/settings/goals': typeof WindowSettingsGoalsIndexRoute
   '/window/settings/timer': typeof WindowSettingsTimerIndexRoute
+  '/window/main/countdown/setup': typeof WindowMainCountdownSetupIndexRoute
   '/window/main/pomodoro/setup': typeof WindowMainPomodoroSetupIndexRoute
   '/window/main/progressive/rating': typeof WindowMainProgressiveRatingIndexRoute
   '/window/main/progressive/setup': typeof WindowMainProgressiveSetupIndexRoute
@@ -245,6 +254,7 @@ export interface FileRoutesById {
   '/window/settings/focus/': typeof WindowSettingsFocusIndexRoute
   '/window/settings/goals/': typeof WindowSettingsGoalsIndexRoute
   '/window/settings/timer/': typeof WindowSettingsTimerIndexRoute
+  '/window/main/countdown/setup/': typeof WindowMainCountdownSetupIndexRoute
   '/window/main/pomodoro/setup/': typeof WindowMainPomodoroSetupIndexRoute
   '/window/main/progressive/rating/': typeof WindowMainProgressiveRatingIndexRoute
   '/window/main/progressive/setup/': typeof WindowMainProgressiveSetupIndexRoute
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/window/settings/focus/'
     | '/window/settings/goals/'
     | '/window/settings/timer/'
+    | '/window/main/countdown/setup/'
     | '/window/main/pomodoro/setup/'
     | '/window/main/progressive/rating/'
     | '/window/main/progressive/setup/'
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/window/settings/focus'
     | '/window/settings/goals'
     | '/window/settings/timer'
+    | '/window/main/countdown/setup'
     | '/window/main/pomodoro/setup'
     | '/window/main/progressive/rating'
     | '/window/main/progressive/setup'
@@ -323,6 +335,7 @@ export interface FileRouteTypes {
     | '/window/settings/focus/'
     | '/window/settings/goals/'
     | '/window/settings/timer/'
+    | '/window/main/countdown/setup/'
     | '/window/main/pomodoro/setup/'
     | '/window/main/progressive/rating/'
     | '/window/main/progressive/setup/'
@@ -515,6 +528,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WindowMainPomodoroSetupIndexRouteImport
       parentRoute: typeof WindowMainRouteRoute
     }
+    '/window/main/countdown/setup/': {
+      id: '/window/main/countdown/setup/'
+      path: '/countdown/setup'
+      fullPath: '/window/main/countdown/setup/'
+      preLoaderRoute: typeof WindowMainCountdownSetupIndexRouteImport
+      parentRoute: typeof WindowMainRouteRoute
+    }
   }
 }
 
@@ -559,6 +579,7 @@ const WindowCatRouteRouteWithChildren = WindowCatRouteRoute._addFileChildren(
 interface WindowMainRouteRouteChildren {
   WindowMainIndexRoute: typeof WindowMainIndexRoute
   WindowMainSplashIndexRoute: typeof WindowMainSplashIndexRoute
+  WindowMainCountdownSetupIndexRoute: typeof WindowMainCountdownSetupIndexRoute
   WindowMainPomodoroSetupIndexRoute: typeof WindowMainPomodoroSetupIndexRoute
   WindowMainProgressiveRatingIndexRoute: typeof WindowMainProgressiveRatingIndexRoute
   WindowMainProgressiveSetupIndexRoute: typeof WindowMainProgressiveSetupIndexRoute
@@ -567,6 +588,7 @@ interface WindowMainRouteRouteChildren {
 const WindowMainRouteRouteChildren: WindowMainRouteRouteChildren = {
   WindowMainIndexRoute: WindowMainIndexRoute,
   WindowMainSplashIndexRoute: WindowMainSplashIndexRoute,
+  WindowMainCountdownSetupIndexRoute: WindowMainCountdownSetupIndexRoute,
   WindowMainPomodoroSetupIndexRoute: WindowMainPomodoroSetupIndexRoute,
   WindowMainProgressiveRatingIndexRoute: WindowMainProgressiveRatingIndexRoute,
   WindowMainProgressiveSetupIndexRoute: WindowMainProgressiveSetupIndexRoute,

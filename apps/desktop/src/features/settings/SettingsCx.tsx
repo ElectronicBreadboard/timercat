@@ -96,7 +96,8 @@ export class SettingsCx {
 				showSessionSetup: false
 			},
 			countdown: {
-				durationMinutes: 25
+				durationMinutes: 25,
+				showSessionSetup: false
 			}
 		},
 		goals: {

@@ -285,12 +285,14 @@ pub struct ProgressiveRatingSetting {
 #[serde(rename_all = "camelCase", default)]
 pub struct CountdownSettings {
     pub duration_minutes: u32,
+    pub show_session_setup: bool,
 }
 
 impl Default for CountdownSettings {
     fn default() -> Self {
         return Self {
             duration_minutes: 25,
+            show_session_setup: false,
         };
     }
 }

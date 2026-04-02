@@ -577,7 +577,7 @@ export type CatSettings = { equippedFur: string; equippedFace: string; equippedH
  * A category assignment within a focus profile (target + category).
  */
 export type CategoryAssignmentDto = { id: number; category: FocusCategory; target: FocusTargetDto }
-export type CountdownSettings = { durationMinutes: number }
+export type CountdownSettings = { durationMinutes: number; showSessionSetup: boolean }
 export type CurrentActivityDto = { appActivated: { app: AppInfo } } | { windowChanged: { window: WindowInfo } }
 export type CurrentActivityEvent = CurrentActivityDto
 export type CurrentActivityPollTarget = "app" | "window"
