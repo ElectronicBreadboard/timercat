@@ -7,6 +7,7 @@ export const ActivityBalanceChart: React.FC<TActivityBalanceChartProps> = (props
 	const { activities, startOfDay, halfH = 80, minBarPx = 2 } = props;
 
 	const [isChartHovered, setIsChartHovered] = React.useState(false);
+	const leftAxisGutterPx = 30;
 	const hourAxisLabels = React.useMemo<Partial<Record<number, string>>>(
 		() => ({
 			0: '12AM',
@@ -47,30 +48,28 @@ export const ActivityBalanceChart: React.FC<TActivityBalanceChartProps> = (props
 							{positiveTicks.map((t) => {
 								const y = halfH - (t / maxPositive) * halfH;
 								return (
-									<div
-										key={`p${t}`}
-										className="absolute inset-x-0 flex items-center gap-1"
-										style={{ top: y }}
-									>
-										<span className="text-base-400 text-[10px] leading-none whitespace-nowrap">
+									<div key={`p${t}`} className="absolute inset-x-0 h-0" style={{ top: y }}>
+										<div className="border-base-200 absolute inset-x-0 top-0 border-t border-dashed" />
+										<span
+											className="bg-base-0 text-base-400 absolute top-0 left-0 flex -translate-y-1/2 items-center text-[10px] leading-none whitespace-nowrap"
+											style={{ width: leftAxisGutterPx }}
+										>
 											{formatDuration(t / 1000)}
 										</span>
-										<div className="border-base-200 flex-1 border-t border-dashed" />
 									</div>
 								);
 							})}
 							{negativeTicks.map((t) => {
 								const y = halfH + (t / maxNegative) * halfH;
 								return (
-									<div
-										key={`n${t}`}
-										className="absolute inset-x-0 flex items-center gap-1"
-										style={{ top: y }}
-									>
-										<span className="text-base-400 text-[10px] leading-none whitespace-nowrap">
+									<div key={`n${t}`} className="absolute inset-x-0 h-0" style={{ top: y }}>
+										<div className="border-base-200 absolute inset-x-0 top-0 border-t border-dashed" />
+										<span
+											className="bg-base-0 text-base-400 absolute top-0 left-0 flex -translate-y-1/2 items-center text-[10px] leading-none whitespace-nowrap"
+											style={{ width: leftAxisGutterPx }}
+										>
 											{formatDuration(t / 1000)}
 										</span>
-										<div className="border-base-200 flex-1 border-t border-dashed" />
 									</div>
 								);
 							})}
@@ -78,121 +77,130 @@ export const ActivityBalanceChart: React.FC<TActivityBalanceChartProps> = (props
 					)}
 
 					{/* Bars + axis */}
-					<div className="relative flex gap-px" style={{ height: halfH * 2 }}>
-						{bins.map((bin, h) => {
-							const tooltipSide = h < 12 ? 'right' : 'left';
-							const focusedH =
-								bin.focused > 0 ? Math.max((bin.focused / maxPositive) * halfH, minBarPx) : 0;
-							const neutralH =
-								bin.neutral > 0 ? Math.max((bin.neutral / maxPositive) * halfH, minBarPx) : 0;
-							const uncategorizedH =
-								bin.uncategorized > 0
-									? Math.max((bin.uncategorized / maxPositive) * halfH, minBarPx)
-									: 0;
-							const distractingH =
-								bin.distracting > 0
-									? Math.max((bin.distracting / maxNegative) * halfH, minBarPx)
-									: 0;
+					<div className="relative" style={{ height: halfH * 2 }}>
+						{/* Reserve label space so hover durations stay clear of the first bar. */}
+						<div className="flex h-full gap-px" style={{ marginLeft: leftAxisGutterPx }}>
+							{bins.map((bin, h) => {
+								const tooltipSide = h < 12 ? 'right' : 'left';
+								const focusedH =
+									bin.focused > 0 ? Math.max((bin.focused / maxPositive) * halfH, minBarPx) : 0;
+								const neutralH =
+									bin.neutral > 0 ? Math.max((bin.neutral / maxPositive) * halfH, minBarPx) : 0;
+								const uncategorizedH =
+									bin.uncategorized > 0
+										? Math.max((bin.uncategorized / maxPositive) * halfH, minBarPx)
+										: 0;
+								const distractingH =
+									bin.distracting > 0
+										? Math.max((bin.distracting / maxNegative) * halfH, minBarPx)
+										: 0;
 
-							const focusedActivities = bin.activities.filter((a) => a.category === 'focused');
-							const neutralActivities = bin.activities.filter((a) => a.category === 'neutral');
-							const uncategorizedActivities = bin.activities.filter((a) =>
-								isUncategorizedActivity(a.category)
-							);
-							const distractingActivities = bin.activities.filter(
-								(a) => a.category === 'distracting'
-							);
+								const focusedActivities = bin.activities.filter((a) => a.category === 'focused');
+								const neutralActivities = bin.activities.filter((a) => a.category === 'neutral');
+								const uncategorizedActivities = bin.activities.filter((a) =>
+									isUncategorizedActivity(a.category)
+								);
+								const distractingActivities = bin.activities.filter(
+									(a) => a.category === 'distracting'
+								);
 
-							return (
-								<div key={h} className="relative flex flex-1 flex-col">
-									{/* Upper half — focused (bottom), neutral, uncategorized (top), touching axis */}
-									<div className="flex flex-col justify-end" style={{ height: halfH }}>
-										{uncategorizedH > 0 && (
-											<Tooltip
-												content={
-													<FocusCategoryTooltip
-														category={null}
-														durationMs={bin.uncategorized}
-														activities={uncategorizedActivities}
+								return (
+									<div key={h} className="relative flex flex-1 flex-col">
+										{/* Upper half — focused (bottom), neutral, uncategorized (top), touching axis */}
+										<div className="flex flex-col justify-end" style={{ height: halfH }}>
+											{uncategorizedH > 0 && (
+												<Tooltip
+													content={
+														<FocusCategoryTooltip
+															category={null}
+															durationMs={bin.uncategorized}
+															activities={uncategorizedActivities}
+														/>
+													}
+													side={tooltipSide}
+													sideOffset={8}
+												>
+													<div
+														className="w-full cursor-default hover:opacity-80"
+														style={{
+															height: uncategorizedH,
+															backgroundColor: categoryToColor(null)
+														}}
 													/>
-												}
-												side={tooltipSide}
-												sideOffset={8}
-											>
-												<div
-													className="w-full cursor-default hover:opacity-80"
-													style={{
-														height: uncategorizedH,
-														backgroundColor: categoryToColor(null)
-													}}
-												/>
-											</Tooltip>
-										)}
-										{neutralH > 0 && (
-											<Tooltip
-												content={
-													<FocusCategoryTooltip
-														category="neutral"
-														durationMs={bin.neutral}
-														activities={neutralActivities}
+												</Tooltip>
+											)}
+											{neutralH > 0 && (
+												<Tooltip
+													content={
+														<FocusCategoryTooltip
+															category="neutral"
+															durationMs={bin.neutral}
+															activities={neutralActivities}
+														/>
+													}
+													side={tooltipSide}
+													sideOffset={8}
+												>
+													<div
+														className="w-full cursor-default hover:opacity-80"
+														style={{
+															height: neutralH,
+															backgroundColor: categoryToColor('neutral')
+														}}
 													/>
-												}
-												side={tooltipSide}
-												sideOffset={8}
-											>
-												<div
-													className="w-full cursor-default hover:opacity-80"
-													style={{ height: neutralH, backgroundColor: categoryToColor('neutral') }}
-												/>
-											</Tooltip>
-										)}
-										{focusedH > 0 && (
-											<Tooltip
-												content={
-													<FocusCategoryTooltip
-														category="focused"
-														durationMs={bin.focused}
-														activities={focusedActivities}
+												</Tooltip>
+											)}
+											{focusedH > 0 && (
+												<Tooltip
+													content={
+														<FocusCategoryTooltip
+															category="focused"
+															durationMs={bin.focused}
+															activities={focusedActivities}
+														/>
+													}
+													side={tooltipSide}
+													sideOffset={8}
+												>
+													<div
+														className="w-full cursor-default hover:opacity-80"
+														style={{
+															height: focusedH,
+															backgroundColor: categoryToColor('focused')
+														}}
 													/>
-												}
-												side={tooltipSide}
-												sideOffset={8}
-											>
-												<div
-													className="w-full cursor-default hover:opacity-80"
-													style={{ height: focusedH, backgroundColor: categoryToColor('focused') }}
-												/>
-											</Tooltip>
-										)}
+												</Tooltip>
+											)}
+										</div>
+
+										{/* Lower half — distracting, growing down from axis */}
+										<div className="flex flex-col" style={{ height: halfH }}>
+											{distractingH > 0 && (
+												<Tooltip
+													content={
+														<FocusCategoryTooltip
+															category="distracting"
+															durationMs={bin.distracting}
+															activities={distractingActivities}
+														/>
+													}
+													side={tooltipSide}
+													sideOffset={8}
+												>
+													<div
+														className="w-full cursor-default hover:opacity-80"
+														style={{
+															height: distractingH,
+															backgroundColor: categoryToColor('distracting')
+														}}
+													/>
+												</Tooltip>
+											)}
+										</div>
 									</div>
-
-									{/* Lower half — distracting, growing down from axis */}
-									<div className="flex flex-col" style={{ height: halfH }}>
-										{distractingH > 0 && (
-											<Tooltip
-												content={
-													<FocusCategoryTooltip
-														category="distracting"
-														durationMs={bin.distracting}
-														activities={distractingActivities}
-													/>
-												}
-												side={tooltipSide}
-												sideOffset={8}
-											>
-												<div
-													className="w-full cursor-default hover:opacity-80"
-													style={{
-														height: distractingH,
-														backgroundColor: categoryToColor('distracting')
-													}}
-												/>
-											</Tooltip>
-										)}
-									</div>
-								</div>
-							);
-						})}
+								);
+							})}
+						</div>
 
 						{/* Axis line */}
 						<div
@@ -204,13 +212,15 @@ export const ActivityBalanceChart: React.FC<TActivityBalanceChartProps> = (props
 
 				{/* Hour axis labels */}
 				<div className="mt-2 flex gap-px px-2">
-					{Array.from({ length: 24 }, (_, h) => (
-						<div key={h} className="flex-1 text-center">
-							{hourAxisLabels[h] != null && (
-								<span className="text-base-400 text-[10px]">{hourAxisLabels[h]}</span>
-							)}
-						</div>
-					))}
+					<div className="flex w-full" style={{ marginLeft: leftAxisGutterPx }}>
+						{Array.from({ length: 24 }, (_, h) => (
+							<div key={h} className="flex-1 text-center">
+								{hourAxisLabels[h] != null && (
+									<span className="text-base-400 text-[10px]">{hourAxisLabels[h]}</span>
+								)}
+							</div>
+						))}
+					</div>
 				</div>
 			</div>
 		</TooltipProvider>
