@@ -1,24 +1,33 @@
 import { Button, cn, Input, Select, type TSessionStartInput } from '@repo/ui';
-import { useLocation, useNavigate } from '@tanstack/react-router';
+import { useLocation } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { WindowHeader } from '@/components';
 import { specta } from '@/environment';
 import { useSettingsCx } from '@/features/settings';
-import { toTuple } from '@/lib';
+import { appendFlowReturnSearch, completeFlowReturn, toTuple, type TFlowReturnTarget } from '@/lib';
 import { AddProfileButton } from './AddProfileButton';
 import { ProfileTag } from './ProfileTag';
 
 export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => {
-	const { onStart, upcomingFocusSessionType, createdProfileId, refreshProfiles, onRefreshHandled } =
-		props;
-	const navigate = useNavigate();
+	const {
+		onStart,
+		upcomingFocusSessionType,
+		createdProfileId,
+		refreshProfiles,
+		returnTarget,
+		onRefreshHandled
+	} = props;
 
 	const returnTo = useLocation({
 		// Keep the return target stable across create/edit roundtrips by stripping the one-shot
 		// params that Settings appends when it sends us back
 		select: (location) => stripTransientSearchParams(location.href)
 	});
+	const settingsReturnTarget = React.useMemo<TFlowReturnTarget>(
+		() => ({ kind: 'main', href: returnTo }),
+		[returnTo]
+	);
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 
@@ -107,8 +116,8 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 	// MARK: - Actions
 
 	const handleCancel = React.useCallback(() => {
-		navigate({ to: '/window/main' });
-	}, [navigate]);
+		void completeFlowReturn(returnTarget);
+	}, [returnTarget]);
 
 	const handleStart = React.useCallback(async () => {
 		if (isStarting) {
@@ -120,8 +129,8 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 			profileIds: selectedIds,
 			blockThreshold: blockThreshold === 'default' ? null : blockThreshold
 		});
-		navigate({ to: '/window/main' });
-	}, [isStarting, intention, selectedIds, blockThreshold, onStart, navigate]);
+		await completeFlowReturn(returnTarget);
+	}, [isStarting, intention, selectedIds, blockThreshold, onStart, returnTarget]);
 
 	const handleAddProfile = React.useCallback((id: number) => {
 		setSelectedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
@@ -134,17 +143,17 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 	const handleOpenProfileInSettings = React.useCallback(
 		async (profileId: number) => {
 			await specta.commands.showSettingsWindowAtPath(
-				buildFocusSettingsPath(`/window/settings/focus/${profileId}`, returnTo)
+				appendFlowReturnSearch(`/window/settings/focus/${profileId}`, settingsReturnTarget)
 			);
 		},
-		[returnTo]
+		[settingsReturnTarget]
 	);
 
 	const handleCreateProfileInSettings = React.useCallback(async () => {
 		await specta.commands.showSettingsWindowAtPath(
-			buildFocusSettingsPath('/window/settings/focus/new', returnTo)
+			appendFlowReturnSearch('/window/settings/focus/new', settingsReturnTarget)
 		);
-	}, [returnTo]);
+	}, [settingsReturnTarget]);
 
 	const loadProfiles = React.useCallback(
 		async (options?: { autoSelectId?: number | null; resetSelected?: boolean }) => {
@@ -328,6 +337,7 @@ interface SessionSetupScreenProps {
 	upcomingFocusSessionType: specta.FocusSessionType;
 	createdProfileId?: number;
 	refreshProfiles?: boolean;
+	returnTarget?: TFlowReturnTarget;
 	onRefreshHandled?: () => void;
 }
 
@@ -342,11 +352,6 @@ function formatBlockThresholdLabel(blockThreshold: specta.BlockThreshold): strin
 		default:
 			return 'Distracting Only';
 	}
-}
-
-function buildFocusSettingsPath(pathname: string, returnTo: string): string {
-	const params = new URLSearchParams({ returnTo });
-	return `${pathname}?${params.toString()}`;
 }
 
 function stripTransientSearchParams(href: string): string {

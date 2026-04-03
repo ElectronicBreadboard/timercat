@@ -15,7 +15,7 @@ export class PomodoroTimerCx extends BaseTimerCx implements TPomodoroCx {
 	public async start(input?: TSessionStartInput): Promise<void> {
 		const s = this._settingsCx.$appSettings.get();
 		if (s.timer.pomodoro.showSessionSetup && input == null) {
-			this._navigate({ to: '/window/main/pomodoro/setup', search: { advance: false } });
+			await this._showMainFlow('/window/main/pomodoro/setup?advance=false');
 			return;
 		}
 		const [ok, , err] = toTuple(await specta.commands.startTimer(this._toSessionStartInput(input)));
@@ -30,7 +30,7 @@ export class PomodoroTimerCx extends BaseTimerCx implements TPomodoroCx {
 		const s = this._settingsCx.$appSettings.get();
 		const isBreak = !this.$sessionType.get().endsWith(':work');
 		if (s.timer.pomodoro.showSessionSetup && isBreak && input == null) {
-			this._navigate({ to: '/window/main/pomodoro/setup', search: { advance: true } });
+			await this._showMainFlow('/window/main/pomodoro/setup?advance=true');
 			return;
 		}
 		const [ok, , err] = toTuple(

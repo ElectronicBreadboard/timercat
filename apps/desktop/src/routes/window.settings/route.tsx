@@ -12,7 +12,7 @@ export const Route = createFileRoute('/window/settings')({
 function LayoutComponent() {
 	return (
 		<SettingsCxProvider>
-			<TimerCxProvider>
+			<TimerCxProvider windowKind="settings">
 				<FocusProfileCxProvider>
 					<ThemeProvider>
 						<div className="bg-base-0 flex h-screen flex-col">

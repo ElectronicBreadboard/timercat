@@ -1,18 +1,27 @@
 import { Button, cn } from '@repo/ui';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { WindowHeader } from '@/components';
 import { useSettingsCx } from '@/features/settings';
 import { ProgressivePomodoroTimerCx, useTimerCx } from '@/features/timer';
+import {
+	completeFlowReturn,
+	parseFlowReturnSearch,
+	toFlowReturnTarget,
+	type TFlowReturnSearch
+} from '@/lib';
 
 export const Route = createFileRoute('/window/main/progressive/rating/')({
+	validateSearch: (search: Record<string, unknown>): TFlowReturnSearch => ({
+		...parseFlowReturnSearch(search)
+	}),
 	component: RouteComponent
 });
 
 function RouteComponent() {
-	const navigate = useNavigate();
 	const timerCx = useTimerCx<ProgressivePomodoroTimerCx>();
+	const returnTarget = toFlowReturnTarget(Route.useSearch());
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 
@@ -75,7 +84,7 @@ function RouteComponent() {
 					workMinutes * 60,
 					breakMinutes != null ? breakMinutes * 60 : null
 				);
-				navigate({ to: '/window/main' });
+				await completeFlowReturn(returnTarget);
 			} finally {
 				setIsSubmitting(false);
 			}
@@ -85,10 +94,10 @@ function RouteComponent() {
 			selectedRating,
 			selectedRatingKey,
 			ratings,
+			returnTarget,
 			settingsCx,
 			settings.timer,
-			timerCx,
-			navigate
+			timerCx
 		]
 	);
 
@@ -267,7 +276,9 @@ function RouteComponent() {
 				)}
 				<Button
 					variant="ghost"
-					onClick={() => navigate({ to: '/window/main' })}
+					onClick={() => {
+						void completeFlowReturn(returnTarget);
+					}}
 					disabled={isSubmitting}
 				>
 					Cancel

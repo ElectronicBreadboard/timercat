@@ -1,15 +1,27 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useCompute } from 'feature-react/state';
 import { ProgressivePomodoroTimerCx, SessionSetupScreen, useTimerCx } from '@/features/timer';
-import { parseSearchBoolean, parseSearchNumber } from '@/lib';
+import {
+	buildFlowReturnSearch,
+	parseFlowReturnSearch,
+	parseSearchBoolean,
+	parseSearchNumber,
+	toFlowReturnTarget,
+	type TFlowReturnSearch
+} from '@/lib';
 
 export const Route = createFileRoute('/window/main/progressive/setup/')({
 	validateSearch: (
 		search: Record<string, unknown>
-	): { advance: boolean; createdProfileId?: number; refreshProfiles?: boolean } => ({
+	): {
+		advance: boolean;
+		createdProfileId?: number;
+		refreshProfiles?: boolean;
+	} & TFlowReturnSearch => ({
 		advance: parseSearchBoolean(search['advance']),
 		createdProfileId: parseSearchNumber(search['createdProfileId']),
-		refreshProfiles: parseSearchBoolean(search['refreshProfiles'])
+		refreshProfiles: parseSearchBoolean(search['refreshProfiles']),
+		...parseFlowReturnSearch(search)
 	}),
 	component: RouteComponent
 });
@@ -17,7 +29,9 @@ export const Route = createFileRoute('/window/main/progressive/setup/')({
 function RouteComponent() {
 	const navigate = useNavigate();
 	const timerCx = useTimerCx<ProgressivePomodoroTimerCx>();
-	const { advance, createdProfileId, refreshProfiles } = Route.useSearch();
+	const search = Route.useSearch();
+	const { advance, createdProfileId, refreshProfiles } = search;
+	const returnTarget = toFlowReturnTarget(search);
 	const upcomingFocusSessionType = useCompute(
 		timerCx.$sessionType,
 		({ value }) => (advance && value.endsWith(':work') ? 'Break' : 'Focus'),
@@ -30,10 +44,11 @@ function RouteComponent() {
 			upcomingFocusSessionType={upcomingFocusSessionType}
 			createdProfileId={createdProfileId}
 			refreshProfiles={refreshProfiles}
+			returnTarget={returnTarget}
 			onRefreshHandled={() =>
 				navigate({
 					to: '/window/main/progressive/setup',
-					search: { advance }
+					search: { advance, ...buildFlowReturnSearch(returnTarget) }
 				})
 			}
 		/>

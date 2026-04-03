@@ -1,13 +1,21 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { CountdownTimerCx, SessionSetupScreen, useTimerCx } from '@/features/timer';
-import { parseSearchBoolean, parseSearchNumber } from '@/lib';
+import {
+	buildFlowReturnSearch,
+	parseFlowReturnSearch,
+	parseSearchBoolean,
+	parseSearchNumber,
+	toFlowReturnTarget,
+	type TFlowReturnSearch
+} from '@/lib';
 
 export const Route = createFileRoute('/window/main/countdown/setup/')({
 	validateSearch: (
 		search: Record<string, unknown>
-	): { createdProfileId?: number; refreshProfiles?: boolean } => ({
+	): { createdProfileId?: number; refreshProfiles?: boolean } & TFlowReturnSearch => ({
 		createdProfileId: parseSearchNumber(search['createdProfileId']),
-		refreshProfiles: parseSearchBoolean(search['refreshProfiles'])
+		refreshProfiles: parseSearchBoolean(search['refreshProfiles']),
+		...parseFlowReturnSearch(search)
 	}),
 	component: RouteComponent
 });
@@ -15,7 +23,9 @@ export const Route = createFileRoute('/window/main/countdown/setup/')({
 function RouteComponent() {
 	const navigate = useNavigate();
 	const timerCx = useTimerCx<CountdownTimerCx>();
-	const { createdProfileId, refreshProfiles } = Route.useSearch();
+	const search = Route.useSearch();
+	const { createdProfileId, refreshProfiles } = search;
+	const returnTarget = toFlowReturnTarget(search);
 
 	return (
 		<SessionSetupScreen
@@ -23,10 +33,11 @@ function RouteComponent() {
 			upcomingFocusSessionType="Focus"
 			createdProfileId={createdProfileId}
 			refreshProfiles={refreshProfiles}
+			returnTarget={returnTarget}
 			onRefreshHandled={() =>
 				navigate({
 					to: '/window/main/countdown/setup',
-					search: {}
+					search: { ...buildFlowReturnSearch(returnTarget) }
 				})
 			}
 		/>

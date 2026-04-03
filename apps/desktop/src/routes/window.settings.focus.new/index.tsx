@@ -4,24 +4,25 @@ import { hasFormChanged } from 'feature-form';
 import { useForm } from 'feature-react/form';
 import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
+import { FocusProfileForm, useFocusProfileCx } from '@/features/focus';
 import {
-	appendReturnSearch,
-	FocusProfileForm,
-	returnToMainFromFocusSettings,
-	useFocusProfileCx
-} from '@/features/focus';
-import { parseSearchString } from '@/lib';
+	appendFlowReturnTargetParams,
+	completeFocusSettingsReturn,
+	parseFlowReturnSearch,
+	toFlowReturnTarget,
+	type TFlowReturnSearch
+} from '@/lib';
 
 export const Route = createFileRoute('/window/settings/focus/new/')({
-	validateSearch: (search: Record<string, unknown>): { returnTo?: string } => ({
-		returnTo: parseSearchString(search['returnTo'])
+	validateSearch: (search: Record<string, unknown>): TFlowReturnSearch => ({
+		...parseFlowReturnSearch(search)
 	}),
 	component: RouteComponent
 });
 
 function RouteComponent() {
 	const navigate = useNavigate();
-	const { returnTo } = Route.useSearch();
+	const returnTarget = toFlowReturnTarget(Route.useSearch());
 	const profileCx = useFocusProfileCx();
 	const { form, handleSubmit } = useForm(profileCx.form);
 	const isSubmitting = useFeatureState(profileCx.form.isSubmitting);
@@ -36,12 +37,12 @@ function RouteComponent() {
 
 	const handleCancel = React.useCallback(() => {
 		profileCx.prepareCreateForm();
-		if (returnTo != null) {
-			void returnToMainFromFocusSettings(returnTo);
+		if (returnTarget != null) {
+			void completeFocusSettingsReturn(returnTarget);
 			return;
 		}
 		navigate({ to: '/window/settings/focus' });
-	}, [navigate, profileCx, returnTo]);
+	}, [navigate, profileCx, returnTarget]);
 
 	const onSubmit = handleSubmit({
 		onValidSubmit: async () => {
@@ -50,9 +51,9 @@ function RouteComponent() {
 				return;
 			}
 			profileCx.prepareCreateForm();
-			if (returnTo != null) {
-				void returnToMainFromFocusSettings(
-					appendReturnSearch(returnTo, {
+			if (returnTarget != null) {
+				void completeFocusSettingsReturn(
+					appendFlowReturnTargetParams(returnTarget, {
 						refreshProfiles: 'true',
 						createdProfileId: String(profile.id)
 					})

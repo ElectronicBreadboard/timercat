@@ -9,7 +9,7 @@ export class CountdownTimerCx extends BaseTimerCx implements TCountdownCx {
 	public async start(input?: TSessionStartInput): Promise<void> {
 		const s = this._settingsCx.$appSettings.get();
 		if (s.timer.countdown.showSessionSetup && input == null) {
-			this._navigate({ to: '/window/main/countdown/setup' });
+			await this._showMainFlow('/window/main/countdown/setup');
 			return;
 		}
 		const [ok, , err] = toTuple(await specta.commands.startTimer(this._toSessionStartInput(input)));

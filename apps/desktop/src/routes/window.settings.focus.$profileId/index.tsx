@@ -4,25 +4,26 @@ import { hasFormChanged } from 'feature-form';
 import { useForm } from 'feature-react/form';
 import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
-import {
-	appendReturnSearch,
-	FocusProfileForm,
-	returnToMainFromFocusSettings,
-	useFocusProfileCx
-} from '@/features/focus';
+import { FocusProfileForm, useFocusProfileCx } from '@/features/focus';
 import { SettingGroup, SettingItem } from '@/features/settings';
-import { parseSearchString } from '@/lib';
+import {
+	appendFlowReturnTargetParams,
+	completeFocusSettingsReturn,
+	parseFlowReturnSearch,
+	toFlowReturnTarget,
+	type TFlowReturnSearch
+} from '@/lib';
 
 export const Route = createFileRoute('/window/settings/focus/$profileId/')({
-	validateSearch: (search: Record<string, unknown>): { returnTo?: string } => ({
-		returnTo: parseSearchString(search['returnTo'])
+	validateSearch: (search: Record<string, unknown>): TFlowReturnSearch => ({
+		...parseFlowReturnSearch(search)
 	}),
 	component: RouteComponent
 });
 
 function RouteComponent() {
 	const { profileId } = Route.useParams();
-	const { returnTo } = Route.useSearch();
+	const returnTarget = toFlowReturnTarget(Route.useSearch());
 	const navigate = useNavigate();
 	const profileCx = useFocusProfileCx();
 	const { form, handleSubmit } = useForm(profileCx.form);
@@ -44,9 +45,9 @@ function RouteComponent() {
 			if (!success) {
 				return;
 			}
-			if (returnTo != null) {
-				await returnToMainFromFocusSettings(
-					appendReturnSearch(returnTo, { refreshProfiles: 'true' })
+			if (returnTarget != null) {
+				await completeFocusSettingsReturn(
+					appendFlowReturnTargetParams(returnTarget, { refreshProfiles: 'true' })
 				);
 			} else {
 				navigate({ to: '/window/settings/focus' });
@@ -57,12 +58,12 @@ function RouteComponent() {
 	// MARK: - Actions
 
 	const handleCancel = React.useCallback(() => {
-		if (returnTo != null) {
-			void returnToMainFromFocusSettings(returnTo);
+		if (returnTarget != null) {
+			void completeFocusSettingsReturn(returnTarget);
 			return;
 		}
 		navigate({ to: '/window/settings/focus' });
-	}, [navigate, returnTo]);
+	}, [navigate, returnTarget]);
 
 	const onSubmit = handleSubmit({
 		onValidSubmit: async () => {
@@ -70,9 +71,9 @@ function RouteComponent() {
 			if (profile == null) {
 				return;
 			}
-			if (returnTo != null) {
-				await returnToMainFromFocusSettings(
-					appendReturnSearch(returnTo, { refreshProfiles: 'true' })
+			if (returnTarget != null) {
+				await completeFocusSettingsReturn(
+					appendFlowReturnTargetParams(returnTarget, { refreshProfiles: 'true' })
 				);
 			} else {
 				navigate({ to: '/window/settings/focus' });

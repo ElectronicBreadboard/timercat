@@ -64,17 +64,17 @@ async showActivityWindowAtSession(sessionId: number) : Promise<Result<null, stri
     else return { status: "error", error: e  as any };
 }
 },
-async showSettingsWindowAtProfile(profileId: number) : Promise<Result<null, string>> {
+async hideMainWindow() : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("show_settings_window_at_profile", { profileId }) };
+    return { status: "ok", data: await TAURI_INVOKE("hide_main_window") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-async hideMainWindow() : Promise<Result<null, string>> {
+async navigateMainWindowToPath(path: string) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("hide_main_window") };
+    return { status: "ok", data: await TAURI_INVOKE("navigate_main_window_to_path", { path }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -99,22 +99,6 @@ async hideSettingsWindow() : Promise<Result<null, string>> {
 async navigateSettingsWindowToPath(path: string) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("navigate_settings_window_to_path", { path }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async hideActivityWindow() : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("hide_activity_window") };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async hideBlockerWindow() : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("hide_blocker_window") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };

@@ -4,12 +4,10 @@ import {
 	Cat,
 	cn,
 	CoffeeIcon,
+	CompactTimerActions,
 	ExpandIcon,
 	formatTime,
 	GripIcon,
-	PauseIcon,
-	PlayIcon,
-	SkipForwardIcon,
 	type TCatRef
 } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
@@ -31,7 +29,7 @@ function RouteComponent() {
 	const timerCx = useTimerCx();
 	const catRef = React.useRef<TCatRef>(null);
 
-	const { isBreak, isOvertime, isRunning, isPaused, displayTime } = useCombinedCompute(
+	const { isBreak, isOvertime, isRunning, displayTime } = useCombinedCompute(
 		[
 			timerCx.$status,
 			timerCx.$sessionType,
@@ -49,7 +47,6 @@ function RouteComponent() {
 				isBreak: !sessionType.endsWith(':work'),
 				isOvertime,
 				isRunning: status === 'running',
-				isPaused: status === 'paused',
 				displayTime: isOvertime ? `+${formatTime(overtimeSeconds)}` : formatTime(remainingSeconds)
 			};
 		},
@@ -59,7 +56,6 @@ function RouteComponent() {
 				a.isBreak === b.isBreak &&
 				a.isOvertime === b.isOvertime &&
 				a.isRunning === b.isRunning &&
-				a.isPaused === b.isPaused &&
 				a.displayTime === b.displayTime
 		}
 	);
@@ -70,22 +66,6 @@ function RouteComponent() {
 		await specta.commands.showMainWindow();
 		await specta.commands.hideCatWindow();
 	}, []);
-
-	const handlePauseResume = React.useCallback(async () => {
-		if (isRunning) {
-			await timerCx.pause();
-		} else if (isPaused) {
-			await timerCx.resume();
-		} else {
-			await timerCx.start();
-		}
-	}, [timerCx, isRunning, isPaused]);
-
-	const handleAdvance = React.useCallback(async () => {
-		if ('advance' in timerCx) {
-			await timerCx.advance();
-		}
-	}, [timerCx]);
 
 	const handleCatTap = React.useCallback(() => {
 		specta.commands.playSound('meow');
@@ -131,40 +111,30 @@ function RouteComponent() {
 					<GripIcon className="text-base-500 size-4 sm:size-3.5" />
 				</div>
 
-				{/* Session Type Indicator */}
-				{isBreak ? (
-					<CoffeeIcon className="text-base-400 size-4 sm:size-3.5" />
-				) : (
-					<BriefcaseIcon className="text-base-400 size-4 sm:size-3.5" />
-				)}
-
-				<div className="group relative flex items-center justify-center px-2">
-					{/* Timer */}
-					<span
-						className={cn(
-							'text-center font-mono text-sm transition-opacity select-none group-hover:opacity-0',
-							isOvertime ? 'text-warning' : isRunning ? 'text-base-950' : 'text-base-400'
+				<div className="group relative flex items-center px-2">
+					<div className="flex items-center gap-2 transition-opacity group-hover:opacity-0">
+						{isBreak ? (
+							<CoffeeIcon
+								className={cn('size-4 sm:size-3.5', isOvertime ? 'text-warning' : 'text-base-400')}
+							/>
+						) : (
+							<BriefcaseIcon
+								className={cn('size-4 sm:size-3.5', isOvertime ? 'text-warning' : 'text-base-400')}
+							/>
 						)}
-					>
-						{displayTime}
-					</span>
+						<span
+							className={cn(
+								'text-center font-mono text-sm select-none',
+								isOvertime ? 'text-warning' : isRunning ? 'text-base-950' : 'text-base-400'
+							)}
+						>
+							{displayTime}
+						</span>
+					</div>
 
 					{/* Hover Controls (overlay) */}
-					<div className="absolute inset-0 flex items-center justify-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-						<Button
-							className="text-base-400 hover:text-base-950 flex items-center p-1 transition-colors"
-							onClick={handlePauseResume}
-						>
-							{isRunning ? <PauseIcon className="size-3.5" /> : <PlayIcon className="size-3.5" />}
-						</Button>
-						{timerCx.mode === 'pomodoro' && (
-							<Button
-								className="text-base-400 hover:text-base-950 flex items-center p-1 transition-colors"
-								onClick={handleAdvance}
-							>
-								<SkipForwardIcon className="size-3.5" />
-							</Button>
-						)}
+					<div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
+						<CompactTimerActions cx={timerCx} />
 					</div>
 				</div>
 

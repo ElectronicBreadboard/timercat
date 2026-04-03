@@ -62,7 +62,9 @@ function RouteComponent() {
 											color: profileColor
 										}}
 										onClick={() => {
-											specta.commands.showSettingsWindowAtProfile(violation.profileId!);
+											specta.commands.showSettingsWindowAtPath(
+												`/window/settings/focus/${violation.profileId}`
+											);
 										}}
 									>
 										{violation.profileName}

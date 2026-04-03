@@ -1,9 +1,8 @@
 import { type TSessionStartInput } from '@repo/ui';
-import { useNavigate } from '@tanstack/react-router';
 import { createState } from 'feature-state';
 import { specta } from '@/environment';
 import { type SettingsCx } from '@/features/settings';
-import { toTuple } from '@/lib';
+import { appendFlowReturnSearch, toTuple } from '@/lib';
 
 export abstract class BaseTimerCx {
 	private _unlisten?: () => void;
@@ -14,7 +13,7 @@ export abstract class BaseTimerCx {
 	protected readonly _enableSideEffects: boolean;
 
 	protected readonly _settingsCx: SettingsCx;
-	protected readonly _navigate: ReturnType<typeof useNavigate>;
+	protected readonly _windowKind: TTimerWindowKind;
 
 	public readonly $status = createState<'idle' | 'running' | 'paused'>('idle');
 	public readonly $sessionType = createState('pomodoro:work');
@@ -24,14 +23,10 @@ export abstract class BaseTimerCx {
 	public readonly $sessionsCompleted = createState(0);
 	public readonly $startedAt = createState<Date | null>(null);
 
-	constructor(
-		settingsCx: SettingsCx,
-		navigate: ReturnType<typeof useNavigate>,
-		enableSideEffects: boolean
-	) {
+	constructor(settingsCx: SettingsCx, enableSideEffects: boolean, windowKind: TTimerWindowKind) {
 		this._settingsCx = settingsCx;
-		this._navigate = navigate;
 		this._enableSideEffects = enableSideEffects;
+		this._windowKind = windowKind;
 		this._init();
 	}
 
@@ -116,4 +111,17 @@ export abstract class BaseTimerCx {
 			blockThreshold: input.blockThreshold ?? null
 		};
 	}
+
+	protected async _showMainFlow(path: string): Promise<void> {
+		const nextPath = appendFlowReturnSearch(
+			path,
+			this._windowKind === 'cat' ? { kind: 'cat' } : undefined
+		);
+		await specta.commands.showMainWindowAtPath(nextPath);
+		if (this._windowKind === 'cat') {
+			await specta.commands.hideCatWindow();
+		}
+	}
 }
+
+export type TTimerWindowKind = 'main' | 'cat' | 'settings';

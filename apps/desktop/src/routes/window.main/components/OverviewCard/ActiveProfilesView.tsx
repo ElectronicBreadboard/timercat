@@ -17,7 +17,7 @@ export const ActiveProfilesView: React.FC = () => {
 	}, []);
 
 	const handleNavigate = React.useCallback(async (profileId: number) => {
-		await specta.commands.showSettingsWindowAtProfile(profileId);
+		await specta.commands.showSettingsWindowAtPath(`/window/settings/focus/${profileId}`);
 	}, []);
 
 	// MARK: - Effects

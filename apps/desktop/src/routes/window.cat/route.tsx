@@ -10,7 +10,7 @@ export const Route = createFileRoute('/window/cat')({
 function LayoutComponent() {
 	return (
 		<SettingsCxProvider>
-			<TimerCxProvider>
+			<TimerCxProvider windowKind="cat">
 				<ThemeProvider>
 					<Outlet />
 				</ThemeProvider>

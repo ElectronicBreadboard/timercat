@@ -71,6 +71,15 @@ pub fn hide_main_window(app: tauri::AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 #[specta::specta]
+pub fn navigate_main_window_to_path(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    Window::Main
+        .navigate_to_path(&app, &path)
+        .map_err(|e| e.to_string())?;
+    return Ok(());
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn hide_cat_window(app: tauri::AppHandle) -> Result<(), String> {
     Window::Cat.hide(&app).map_err(|e| e.to_string())?;
     return Ok(());
@@ -130,35 +139,6 @@ pub fn show_activity_window_at_session(
     Window::Activity
         .show_at_path(&app, &path)
         .map_err(|e| e.to_string())?;
-    return Ok(());
-}
-
-#[tauri::command]
-#[specta::specta]
-pub fn show_settings_window_at_profile(
-    app: tauri::AppHandle,
-    profile_id: i32,
-) -> Result<(), String> {
-    let path = format!("/window/settings/focus/{}", profile_id);
-
-    Window::Main.hide(&app).map_err(|e| e.to_string())?;
-    Window::Settings
-        .show_at_path(&app, &path)
-        .map_err(|e| e.to_string())?;
-    return Ok(());
-}
-
-#[tauri::command]
-#[specta::specta]
-pub fn hide_activity_window(app: tauri::AppHandle) -> Result<(), String> {
-    Window::Activity.hide(&app).map_err(|e| e.to_string())?;
-    return Ok(());
-}
-
-#[tauri::command]
-#[specta::specta]
-pub fn hide_blocker_window(app: tauri::AppHandle) -> Result<(), String> {
-    Window::Blocker.hide(&app).map_err(|e| e.to_string())?;
     return Ok(());
 }
 
