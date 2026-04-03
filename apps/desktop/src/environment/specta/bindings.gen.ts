@@ -151,9 +151,9 @@ async openDataDirectory() : Promise<Result<null, string>> {
 async getTimer() : Promise<TimerDto> {
     return await TAURI_INVOKE("get_timer");
 },
-async startTimer(intention: string | null, profileIds: number[] | null) : Promise<Result<null, string>> {
+async startTimer(input: SessionStartInput | null) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("start_timer", { intention, profileIds }) };
+    return { status: "ok", data: await TAURI_INVOKE("start_timer", { input }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -187,9 +187,9 @@ async resetTimer() : Promise<Result<null, string>> {
  * Complete the current session and advance to the next in the Pomodoro sequence (work↔break).
  * When the next session is work, intention and profile_ids may be provided.
  */
-async advancePomodoroTimer(intention: string | null, profileIds: number[] | null) : Promise<Result<null, string>> {
+async advancePomodoroTimer(input: SessionStartInput | null) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("advance_pomodoro_timer", { intention, profileIds }) };
+    return { status: "ok", data: await TAURI_INVOKE("advance_pomodoro_timer", { input }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -198,9 +198,9 @@ async advancePomodoroTimer(intention: string | null, profileIds: number[] | null
 /**
  * Advance to the specified next Progressive session type and duration.
  */
-async advanceProgressiveTimer(sessionType: ProgressiveSessionType, durationSeconds: number, intention: string | null, profileIds: number[] | null) : Promise<Result<null, string>> {
+async advanceProgressiveTimer(sessionType: ProgressiveSessionType, durationSeconds: number, input: SessionStartInput | null) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("advance_progressive_timer", { sessionType, durationSeconds, intention, profileIds }) };
+    return { status: "ok", data: await TAURI_INVOKE("advance_progressive_timer", { sessionType, durationSeconds, input }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -692,6 +692,7 @@ data: SessionEventDataDto | null }
  * A profile shown in session setup, with how it was activated.
  */
 export type SessionProfileDto = { profile: FocusProfileDto; activation: ProfileActivation }
+export type SessionStartInput = { intention: string | null; profileIds: number[] | null; blockThreshold: BlockThreshold | null }
 /**
  * Computed stats for a session.
  */

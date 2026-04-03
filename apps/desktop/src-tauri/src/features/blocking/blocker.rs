@@ -14,6 +14,7 @@ use crate::{
             },
             types::FocusProfileState,
         },
+        timer::types::TimerState,
         settings::types::{AppSettingsState, BlockThreshold},
     },
 };
@@ -41,6 +42,18 @@ impl Blocker {
     }
 
     fn get_threshold(&self) -> BlockThreshold {
+        if let Some(state) = self.app.try_state::<TimerState>() {
+            if let Some(block_threshold) = state
+                .lock()
+                .unwrap()
+                .session
+                .as_ref()
+                .and_then(|session| session.block_threshold)
+            {
+                return block_threshold;
+            }
+        }
+
         self.app
             .try_state::<AppSettingsState>()
             .map(|state| state.lock().unwrap().focus.block_threshold)

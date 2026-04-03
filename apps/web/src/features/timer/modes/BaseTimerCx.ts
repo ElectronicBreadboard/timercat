@@ -1,4 +1,4 @@
-import { formatTime, type TTimerCx } from '@repo/ui';
+import { formatTime, type TSessionStartInput, type TTimerCx } from '@repo/ui';
 import { createState, type TState } from 'feature-state';
 import { type AudioCx } from '@/features/audio';
 import { type SessionCx } from '@/features/session';
@@ -50,7 +50,7 @@ export abstract class BaseTimerCx implements TTimerCx {
 		);
 	}
 
-	public abstract start(): Promise<void>;
+	public abstract start(input?: TSessionStartInput): Promise<void>;
 	public abstract reset(): Promise<void>;
 	public abstract complete(): Promise<void>;
 	protected abstract _applyIdleState(): void;

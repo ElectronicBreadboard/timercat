@@ -378,6 +378,25 @@ pub enum BlockThreshold {
     Neutral,
 }
 
+impl BlockThreshold {
+    pub fn as_str(&self) -> &'static str {
+        return match self {
+            BlockThreshold::None => "none",
+            BlockThreshold::Distracting => "distracting",
+            BlockThreshold::Neutral => "neutral",
+        };
+    }
+
+    pub fn from_str(value: &str) -> Option<Self> {
+        return match value {
+            "none" => Some(BlockThreshold::None),
+            "distracting" => Some(BlockThreshold::Distracting),
+            "neutral" => Some(BlockThreshold::Neutral),
+            _ => None,
+        };
+    }
+}
+
 // MARK: - State
 
 pub struct AppSettingsState(Mutex<AppSettings>);

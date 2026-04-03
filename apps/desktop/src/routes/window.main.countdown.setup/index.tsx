@@ -10,7 +10,7 @@ function RouteComponent() {
 
 	return (
 		<SessionSetupScreen
-			onStart={(intention, selectedIds) => timerCx.start(intention, selectedIds)}
+			onStart={(input) => timerCx.start(input)}
 			upcomingFocusSessionType="Focus"
 		/>
 	);

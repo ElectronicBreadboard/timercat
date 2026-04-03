@@ -1,3 +1,4 @@
+import { type TSessionStartInput } from '@repo/ui';
 import { useNavigate } from '@tanstack/react-router';
 import { createState } from 'feature-state';
 import { specta } from '@/environment';
@@ -102,5 +103,17 @@ export abstract class BaseTimerCx {
 	public async setDuration(minutes: number): Promise<void> {
 		const [ok, , err] = toTuple(await specta.commands.setTimerDuration(minutes));
 		if (!ok) console.error('Failed to set timer duration:', err);
+	}
+
+	protected _toSessionStartInput(input?: TSessionStartInput): specta.SessionStartInput | null {
+		if (input == null) {
+			return null;
+		}
+
+		return {
+			intention: input.intention ?? null,
+			profileIds: input.profileIds ?? null,
+			blockThreshold: input.blockThreshold ?? null
+		};
 	}
 }

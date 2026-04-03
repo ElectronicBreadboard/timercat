@@ -101,6 +101,7 @@ pub async fn get_session(
         &row.status,
         row.planned_seconds as u32,
         row.intention.clone(),
+        row.block_threshold.clone(),
         row.started_at,
         row.ended_at,
         events,

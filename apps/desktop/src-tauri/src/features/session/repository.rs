@@ -1,4 +1,5 @@
 use super::session::{Session, SessionEvent, SessionType};
+use crate::features::settings::types::BlockThreshold;
 use chrono::{Local, TimeZone};
 use sqlx::{Row, SqlitePool};
 
@@ -12,18 +13,27 @@ impl SessionRepository {
         session_type: SessionType,
         planned_seconds: u32,
         intention: Option<&str>,
+        block_threshold: BlockThreshold,
         started_at: i64,
     ) -> Result<Session, sqlx::Error> {
         let result = sqlx::query(
             r#"
-            INSERT INTO session (session_type, status, planned_seconds, intention, started_at)
-            VALUES (?, 'active', ?, ?, ?)
+            INSERT INTO session (
+                session_type,
+                status,
+                planned_seconds,
+                intention,
+                block_threshold,
+                started_at
+            )
+            VALUES (?, 'active', ?, ?, ?, ?)
             RETURNING id
             "#,
         )
         .bind(session_type.as_str())
         .bind(planned_seconds as i64)
         .bind(intention)
+        .bind(block_threshold.as_str())
         .bind(started_at)
         .fetch_one(pool)
         .await?;
@@ -45,6 +55,7 @@ impl SessionRepository {
             session_type,
             planned_seconds,
             intention.map(|s| s.to_string()),
+            block_threshold,
             started_at,
         ));
     }
@@ -197,6 +208,7 @@ impl SessionRepository {
         let results = sqlx::query_as::<_, SessionRow>(
             r#"
             SELECT id, session_type, status, planned_seconds, actual_seconds, intention, started_at, ended_at
+                 , block_threshold
             FROM session
             WHERE started_at >= ? AND started_at < ?
               AND (? IS NULL OR actual_seconds IS NULL OR actual_seconds >= ?)
@@ -245,6 +257,7 @@ impl SessionRepository {
         let result = sqlx::query_as::<_, SessionRow>(
             r#"
             SELECT id, session_type, status, planned_seconds, actual_seconds, intention, started_at, ended_at
+                 , block_threshold
             FROM session
             WHERE id = ?
             "#,
@@ -373,6 +386,7 @@ pub struct SessionRow {
     pub planned_seconds: i64,
     pub actual_seconds: Option<i64>,
     pub intention: Option<String>,
+    pub block_threshold: Option<String>,
     pub started_at: i64,
     pub ended_at: Option<i64>,
 }

@@ -1,4 +1,4 @@
-import { type TCountdownCx } from '@repo/ui';
+import { type TCountdownCx, type TSessionStartInput } from '@repo/ui';
 import { createState } from 'feature-state';
 import { type AudioCx } from '@/features/audio';
 import { type SessionCx } from '@/features/session';
@@ -14,12 +14,12 @@ export class CountdownTimerCx extends BaseTimerCx implements TCountdownCx {
 		this._applyIdleState();
 	}
 
-	public async start(): Promise<void> {
+	public async start(input?: TSessionStartInput): Promise<void> {
 		if (this.$status.get() !== 'idle') return;
 		this._activeSessionId = await this._sessionCx.createSession({
 			session_type: 'countdown',
 			planned_seconds: this.$totalSeconds.get(),
-			intention: null,
+			intention: input?.intention?.trim() ?? null,
 			started_at: Date.now()
 		});
 		this.$status.set('running');

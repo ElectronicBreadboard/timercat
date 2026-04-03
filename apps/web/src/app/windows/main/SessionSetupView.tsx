@@ -22,9 +22,9 @@ export const SessionSetupView: React.FC<TSessionSetupViewProps> = (props) => {
 		}
 		setIsStarting(true);
 		if (mode === 'advance') {
-			void timerCx.advance(intention);
+			void timerCx.advance({ intention });
 		} else {
-			void timerCx.start(intention);
+			void timerCx.start({ intention });
 		}
 	}, [isStarting, intention, mode, timerCx]);
 

@@ -1,4 +1,4 @@
-import { type TProgressivePomodoroCx } from '@repo/ui';
+import { type TProgressivePomodoroCx, type TSessionStartInput } from '@repo/ui';
 import { createState } from 'feature-state';
 import { specta } from '@/environment';
 import { toTuple } from '@/lib';
@@ -16,15 +16,13 @@ export class ProgressivePomodoroTimerCx extends BaseTimerCx implements TProgress
 		this._checkAutoAdvance(prevOvertime, timer.overtimeSeconds);
 	}
 
-	public async start(intention?: string, profileIds?: number[]): Promise<void> {
+	public async start(input?: TSessionStartInput): Promise<void> {
 		const s = this._settingsCx.$appSettings.get();
-		if (s.timer.progressive.showSessionSetup && intention == null && profileIds == null) {
+		if (s.timer.progressive.showSessionSetup && input == null) {
 			this._navigate({ to: '/window/main/progressive/setup', search: { advance: false } });
 			return;
 		}
-		const [ok, , err] = toTuple(
-			await specta.commands.startTimer(intention ?? null, profileIds ?? null)
-		);
+		const [ok, , err] = toTuple(await specta.commands.startTimer(this._toSessionStartInput(input)));
 		if (ok) {
 			this.$startedAt.set(new Date());
 		} else {
@@ -32,7 +30,7 @@ export class ProgressivePomodoroTimerCx extends BaseTimerCx implements TProgress
 		}
 	}
 
-	public async advance(intention?: string, profileIds?: number[]): Promise<void> {
+	public async advance(input?: TSessionStartInput): Promise<void> {
 		const sessionType = this.$sessionType.get();
 		if (sessionType === 'progressive:work') {
 			this._navigate({ to: '/window/main/progressive/rating' });
@@ -41,22 +39,12 @@ export class ProgressivePomodoroTimerCx extends BaseTimerCx implements TProgress
 
 		const s = this._settingsCx.$appSettings.get();
 		const isBreak = !this.$sessionType.get().endsWith(':work');
-		if (
-			s.timer.progressive.showSessionSetup &&
-			isBreak &&
-			intention == null &&
-			profileIds == null
-		) {
+		if (s.timer.progressive.showSessionSetup && isBreak && input == null) {
 			this._navigate({ to: '/window/main/progressive/setup', search: { advance: true } });
 			return;
 		}
 
-		await this._advanceSession(
-			'Work',
-			this.$currentWorkDuration.get(),
-			intention ?? null,
-			profileIds ?? null
-		);
+		await this._advanceSession('Work', this.$currentWorkDuration.get(), input);
 	}
 
 	public async advanceWithSuggestion(
@@ -65,24 +53,22 @@ export class ProgressivePomodoroTimerCx extends BaseTimerCx implements TProgress
 	): Promise<void> {
 		this.$currentWorkDuration.set(workSeconds);
 		if (breakSeconds != null) {
-			await this._advanceSession('Break', breakSeconds, null, null);
+			await this._advanceSession('Break', breakSeconds);
 		} else {
-			await this._advanceSession('Work', workSeconds, null, null);
+			await this._advanceSession('Work', workSeconds);
 		}
 	}
 
 	private async _advanceSession(
 		sessionType: specta.ProgressiveSessionType,
 		durationSeconds: number,
-		intention: string | null,
-		profileIds: number[] | null
+		input?: TSessionStartInput
 	): Promise<void> {
 		const [ok, , err] = toTuple(
 			await specta.commands.advanceProgressiveTimer(
 				sessionType,
 				durationSeconds,
-				intention,
-				profileIds
+				this._toSessionStartInput(input)
 			)
 		);
 		if (ok) {

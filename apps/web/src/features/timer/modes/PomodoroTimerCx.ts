@@ -1,4 +1,4 @@
-import { type TPomodoroCx } from '@repo/ui';
+import { type TPomodoroCx, type TSessionStartInput } from '@repo/ui';
 import { createState } from 'feature-state';
 import { type AudioCx } from '@/features/audio';
 import { type SessionCx } from '@/features/session';
@@ -19,10 +19,10 @@ export class PomodoroTimerCx extends BaseTimerCx implements TPomodoroCx {
 		this.$sessionSetupRequested.set(null);
 	}
 
-	public async start(intention?: string): Promise<void> {
+	public async start(input?: TSessionStartInput): Promise<void> {
 		if (this.$status.get() !== 'idle') return;
 		const s = this._settingsCx.$appSettings.get();
-		if (s.timer.showSessionSetup && intention == null) {
+		if (s.timer.showSessionSetup && input == null) {
 			this.$sessionSetupRequested.set('start');
 			return;
 		}
@@ -30,7 +30,7 @@ export class PomodoroTimerCx extends BaseTimerCx implements TPomodoroCx {
 		this._activeSessionId = await this._sessionCx.createSession({
 			session_type: this.$sessionType.get(),
 			planned_seconds: this.$totalSeconds.get(),
-			intention: intention?.trim() || null,
+			intention: input?.intention?.trim() ?? null,
 			started_at: Date.now()
 		});
 		this.$status.set('running');
@@ -38,10 +38,10 @@ export class PomodoroTimerCx extends BaseTimerCx implements TPomodoroCx {
 		this.startLoop();
 	}
 
-	public async advance(intention?: string): Promise<void> {
+	public async advance(input?: TSessionStartInput): Promise<void> {
 		const s = this._settingsCx.$appSettings.get();
 		const isBreak = !this.$sessionType.get().endsWith(':work');
-		if (s.timer.showSessionSetup && isBreak && intention == null) {
+		if (s.timer.showSessionSetup && isBreak && input == null) {
 			this.$sessionSetupRequested.set('advance');
 			return;
 		}
@@ -70,7 +70,7 @@ export class PomodoroTimerCx extends BaseTimerCx implements TPomodoroCx {
 		this._activeSessionId = await this._sessionCx.createSession({
 			session_type: nextType,
 			planned_seconds: duration,
-			intention: nextType === 'pomodoro:work' && intention?.trim() ? intention : null,
+			intention: input?.intention?.trim() ?? null,
 			started_at: now
 		});
 

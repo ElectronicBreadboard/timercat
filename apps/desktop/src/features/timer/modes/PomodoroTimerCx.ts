@@ -1,4 +1,4 @@
-import { type TPomodoroCx } from '@repo/ui';
+import { type TPomodoroCx, type TSessionStartInput } from '@repo/ui';
 import { specta } from '@/environment';
 import { toTuple } from '@/lib';
 import { BaseTimerCx } from './BaseTimerCx';
@@ -12,15 +12,13 @@ export class PomodoroTimerCx extends BaseTimerCx implements TPomodoroCx {
 		this._checkAutoAdvance(prevOvertime, timer.overtimeSeconds);
 	}
 
-	public async start(intention?: string, profileIds?: number[]): Promise<void> {
+	public async start(input?: TSessionStartInput): Promise<void> {
 		const s = this._settingsCx.$appSettings.get();
-		if (s.timer.pomodoro.showSessionSetup && intention == null && profileIds == null) {
+		if (s.timer.pomodoro.showSessionSetup && input == null) {
 			this._navigate({ to: '/window/main/pomodoro/setup', search: { advance: false } });
 			return;
 		}
-		const [ok, , err] = toTuple(
-			await specta.commands.startTimer(intention ?? null, profileIds ?? null)
-		);
+		const [ok, , err] = toTuple(await specta.commands.startTimer(this._toSessionStartInput(input)));
 		if (ok) {
 			this.$startedAt.set(new Date());
 		} else {
@@ -28,15 +26,15 @@ export class PomodoroTimerCx extends BaseTimerCx implements TPomodoroCx {
 		}
 	}
 
-	public async advance(intention?: string, profileIds?: number[]): Promise<void> {
+	public async advance(input?: TSessionStartInput): Promise<void> {
 		const s = this._settingsCx.$appSettings.get();
 		const isBreak = !this.$sessionType.get().endsWith(':work');
-		if (s.timer.pomodoro.showSessionSetup && isBreak && intention == null && profileIds == null) {
+		if (s.timer.pomodoro.showSessionSetup && isBreak && input == null) {
 			this._navigate({ to: '/window/main/pomodoro/setup', search: { advance: true } });
 			return;
 		}
 		const [ok, , err] = toTuple(
-			await specta.commands.advancePomodoroTimer(intention ?? null, profileIds ?? null)
+			await specta.commands.advancePomodoroTimer(this._toSessionStartInput(input))
 		);
 		if (ok) {
 			this.$startedAt.set(null);

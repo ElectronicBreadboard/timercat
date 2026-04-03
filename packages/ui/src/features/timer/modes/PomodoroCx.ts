@@ -1,7 +1,7 @@
-import { type TTimerCx } from '../TimerCx';
+import { type TSessionStartInput, type TTimerCx } from '../TimerCx';
 
 export interface TPomodoroCx extends TTimerCx {
 	readonly mode: 'pomodoro';
-	start(intention?: string, profileIds?: number[]): Promise<void>;
-	advance(intention?: string, profileIds?: number[]): Promise<void>;
+	start(input?: TSessionStartInput): Promise<void>;
+	advance(input?: TSessionStartInput): Promise<void>;
 }

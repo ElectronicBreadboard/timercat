@@ -1,4 +1,4 @@
-import { Button, cn, Input } from '@repo/ui';
+import { Button, cn, Input, Select, type TSessionStartInput } from '@repo/ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
@@ -19,6 +19,7 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 	const [selectedIds, setSelectedIds] = React.useState<number[]>([]);
 	const [profiles, setProfiles] = React.useState<specta.SessionProfileDto[]>([]);
 	const [isStarting, setIsStarting] = React.useState(false);
+	const [blockThreshold, setBlockThreshold] = React.useState<TBlockingLevelValue>('default');
 
 	const selectedIdSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
 
@@ -43,6 +44,19 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 	);
 
 	const showProfiles = settings.features.focus && profiles.length > 0;
+	const showBlockingLevel = showProfiles;
+	const blockingLevelItems = React.useMemo(
+		() => [
+			{
+				label: `Use default (${formatBlockThresholdLabel(settings.focus.blockThreshold)})`,
+				value: 'default'
+			},
+			{ label: 'Off', value: 'none' },
+			{ label: 'Distracting Only', value: 'distracting' },
+			{ label: 'Neutral and Distracting', value: 'neutral' }
+		],
+		[settings.focus.blockThreshold]
+	);
 
 	const categoryPreviewItems = React.useMemo(() => {
 		const activeProfiles = [...alwaysOnProfiles, ...selectedProfiles];
@@ -94,9 +108,13 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 			return;
 		}
 		setIsStarting(true);
-		await onStart(intention, selectedIds);
+		await onStart({
+			intention,
+			profileIds: selectedIds,
+			blockThreshold: blockThreshold === 'default' ? null : blockThreshold
+		});
 		navigate({ to: '/window/main' });
-	}, [isStarting, intention, selectedIds, onStart, navigate]);
+	}, [isStarting, intention, selectedIds, blockThreshold, onStart, navigate]);
 
 	const handleAddProfile = React.useCallback((id: number) => {
 		setSelectedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
@@ -211,6 +229,19 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 							</div>
 						</div>
 					)}
+
+					{showBlockingLevel && (
+						<div className="flex flex-col gap-2">
+							<label className="text-base-900 text-sm font-medium">Blocking Level</label>
+							<Select
+								items={blockingLevelItems}
+								value={blockThreshold}
+								onValueChange={(value) => setBlockThreshold(value as TBlockingLevelValue)}
+								size="sm"
+							/>
+							<p className="text-base-500 text-xs">Applies only to this session</p>
+						</div>
+					)}
 				</div>
 			</div>
 
@@ -228,6 +259,19 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 };
 
 interface SessionSetupScreenProps {
-	onStart: (intention: string, selectedIds: number[]) => Promise<void>;
+	onStart: (input: TSessionStartInput) => Promise<void>;
 	upcomingFocusSessionType: specta.FocusSessionType;
+}
+
+type TBlockingLevelValue = 'default' | specta.BlockThreshold;
+
+function formatBlockThresholdLabel(blockThreshold: specta.BlockThreshold): string {
+	switch (blockThreshold) {
+		case 'none':
+			return 'Off';
+		case 'neutral':
+			return 'Neutral and Distracting';
+		default:
+			return 'Distracting Only';
+	}
 }

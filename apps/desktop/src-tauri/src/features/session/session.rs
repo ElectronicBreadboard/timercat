@@ -1,3 +1,4 @@
+use crate::features::settings::types::BlockThreshold;
 use serde::{Deserialize, Serialize};
 
 /// A timed block (countdown timer) regardless of mode. `session_type` describes
@@ -11,6 +12,8 @@ pub struct Session {
     pub planned_seconds: u32,
     /// Optional session intention ("What are you focusing on?")
     pub intention: Option<String>,
+    /// Optional session-specific blocking threshold snapshot.
+    pub block_threshold: Option<BlockThreshold>,
     /// Unix timestamp when session started
     pub started_at: i64,
     /// Unix timestamp when session ended (set on complete/cancel)
@@ -25,6 +28,7 @@ impl Session {
         session_type: SessionType,
         planned_seconds: u32,
         intention: Option<String>,
+        block_threshold: BlockThreshold,
         started_at: i64,
     ) -> Self {
         return Self {
@@ -33,6 +37,7 @@ impl Session {
             status: SessionStatus::Active,
             planned_seconds,
             intention,
+            block_threshold: Some(block_threshold),
             started_at,
             ended_at: None,
             events: vec![SessionEvent::Started {
@@ -48,16 +53,23 @@ impl Session {
         status: &str,
         planned_seconds: u32,
         intention: Option<String>,
+        block_threshold: Option<String>,
         started_at: i64,
         ended_at: Option<i64>,
         events: Vec<SessionEvent>,
     ) -> Option<Self> {
+        let block_threshold = match block_threshold {
+            Some(value) => Some(BlockThreshold::from_str(&value)?),
+            None => None,
+        };
+
         return Some(Self {
             id,
             session_type: SessionType::from_str(session_type)?,
             status: SessionStatus::from_str(status)?,
             planned_seconds,
             intention,
+            block_threshold,
             started_at,
             ended_at,
             events,
@@ -297,7 +309,14 @@ mod tests {
     const START_MS: i64 = 1_000_000; // 1 second
 
     fn make_session() -> Session {
-        return Session::new(1, SessionType::PomodoroWork, 1500, None, START_MS);
+        return Session::new(
+            1,
+            SessionType::PomodoroWork,
+            1500,
+            None,
+            BlockThreshold::Distracting,
+            START_MS,
+        );
     }
 
     #[test]

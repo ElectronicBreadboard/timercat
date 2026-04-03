@@ -7,7 +7,7 @@ use crate::features::session::session::{SessionEvent, SessionStatus, SessionType
 use crate::features::session::types::{
     SessionChangedEvent, SessionCompletedEvent, SessionSummaryDto,
 };
-use crate::features::settings::types::AppSettingsState;
+use crate::features::settings::types::{AppSettingsState, BlockThreshold};
 use chrono::Utc;
 use std::sync::Mutex;
 use tauri::{AppHandle, State};
@@ -27,15 +27,19 @@ pub fn get_timer(state: State<'_, TimerState>) -> TimerDto {
 pub async fn start_timer(
     app: AppHandle,
     state: State<'_, TimerState>,
+    app_settings: State<'_, AppSettingsState>,
     runner: State<'_, Mutex<Option<TimerRunner>>>,
     db: State<'_, DatabaseState>,
-    intention: Option<String>,
-    profile_ids: Option<Vec<i32>>,
+    input: Option<SessionStartInput>,
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
-
-    // Normalize empty intention to None
+    let SessionStartInput {
+        intention,
+        profile_ids,
+        block_threshold,
+    } = input.unwrap_or_default();
     let intention = intention.filter(|s| !s.trim().is_empty());
+    let resolved_block_threshold = resolve_block_threshold(&app_settings, block_threshold);
 
     // Read state
     let (session_type, planned_seconds) = {
@@ -55,6 +59,7 @@ pub async fn start_timer(
         session_type,
         planned_seconds,
         intention.as_deref(),
+        resolved_block_threshold,
         now,
     )
     .await
@@ -275,13 +280,12 @@ pub async fn complete_timer(
 pub async fn advance_pomodoro_timer(
     app: AppHandle,
     state: State<'_, TimerState>,
+    app_settings: State<'_, AppSettingsState>,
     runner: State<'_, Mutex<Option<TimerRunner>>>,
     db: State<'_, DatabaseState>,
-    intention: Option<String>,
-    profile_ids: Option<Vec<i32>>,
+    input: Option<SessionStartInput>,
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
-    let intention = intention.filter(|s| !s.trim().is_empty());
 
     // Read state
     let (session_data, current_session_type, sessions_completed) = {
@@ -313,14 +317,14 @@ pub async fn advance_pomodoro_timer(
     do_advance(
         &app,
         &state,
+        &app_settings,
         &runner,
         &db,
         session_data,
         current_session_type,
         next_session_type,
         next_duration_seconds,
-        intention.as_deref(),
-        profile_ids.as_ref(),
+        input.unwrap_or_default(),
         now,
     )
     .await
@@ -332,15 +336,14 @@ pub async fn advance_pomodoro_timer(
 pub async fn advance_progressive_timer(
     app: AppHandle,
     state: State<'_, TimerState>,
+    app_settings: State<'_, AppSettingsState>,
     runner: State<'_, Mutex<Option<TimerRunner>>>,
     db: State<'_, DatabaseState>,
     session_type: ProgressiveSessionType,
     duration_seconds: u32,
-    intention: Option<String>,
-    profile_ids: Option<Vec<i32>>,
+    input: Option<SessionStartInput>,
 ) -> Result<(), String> {
     let now = Utc::now().timestamp_millis();
-    let intention = intention.filter(|s| !s.trim().is_empty());
 
     let next_session_type = session_type.to_session_type();
 
@@ -366,14 +369,14 @@ pub async fn advance_progressive_timer(
     do_advance(
         &app,
         &state,
+        &app_settings,
         &runner,
         &db,
         session_data,
         current_session_type,
         next_session_type,
         duration_seconds,
-        intention.as_deref(),
-        profile_ids.as_ref(),
+        input.unwrap_or_default(),
         now,
     )
     .await
@@ -398,17 +401,24 @@ impl ProgressiveSessionType {
 async fn do_advance(
     app: &AppHandle,
     state: &State<'_, TimerState>,
+    app_settings: &State<'_, AppSettingsState>,
     runner: &State<'_, Mutex<Option<TimerRunner>>>,
     db: &State<'_, DatabaseState>,
     session_data: Option<(i64, String, u32, u32, i64)>,
     current_session_type: SessionType,
     next_session_type: SessionType,
     next_duration_seconds: u32,
-    intention: Option<&str>,
-    profile_ids: Option<&Vec<i32>>,
+    input: SessionStartInput,
     now: i64,
 ) -> Result<(), String> {
     let is_work = current_session_type.is_work();
+    let SessionStartInput {
+        intention,
+        profile_ids,
+        block_threshold,
+    } = input;
+    let intention = intention.filter(|s| !s.trim().is_empty());
+    let resolved_block_threshold = resolve_block_threshold(app_settings, block_threshold);
 
     // DB: complete current session
     if let Some(data) = session_data {
@@ -417,7 +427,7 @@ async fn do_advance(
 
     // DB: create next session
     let intention_for_create = if next_session_type.is_work() {
-        intention
+        intention.as_deref()
     } else {
         None
     };
@@ -426,6 +436,7 @@ async fn do_advance(
         next_session_type,
         next_duration_seconds,
         intention_for_create,
+        resolved_block_threshold,
         now,
     )
     .await
@@ -433,7 +444,7 @@ async fn do_advance(
 
     // Link profiles if next is a work session
     if next_session_type.is_work() {
-        if let Some(ids) = profile_ids {
+        if let Some(ids) = &profile_ids {
             if !ids.is_empty() {
                 SessionRepository::link_profiles(&db.pool, new_session.id, ids)
                     .await
@@ -457,6 +468,14 @@ async fn do_advance(
     let _ = SessionChangedEvent.emit(app);
     restart_runner(app, runner);
     return Ok(());
+}
+
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase", default)]
+pub struct SessionStartInput {
+    pub intention: Option<String>,
+    pub profile_ids: Option<Vec<i32>>,
+    pub block_threshold: Option<BlockThreshold>,
 }
 
 #[tauri::command]
@@ -522,6 +541,13 @@ pub async fn set_timer_duration(
 }
 
 // MARK: - Helpers
+
+fn resolve_block_threshold(
+    app_settings: &State<'_, AppSettingsState>,
+    block_threshold: Option<BlockThreshold>,
+) -> BlockThreshold {
+    return block_threshold.unwrap_or_else(|| app_settings.lock().unwrap().focus.block_threshold);
+}
 
 /// Complete session in DB and emit SessionCompletedEvent.
 async fn complete_and_emit_session(

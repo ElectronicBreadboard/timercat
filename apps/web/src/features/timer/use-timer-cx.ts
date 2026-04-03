@@ -4,5 +4,5 @@ import { CountdownTimerCx, PomodoroTimerCx } from './modes';
 export function useTimerCx<
 	GTimerCx extends CountdownTimerCx | PomodoroTimerCx = CountdownTimerCx | PomodoroTimerCx
 >(): GTimerCx {
-	return useBaseTimerCx();
+	return useBaseTimerCx<GTimerCx>();
 }

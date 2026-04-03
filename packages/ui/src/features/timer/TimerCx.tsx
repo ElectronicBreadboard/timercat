@@ -11,13 +11,21 @@ export interface TTimerCx {
 	readonly $sessionsCompleted: TState<number, []>;
 	readonly $startedAt: TState<Date | null, []>;
 
-	start(): Promise<void>;
+	start(input?: TSessionStartInput): Promise<void>;
 	pause(): Promise<void>;
 	resume(): Promise<void>;
 	reset(): Promise<void>;
 	complete(): Promise<void>;
 	setDuration(minutes: number): Promise<void>;
 }
+
+export interface TSessionStartInput {
+	intention?: string | null;
+	profileIds?: number[] | null;
+	blockThreshold?: TBlockThreshold | null;
+}
+
+export type TBlockThreshold = 'none' | 'distracting' | 'neutral';
 
 const ReactTimerCx = React.createContext<TTimerCx | null>(null);
 
