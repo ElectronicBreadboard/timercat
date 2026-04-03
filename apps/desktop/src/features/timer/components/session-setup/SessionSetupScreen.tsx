@@ -1,5 +1,5 @@
 import { Button, cn, Input, Select, type TSessionStartInput } from '@repo/ui';
-import { useNavigate } from '@tanstack/react-router';
+import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { WindowHeader } from '@/components';
@@ -10,8 +10,15 @@ import { AddProfileButton } from './AddProfileButton';
 import { ProfileTag } from './ProfileTag';
 
 export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => {
-	const { onStart, upcomingFocusSessionType } = props;
+	const { onStart, upcomingFocusSessionType, createdProfileId, refreshProfiles, onRefreshHandled } =
+		props;
 	const navigate = useNavigate();
+
+	const returnTo = useLocation({
+		// Keep the return target stable across create/edit roundtrips by stripping the one-shot
+		// params that Settings appends when it sends us back
+		select: (location) => stripTransientSearchParams(location.href)
+	});
 	const settingsCx = useSettingsCx();
 	const settings = useFeatureState(settingsCx.$appSettings);
 
@@ -43,8 +50,8 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 		[selectableProfiles, selectedIdSet]
 	);
 
-	const showProfiles = settings.features.focus && profiles.length > 0;
-	const showBlockingLevel = showProfiles;
+	const showProfiles = settings.features.focus;
+	const showBlockingLevel = settings.features.focus && profiles.length > 0;
 	const blockingLevelItems = React.useMemo(
 		() => [
 			{
@@ -124,9 +131,49 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 		setSelectedIds((prev) => prev.filter((v) => v !== id));
 	}, []);
 
-	const handleOpenProfileInSettings = React.useCallback(async (profileId: number) => {
-		await specta.commands.showSettingsWindowAtProfile(profileId);
-	}, []);
+	const handleOpenProfileInSettings = React.useCallback(
+		async (profileId: number) => {
+			await specta.commands.showSettingsWindowAtPath(
+				buildFocusSettingsPath(`/window/settings/focus/${profileId}`, returnTo)
+			);
+		},
+		[returnTo]
+	);
+
+	const handleCreateProfileInSettings = React.useCallback(async () => {
+		await specta.commands.showSettingsWindowAtPath(
+			buildFocusSettingsPath('/window/settings/focus/new', returnTo)
+		);
+	}, [returnTo]);
+
+	const loadProfiles = React.useCallback(
+		async (options?: { autoSelectId?: number | null; resetSelected?: boolean }) => {
+			const { autoSelectId = null, resetSelected = false } = options ?? {};
+			const [ok, , data] = toTuple(
+				await specta.commands.getSessionProfiles(upcomingFocusSessionType)
+			);
+			if (!ok) {
+				return;
+			}
+
+			setProfiles(data);
+			const validIds = new Set(data.map((profile) => profile.profile.id));
+			setSelectedIds((prev) => {
+				if (resetSelected) {
+					return data
+						.filter((profile) => profile.activation === 'pre_selected')
+						.map((profile) => profile.profile.id);
+				}
+
+				const next = prev.filter((id) => validIds.has(id));
+				if (autoSelectId != null && validIds.has(autoSelectId) && !next.includes(autoSelectId)) {
+					next.push(autoSelectId);
+				}
+				return next;
+			});
+		},
+		[upcomingFocusSessionType]
+	);
 
 	// MARK: - Effects
 
@@ -137,20 +184,36 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 
 		let cancelled = false;
 		(async () => {
-			const [ok, , data] = toTuple(
-				await specta.commands.getSessionProfiles(upcomingFocusSessionType)
-			);
-			if (cancelled || !ok) {
+			if (cancelled) {
 				return;
 			}
-			setProfiles(data);
-			setSelectedIds(data.filter((p) => p.activation === 'pre_selected').map((p) => p.profile.id));
+			await loadProfiles({ resetSelected: true });
 		})();
 
 		return () => {
 			cancelled = true;
 		};
-	}, [settings.features.focus, upcomingFocusSessionType]);
+	}, [settings.features.focus, loadProfiles]);
+
+	// After a create/edit roundtrip through Settings, refresh profiles once and let the
+	// route clear the transient search params so this does not re-run on future opens
+	React.useEffect(() => {
+		if (!settings.features.focus || (!refreshProfiles && createdProfileId == null)) {
+			return;
+		}
+
+		let cancelled = false;
+		(async () => {
+			await loadProfiles({ autoSelectId: createdProfileId });
+			if (!cancelled) {
+				onRefreshHandled?.();
+			}
+		})();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [settings.features.focus, refreshProfiles, createdProfileId, loadProfiles, onRefreshHandled]);
 
 	// MARK: - UI
 
@@ -200,9 +263,11 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 										onProfileClick={() => handleOpenProfileInSettings(profile.id)}
 									/>
 								))}
-								{unselectedProfiles.length > 0 && (
-									<AddProfileButton profiles={unselectedProfiles} onAdd={handleAddProfile} />
-								)}
+								<AddProfileButton
+									profiles={unselectedProfiles}
+									onAdd={handleAddProfile}
+									onCreate={handleCreateProfileInSettings}
+								/>
 							</div>
 						</div>
 					)}
@@ -261,6 +326,9 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 interface SessionSetupScreenProps {
 	onStart: (input: TSessionStartInput) => Promise<void>;
 	upcomingFocusSessionType: specta.FocusSessionType;
+	createdProfileId?: number;
+	refreshProfiles?: boolean;
+	onRefreshHandled?: () => void;
 }
 
 type TBlockingLevelValue = 'default' | specta.BlockThreshold;
@@ -274,4 +342,20 @@ function formatBlockThresholdLabel(blockThreshold: specta.BlockThreshold): strin
 		default:
 			return 'Distracting Only';
 	}
+}
+
+function buildFocusSettingsPath(pathname: string, returnTo: string): string {
+	const params = new URLSearchParams({ returnTo });
+	return `${pathname}?${params.toString()}`;
+}
+
+function stripTransientSearchParams(href: string): string {
+	const [pathWithSearch = '', hash = ''] = href.split('#');
+	const [pathname, search = ''] = pathWithSearch.split('?');
+	const params = new URLSearchParams(search);
+	params.delete('createdProfileId');
+	params.delete('refreshProfiles');
+	const searchString = params.toString();
+	const hashString = hash.length > 0 ? `#${hash}` : '';
+	return `${pathname}${searchString.length > 0 ? `?${searchString}` : ''}${hashString}`;
 }

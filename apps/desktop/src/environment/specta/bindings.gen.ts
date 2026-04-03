@@ -16,6 +16,14 @@ async showMainWindow() : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async showMainWindowAtPath(path: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("show_main_window_at_path", { path }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async showCatWindow() : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("show_cat_window") };
@@ -27,6 +35,14 @@ async showCatWindow() : Promise<Result<null, string>> {
 async showSettingsWindow() : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("show_settings_window") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async showSettingsWindowAtPath(path: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("show_settings_window_at_path", { path }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -75,6 +91,14 @@ async hideCatWindow() : Promise<Result<null, string>> {
 async hideSettingsWindow() : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("hide_settings_window") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async navigateSettingsWindowToPath(path: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("navigate_settings_window_to_path", { path }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };

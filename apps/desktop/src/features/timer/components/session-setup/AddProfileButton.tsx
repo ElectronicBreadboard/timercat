@@ -3,7 +3,7 @@ import React from 'react';
 import { specta } from '@/environment';
 
 export const AddProfileButton: React.FC<TAddProfileButtonProps> = (props) => {
-	const { profiles, onAdd } = props;
+	const { profiles, onAdd, onCreate } = props;
 	const [open, setOpen] = React.useState(false);
 
 	return (
@@ -41,6 +41,21 @@ export const AddProfileButton: React.FC<TAddProfileButtonProps> = (props) => {
 						{p.name}
 					</button>
 				))}
+				<button
+					type="button"
+					className={cn(
+						'flex w-full items-center gap-2.5 px-3 py-2 text-sm',
+						'text-base-700 hover:bg-base-100 transition-colors duration-100',
+						profiles.length > 0 && 'border-base-200 mt-1.5 border-t pt-3'
+					)}
+					onClick={() => {
+						onCreate();
+						setOpen(false);
+					}}
+				>
+					<PlusIcon size={14} />
+					New Profile...
+				</button>
 			</Popover.Content>
 		</Popover.Root>
 	);
@@ -49,4 +64,5 @@ export const AddProfileButton: React.FC<TAddProfileButtonProps> = (props) => {
 interface TAddProfileButtonProps {
 	profiles: specta.FocusProfileDto[];
 	onAdd: (id: number) => void;
+	onCreate: () => void;
 }

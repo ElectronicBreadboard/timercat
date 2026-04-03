@@ -4,14 +4,24 @@ import { hasFormChanged } from 'feature-form';
 import { useForm } from 'feature-react/form';
 import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { FocusProfileForm, useFocusProfileCx } from '@/features/focus';
+import {
+	appendReturnSearch,
+	FocusProfileForm,
+	returnToMainFromFocusSettings,
+	useFocusProfileCx
+} from '@/features/focus';
+import { parseSearchString } from '@/lib';
 
 export const Route = createFileRoute('/window/settings/focus/new/')({
+	validateSearch: (search: Record<string, unknown>): { returnTo?: string } => ({
+		returnTo: parseSearchString(search['returnTo'])
+	}),
 	component: RouteComponent
 });
 
 function RouteComponent() {
 	const navigate = useNavigate();
+	const { returnTo } = Route.useSearch();
 	const profileCx = useFocusProfileCx();
 	const { form, handleSubmit } = useForm(profileCx.form);
 	const isSubmitting = useFeatureState(profileCx.form.isSubmitting);
@@ -25,13 +35,29 @@ function RouteComponent() {
 	// MARK: - Actions
 
 	const handleCancel = React.useCallback(() => {
+		profileCx.prepareCreateForm();
+		if (returnTo != null) {
+			void returnToMainFromFocusSettings(returnTo);
+			return;
+		}
 		navigate({ to: '/window/settings/focus' });
-	}, [navigate]);
+	}, [navigate, profileCx, returnTo]);
 
 	const onSubmit = handleSubmit({
 		onValidSubmit: async () => {
-			const success = await profileCx.save();
-			if (success) {
+			const profile = await profileCx.save();
+			if (profile == null) {
+				return;
+			}
+			profileCx.prepareCreateForm();
+			if (returnTo != null) {
+				void returnToMainFromFocusSettings(
+					appendReturnSearch(returnTo, {
+						refreshProfiles: 'true',
+						createdProfileId: String(profile.id)
+					})
+				);
+			} else {
 				navigate({ to: '/window/settings/focus' });
 			}
 		},
@@ -49,7 +75,7 @@ function RouteComponent() {
 	// MARK: - Effects
 
 	React.useEffect(() => {
-		profileCx.startCreate();
+		profileCx.prepareCreateForm();
 	}, [profileCx]);
 
 	// MARK: - UI

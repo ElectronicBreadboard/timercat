@@ -138,7 +138,7 @@ export class FocusProfileCx {
 		}
 	}
 
-	public startCreate(): void {
+	public prepareCreateForm(): void {
 		this.$editingId.set(null);
 		this.setInitialValues({
 			name: '',
@@ -158,7 +158,7 @@ export class FocusProfileCx {
 		this.form.reset();
 	}
 
-	public async startEdit(id: number): Promise<void> {
+	public async prepareEditForm(id: number): Promise<void> {
 		const [isProfileOk, , profile] = toTuple(await specta.commands.getFocusProfile(id));
 		if (!isProfileOk || profile == null) {
 			return;
@@ -169,10 +169,10 @@ export class FocusProfileCx {
 		this.form.reset();
 	}
 
-	public async save(): Promise<boolean> {
+	public async save(): Promise<specta.FocusProfileDto | null> {
 		const data = this.form.getValidData();
 		if (data == null) {
-			return false;
+			return null;
 		}
 
 		const categories: specta.FocusProfileCategoryParams[] = data.categories.map((entry) => ({
@@ -206,9 +206,10 @@ export class FocusProfileCx {
 			);
 			if (!ok) {
 				console.error('Failed to create focus profile:', err);
-				return false;
+				return null;
 			}
 			this.$profiles.set((prev) => [...prev, profile]);
+			return profile;
 		} else {
 			const [ok, err, profile] = toTuple(
 				await specta.commands.updateFocusProfile(
@@ -222,12 +223,11 @@ export class FocusProfileCx {
 			);
 			if (!ok) {
 				console.error('Failed to update focus profile:', err);
-				return false;
+				return null;
 			}
 			this.$profiles.set((prev) => prev.map((p) => (p.id === editingId ? profile : p)));
+			return profile;
 		}
-
-		return true;
 	}
 
 	public async delete(id: number): Promise<boolean> {

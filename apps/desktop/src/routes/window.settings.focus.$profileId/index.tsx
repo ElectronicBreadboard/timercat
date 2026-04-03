@@ -4,15 +4,25 @@ import { hasFormChanged } from 'feature-form';
 import { useForm } from 'feature-react/form';
 import { useCombinedCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { FocusProfileForm, useFocusProfileCx } from '@/features/focus';
+import {
+	appendReturnSearch,
+	FocusProfileForm,
+	returnToMainFromFocusSettings,
+	useFocusProfileCx
+} from '@/features/focus';
 import { SettingGroup, SettingItem } from '@/features/settings';
+import { parseSearchString } from '@/lib';
 
 export const Route = createFileRoute('/window/settings/focus/$profileId/')({
+	validateSearch: (search: Record<string, unknown>): { returnTo?: string } => ({
+		returnTo: parseSearchString(search['returnTo'])
+	}),
 	component: RouteComponent
 });
 
 function RouteComponent() {
 	const { profileId } = Route.useParams();
+	const { returnTo } = Route.useSearch();
 	const navigate = useNavigate();
 	const profileCx = useFocusProfileCx();
 	const { form, handleSubmit } = useForm(profileCx.form);
@@ -31,7 +41,14 @@ function RouteComponent() {
 		confirmLabel: 'Delete profile',
 		onConfirm: async () => {
 			const success = await profileCx.delete(Number(profileId));
-			if (success) {
+			if (!success) {
+				return;
+			}
+			if (returnTo != null) {
+				await returnToMainFromFocusSettings(
+					appendReturnSearch(returnTo, { refreshProfiles: 'true' })
+				);
+			} else {
 				navigate({ to: '/window/settings/focus' });
 			}
 		}
@@ -40,13 +57,24 @@ function RouteComponent() {
 	// MARK: - Actions
 
 	const handleCancel = React.useCallback(() => {
+		if (returnTo != null) {
+			void returnToMainFromFocusSettings(returnTo);
+			return;
+		}
 		navigate({ to: '/window/settings/focus' });
-	}, [navigate]);
+	}, [navigate, returnTo]);
 
 	const onSubmit = handleSubmit({
 		onValidSubmit: async () => {
-			const success = await profileCx.save();
-			if (success) {
+			const profile = await profileCx.save();
+			if (profile == null) {
+				return;
+			}
+			if (returnTo != null) {
+				await returnToMainFromFocusSettings(
+					appendReturnSearch(returnTo, { refreshProfiles: 'true' })
+				);
+			} else {
 				navigate({ to: '/window/settings/focus' });
 			}
 		},
@@ -64,7 +92,7 @@ function RouteComponent() {
 	// MARK: - Effects
 
 	React.useEffect(() => {
-		profileCx.startEdit(Number(profileId));
+		void profileCx.prepareEditForm(Number(profileId));
 	}, [profileCx, profileId]);
 
 	// MARK: - UI

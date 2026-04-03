@@ -107,6 +107,17 @@ impl Window {
         return Ok(());
     }
 
+    /// Navigate an existing window to a specific path without changing visibility.
+    pub fn navigate_to_path(&self, app: &AppHandle, path: &str) -> tauri::Result<()> {
+        if let Some(window) = self.get(app) {
+            window.eval(&format!(
+                "window.__TAURI_ROUTER__?.navigate({{ href: '{}' }});",
+                path
+            ))?;
+        }
+        return Ok(());
+    }
+
     /// Bring all visible windows to the foreground.
     /// If no windows are visible, shows the Main window.
     pub fn focus_all_visible(app: &AppHandle) -> tauri::Result<()> {
@@ -140,7 +151,7 @@ impl Window {
             window.show()?;
             window.set_focus()?;
             window.eval(&format!(
-                "window.__TAURI_ROUTER__?.navigate({{ to: '{}' }});",
+                "window.__TAURI_ROUTER__?.navigate({{ href: '{}' }});",
                 path
             ))?;
             return Ok(window);
@@ -198,6 +209,7 @@ impl Window {
     /// Build window with a custom path (for dynamic routing).
     fn build_at_path(&self, app: &AppHandle, path: &str) -> tauri::Result<WebviewWindow> {
         return match self {
+            Self::Main => self.build_main_at_path(app, path),
             Self::Activity => self.build_activity_at_path(app, path),
             Self::Settings => self.build_settings_at_path(app, path),
             // Other windows don't support dynamic paths, fall back to default
@@ -206,8 +218,12 @@ impl Window {
     }
 
     fn build_main(&self, app: &AppHandle) -> tauri::Result<WebviewWindow> {
+        return self.build_main_at_path(app, self.path());
+    }
+
+    fn build_main_at_path(&self, app: &AppHandle, path: &str) -> tauri::Result<WebviewWindow> {
         let mut builder = self
-            .base_builder(app)
+            .base_builder_at_path(app, path)
             .resizable(false)
             .maximizable(false)
             .minimizable(true)

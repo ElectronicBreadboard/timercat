@@ -48,6 +48,15 @@ pub fn show_main_window(app: tauri::AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 #[specta::specta]
+pub fn show_main_window_at_path(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    Window::Main
+        .show_at_path(&app, &path)
+        .map_err(|e| e.to_string())?;
+    return Ok(());
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn show_cat_window(app: tauri::AppHandle) -> Result<(), String> {
     Window::Cat.show(&app).map_err(|e| e.to_string())?;
     return Ok(());
@@ -77,8 +86,27 @@ pub fn show_settings_window(app: tauri::AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 #[specta::specta]
+pub fn show_settings_window_at_path(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    Window::Main.hide(&app).map_err(|e| e.to_string())?;
+    Window::Settings
+        .show_at_path(&app, &path)
+        .map_err(|e| e.to_string())?;
+    return Ok(());
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn hide_settings_window(app: tauri::AppHandle) -> Result<(), String> {
     Window::Settings.hide(&app).map_err(|e| e.to_string())?;
+    return Ok(());
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn navigate_settings_window_to_path(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    Window::Settings
+        .navigate_to_path(&app, &path)
+        .map_err(|e| e.to_string())?;
     return Ok(());
 }
 
