@@ -14,7 +14,7 @@ function RouteComponent() {
 		<div className="space-y-6">
 			<h1 className="text-base-900 text-xl font-semibold">About</h1>
 
-			<SettingGroup>
+			<SettingGroup title="Support">
 				<SettingItem variant="link" label="Feedback" href={appConfig.help.mailto('Feedback')} />
 				<SettingItem
 					variant="link"
@@ -28,7 +28,7 @@ function RouteComponent() {
 				/>
 			</SettingGroup>
 
-			<SettingGroup>
+			<SettingGroup title="App">
 				<SettingItem
 					variant="link"
 					label="Website"
@@ -43,7 +43,22 @@ function RouteComponent() {
 				/>
 			</SettingGroup>
 
-			<SettingGroup>
+			<SettingGroup title="Credits">
+				<SettingItem
+					variant="link"
+					label="Bongo Cat"
+					description="Inspiration for the cat mechanic"
+					href="https://store.steampowered.com/app/3419430/Bongo_Cat/"
+				/>
+				<SettingItem
+					variant="link"
+					label="@StrayRogue"
+					description="Original Bongo Cat artwork and meme"
+					href="https://twitter.com/StrayRogue"
+				/>
+			</SettingGroup>
+
+			<SettingGroup title="Legal">
 				<SettingItem variant="link" label="Privacy Policy" href={appConfig.help.legal.privacy} />
 				<SettingItem variant="link" label="Terms of Use" href={appConfig.help.legal.terms} />
 			</SettingGroup>

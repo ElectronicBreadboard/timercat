@@ -15,7 +15,8 @@
   <a href="#introduction"><strong>Introduction</strong></a> ·
   <a href="#download"><strong>Download</strong></a> ·
   <a href="#tech-stack"><strong>Tech Stack</strong></a> ·
-  <a href="#contributing"><strong>Contributing</strong></a>
+  <a href="#contributing"><strong>Contributing</strong></a> ·
+  <a href="#credits"><strong>Credits</strong></a>
 </p>
 
 <p align="center">
@@ -47,6 +48,11 @@ Fully local. No cloud, no analytics, no account.
 
 ## Tech Stack
 
-**Frontend:** React, TypeScript, TanStack Router, Vite
-**Backend:** Tauri (Rust), SQLite, Swift
-**Tools:** pnpm, Turborepo, GitHub Actions
+- **Frontend:** React, TypeScript, TanStack Router, Vite
+- **Backend:** Tauri (Rust), SQLite, Swift
+- **Tools:** pnpm, Turborepo, GitHub Actions
+
+## Credits
+
+- **[Bongo Cat](https://store.steampowered.com/app/3419430/Bongo_Cat/)** — Inspiration for the cat mechanic
+- **[@StrayRogue](https://twitter.com/StrayRogue)** — Original Bongo Cat artwork and meme
