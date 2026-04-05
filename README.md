@@ -15,7 +15,6 @@
   <a href="#introduction"><strong>Introduction</strong></a> ·
   <a href="#download"><strong>Download</strong></a> ·
   <a href="#tech-stack"><strong>Tech Stack</strong></a> ·
-  <a href="#contributing"><strong>Contributing</strong></a> ·
   <a href="#credits"><strong>Credits</strong></a>
 </p>
 
@@ -29,7 +28,7 @@
   <a href="https://github.com/builder-group/focuscat/releases/latest">
     <img src="https://img.shields.io/github/v/release/builder-group/focuscat?style=flat" alt="Release" />
   </a>
-  <a href="https://saku-v1.vercel.app/discord">
+  <a href="https://discord.com/invite/w4xE3bSjhQ">
     <img src="https://img.shields.io/discord/795291052897992724.svg?label=&logo=discord&logoColor=ffffff&color=293140&labelColor=3377FF" alt="Join Discord" />
   </a>
 </p>
@@ -40,7 +39,7 @@
 
 Pomodoro timer with a cat companion that reacts to your work. Configure your cycles, block apps during focus time. Enforces breaks so you actually take them.
 
-Fully local. No cloud, no analytics, no account.
+Fully local. No cloud, no account.
 
 ## Download
 

@@ -41,6 +41,7 @@ function RouteComponent() {
 					description="github.com/builder-group/focuscat"
 					href={appConfig.distribution.github}
 				/>
+				<SettingItem variant="link" label="Discord" href={appConfig.help.discord} />
 			</SettingGroup>
 
 			<SettingGroup title="Credits">
