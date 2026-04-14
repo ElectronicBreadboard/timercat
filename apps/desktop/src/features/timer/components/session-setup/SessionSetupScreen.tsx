@@ -292,9 +292,11 @@ export const SessionSetupScreen: React.FC<SessionSetupScreenProps> = (props) => 
 										key={`${item.category}:${item.name}`}
 										className={cn(
 											'rounded-full px-2 py-0.5 text-xs font-medium',
-											item.category === 'focused' && 'bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300',
+											item.category === 'focused' &&
+												'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
 											item.category === 'neutral' && 'bg-base-100 text-base-500',
-											item.category === 'distracting' && 'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400'
+											item.category === 'distracting' &&
+												'bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400'
 										)}
 									>
 										{item.name}

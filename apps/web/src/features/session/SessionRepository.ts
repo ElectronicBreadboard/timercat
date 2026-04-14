@@ -1,5 +1,5 @@
-import { Err, Ok, type TResult } from 'tuple-result';
 import { isWorkSession } from '@repo/ui';
+import { Err, Ok, type TResult } from 'tuple-result';
 import { idbReq, toError } from '@/lib';
 
 export class SessionRepository {

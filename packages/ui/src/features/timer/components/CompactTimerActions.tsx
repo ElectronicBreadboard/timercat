@@ -33,12 +33,7 @@ export const CompactTimerActions: React.FC<TCompactTimerActionsProps> = (props) 
 			case 'pomodoro':
 				return getPomodoroTimerActionSlots(cx, status, isBreakSession(sessionType), isOvertime);
 			case 'progressive':
-				return getProgressiveTimerActionSlots(
-					cx,
-					status,
-					isBreakSession(sessionType),
-					isOvertime
-				);
+				return getProgressiveTimerActionSlots(cx, status, isBreakSession(sessionType), isOvertime);
 		}
 	}, [cx, status, sessionType, isOvertime]);
 
