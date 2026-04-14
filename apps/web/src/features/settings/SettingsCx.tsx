@@ -7,14 +7,15 @@ import { type TAppSettings } from './types';
 export class SettingsCx {
 	public readonly $appSettings = withVersionedLocalStorage(
 		createState<TAppSettings>({
-			version: '0.0.3',
+			version: '0.0.4',
 			features: {
 				goals: true,
 				catWindow: true,
 				developer: false
 			},
 			appearance: {
-				theme: 'auto'
+				theme: 'auto',
+				background: 'lofi'
 			},
 			audio: {
 				session: { enabled: true, volume: 0.6 },
@@ -69,7 +70,7 @@ export class SettingsCx {
 }
 
 const settingsMigrationConfig: TVersionedMigrationConfig<TAppSettings> = {
-	latestVersion: '0.0.3',
+	latestVersion: '0.0.4',
 	migrations: {
 		'0.0.1': {
 			to: '0.0.2',
@@ -94,6 +95,19 @@ const settingsMigrationConfig: TVersionedMigrationConfig<TAppSettings> = {
 						session: { enabled: v.audio.enabled ?? true, volume: v.audio.volume ?? 0.6 },
 						sessionEnd: { enabled: v.audio.enabled ?? true, volume: v.audio.volume ?? 0.6 },
 						effects: { enabled: v.audio.enabled ?? true, volume: v.audio.volume ?? 0.6 }
+					}
+				};
+			}
+		},
+		'0.0.3': {
+			to: '0.0.4',
+			migrate: (value) => {
+				const v = value as TAppSettings;
+				return {
+					...v,
+					appearance: {
+						...v.appearance,
+						background: 'lofi'
 					}
 				};
 			}

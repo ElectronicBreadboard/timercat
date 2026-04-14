@@ -1,7 +1,7 @@
 import type { TCatFace, TCatFur, TCatHat } from '@repo/ui';
 
 export interface TAppSettings {
-	version: '0.0.3';
+	version: '0.0.4';
 	features: {
 		goals: boolean;
 		catWindow: boolean;
@@ -9,6 +9,7 @@ export interface TAppSettings {
 	};
 	appearance: {
 		theme: TTheme;
+		background: TBackground;
 	};
 	audio: {
 		session: { enabled: boolean; volume: number };
@@ -45,3 +46,4 @@ export interface TAppSettings {
 }
 
 export type TTheme = 'light' | 'dark' | 'auto';
+export type TBackground = 'sage' | 'cream' | 'night' | 'lofi';

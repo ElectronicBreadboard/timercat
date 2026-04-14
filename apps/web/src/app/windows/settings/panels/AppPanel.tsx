@@ -1,7 +1,14 @@
-import { MonitorIcon, MoonIcon, Slider, SunIcon, Switch, ToggleGroup } from '@repo/ui';
+import { MonitorIcon, MoonIcon, Select, Slider, SunIcon, Switch, ToggleGroup } from '@repo/ui';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
-import { SettingGroup, SettingItem, useSettingsCx, type TTheme } from '@/features/settings';
+import { appBackgroundOrder, appBackgrounds } from '@/app/backgrounds';
+import {
+	SettingGroup,
+	SettingItem,
+	useSettingsCx,
+	type TBackground,
+	type TTheme
+} from '@/features/settings';
 
 export const AppPanel: React.FC = () => {
 	const settingsCx = useSettingsCx();
@@ -10,7 +17,7 @@ export const AppPanel: React.FC = () => {
 	// MARK: - Actions
 
 	const updateAppearance = React.useCallback(
-		(updates: Partial<{ theme: TTheme }>) => {
+		(updates: Partial<{ theme: TTheme; background: TBackground }>) => {
 			settingsCx.update({ appearance: { ...settings.appearance, ...updates } });
 		},
 		[settingsCx, settings.appearance]
@@ -73,6 +80,26 @@ export const AppPanel: React.FC = () => {
 							<MoonIcon size={14} />
 						</ToggleGroup.Item>
 					</ToggleGroup>
+				</SettingItem>
+				<SettingItem label="Background" description="Choose the backdrop for your timer workspace">
+					<Select
+						items={appBackgroundOrder.map((background) => ({
+							label: appBackgrounds[background].label,
+							value: background,
+							preview: (
+								<div
+									className={`border-base-200 h-5 w-8 shrink-0 rounded-sm border ${appBackgrounds[background].previewClassName}`}
+									aria-hidden
+								/>
+							)
+						}))}
+						value={settings.appearance.background}
+						onValueChange={(background) =>
+							updateAppearance({ background: background as TBackground })
+						}
+						size="sm"
+						className="min-w-40"
+					/>
 				</SettingItem>
 			</SettingGroup>
 

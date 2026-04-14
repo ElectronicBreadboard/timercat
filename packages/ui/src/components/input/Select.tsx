@@ -6,6 +6,29 @@ import { cn } from '@/lib';
 export const Select: React.FC<TSelectProps> = (props) => {
 	const { items, placeholder, label, className, size, variant, ...rest } = props;
 
+	const hasPreviewItems = React.useMemo(() => items.some((item) => item.preview != null), [items]);
+
+	const renderSelectedValue = React.useCallback(
+		(value: unknown) => {
+			const item =
+				typeof value === 'string'
+					? items.find((candidate) => candidate.value === value)
+					: undefined;
+
+			if (item == null) {
+				return placeholder != null ? <span className="text-base-400">{placeholder}</span> : null;
+			}
+
+			return (
+				<>
+					{item.preview}
+					<span className="truncate">{item.label}</span>
+				</>
+			);
+		},
+		[items, placeholder]
+	);
+
 	return (
 		<BaseSelect.Root items={items} {...rest}>
 			{label && (
@@ -14,7 +37,13 @@ export const Select: React.FC<TSelectProps> = (props) => {
 				</BaseSelect.Label>
 			)}
 			<BaseSelect.Trigger className={cn(selectVariants({ variant, size }), className)}>
-				<BaseSelect.Value className="data-placeholder:text-base-400" placeholder={placeholder} />
+				{hasPreviewItems ? (
+					<BaseSelect.Value className="flex min-w-0 items-center gap-2">
+						{renderSelectedValue}
+					</BaseSelect.Value>
+				) : (
+					<BaseSelect.Value className="data-placeholder:text-base-400" placeholder={placeholder} />
+				)}
 				<BaseSelect.Icon className="text-base-500 flex shrink-0">
 					<ChevronUpDownIcon />
 				</BaseSelect.Icon>
@@ -46,7 +75,14 @@ export const Select: React.FC<TSelectProps> = (props) => {
 									<BaseSelect.ItemIndicator className="col-start-1 flex items-center justify-center">
 										<CheckIcon />
 									</BaseSelect.ItemIndicator>
-									<BaseSelect.ItemText className="col-start-2">{item.label}</BaseSelect.ItemText>
+									{item.preview != null ? (
+										<div className="col-start-2 flex min-w-0 items-center gap-2">
+											{item.preview}
+											<BaseSelect.ItemText className="truncate">{item.label}</BaseSelect.ItemText>
+										</div>
+									) : (
+										<BaseSelect.ItemText className="col-start-2">{item.label}</BaseSelect.ItemText>
+									)}
 								</BaseSelect.Item>
 							))}
 						</BaseSelect.List>
@@ -97,6 +133,7 @@ export interface TSelectProps
 export interface SelectItem {
 	label: string;
 	value: string;
+	preview?: React.ReactNode;
 }
 
 const ChevronUpDownIcon = () => (

@@ -1,13 +1,21 @@
-import { useBoundingRectObserver, type TRandomCat } from '@repo/ui';
+import { cn, useBoundingRectObserver, type TRandomCat } from '@repo/ui';
 import { useCompute } from 'feature-react/state';
 import { AnimatePresence } from 'motion/react';
 import React from 'react';
+import { useSettingsCx } from '@/features/settings';
 import { useWindowCx } from '@/features/window';
+import { appBackgrounds } from './backgrounds';
 import { AppSplash, Fireflies, WindowCanvas } from './components';
 
 export const App: React.FC<TAppProps> = (props) => {
 	const { splashCat } = props;
 	const windowCx = useWindowCx();
+	const settingsCx = useSettingsCx();
+	const background = useCompute(
+		settingsCx.$appSettings,
+		({ value }) => appBackgrounds[value.appearance.background],
+		[]
+	);
 	const [splashDone, setSplashDone] = React.useState(false);
 	const containerReady = useCompute(
 		windowCx.$containerRect,
@@ -42,10 +50,10 @@ export const App: React.FC<TAppProps> = (props) => {
 		<div ref={windowCx.containerRef} className="relative h-dvh w-screen overflow-hidden">
 			{/* Background */}
 			<div
-				className={`absolute inset-0 bg-[url('/illustrations/backgrounds/japanese-lofi.png')] bg-cover bg-center bg-no-repeat`}
+				className={cn('absolute inset-0', background.className)}
 				onClick={handleBackgroundClick}
 			/>
-			<Fireflies count={containerReady ? fireflyCount : 0} />
+			{background.showFireflies && <Fireflies count={containerReady ? fireflyCount : 0} />}
 
 			{/* Windows */}
 			{containerReady && <WindowCanvas windowCx={windowCx} />}
