@@ -1,4 +1,5 @@
 import { Err, Ok, type TResult } from 'tuple-result';
+import { isWorkSession } from '@repo/ui';
 import { idbReq, toError } from '@/lib';
 
 export class SessionRepository {
@@ -95,7 +96,7 @@ export class SessionRepository {
 			const total = rows
 				.filter(
 					(r) =>
-						r.session_type === 'pomodoro:work' &&
+						isWorkSession(r.session_type) &&
 						(r.status === 'completed' ||
 							(r.status === 'cancelled' && (r.actual_seconds ?? 0) >= 30))
 				)

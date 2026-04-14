@@ -1,4 +1,4 @@
-import { formatDuration } from '@repo/ui';
+import { formatDuration, isWorkSession } from '@repo/ui';
 import { useCombinedCompute, useCompute, useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { useSessionCx } from '@/features/session';
@@ -29,7 +29,7 @@ export const FocusGoalView: React.FC = () => {
 			const totalSeconds = totalCx.value;
 			const remainingSeconds = remainingCx.value;
 			const overtimeSeconds = overtimeCx.value;
-			return sessionType === 'pomodoro:work' && status !== 'idle'
+			return isWorkSession(sessionType) && status !== 'idle'
 				? totalSeconds - remainingSeconds + overtimeSeconds
 				: 0;
 		}

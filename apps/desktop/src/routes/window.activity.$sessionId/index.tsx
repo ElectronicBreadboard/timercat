@@ -1,4 +1,11 @@
-import { BriefcaseIcon, cn, CoffeeIcon, formatDuration, formatTimeOfDayAmPm } from '@repo/ui';
+import {
+	BriefcaseIcon,
+	cn,
+	CoffeeIcon,
+	formatDuration,
+	formatTimeOfDayAmPm,
+	isWorkSession
+} from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import React from 'react';
 import { unwrapOr } from 'tuple-result';
@@ -46,7 +53,7 @@ function RouteComponent() {
 		}
 
 		const { session } = data;
-		const isWork = session.sessionType.endsWith(':work');
+		const isWork = isWorkSession(session.sessionType);
 		const duration = session.actualSeconds ?? session.plannedSeconds;
 
 		const startDate = new Date(session.startedAt);

@@ -1,4 +1,4 @@
-import { type TProgressivePomodoroCx, type TSessionStartInput } from '@repo/ui';
+import { isBreakSession, type TProgressivePomodoroCx, type TSessionStartInput } from '@repo/ui';
 import { createState } from 'feature-state';
 import { specta } from '@/environment';
 import { toTuple } from '@/lib';
@@ -38,7 +38,7 @@ export class ProgressivePomodoroTimerCx extends BaseTimerCx implements TProgress
 		}
 
 		const s = this._settingsCx.$appSettings.get();
-		const isBreak = !this.$sessionType.get().endsWith(':work');
+		const isBreak = isBreakSession(this.$sessionType.get());
 		if (s.timer.progressive.showSessionSetup && isBreak && input == null) {
 			await this._showMainFlow('/window/main/progressive/setup?advance=true');
 			return;

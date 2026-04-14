@@ -4,7 +4,8 @@ import {
 	cn,
 	CoffeeIcon,
 	formatDuration,
-	formatTimeOfDayAmPm
+	formatTimeOfDayAmPm,
+	isWorkSession
 } from '@repo/ui';
 import React from 'react';
 import type { TSessionRow } from '@/features/session';
@@ -13,7 +14,7 @@ export const SessionDetail: React.FC<TSessionDetailProps> = (props) => {
 	const { session, onBack } = props;
 
 	const sessionInfo = React.useMemo(() => {
-		const isWork = session.session_type.endsWith(':work');
+		const isWork = isWorkSession(session.session_type);
 		const duration = session.actual_seconds ?? session.planned_seconds;
 
 		const startDate = new Date(session.started_at);

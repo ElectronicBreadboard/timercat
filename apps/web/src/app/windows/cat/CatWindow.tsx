@@ -8,6 +8,7 @@ import {
 	ExpandIcon,
 	formatTime,
 	GripIcon,
+	isBreakSession,
 	mq,
 	useMediaQuery,
 	type TCatRef
@@ -42,7 +43,7 @@ export const CatWindow: React.FC<TCatWindowProps> = (props) => {
 		]) => {
 			const isOvertime = overtimeSeconds > 0;
 			return {
-				isBreak: !sessionType.endsWith(':work'),
+				isBreak: isBreakSession(sessionType),
 				isOvertime,
 				isRunning: status === 'running',
 				displayTime: isOvertime ? `+${formatTime(overtimeSeconds)}` : formatTime(remainingSeconds)

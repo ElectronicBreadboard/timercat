@@ -2,6 +2,7 @@ import { useCombinedCompute, useCompute } from 'feature-react/state';
 import { animate, motion, useMotionValue } from 'motion/react';
 import React from 'react';
 import { cn } from '@/lib';
+import { isWorkSession } from '../session-category';
 import { TTimerViewCx } from '../TimerViewCx';
 
 export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
@@ -32,7 +33,7 @@ export const SessionWheel: React.FC<TSessionWheelProps> = (props) => {
 				return { value: 0, isRunning: false };
 			}
 			const phaseProgress = totalSeconds > 0 ? (totalSeconds - remainingSeconds) / totalSeconds : 0;
-			const value = sessionType.endsWith(':work')
+			const value = isWorkSession(sessionType)
 				? sessionsCompleted + phaseProgress * 0.5
 				: sessionsCompleted - 0.5 + phaseProgress * 0.5;
 			return { value, isRunning: status === 'running' };

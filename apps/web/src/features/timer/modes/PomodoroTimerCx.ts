@@ -1,4 +1,4 @@
-import { type TPomodoroCx, type TSessionStartInput } from '@repo/ui';
+import { isBreakSession, type TPomodoroCx, type TSessionStartInput } from '@repo/ui';
 import { createState } from 'feature-state';
 import { type AudioCx } from '@/features/audio';
 import { type SessionCx } from '@/features/session';
@@ -40,7 +40,7 @@ export class PomodoroTimerCx extends BaseTimerCx implements TPomodoroCx {
 
 	public async advance(input?: TSessionStartInput): Promise<void> {
 		const s = this._settingsCx.$appSettings.get();
-		const isBreak = !this.$sessionType.get().endsWith(':work');
+		const isBreak = isBreakSession(this.$sessionType.get());
 		if (s.timer.showSessionSetup && isBreak && input == null) {
 			this.$sessionSetupRequested.set('advance');
 			return;

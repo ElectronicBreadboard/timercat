@@ -1,4 +1,11 @@
-import { BriefcaseIcon, cn, CoffeeIcon, formatDuration, formatTimeOfDayAmPm } from '@repo/ui';
+import {
+	BriefcaseIcon,
+	cn,
+	CoffeeIcon,
+	formatDuration,
+	formatTimeOfDayAmPm,
+	isWorkSession
+} from '@repo/ui';
 import { Link, useParams } from '@tanstack/react-router';
 import React from 'react';
 import { specta } from '@/environment';
@@ -8,7 +15,7 @@ export const SessionListItem: React.FC<TSessionListItemProps> = (props) => {
 	const params = useParams({ strict: false });
 	const isSelected = params.sessionId === String(session.id);
 
-	const isWork = session.sessionType.endsWith(':work');
+	const isWork = isWorkSession(session.sessionType);
 	const intention = session.intention?.trim() ?? '';
 	const sessionName = isWork ? (intention !== '' ? intention : 'Focus') : 'Break';
 	const duration = session.actualSeconds ?? session.plannedSeconds;

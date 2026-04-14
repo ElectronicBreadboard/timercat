@@ -8,6 +8,7 @@ import {
 	ExpandIcon,
 	formatTime,
 	GripIcon,
+	isBreakSession,
 	type TCatRef
 } from '@repo/ui';
 import { createFileRoute } from '@tanstack/react-router';
@@ -44,7 +45,7 @@ function RouteComponent() {
 		]) => {
 			const isOvertime = overtimeSeconds > 0;
 			return {
-				isBreak: !sessionType.endsWith(':work'),
+				isBreak: isBreakSession(sessionType),
 				isOvertime,
 				isRunning: status === 'running',
 				displayTime: isOvertime ? `+${formatTime(overtimeSeconds)}` : formatTime(remainingSeconds)

@@ -186,7 +186,7 @@ impl SessionRepository {
             r#"
             SELECT COALESCE(SUM(actual_seconds), 0)
             FROM session
-            WHERE session_type = 'pomodoro:work'
+            WHERE session_type IN ('pomodoro:work', 'countdown', 'progressive:work')
               AND (status = 'completed' OR (status = 'cancelled' AND actual_seconds >= 30))
               AND started_at >= ?
             "#,
@@ -298,7 +298,7 @@ impl SessionRepository {
             r#"
             SELECT id
             FROM session
-            WHERE session_type = 'pomodoro:work'
+            WHERE session_type IN ('pomodoro:work', 'countdown', 'progressive:work')
               AND status = 'completed'
               AND (? IS NULL OR actual_seconds >= ?)
             ORDER BY started_at DESC

@@ -1,11 +1,18 @@
-import { BriefcaseIcon, cn, CoffeeIcon, formatDuration, formatTimeOfDayAmPm } from '@repo/ui';
+import {
+	BriefcaseIcon,
+	cn,
+	CoffeeIcon,
+	formatDuration,
+	formatTimeOfDayAmPm,
+	isWorkSession
+} from '@repo/ui';
 import React from 'react';
 import type { TSessionRow } from '@/features/session';
 
 export const SessionListItem: React.FC<TSessionListItemProps> = (props) => {
 	const { session, isSelected, onSelect } = props;
 
-	const isWork = session.session_type.endsWith(':work');
+	const isWork = isWorkSession(session.session_type);
 	const intention = session.intention?.trim() ?? '';
 	const sessionName = isWork ? (intention !== '' ? intention : 'Focus') : 'Break';
 	const duration = session.actual_seconds ?? session.planned_seconds;

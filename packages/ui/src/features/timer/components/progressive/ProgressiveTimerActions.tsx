@@ -2,6 +2,7 @@ import { useCombinedCompute } from 'feature-react/state';
 import React from 'react';
 import { cn } from '@/lib';
 import { type TProgressivePomodoroCx } from '../../modes';
+import { isBreakSession } from '../../session-category';
 import { getProgressiveTimerActionSlots } from '../timer-action-slots';
 import { TimerActionSlotsView } from '../TimerActionSlotsView';
 
@@ -16,7 +17,7 @@ export const ProgressiveTimerActions: React.FC<TProps> = (props) => {
 			{ value: overtimeSeconds = 0 }
 		]) => ({
 			status,
-			isBreak: !sessionType.endsWith(':work'),
+			isBreak: isBreakSession(sessionType),
 			isOvertime: overtimeSeconds > 0
 		})
 	);

@@ -201,7 +201,7 @@ impl SessionType {
     pub fn is_work(&self) -> bool {
         return matches!(
             self,
-            SessionType::PomodoroWork | SessionType::ProgressiveWork
+            SessionType::PomodoroWork | SessionType::Countdown | SessionType::ProgressiveWork
         );
     }
 

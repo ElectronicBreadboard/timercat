@@ -1,4 +1,4 @@
-import { type TPomodoroCx, type TSessionStartInput } from '@repo/ui';
+import { isBreakSession, type TPomodoroCx, type TSessionStartInput } from '@repo/ui';
 import { specta } from '@/environment';
 import { toTuple } from '@/lib';
 import { BaseTimerCx } from './BaseTimerCx';
@@ -28,7 +28,7 @@ export class PomodoroTimerCx extends BaseTimerCx implements TPomodoroCx {
 
 	public async advance(input?: TSessionStartInput): Promise<void> {
 		const s = this._settingsCx.$appSettings.get();
-		const isBreak = !this.$sessionType.get().endsWith(':work');
+		const isBreak = isBreakSession(this.$sessionType.get());
 		if (s.timer.pomodoro.showSessionSetup && isBreak && input == null) {
 			await this._showMainFlow('/window/main/pomodoro/setup?advance=true');
 			return;

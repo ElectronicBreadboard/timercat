@@ -1,4 +1,4 @@
-import { useMemoCleanup } from '@repo/ui';
+import { isWorkSession, useMemoCleanup } from '@repo/ui';
 import { createState } from 'feature-state';
 import React from 'react';
 import { unwrapOrNull } from 'tuple-result';
@@ -67,7 +67,7 @@ export class SessionCx {
 
 	public async getLastWorkSession(minDurationSecs: number): Promise<TSessionRow | null> {
 		const rows = await this.getSessions(0, Date.now(), 50, minDurationSecs);
-		return rows.find((r) => r.session_type === 'pomodoro:work') ?? null;
+		return rows.find((r) => isWorkSession(r.session_type)) ?? null;
 	}
 
 	public async getSessions(

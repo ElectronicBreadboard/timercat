@@ -1,3 +1,4 @@
+import { isWorkSession } from '@repo/ui';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useCompute } from 'feature-react/state';
 import { ProgressivePomodoroTimerCx, SessionSetupScreen, useTimerCx } from '@/features/timer';
@@ -34,7 +35,7 @@ function RouteComponent() {
 	const returnTarget = toFlowReturnTarget(search);
 	const upcomingFocusSessionType = useCompute(
 		timerCx.$sessionType,
-		({ value }) => (advance && value.endsWith(':work') ? 'Break' : 'Focus'),
+		({ value }) => (advance && isWorkSession(value) ? 'Break' : 'Focus'),
 		[advance]
 	);
 
