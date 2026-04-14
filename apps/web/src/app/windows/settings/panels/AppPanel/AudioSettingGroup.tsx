@@ -1,7 +1,6 @@
 import { ChevronRightIcon, cn, Slider, Switch } from '@repo/ui';
 import React from 'react';
-import { specta } from '@/environment';
-import { SettingGroup, SettingItem } from '@/features/settings';
+import { SettingGroup, SettingItem, type TAppSettings } from '@/features/settings';
 
 export const AudioSettingGroup: React.FC<TAudioSettingGroupProps> = (props) => {
 	const { audio, onUpdate } = props;
@@ -9,29 +8,32 @@ export const AudioSettingGroup: React.FC<TAudioSettingGroupProps> = (props) => {
 	const [showAdvanced, setShowAdvanced] = React.useState(false);
 
 	const channels = [audio.session, audio.sessionEnd, audio.effects];
-	const enabledChannels = channels.filter((c) => c.enabled);
+	const enabledChannels = channels.filter((channel) => channel.enabled);
 	const isAnyEnabled = enabledChannels.length > 0;
 	const hasCustomMix = channels.some(
-		(c) => c.enabled !== audio.session.enabled || c.volume !== audio.session.volume
+		(channel) =>
+			channel.enabled !== audio.session.enabled || channel.volume !== audio.session.volume
 	);
 	const masterVolume =
 		enabledChannels.length === 0
 			? 0
 			: snapVolumePercentToStep(
-					(enabledChannels.reduce((sum, c) => sum + c.volume, 0) / enabledChannels.length) * 100
+					(enabledChannels.reduce((sum, channel) => sum + channel.volume, 0) /
+						enabledChannels.length) *
+						100
 				);
 
 	// MARK: - Actions
 
 	const updateChannel = React.useCallback(
-		(channel: keyof specta.AudioSettings, updates: Partial<specta.AudioChannelSettings>) => {
+		(channel: keyof TAppSettings['audio'], updates: Partial<TAppSettings['audio']['session']>) => {
 			onUpdate({ ...audio, [channel]: { ...audio[channel], ...updates } });
 		},
 		[audio, onUpdate]
 	);
 
 	const updateAllChannels = React.useCallback(
-		(updates: Partial<specta.AudioChannelSettings>) => {
+		(updates: Partial<TAppSettings['audio']['session']>) => {
 			onUpdate({
 				...audio,
 				session: { ...audio.session, ...updates },
@@ -46,14 +48,16 @@ export const AudioSettingGroup: React.FC<TAudioSettingGroupProps> = (props) => {
 		(nextVolumePercent: number) => {
 			const nextVolume = snapVolumePercentToStep(nextVolumePercent) / 100;
 			const activeChannels = [audio.session, audio.sessionEnd, audio.effects].filter(
-				(c) => c.enabled
+				(channel) => channel.enabled
 			);
 
 			if (activeChannels.length === 0) return;
 
 			const currentMasterVolume =
 				snapVolumePercentToStep(
-					(activeChannels.reduce((sum, c) => sum + c.volume, 0) / activeChannels.length) * 100
+					(activeChannels.reduce((sum, channel) => sum + channel.volume, 0) /
+						activeChannels.length) *
+						100
 				) / 100;
 
 			if (currentMasterVolume <= 0) {
@@ -69,14 +73,15 @@ export const AudioSettingGroup: React.FC<TAudioSettingGroupProps> = (props) => {
 			}
 
 			const scale = nextVolume / currentMasterVolume;
-			const scaleChannel = (c: specta.AudioChannelSettings) =>
-				c.enabled
+			const scaleChannel = (channel: TAppSettings['audio']['session']) =>
+				channel.enabled
 					? {
-							...c,
+							...channel,
 							volume:
-								snapVolumePercentToStep(Math.min(100, Math.max(0, c.volume * scale * 100))) / 100
+								snapVolumePercentToStep(Math.min(100, Math.max(0, channel.volume * scale * 100))) /
+								100
 						}
-					: c;
+					: channel;
 
 			onUpdate({
 				...audio,
@@ -120,7 +125,7 @@ export const AudioSettingGroup: React.FC<TAudioSettingGroupProps> = (props) => {
 						variant="action"
 						label="Individual sound controls"
 						description={hasCustomMix ? 'Sounds use different levels' : 'Adjust per sound'}
-						onClick={() => setShowAdvanced((v) => !v)}
+						onClick={() => setShowAdvanced((value) => !value)}
 						className="py-2.5"
 					>
 						<ChevronRightIcon
@@ -148,7 +153,7 @@ export const AudioSettingGroup: React.FC<TAudioSettingGroupProps> = (props) => {
 									<AudioVolumeControl
 										value={Math.round(audio.session.volume * 100)}
 										ariaLabel="Session sound volume"
-										onValueChange={(v) => updateChannel('session', { volume: v / 100 })}
+										onValueChange={(value) => updateChannel('session', { volume: value / 100 })}
 									/>
 								</SettingItem>
 							)}
@@ -168,7 +173,7 @@ export const AudioSettingGroup: React.FC<TAudioSettingGroupProps> = (props) => {
 									<AudioVolumeControl
 										value={Math.round(audio.sessionEnd.volume * 100)}
 										ariaLabel="Session end sound volume"
-										onValueChange={(v) => updateChannel('sessionEnd', { volume: v / 100 })}
+										onValueChange={(value) => updateChannel('sessionEnd', { volume: value / 100 })}
 									/>
 								</SettingItem>
 							)}
@@ -188,7 +193,7 @@ export const AudioSettingGroup: React.FC<TAudioSettingGroupProps> = (props) => {
 									<AudioVolumeControl
 										value={Math.round(audio.effects.volume * 100)}
 										ariaLabel="Sound effects volume"
-										onValueChange={(v) => updateChannel('effects', { volume: v / 100 })}
+										onValueChange={(value) => updateChannel('effects', { volume: value / 100 })}
 									/>
 								</SettingItem>
 							)}
@@ -201,12 +206,13 @@ export const AudioSettingGroup: React.FC<TAudioSettingGroupProps> = (props) => {
 };
 
 interface TAudioSettingGroupProps {
-	audio: specta.AudioSettings;
-	onUpdate: (audio: specta.AudioSettings) => void;
+	audio: TAppSettings['audio'];
+	onUpdate: (audio: TAppSettings['audio']) => void;
 }
 
 const AudioVolumeControl: React.FC<TAudioVolumeControlProps> = (props) => {
 	const { value, ariaLabel, onValueChange } = props;
+
 	return (
 		<div className="flex min-w-40 items-center gap-3">
 			<span className="text-base-500 shrink-0 text-right text-xs tabular-nums">{value}%</span>
