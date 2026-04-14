@@ -43,6 +43,10 @@ export const SessionList: React.FC<TSessionListProps> = (props) => {
 
 		return groups;
 	}, [sessions]);
+	const groupedSessionsArray = React.useMemo(
+		() => Array.from(groupedSessions.entries()),
+		[groupedSessions]
+	);
 
 	return (
 		<div className={cn('bg-base-0 flex flex-col overflow-y-auto', className)}>
@@ -61,8 +65,11 @@ export const SessionList: React.FC<TSessionListProps> = (props) => {
 				</span>
 			</Link>
 
-			{Array.from(groupedSessions.entries()).map(([dateKey, dateSessions], index) => (
-				<div key={dateKey}>
+			{groupedSessionsArray.map(([dateKey, dateSessions], index) => (
+				<div
+					key={dateKey}
+					className={cn(index === groupedSessionsArray.length - 1 && 'border-base-200 border-b')}
+				>
 					{/* Date Header */}
 					<div
 						className={cn(
@@ -76,7 +83,7 @@ export const SessionList: React.FC<TSessionListProps> = (props) => {
 					</div>
 
 					{/* Sessions */}
-					<div className="border-base-200 divide-base-200 flex flex-col divide-y border-b">
+					<div className="divide-base-200 flex flex-col divide-y">
 						{dateSessions.map((session) => (
 							<SessionListItem key={session.id} session={session} />
 						))}
