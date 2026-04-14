@@ -17,7 +17,7 @@ export const catConfig = {
 			}
 		},
 		hat: {
-			available: ['banana', 'lil-duck', 'propeller-hat', 'heart', 'timer'] as const,
+			available: ['banana', 'lil-duck', 'propeller-hat', 'heart', 'timer', 'crown'] as const,
 			path: (hat: TCatHat) => getCatPath('hat', hat)
 		},
 		face: {
