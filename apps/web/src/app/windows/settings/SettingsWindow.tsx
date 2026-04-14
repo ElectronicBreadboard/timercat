@@ -4,7 +4,7 @@ import React from 'react';
 import { useWindowCx } from '@/features/window';
 import { WindowHeader } from '../../components';
 import { Sidebar } from './components';
-import { AppPanel, DeveloperPanel, GoalsPanel, TimerPanel } from './panels';
+import { AboutPanel, AppPanel, DeveloperPanel, GoalsPanel, TimerPanel } from './panels';
 import type { TSettingsPanel } from './types';
 
 export const SettingsWindow: React.FC = () => {
@@ -23,6 +23,7 @@ export const SettingsWindow: React.FC = () => {
 					{activePanel === 'app' && <AppPanel />}
 					{activePanel === 'timer' && <TimerPanel />}
 					{activePanel === 'goals' && <GoalsPanel />}
+					{activePanel === 'about' && <AboutPanel />}
 					{activePanel === 'developer' && <DeveloperPanel />}
 				</main>
 			</div>

@@ -1,1 +1,1 @@
-export type TSettingsPanel = 'app' | 'timer' | 'goals' | 'developer';
+export type TSettingsPanel = 'app' | 'timer' | 'goals' | 'about' | 'developer';

@@ -1,4 +1,4 @@
-import { AppWindowIcon, Button, CodeIcon, TargetIcon, TimerIcon } from '@repo/ui';
+import { AppWindowIcon, Button, CodeIcon, InfoIcon, TargetIcon, TimerIcon } from '@repo/ui';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { appConfig } from '@/environment';
@@ -36,6 +36,13 @@ export const Sidebar: React.FC<TSidebarProps> = (props) => {
 					onSelectPanel={onSelectPanel}
 				/>
 			)}
+			<SidebarItem
+				panel="about"
+				icon={<InfoIcon size={16} />}
+				label="About"
+				activePanel={activePanel}
+				onSelectPanel={onSelectPanel}
+			/>
 			{settings.features.developer && (
 				<SidebarItem
 					panel="developer"

@@ -32,7 +32,7 @@ export const appConfig = {
 		email: 'support@focuscat.app',
 		githubIssues: 'https://github.com/builder-group/focuscat/issues',
 		mailto: (subject: string) =>
-			`mailto:${appConfig.help.email}?subject=${encodeURIComponent(`[FocusCat] ${subject}`)}`,
+			`mailto:${appConfig.help.email}?subject=${encodeURIComponent(`[PomodoroCat] ${subject}`)}`,
 		legal: {
 			privacy: 'https://focuscat.app/legal/privacy',
 			terms: 'https://focuscat.app/legal/terms'
