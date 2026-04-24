@@ -8,6 +8,7 @@ export abstract class BaseTimerCx implements TTimerCx {
 	protected readonly _unlisteners: (() => void)[] = [];
 	protected _interval: ReturnType<typeof setInterval> | null = null;
 	protected _remainingAtStart = 0;
+	protected _overtimeAtStart = 0;
 	protected _loopStartedAt = 0;
 	protected _activeSessionId: number | null = null;
 
@@ -88,6 +89,7 @@ export abstract class BaseTimerCx implements TTimerCx {
 	protected startLoop(): void {
 		this.stopLoop();
 		this._remainingAtStart = this.$remainingSeconds.get();
+		this._overtimeAtStart = this.$overtimeSeconds.get();
 		this._loopStartedAt = Date.now();
 		this._interval = setInterval(() => this._tick(), Math.round(1000 / this.$speed.get()));
 	}
@@ -103,7 +105,7 @@ export abstract class BaseTimerCx implements TTimerCx {
 		const speed = this.$speed.get();
 		const elapsed = Math.floor(((Date.now() - this._loopStartedAt) / 1000) * speed);
 		const newRemaining = Math.max(0, this._remainingAtStart - elapsed);
-		const newOvertime = Math.max(0, elapsed - this._remainingAtStart);
+		const newOvertime = this._overtimeAtStart + Math.max(0, elapsed - this._remainingAtStart);
 
 		const prevRemaining = this.$remainingSeconds.get();
 		const prevOvertime = this.$overtimeSeconds.get();
