@@ -10,7 +10,7 @@ export const MacosWindow: React.FC = () => {
 				target="_blank"
 				rel="noopener noreferrer"
 				draggable={false}
-				className="bg-base-0 flex min-w-0 flex-1 items-center justify-center rounded-xl p-3 transition hover:opacity-90"
+				className="bg-base-0 flex min-w-0 flex-1 items-center justify-center rounded-xl transition hover:opacity-90"
 			>
 				<AppleIcon className="text-base-900 h-6 w-auto" aria-hidden />
 			</a>

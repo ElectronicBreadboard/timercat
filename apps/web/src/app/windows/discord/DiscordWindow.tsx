@@ -10,7 +10,7 @@ export const DiscordWindow: React.FC = () => {
 				target="_blank"
 				rel="noopener noreferrer"
 				draggable={false}
-				className="flex min-w-0 flex-1 items-center justify-center rounded-xl bg-[#E0E3FF] p-3 transition hover:opacity-90"
+				className="flex min-w-0 flex-1 items-center justify-center rounded-xl bg-[#E0E3FF] transition hover:opacity-90"
 			>
 				<DiscordWordmarkLogo className="h-5 w-auto text-[#5865F2]" aria-hidden />
 			</a>

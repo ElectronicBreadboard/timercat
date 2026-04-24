@@ -4,6 +4,7 @@ import { TrashDropZone, type WindowCx } from '@/features/window';
 import { ActivityWindow } from '../windows/activity';
 import { CatWindow } from '../windows/cat';
 import { DiscordWindow } from '../windows/discord';
+import { GithubWindow } from '../windows/github';
 import { MacosWindow } from '../windows/macos';
 import { MainWindow } from '../windows/main';
 import { SettingsWindow } from '../windows/settings';
@@ -88,10 +89,20 @@ export const WindowCanvas: React.FC<TWindowCanvasProps> = (props) => {
 					>
 						<MacosWindow />
 					</DraggableWindow>
+					<DraggableWindow
+						windowId="github"
+						windowCx={windowCx}
+						transparent
+						dragThreshold={8}
+						excludeFromDrag=""
+						className="active:cursor-grabbing"
+					>
+						<GithubWindow />
+					</DraggableWindow>
 				</>
 			)}
 
-			<TrashDropZone windowCx={windowCx} trashableIds={['spotify', 'discord', 'macos']} />
+			<TrashDropZone windowCx={windowCx} trashableIds={['spotify', 'discord', 'macos', 'github']} />
 		</>
 	);
 };
