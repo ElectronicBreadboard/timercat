@@ -2,7 +2,7 @@ import { Button, Input } from '@repo/ui';
 import { useFeatureState } from 'feature-react/state';
 import React from 'react';
 import { WindowHeader } from '@/app';
-import { type PomodoroTimerCx } from '@/features/timer';
+import { type CountdownTimerCx, type PomodoroTimerCx } from '@/features/timer';
 
 export const SessionSetupView: React.FC<TSessionSetupViewProps> = (props) => {
 	const { timerCx } = props;
@@ -21,7 +21,7 @@ export const SessionSetupView: React.FC<TSessionSetupViewProps> = (props) => {
 			return;
 		}
 		setIsStarting(true);
-		if (mode === 'advance') {
+		if (timerCx.mode === 'pomodoro' && mode === 'advance') {
 			void timerCx.advance({ intention });
 		} else {
 			void timerCx.start({ intention });
@@ -67,5 +67,5 @@ export const SessionSetupView: React.FC<TSessionSetupViewProps> = (props) => {
 };
 
 export interface TSessionSetupViewProps {
-	timerCx: PomodoroTimerCx;
+	timerCx: CountdownTimerCx | PomodoroTimerCx;
 }

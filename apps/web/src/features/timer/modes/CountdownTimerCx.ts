@@ -8,14 +8,25 @@ import { BaseTimerCx } from './BaseTimerCx';
 export class CountdownTimerCx extends BaseTimerCx implements TCountdownCx {
 	public readonly mode = 'countdown' as const;
 	public readonly $sessionType = createState('countdown');
+	public readonly $sessionSetupRequested = createState<'start' | null>(null);
 
 	constructor(settingsCx: SettingsCx, sessionCx: SessionCx, audioCx: AudioCx) {
 		super(settingsCx, sessionCx, audioCx);
 		this._applyIdleState();
 	}
 
+	public dismissSessionSetup(): void {
+		this.$sessionSetupRequested.set(null);
+	}
+
 	public async start(input?: TSessionStartInput): Promise<void> {
 		if (this.$status.get() !== 'idle') return;
+		const s = this._settingsCx.$appSettings.get();
+		if (s.timer.showSessionSetup && input == null) {
+			this.$sessionSetupRequested.set('start');
+			return;
+		}
+		this.$sessionSetupRequested.set(null);
 		this._activeSessionId = await this._sessionCx.createSession({
 			session_type: 'countdown',
 			planned_seconds: this.$totalSeconds.get(),

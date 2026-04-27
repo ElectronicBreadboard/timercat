@@ -30,9 +30,7 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 	const timerViewCx = useTimerViewCx();
 	const timerCx = timerViewCx.timer as CountdownTimerCx | PomodoroTimerCx;
 	const timerStatus = useFeatureState(timerCx.$status);
-	const sessionSetupRequested = useFeatureState(
-		timerCx.mode === 'pomodoro' ? timerCx.$sessionSetupRequested : null
-	);
+	const sessionSetupRequested = useFeatureState(timerCx.$sessionSetupRequested);
 
 	const audioCx = useAudioCx();
 
@@ -100,7 +98,7 @@ export const MainWindow: React.FC<TMainWindowProps> = (props) => {
 
 	// MARK: - UI
 
-	if (sessionSetupRequested != null && timerCx.mode === 'pomodoro') {
+	if (sessionSetupRequested != null) {
 		return <SessionSetupView timerCx={timerCx} />;
 	}
 
