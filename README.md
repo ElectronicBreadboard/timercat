@@ -1,26 +1,19 @@
 <p align="center">
   <a href="https://focuscat.app/">
-    <img alt="FocusCat is an open source pomodoro timer with a cat companion for better focus." src="./.github/assets/logo.svg" width="200" height="200">
+    <img alt="FocusCat" src="./.github/assets/logo.svg" width="200" height="200">
   </a>
 </p>
 
 <h3 align="center">FocusCat <i>by <a href="https://builder.group/">builder.group</a></i></h3>
 
 <p align="center">
-  Pomodoro timer with a cat companion that reacts to your work.
+  every focus timer looks kinda the same, so I added a cat.
   <br />
-  <a href="https://focuscat.app/"><strong>Learn more »</strong></a>
+  <a href="https://focuscat.app/"><strong>focuscat.app »</strong></a>
   <br />
   <br />
-  <a href="#introduction"><strong>Introduction</strong></a> ·
-  <a href="#download"><strong>Download</strong></a> ·
-  <a href="#tech-stack"><strong>Tech Stack</strong></a> ·
-  <a href="#credits"><strong>Credits</strong></a>
-</p>
-
-<p align="center">
   <a href="https://github.com/builder-group/focuscat/blob/develop/LICENSE">
-    <img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg" alt="GitHub License" />
+    <img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg" alt="License" />
   </a>
   <a href="https://github.com/builder-group/focuscat/releases">
     <img src="https://img.shields.io/github/downloads/builder-group/focuscat/total?style=flat&color=blue" alt="Downloads" />
@@ -29,21 +22,27 @@
     <img src="https://img.shields.io/github/v/release/builder-group/focuscat?style=flat" alt="Release" />
   </a>
   <a href="https://discord.com/invite/w4xE3bSjhQ">
-    <img src="https://img.shields.io/discord/795291052897992724.svg?label=&logo=discord&logoColor=ffffff&color=293140&labelColor=3377FF" alt="Join Discord" />
+    <img src="https://img.shields.io/discord/795291052897992724.svg?label=&logo=discord&logoColor=ffffff&color=293140&labelColor=3377FF" alt="Discord" />
   </a>
 </p>
 
 <br />
 
-## Introduction
+FocusCat is an offline-first Pomodoro timer for Mac with a cat companion that taps along as you work. block distracting apps during sessions, track where your time actually goes, and enforce breaks so you actually take them.
 
-Pomodoro timer with a cat companion that reacts to your work. Configure your cycles, block apps during focus time. Enforces breaks so you actually take them.
+no account. no cloud. no analytics. just you, your work, and a cat judging you.
 
-Fully local. No cloud, no account.
+free forever. open source under [AGPL-3](./LICENSE).
 
 ## Download
 
-**[macOS (focuscat.app)](https://focuscat.app)** · [Mac App Store](https://apps.apple.com/us/app/focus-cat-pomodoro-timer/id6759088013?mt=12) · [Web](https://pomodorocat.com)
+**[macOS (focuscat.app)](https://focuscat.app)** · [Mac App Store](https://apps.apple.com/us/app/focus-cat-pomodoro-timer/id6759088013?mt=12) · [Web (pomodorocat.com)](https://pomodorocat.com)
+
+## The Cat
+
+the cat is composed of 3 SVG layers (hat, fur, eyes). fully customizable. want to create your own cosmetics? grab the [Figma file](https://www.figma.com/community/file/1632645156337158294) and contribute your own hats, furs, or faces.
+
+inspired by the Bongo Cat meme and artwork by [@StrayRogue](https://twitter.com/StrayRogue) and the [Bongo Cat Steam game](https://store.steampowered.com/app/3419430/Bongo_Cat/). this is a fan project made with respect for what they built.
 
 ## Tech Stack
 
@@ -51,7 +50,12 @@ Fully local. No cloud, no account.
 - **Backend:** Tauri (Rust), SQLite, Swift
 - **Tools:** pnpm, Turborepo, GitHub Actions
 
-## Credits
+## Contributing
 
-- **[Bongo Cat](https://store.steampowered.com/app/3419430/Bongo_Cat/)** — Inspiration for the cat mechanic
-- **[@StrayRogue](https://twitter.com/StrayRogue)** — Original Bongo Cat artwork and meme
+contributions are welcome :) if you have ideas, found a bug or want to add new cosmetics, open an issue first so we can discuss it. PRs without an issue and context are closed without comment.
+
+have questions or just want to hang out? [join the Discord](https://discord.com/invite/w4xE3bSjhQ).
+
+## License
+
+this repository is licensed under [AGPL-3](./LICENSE), unless otherwise noted.

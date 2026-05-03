@@ -1,23 +1,8 @@
-Copyright (c) 2025 @bennobuilder
+Copyright (c) 2026 @bennobuilder
 
-1. SCOPE OF LICENSING
-   * All content (including but not limited to files, code, documentation, images, and data) follows the LICENSE file in its respective directory (e.g. "ee/LICENSE" applies to all content in "ee/", "clouds/LICENSE" applies to "clouds/").
-   * Content with explicit license headers is governed by that specific header, which overrides any directory-level license terms.
+Source code in this repository is covered by the GNU Affero General Public License version 3 (AGPLv3). The default throughout the repository is a license under the AGPLv3, unless a file header or a license file in a subdirectory specifies another license.
 
-2. PRECEDENCE OF LICENSES
-   * When multiple licenses could apply, the most specific (closest) license takes precedence. For example:
-     * If "ee/LICENSE" specifies a proprietary license but "ee/module/LICENSE" specifies MIT, then all content within "ee/module/" follows MIT licensing.
-     * If "src/file.js" contains an explicit GPL header but "src/LICENSE" specifies MIT, then that specific file follows GPL licensing.
-
-3. THIRD-PARTY COMPONENTS
-   * All third-party components incorporated into the Software remain under their original licenses as provided by their respective owners or contributors.
-
-4. MODIFICATIONS AND CONTRIBUTIONS
-   * Contributions to this project imply acceptance of these licensing terms.
-   * Modified versions must clearly indicate changes from the original.
-
-5. DEFAULT LICENSE
-   * Any content not explicitly covered by the licensing terms above is available under the GNU Affero General Public License version 3 (AGPLv3) as published by the Free Software Foundation:
+--------------------------------------------------------------------------------
           
                     GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
@@ -680,3 +665,5 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
+
+--------------------------------------------------------------------------------
