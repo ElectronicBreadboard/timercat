@@ -44,7 +44,7 @@ export const appConfig = {
 		webApp:
 			env === 'development' || env === 'local'
 				? 'http://pomodorocat.localhost:3000'
-				: 'https://pomodorocat.com',
+				: 'https://timercat.vercel.app',
 		github: 'https://github.com/builder-group/focuscat',
 		githubReleases: 'https://github.com/builder-group/focuscat/releases'
 	},
